@@ -46,11 +46,24 @@
             border-left: 4px solid #D4A650;
             padding: 1.5rem;
             margin-bottom: 2rem;
-        }
-      </style>
+          }
+  </style>
 </head>
 <body class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-3xl mx-auto">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass py-4 px-6 flex justify-between items-center">
+        <a href="/" class="flex items-center gap-3">
+            <img src="Images/web%20icon.png" alt="Logo" class="w-8 h-8 rounded-lg shadow-lg">
+            <span class="font-bold text-lg tracking-tight hidden sm:block">Daily Grid</span>
+        </a>
+        <div class="flex gap-6 text-sm font-medium">
+            <a href="/" class="hover:text-amber-500 transition-colors">Home</a>
+            <a href="/games" class="hover:text-amber-500 transition-colors">Games</a>
+            <a href="/support" class="hover:text-amber-500 transition-colors">Support</a>
+        </div>
+    </nav>
+
+    <div class="max-w-3xl mx-auto mt-16">
         <header class="mb-12 text-center">
             <a href="/" class="inline-block mb-8">
                 <img src="Images/web%20icon.png" alt="Daily Grid Icon" class="w-20 h-20 rounded-2xl shadow-2xl mx-auto">
@@ -159,7 +172,7 @@
                 <a href="/terms" class="hover:text-amber-500 transition-colors">Terms of Service</a>
             </div>
         </footer>
-    </div>
+        </div>
 </body>
 </html>
         
