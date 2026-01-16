@@ -10,5 +10,6 @@ database_name = "daily-grid-db"
 database_id = "ca6a0759-26c7-439e-8a41-ba99959ce15b"
 
 # KV namespace for puzzle caching
-# Production binding is configured via Cloudflare Dashboard
-# Local dev uses: --kv PUZZLE_CACHE flag in npm run dev
+[[kv_namespaces]]
+binding = "PUZZLE_CACHE"
+id = "4645c8c9221849fbb7933b51bcc46a6d"
