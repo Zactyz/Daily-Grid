@@ -178,6 +178,60 @@
             animation: pulse-glow 2s ease-in-out infinite;
         }
         
+        /* Snake path loading animation */
+        @keyframes draw-path {
+            0% { stroke-dashoffset: 200; }
+            100% { stroke-dashoffset: 0; }
+        }
+        
+        @keyframes fade-cell {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes bounce-dot {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+        
+        .loading-path {
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: draw-path 2s ease-in-out infinite;
+        }
+        
+        .loading-cell {
+            animation: fade-cell 0.3s ease-out forwards;
+        }
+        
+        .loading-dot {
+            animation: bounce-dot 0.6s ease-in-out infinite;
+        }
+        
+        .loading-cell:nth-child(1) { animation-delay: 0s; }
+        .loading-cell:nth-child(2) { animation-delay: 0.15s; }
+        .loading-cell:nth-child(3) { animation-delay: 0.3s; }
+        .loading-cell:nth-child(4) { animation-delay: 0.45s; }
+        .loading-cell:nth-child(5) { animation-delay: 0.6s; }
+        .loading-cell:nth-child(6) { animation-delay: 0.75s; }
+        .loading-cell:nth-child(7) { animation-delay: 0.9s; }
+        .loading-cell:nth-child(8) { animation-delay: 1.05s; }
+        .loading-cell:nth-child(9) { animation-delay: 1.2s; }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .shimmer-text {
+            background: linear-gradient(90deg, #71717a 0%, #f0c674 50%, #71717a 100%);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 2s ease-in-out infinite;
+        }
+        
         /* Details/summary styling */
         details summary {
             list-style: none;
@@ -272,14 +326,49 @@
         </div>
 
         <!-- Loading State -->
-        <div id="loading-state" class="glass-strong p-10 rounded-2xl mb-5 w-full text-center">
-            <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center loading-pulse">
-                <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        <div id="loading-state" class="glass-strong p-8 rounded-2xl mb-5 w-full">
+            <!-- Animated Mini Grid -->
+            <div class="relative w-32 h-32 mx-auto mb-6">
+                <!-- 3x3 grid of cells -->
+                <div class="absolute inset-0 grid grid-cols-3 gap-1.5">
+                    <div class="loading-cell opacity-0 rounded-md bg-white/5 border border-white/10"></div>
+                    <div class="loading-cell opacity-0 rounded-md bg-white/5 border border-white/10"></div>
+                    <div class="loading-cell opacity-0 rounded-md bg-white/5 border border-white/10"></div>
+                    <div class="loading-cell opacity-0 rounded-md bg-white/5 border border-white/10"></div>
+                    <div class="loading-cell opacity-0 rounded-md bg-white/5 border border-white/10"></div>
+                    <div class="loading-cell opacity-0 rounded-md bg-white/5 border border-white/10"></div>
+                    <div class="loading-cell opacity-0 rounded-md bg-white/5 border border-white/10"></div>
+                    <div class="loading-cell opacity-0 rounded-md bg-white/5 border border-white/10"></div>
+                    <div class="loading-cell opacity-0 rounded-md bg-white/5 border border-white/10"></div>
+                </div>
+                <!-- Animated snake path -->
+                <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                    <path 
+                        d="M 17 17 L 17 50 L 50 50 L 50 17 L 83 17 L 83 50 L 83 83 L 50 83 L 17 83" 
+                        fill="none" 
+                        stroke="#f0c674" 
+                        stroke-width="4" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round"
+                        class="loading-path"
+                        style="filter: drop-shadow(0 0 8px rgba(240, 198, 104, 0.5));"
+                    />
                 </svg>
+                <!-- Animated dot at path end -->
+                <div class="absolute w-3 h-3 bg-amber-400 rounded-full loading-dot" style="left: 13px; top: 13px; box-shadow: 0 0 12px rgba(240, 198, 104, 0.8);"></div>
             </div>
-            <div class="text-zinc-300 font-medium mb-1">Generating puzzle...</div>
-            <div class="text-xs text-zinc-500">Just a moment</div>
+            
+            <div class="text-center">
+                <div class="shimmer-text font-semibold text-lg mb-2">Building your puzzle</div>
+                <div class="flex items-center justify-center gap-1.5 text-xs text-zinc-500">
+                    <span>Finding the perfect path</span>
+                    <span class="flex gap-0.5">
+                        <span class="w-1 h-1 bg-zinc-500 rounded-full animate-bounce" style="animation-delay: 0s;"></span>
+                        <span class="w-1 h-1 bg-zinc-500 rounded-full animate-bounce" style="animation-delay: 0.15s;"></span>
+                        <span class="w-1 h-1 bg-zinc-500 rounded-full animate-bounce" style="animation-delay: 0.3s;"></span>
+                    </span>
+                </div>
+            </div>
         </div>
 
         <!-- Game Container -->
