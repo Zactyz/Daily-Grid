@@ -11,6 +11,4 @@ database_id = "ca6a0759-26c7-439e-8a41-ba99959ce15b"
 
 # KV namespace for puzzle caching
 # Production binding is configured via Cloudflare Dashboard
-[[kv_namespaces]]
-binding = "PUZZLE_CACHE"
-id = "PLACEHOLDER_KV_ID"
+# Local dev uses: --kv PUZZLE_CACHE flag in npm run dev
