@@ -39,7 +39,7 @@ function shuffleArray(arr, random) {
   }
 }
 
-function generateHamiltonianPath(width, height, walls, random, maxIterations = 50000) {
+function generateHamiltonianPath(width, height, walls, random, maxIterations = 5000) {
   const wallSet = new Set(walls);
   const visited = new Set();
   const path = [];
@@ -104,7 +104,7 @@ function countSolutions(width, height, numbers, walls, maxCount = 2) {
   
   let solutionCount = 0;
   let iterations = 0;
-  const maxIterations = 100000;
+  const maxIterations = 10000;
   
   function isValid(path, x, y) {
     if (x < 0 || x >= width || y < 0 || y >= height) return false;
@@ -219,25 +219,17 @@ function generatePuzzleForDate(puzzleId) {
   const baseSeed = hashString(puzzleId);
   const paramRandom = createSeededRandom(baseSeed);
   
-  // Server-side can handle larger grids: 6x6 (50%), 6x7/7x6 (30%), 7x7 (20%)
-  const sizeRoll = paramRandom();
-  let width, height;
-  if (sizeRoll < 0.5) {
-    width = 6; height = 6;
-  } else if (sizeRoll < 0.65) {
-    width = 6; height = 7;
-  } else if (sizeRoll < 0.8) {
-    width = 7; height = 6;
-  } else {
-    width = 7; height = 7;
-  }
+  // Keep grids small to stay within Cloudflare CPU limits
+  // Only 6x6 to ensure fast generation
+  const width = 6;
+  const height = 6;
   
   const totalCells = width * height;
   const minClues = 4;
   const maxClues = Math.min(6, Math.floor(totalCells / 6));
   const numClues = minClues + Math.floor(paramRandom() * (maxClues - minClues + 1));
   
-  for (let seedOffset = 0; seedOffset < 5000; seedOffset++) {
+  for (let seedOffset = 0; seedOffset < 500; seedOffset++) {
     const seed = baseSeed + seedOffset + 1000;
     const random = createSeededRandom(seed);
     
