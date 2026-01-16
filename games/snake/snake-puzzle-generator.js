@@ -142,9 +142,9 @@ export function generatePuzzleForDate(puzzleId) {
   const baseSeed = hashString(puzzleId);
   const paramRandom = createSeededRandom(baseSeed);
   
-  // Fixed 6x6 grid (must match server for consistency)
-  const width = 6;
-  const height = 6;
+  // Fixed 5x5 grid (must match server for consistency)
+  const width = 5;
+  const height = 5;
   
   // Vary clue count: 4-6 based on grid size
   const totalCells = width * height;
