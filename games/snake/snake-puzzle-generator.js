@@ -13,7 +13,7 @@ function shuffleArray(arr, random) {
 
 // Generate Hamiltonian path using backtracking with seeded randomness
 // maxIterations prevents infinite loops on difficult configurations
-function generateHamiltonianPath(width, height, walls, random, maxIterations = 20000) {
+function generateHamiltonianPath(width, height, walls, random, maxIterations = 10000) {
   const wallSet = new Set(walls);
   const visited = new Set();
   const path = [];
@@ -80,7 +80,7 @@ function countSolutions(width, height, numbers, walls, maxCount = 2) {
   
   let solutionCount = 0;
   let iterations = 0;
-  const maxIterations = 100000;
+  const maxIterations = 5000; // Keep low for fast generation
   
   function isValid(path, x, y) {
     if (x < 0 || x >= width || y < 0 || y >= height) return false;
@@ -162,7 +162,7 @@ export function generatePuzzleForDate(puzzleId) {
   const numClues = minClues + Math.floor(paramRandom() * (maxClues - minClues + 1));
   
   // Try with increasing seed offsets until we find a valid puzzle
-  for (let seedOffset = 0; seedOffset < 5000; seedOffset++) {
+  for (let seedOffset = 0; seedOffset < 200; seedOffset++) {
     const seed = baseSeed + seedOffset + 1000; // Offset to avoid param seed collision
     const random = createSeededRandom(seed);
     
