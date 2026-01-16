@@ -12,10 +12,12 @@ function shuffleArray(arr, random) {
 }
 
 // Generate Hamiltonian path using backtracking with seeded randomness
-function generateHamiltonianPath(width, height, walls, random) {
+// maxIterations prevents infinite loops on difficult configurations
+function generateHamiltonianPath(width, height, walls, random, maxIterations = 50000) {
   const wallSet = new Set(walls);
   const visited = new Set();
   const path = [];
+  let iterations = 0;
   
   function getNeighbors(x, y) {
     const neighbors = [];
@@ -37,6 +39,9 @@ function generateHamiltonianPath(width, height, walls, random) {
   }
   
   function backtrack(x, y) {
+    // Prevent infinite loops
+    if (++iterations > maxIterations) return false;
+    
     visited.add(`${x},${y}`);
     path.push([x, y]);
     
@@ -74,6 +79,8 @@ function countSolutions(width, height, numbers, walls, maxCount = 2) {
   const numberMap = { ...numbers };
   
   let solutionCount = 0;
+  let iterations = 0;
+  const maxIterations = 100000;
   
   function isValid(path, x, y) {
     if (x < 0 || x >= width || y < 0 || y >= height) return false;
@@ -105,7 +112,8 @@ function countSolutions(width, height, numbers, walls, maxCount = 2) {
   }
   
   function solve(path) {
-    if (solutionCount >= maxCount) return;
+    // Prevent infinite loops
+    if (solutionCount >= maxCount || ++iterations > maxIterations) return;
     
     if (path.length === width * height) {
       solutionCount++;
