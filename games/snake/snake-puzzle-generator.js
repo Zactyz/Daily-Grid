@@ -134,18 +134,16 @@ export function generatePuzzleForDate(puzzleId) {
   const baseSeed = hashString(puzzleId);
   const paramRandom = createSeededRandom(baseSeed);
   
-  // Grid size distribution (must match server for fallback consistency)
-  // 6x6 (50%), 6x7 (15%), 7x6 (15%), 7x7 (20%)
+  // Vary grid size: 6x6 (70%), 6x7 or 7x6 (30%)
+  // Note: 7x7+ causes performance issues with Hamiltonian path generation
   const sizeRoll = paramRandom();
   let width, height;
-  if (sizeRoll < 0.5) {
+  if (sizeRoll < 0.7) {
     width = 6; height = 6;
-  } else if (sizeRoll < 0.65) {
+  } else if (sizeRoll < 0.85) {
     width = 6; height = 7;
-  } else if (sizeRoll < 0.8) {
-    width = 7; height = 6;
   } else {
-    width = 7; height = 7;
+    width = 7; height = 6;
   }
   
   // Vary clue count: 4-6 based on grid size
