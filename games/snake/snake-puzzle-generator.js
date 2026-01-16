@@ -1,5 +1,5 @@
 // Deterministic puzzle generator for Snake game
-// Generates the same puzzle for any given date string
+// Fast approach: Generate path first, then add compatible walls
 
 import { normalizeWall, createSeededRandom, hashString } from './snake-utils.js';
 
@@ -11,134 +11,141 @@ function shuffleArray(arr, random) {
   }
 }
 
-// Generate Hamiltonian path using backtracking with seeded randomness
-// maxIterations prevents infinite loops on difficult configurations
-function generateHamiltonianPath(width, height, walls, random, maxIterations = 10000) {
-  const wallSet = new Set(walls);
+// Generate a random Hamiltonian path on an EMPTY grid (no walls)
+// This is fast because there are no constraints blocking movement
+function generatePath(width, height, random) {
+  const totalCells = width * height;
   const visited = new Set();
   const path = [];
-  let iterations = 0;
   
-  function getNeighbors(x, y) {
+  // Start from a random cell
+  let x = Math.floor(random() * width);
+  let y = Math.floor(random() * height);
+  
+  visited.add(`${x},${y}`);
+  path.push([x, y]);
+  
+  const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+  
+  // Use Warnsdorff's heuristic: prefer cells with fewer unvisited neighbors
+  while (path.length < totalCells) {
     const neighbors = [];
-    const dirs = [[0,-1], [1,0], [0,1], [-1,0]];
     
     for (const [dx, dy] of dirs) {
       const nx = x + dx;
       const ny = y + dy;
       
-      if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-        const wallId = normalizeWall([x, y], [nx, ny]);
-        if (!wallSet.has(wallId) && !visited.has(`${nx},${ny}`)) {
-          neighbors.push([nx, ny]);
+      if (nx >= 0 && nx < width && ny >= 0 && ny < height && !visited.has(`${nx},${ny}`)) {
+        // Count unvisited neighbors of this neighbor (Warnsdorff's heuristic)
+        let degree = 0;
+        for (const [ddx, ddy] of dirs) {
+          const nnx = nx + ddx;
+          const nny = ny + ddy;
+          if (nnx >= 0 && nnx < width && nny >= 0 && nny < height && !visited.has(`${nnx},${nny}`)) {
+            degree++;
+          }
         }
+        neighbors.push({ x: nx, y: ny, degree });
       }
     }
     
-    return neighbors;
-  }
-  
-  function backtrack(x, y) {
-    // Prevent infinite loops
-    if (++iterations > maxIterations) return false;
+    if (neighbors.length === 0) {
+      // Dead end - restart with different starting point
+      return null;
+    }
     
+    // Sort by degree (Warnsdorff's) but add randomness
+    neighbors.sort((a, b) => a.degree - b.degree);
+    
+    // Pick from the best candidates with some randomness
+    const bestDegree = neighbors[0].degree;
+    const bestNeighbors = neighbors.filter(n => n.degree <= bestDegree + 1);
+    const chosen = bestNeighbors[Math.floor(random() * bestNeighbors.length)];
+    
+    x = chosen.x;
+    y = chosen.y;
     visited.add(`${x},${y}`);
     path.push([x, y]);
-    
-    if (visited.size === width * height) {
-      return true;
-    }
-    
-    const neighbors = getNeighbors(x, y);
-    shuffleArray(neighbors, random);
-    
-    for (const [nx, ny] of neighbors) {
-      if (backtrack(nx, ny)) {
-        return true;
-      }
-    }
-    
-    visited.delete(`${x},${y}`);
-    path.pop();
-    return false;
   }
   
-  const startX = Math.floor(random() * width);
-  const startY = Math.floor(random() * height);
-  
-  if (backtrack(startX, startY)) {
-    return path;
-  }
-  
-  return null;
+  return path;
 }
 
-// Count solutions (stop at maxCount for efficiency)
-function countSolutions(width, height, numbers, walls, maxCount = 2) {
-  const wallSet = new Set(walls);
-  const numberMap = { ...numbers };
-  
-  let solutionCount = 0;
-  let iterations = 0;
-  const maxIterations = 5000; // Keep low for fast generation
-  
-  function isValid(path, x, y) {
-    if (x < 0 || x >= width || y < 0 || y >= height) return false;
-    if (path.some(([px, py]) => px === x && py === y)) return false;
-    
-    if (path.length === 0) {
-      return numberMap[`${x},${y}`] === 1;
-    }
-    
-    const [lastX, lastY] = path[path.length - 1];
-    const isAdjacent = (Math.abs(x - lastX) === 1 && y === lastY) ||
-                      (Math.abs(y - lastY) === 1 && x === lastX);
-    if (!isAdjacent) return false;
-    
-    const wallId = normalizeWall([lastX, lastY], [x, y]);
-    if (wallSet.has(wallId)) return false;
-    
-    const cellNum = numberMap[`${x},${y}`];
-    if (cellNum !== undefined) {
-      let maxSeen = 0;
-      for (const [px, py] of path) {
-        const num = numberMap[`${px},${py}`];
-        if (num !== undefined && num > maxSeen) maxSeen = num;
-      }
-      if (cellNum !== maxSeen + 1) return false;
-    }
-    
-    return true;
+// Generate walls that DON'T block the solution path
+function generateWalls(width, height, path, numWalls, random) {
+  // Build set of edges used by the path
+  const pathEdges = new Set();
+  for (let i = 0; i < path.length - 1; i++) {
+    const edge = normalizeWall(path[i], path[i + 1]);
+    pathEdges.add(edge);
   }
   
-  function solve(path) {
-    // Prevent infinite loops
-    if (solutionCount >= maxCount || ++iterations > maxIterations) return;
-    
-    if (path.length === width * height) {
-      solutionCount++;
-      return;
-    }
-    
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        if (isValid(path, x, y)) {
-          path.push([x, y]);
-          solve(path);
-          path.pop();
-        }
+  // Get all possible edges that are NOT in the path
+  const availableEdges = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (x < width - 1) {
+        const edge = normalizeWall([x, y], [x + 1, y]);
+        if (!pathEdges.has(edge)) availableEdges.push(edge);
+      }
+      if (y < height - 1) {
+        const edge = normalizeWall([x, y], [x, y + 1]);
+        if (!pathEdges.has(edge)) availableEdges.push(edge);
       }
     }
   }
   
-  solve([]);
-  return solutionCount;
+  shuffleArray(availableEdges, random);
+  return availableEdges.slice(0, Math.min(numWalls, availableEdges.length));
+}
+
+// Place clues along the path
+function placeClues(path, numClues, random) {
+  const numbers = {};
+  
+  // Always place 1 at start
+  numbers[`${path[0][0]},${path[0][1]}`] = 1;
+  
+  // Always place highest number at end
+  const lastIdx = path.length - 1;
+  numbers[`${path[lastIdx][0]},${path[lastIdx][1]}`] = numClues;
+  
+  if (numClues > 2) {
+    // Distribute middle clues evenly along the path with some randomness
+    const middleClues = numClues - 2;
+    const spacing = Math.floor((path.length - 2) / (middleClues + 1));
+    
+    const middleIndices = [];
+    for (let i = 1; i <= middleClues; i++) {
+      // Base position with some variance
+      let idx = i * spacing;
+      const variance = Math.floor(spacing / 3);
+      idx += Math.floor(random() * (variance * 2 + 1)) - variance;
+      idx = Math.max(1, Math.min(path.length - 2, idx));
+      
+      // Avoid duplicates
+      while (middleIndices.includes(idx) || idx === 0 || idx === lastIdx) {
+        idx = (idx + 1) % (path.length - 1);
+        if (idx === 0) idx = 1;
+      }
+      middleIndices.push(idx);
+    }
+    
+    // Sort to assign numbers in path order
+    middleIndices.sort((a, b) => a - b);
+    
+    for (let i = 0; i < middleIndices.length; i++) {
+      const idx = middleIndices[i];
+      const [x, y] = path[idx];
+      numbers[`${x},${y}`] = i + 2;
+    }
+  }
+  
+  return numbers;
 }
 
 // Main export: Generate puzzle for a given date string
-// Same date always produces same puzzle (deterministic)
 export function generatePuzzleForDate(puzzleId) {
-  // Use date hash to determine puzzle parameters with variance
   const baseSeed = hashString(puzzleId);
   const paramRandom = createSeededRandom(baseSeed);
   
@@ -155,100 +162,45 @@ export function generatePuzzleForDate(puzzleId) {
     width = 6; height = 6;
   }
   
-  // Vary clue count: 4-6 based on grid size
   const totalCells = width * height;
+  
+  // Clue count: 4-6
   const minClues = 4;
-  const maxClues = Math.min(6, Math.floor(totalCells / 6));
+  const maxClues = 6;
   const numClues = minClues + Math.floor(paramRandom() * (maxClues - minClues + 1));
   
-  // Try with increasing seed offsets until we find a valid puzzle
-  for (let seedOffset = 0; seedOffset < 200; seedOffset++) {
-    const seed = baseSeed + seedOffset + 1000; // Offset to avoid param seed collision
+  // Wall count based on grid size
+  const baseWalls = Math.floor(totalCells / 6);
+  const numWalls = baseWalls + Math.floor(paramRandom() * 4);
+  
+  // Try to generate a valid path (should succeed quickly)
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const seed = baseSeed + attempt * 1000;
     const random = createSeededRandom(seed);
     
-    // Determine wall count deterministically based on grid size
-    const baseWalls = Math.floor(totalCells / 8);
-    const numWalls = baseWalls + Math.floor(random() * 3);
+    const path = generatePath(width, height, random);
     
-    const puzzle = generatePuzzleAttemptEndOnNumber(width, height, numWalls, numClues, random);
-    
-    if (puzzle) {
+    if (path && path.length === totalCells) {
+      const walls = generateWalls(width, height, path, numWalls, random);
+      const numbers = placeClues(path, numClues, random);
+      
       return {
         id: puzzleId,
         width,
         height,
-        numbers: puzzle.numbers,
-        walls: puzzle.walls
+        numbers,
+        walls
       };
     }
   }
   
-  // Fallback: return a simple puzzle (should never happen with valid algorithm)
-  console.error('Failed to generate puzzle for', puzzleId, '- using fallback');
+  // Fallback (should rarely happen)
+  console.warn('Using fallback puzzle for', puzzleId);
   return {
     id: puzzleId,
-    width: 6,
-    height: 6,
-    numbers: { '0,0': 1, '5,5': 2 },
+    width: 5,
+    height: 5,
+    numbers: { '0,0': 1, '2,2': 2, '4,4': 3 },
     walls: []
   };
-}
-
-// Generate puzzle that ends on the highest numbered clue
-function generatePuzzleAttemptEndOnNumber(width, height, numWalls, numClues, random) {
-  const walls = [];
-  const allEdges = [];
-  
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if (x < width - 1) allEdges.push([[x,y], [x+1,y]]);
-      if (y < height - 1) allEdges.push([[x,y], [x,y+1]]);
-    }
-  }
-  
-  shuffleArray(allEdges, random);
-  
-  for (let i = 0; i < Math.min(numWalls, allEdges.length); i++) {
-    const [a, b] = allEdges[i];
-    walls.push(normalizeWall(a, b));
-  }
-  
-  const solution = generateHamiltonianPath(width, height, walls, random);
-  if (!solution) return null;
-  
-  const numbers = {};
-  
-  // Always place the highest number at the END of the solution path
-  const lastCell = solution[solution.length - 1];
-  numbers[`${lastCell[0]},${lastCell[1]}`] = numClues;
-  
-  // Always place 1 at the START of the solution path
-  const firstCell = solution[0];
-  numbers[`${firstCell[0]},${firstCell[1]}`] = 1;
-  
-  // Place remaining clues (2 to numClues-1) at random positions along the path
-  if (numClues > 2) {
-    const middleIndices = [];
-    for (let i = 1; i < solution.length - 1; i++) {
-      middleIndices.push(i);
-    }
-    shuffleArray(middleIndices, random);
-    
-    // Sort selected indices to maintain order, then assign numbers 2, 3, etc.
-    const selectedIndices = middleIndices.slice(0, numClues - 2).sort((a, b) => a - b);
-    
-    for (let i = 0; i < selectedIndices.length; i++) {
-      const idx = selectedIndices[i];
-      const [x, y] = solution[idx];
-      numbers[`${x},${y}`] = i + 2; // Numbers 2, 3, 4, ... (numClues-1)
-    }
-  }
-  
-  const solCount = countSolutions(width, height, numbers, walls, 2);
-  
-  if (solCount === 1) {
-    return { numbers, walls };
-  }
-  
-  return null;
 }
