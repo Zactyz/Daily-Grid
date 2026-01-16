@@ -219,16 +219,17 @@ function generatePuzzleForDate(puzzleId) {
   const baseSeed = hashString(puzzleId);
   const paramRandom = createSeededRandom(baseSeed);
   
-  // Grid size distribution (must match client-side for fallback consistency)
-  // 6x6 (70%), 6x7 (15%), 7x6 (15%)
+  // Server-side can handle larger grids: 6x6 (50%), 6x7/7x6 (30%), 7x7 (20%)
   const sizeRoll = paramRandom();
   let width, height;
-  if (sizeRoll < 0.7) {
+  if (sizeRoll < 0.5) {
     width = 6; height = 6;
-  } else if (sizeRoll < 0.85) {
+  } else if (sizeRoll < 0.65) {
     width = 6; height = 7;
-  } else {
+  } else if (sizeRoll < 0.8) {
     width = 7; height = 6;
+  } else {
+    width = 7; height = 7;
   }
   
   const totalCells = width * height;
