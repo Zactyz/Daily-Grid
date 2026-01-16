@@ -7,12 +7,12 @@ export class SnakeRenderer {
     // Modern, refined color palette
     this.colors = {
       bg: '#0a0a0f',
-      cellEmpty: 'rgba(255, 255, 255, 0.08)',
-      cellHover: 'rgba(255, 255, 255, 0.12)',
+      cellEmpty: 'rgba(255, 255, 255, 0.15)',
+      cellHover: 'rgba(255, 255, 255, 0.2)',
       cellPath: 'rgba(240, 198, 104, 0.12)',
       cellStart: 'rgba(240, 198, 104, 0.2)',
       cellEnd: 'rgba(240, 198, 104, 0.2)',
-      gridLine: 'rgba(255, 255, 255, 0.12)',
+      gridLine: 'rgba(255, 255, 255, 0.2)',
       pathLine: '#f0c674',
       pathLineGlow: 'rgba(240, 198, 104, 0.4)',
       number: '#f0c674',
