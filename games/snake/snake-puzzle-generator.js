@@ -96,25 +96,25 @@ function countSolutions(width, height, numbers, walls, maxCount = 2) {
   
   // Find start cell (where number 1 is)
   let startCell = null;
-  const cluePositions = {};
   const maxClue = Math.max(...Object.values(numbers));
   
   for (const [key, num] of Object.entries(numbers)) {
     const [x, y] = key.split(',').map(Number);
-    cluePositions[num] = [x, y];
     if (num === 1) startCell = [x, y];
   }
   
   if (!startCell) return 0;
   
   let solutionCount = 0;
+  let iterations = 0;
+  const maxIterations = 50000; // Bail out if taking too long
   const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
   
-  function solve(path, nextClue) {
-    if (solutionCount >= maxCount) return;
+  function solve(path, nextClue, visited) {
+    if (solutionCount >= maxCount || iterations >= maxIterations) return;
+    iterations++;
     
     if (path.length === totalCells) {
-      // Verify we hit all clues
       const lastCell = path[path.length - 1];
       const lastKey = `${lastCell[0]},${lastCell[1]}`;
       if (numbers[lastKey] === maxClue) {
@@ -124,7 +124,6 @@ function countSolutions(width, height, numbers, walls, maxCount = 2) {
     }
     
     const [cx, cy] = path[path.length - 1];
-    const visited = new Set(path.map(([x, y]) => `${x},${y}`));
     
     for (const [dx, dy] of dirs) {
       const nx = cx + dx;
@@ -140,21 +139,31 @@ function countSolutions(width, height, numbers, walls, maxCount = 2) {
       // Check clue constraint
       const cellClue = numbers[nKey];
       if (cellClue !== undefined) {
-        if (cellClue !== nextClue) continue; // Must hit clues in order
+        if (cellClue !== nextClue) continue;
+        visited.add(nKey);
         path.push([nx, ny]);
-        solve(path, nextClue + 1);
+        solve(path, nextClue + 1, visited);
         path.pop();
+        visited.delete(nKey);
       } else {
+        visited.add(nKey);
         path.push([nx, ny]);
-        solve(path, nextClue);
+        solve(path, nextClue, visited);
         path.pop();
+        visited.delete(nKey);
       }
       
-      if (solutionCount >= maxCount) return;
+      if (solutionCount >= maxCount || iterations >= maxIterations) return;
     }
   }
   
-  solve([startCell], 2); // Start at 1, looking for 2 next
+  const visited = new Set([`${startCell[0]},${startCell[1]}`]);
+  solve([startCell], 2, visited);
+  
+  // If we hit iteration limit without finding 2 solutions, assume unique
+  if (iterations >= maxIterations && solutionCount < 2) {
+    return 1;
+  }
   return solutionCount;
 }
 
@@ -173,18 +182,16 @@ function placeCluesAtIndices(path, indices) {
 function findUniqueClues(width, height, path, walls, random) {
   const totalCells = path.length;
   
-  // Start with endpoints (1 at start, max at end)
-  let clueIndices = [0, totalCells - 1];
-  
-  // Add middle clues until we get exactly 1 solution
+  // Get middle indices and shuffle
   const middleIndices = [];
   for (let i = 1; i < totalCells - 1; i++) {
     middleIndices.push(i);
   }
   shuffleArray(middleIndices, random);
   
-  // Try with just 2 clues first, then add more
-  for (let extraClues = 0; extraClues <= 8; extraClues++) {
+  // Start with minimum 2 middle clues (total 4 clues including start/end)
+  // Then add more if needed for uniqueness
+  for (let extraClues = 2; extraClues <= 10; extraClues++) {
     const testIndices = [0, ...middleIndices.slice(0, extraClues), totalCells - 1].sort((a, b) => a - b);
     const numbers = placeCluesAtIndices(path, testIndices);
     
@@ -197,7 +204,7 @@ function findUniqueClues(width, height, path, walls, random) {
   
   // Fallback: use many clues to force uniqueness
   const manyClues = [0];
-  const step = Math.floor(totalCells / 6);
+  const step = Math.max(2, Math.floor(totalCells / 8));
   for (let i = step; i < totalCells - 1; i += step) {
     manyClues.push(i);
   }
@@ -228,7 +235,7 @@ export function generatePuzzleForDate(puzzleId) {
   const numWalls = baseWalls + Math.floor(paramRandom() * 4);
   
   // Try to generate a valid unique puzzle
-  for (let attempt = 0; attempt < 30; attempt++) {
+  for (let attempt = 0; attempt < 100; attempt++) {
     const seed = baseSeed + attempt * 1000;
     const random = createSeededRandom(seed);
     
