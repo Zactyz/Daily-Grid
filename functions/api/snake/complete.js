@@ -43,7 +43,7 @@ export async function onRequest(context) {
       });
     }
 
-    if (timeMs < 10000 || timeMs > 3600000) {
+    if (timeMs < 3000 || timeMs > 3600000) {
       return new Response(JSON.stringify({ error: 'Invalid time' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
