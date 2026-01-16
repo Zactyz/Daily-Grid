@@ -9,6 +9,7 @@ export class SnakeUI {
     this.uiThrottleMs = 100;
     this.modalShown = false;
     this.completionTime = null; // Lock in time when completed
+    this.hasSubmittedScore = false; // Track if score was submitted (only first attempt counts)
     
     this.elements = {
       timer: document.getElementById('timer'),
@@ -24,6 +25,9 @@ export class SnakeUI {
       closeModalBtn: document.getElementById('close-modal-btn')
     };
     
+    // Check if already submitted for today
+    this.checkIfAlreadySubmitted();
+    
     this.setupListeners();
     this.setupVisibilityHandler();
     
@@ -31,6 +35,27 @@ export class SnakeUI {
     if (this.engine.state.isComplete) {
       this.completionTime = this.engine.state.timeMs;
       this.modalShown = true; // Don't auto-show modal on reload
+    }
+  }
+  
+  checkIfAlreadySubmitted() {
+    try {
+      const puzzleId = getPTDateYYYYMMDD();
+      const submittedKey = `dailygrid_submitted_${puzzleId}`;
+      this.hasSubmittedScore = localStorage.getItem(submittedKey) === 'true';
+    } catch (e) {
+      this.hasSubmittedScore = false;
+    }
+  }
+  
+  markAsSubmitted() {
+    try {
+      const puzzleId = getPTDateYYYYMMDD();
+      const submittedKey = `dailygrid_submitted_${puzzleId}`;
+      localStorage.setItem(submittedKey, 'true');
+      this.hasSubmittedScore = true;
+    } catch (e) {
+      console.warn('Failed to save submission status');
     }
   }
   
@@ -177,6 +202,14 @@ export class SnakeUI {
   }
   
   async submitScore(timeMs) {
+    // Only submit on first attempt - no gaming the leaderboard with resets
+    if (this.hasSubmittedScore) {
+      if (this.elements.percentileMsg) {
+        this.elements.percentileMsg.textContent = 'Score already submitted for today';
+      }
+      return;
+    }
+    
     try {
       const anonId = getOrCreateAnonId();
       const puzzleId = getPTDateYYYYMMDD();
@@ -195,6 +228,9 @@ export class SnakeUI {
       if (!response.ok) throw new Error('Failed to submit score');
       
       const data = await response.json();
+      
+      // Mark as submitted so resets don't count
+      this.markAsSubmitted();
       
       if (this.elements.percentileMsg) {
         const msg = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
