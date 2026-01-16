@@ -61,11 +61,19 @@ export async function onRequest(context) {
         END
     `).bind(puzzleId, anonId, timeMs, hintsUsed).run();
 
+    // Get user's actual best time from DB (may be faster than submitted time)
+    const userTimeResult = await env.DB.prepare(`
+      SELECT time_ms FROM snake_scores
+      WHERE puzzle_id = ?1 AND anon_id = ?2
+    `).bind(puzzleId, anonId).first();
+    
+    const actualBestTime = userTimeResult?.time_ms || timeMs;
+
     const fasterCountResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
       FROM snake_scores
       WHERE puzzle_id = ?1 AND time_ms < ?2
-    `).bind(puzzleId, timeMs).first();
+    `).bind(puzzleId, actualBestTime).first();
 
     const totalResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
