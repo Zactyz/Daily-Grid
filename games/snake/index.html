@@ -421,27 +421,15 @@
         let engine, renderer, input, ui;
         let lastTime = Date.now();
 
-        // Fetch puzzle from server, fallback to local generation
-        async function getTodaysPuzzle() {
-            try {
-                const response = await fetch('/api/snake/puzzle');
-                if (response.ok) {
-                    const puzzle = await response.json();
-                    console.log('Puzzle loaded from server (cache:', response.headers.get('X-Cache') || 'N/A', ')');
-                    return puzzle;
-                }
-            } catch (err) {
-                console.warn('Server puzzle fetch failed, using local generation:', err);
-            }
-            
-            // Fallback to local generation
+        // Generate puzzle client-side (deterministic - same puzzle for everyone on same day)
+        function getTodaysPuzzle() {
             const puzzleId = getPTDateYYYYMMDD();
             return generatePuzzleForDate(puzzleId);
         }
 
-        async function init() {
+        function init() {
             try {
-                const puzzle = await getTodaysPuzzle();
+                const puzzle = getTodaysPuzzle();
                 const canvas = document.getElementById('game-canvas');
                 
                 // Update grid size display

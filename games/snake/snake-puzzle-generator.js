@@ -13,7 +13,7 @@ function shuffleArray(arr, random) {
 
 // Generate Hamiltonian path using backtracking with seeded randomness
 // maxIterations prevents infinite loops on difficult configurations
-function generateHamiltonianPath(width, height, walls, random, maxIterations = 50000) {
+function generateHamiltonianPath(width, height, walls, random, maxIterations = 20000) {
   const wallSet = new Set(walls);
   const visited = new Set();
   const path = [];
@@ -142,9 +142,18 @@ export function generatePuzzleForDate(puzzleId) {
   const baseSeed = hashString(puzzleId);
   const paramRandom = createSeededRandom(baseSeed);
   
-  // Fixed 5x5 grid (must match server for consistency)
-  const width = 5;
-  const height = 5;
+  // Vary grid size: 5x5 (40%), 5x6 or 6x5 (40%), 6x6 (20%)
+  const sizeRoll = paramRandom();
+  let width, height;
+  if (sizeRoll < 0.4) {
+    width = 5; height = 5;
+  } else if (sizeRoll < 0.6) {
+    width = 5; height = 6;
+  } else if (sizeRoll < 0.8) {
+    width = 6; height = 5;
+  } else {
+    width = 6; height = 6;
+  }
   
   // Vary clue count: 4-6 based on grid size
   const totalCells = width * height;
