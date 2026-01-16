@@ -50,22 +50,31 @@ export async function onRequest(context) {
       });
     }
 
-    await env.DB.prepare(`
-      INSERT INTO snake_scores (puzzle_id, anon_id, time_ms, hints_used)
-      VALUES (?1, ?2, ?3, ?4)
-      ON CONFLICT(puzzle_id, anon_id) DO UPDATE SET
-        time_ms = MIN(snake_scores.time_ms, excluded.time_ms),
-        hints_used = CASE
-          WHEN excluded.time_ms < snake_scores.time_ms THEN excluded.hints_used
-          ELSE snake_scores.hints_used
-        END
-    `).bind(puzzleId, anonId, timeMs, hintsUsed).run();
+    // Check if user already has a score for this puzzle (first attempt only!)
+    const existingScore = await env.DB.prepare(`
+      SELECT time_ms FROM snake_scores
+      WHERE puzzle_id = ?1 AND anon_id = ?2
+    `).bind(puzzleId, anonId).first();
 
+    let userTime = timeMs;
+    
+    if (existingScore) {
+      // Already submitted - use existing time, don't update
+      userTime = existingScore.time_ms;
+    } else {
+      // First attempt - insert the score
+      await env.DB.prepare(`
+        INSERT INTO snake_scores (puzzle_id, anon_id, time_ms, hints_used)
+        VALUES (?1, ?2, ?3, ?4)
+      `).bind(puzzleId, anonId, timeMs, hintsUsed).run();
+    }
+
+    // Calculate rank based on user's stored time
     const fasterCountResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
       FROM snake_scores
       WHERE puzzle_id = ?1 AND time_ms < ?2
-    `).bind(puzzleId, timeMs).first();
+    `).bind(puzzleId, userTime).first();
 
     const totalResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
