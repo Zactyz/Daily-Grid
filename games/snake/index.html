@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/games/snake/snake-logo.png">
+    <link rel="apple-touch-icon" href="/games/snake/snake-logo.png">
+    <link rel="manifest" href="/games/snake/manifest.json">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Snake">
+    <title>Snake by Daily Grid</title>
+    <meta name="description" content="Snake: A calm daily number-linking puzzle. Connect the numbers in order.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-bg: #0a0a0f;
+            --brand-gold: #f0c674;
+            --brand-gold-dim: #c9a85c;
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.06);
+        }
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--brand-bg);
+            color: #e8e8ed;
+            overflow-x: hidden;
+        }
+        
+        /* Ambient background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(240, 198, 104, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99, 102, 241, 0.05), transparent),
+                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(240, 198, 104, 0.03), transparent);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        /* Subtle grid pattern */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+        }
+        
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 4px 24px -4px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        #game-canvas {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            max-width: 100%;
+            max-height: 65vh;
+            touch-action: none;
+            border-radius: 16px;
+        }
+        
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            letter-spacing: 0.01em;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-dim));
+            color: #0a0a0f;
+            box-shadow: 0 2px 12px rgba(240, 198, 104, 0.25);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(240, 198, 104, 0.35);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a1a1aa;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #e8e8ed;
+        }
+        
+        .timer-display {
+            background: linear-gradient(135deg, rgba(240, 198, 104, 0.1), rgba(240, 198, 104, 0.05));
+            border: 1px solid rgba(240, 198, 104, 0.2);
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .gold-text {
+            color: var(--brand-gold);
+        }
+        
+        .gold-glow {
+            text-shadow: 0 0 30px rgba(240, 198, 104, 0.4);
+        }
+        
+        /* Completion modal enhancements */
+        .modal-backdrop {
+            background: rgba(5, 5, 10, 0.9);
+            backdrop-filter: blur(8px);
+        }
+        
+        .leaderboard-row {
+            transition: background 0.15s ease;
+        }
+        
+        .leaderboard-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        /* Loading animation */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        
+        .loading-pulse {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        /* Details/summary styling */
+        details summary {
+            list-style: none;
+        }
+        
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        details summary::after {
+            content: '+';
+            float: right;
+            font-weight: 300;
+            font-size: 1.25rem;
+            color: #71717a;
+            transition: transform 0.2s ease;
+        }
+        
+        details[open] summary::after {
+            transform: rotate(45deg);
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        /* Focus states */
+        input:focus {
+            outline: none;
+            border-color: var(--brand-gold) !important;
+            box-shadow: 0 0 0 3px rgba(240, 198, 104, 0.15);
+        }
+        
+        button:focus-visible {
+            outline: 2px solid var(--brand-gold);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <a href="/games/snake/" class="flex items-center gap-2.5 transition-all hover:opacity-80">
+                <img src="/games/snake/snake-logo.png" alt="Snake Logo" class="w-9 h-9 rounded-lg">
+                <span class="font-semibold text-lg tracking-tight hidden sm:block">Snake</span>
+            </a>
+            <div class="flex gap-5 text-sm font-medium text-zinc-400">
+                <a href="/" class="hover:text-white transition-colors">Home</a>
+                <a href="/games/" class="text-white">Games</a>
+                <a href="/support/" class="hover:text-white transition-colors">Support</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Game -->
+    <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
+        <!-- Header -->
+        <header class="text-center mb-6 w-full">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400/90 text-xs font-medium mb-3 uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                Daily Puzzle
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 gold-text gold-glow">Snake</h1>
+            <p class="text-zinc-500 text-sm">Connect numbers. Fill every cell.</p>
+        </header>
+
+        <!-- Stats Row -->
+        <div class="flex gap-3 mb-5 w-full max-w-xs">
+            <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
+                <div class="text-[10px] uppercase tracking-wider text-amber-400/60 mb-0.5">Time</div>
+                <div id="timer" class="text-xl font-bold mono gold-text">0:00</div>
+            </div>
+            <div class="flex-1 stat-card px-4 py-2.5 rounded-xl text-center">
+                <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Grid</div>
+                <div id="grid-size" class="text-xl font-bold mono text-zinc-300">5x5</div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="glass-strong p-10 rounded-2xl mb-5 w-full text-center">
+            <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center loading-pulse">
+                <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+            <div class="text-zinc-300 font-medium mb-1">Generating puzzle...</div>
+            <div class="text-xs text-zinc-500">Just a moment</div>
+        </div>
+
+        <!-- Game Container -->
+        <div id="game-container" class="hidden glass-strong p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
+            <canvas id="game-canvas"></canvas>
+            <!-- Pause Overlay -->
+            <div id="pause-overlay" class="hidden absolute inset-0 bg-black/60 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10">
+                <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
+                    </svg>
+                </div>
+                <span class="text-2xl font-bold text-white tracking-wide">Paused</span>
+                <span class="text-sm text-white/60 mt-1">Tap to resume</span>
+            </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="flex gap-3 mb-8">
+            <button id="pause-btn" class="btn btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
+                </svg>
+                Pause
+            </button>
+            <button id="reset-btn" class="btn btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Reset
+            </button>
+        </div>
+
+        <!-- How to Play -->
+        <details class="glass-strong rounded-xl w-full max-w-md">
+            <summary class="cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">
+                How to Play
+            </summary>
+            <div class="px-5 pb-5 pt-1">
+                <ul class="text-zinc-400 space-y-2.5 text-sm">
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                        <span>Start at the cell marked <strong class="text-amber-400">1</strong></span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-zinc-700/50 text-zinc-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                        <span>Drag to connect adjacent cells (no diagonals)</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-zinc-700/50 text-zinc-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                        <span>Visit numbered cells in sequence</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-zinc-700/50 text-zinc-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span>
+                        <span>Fill every cell exactly once</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-zinc-700/50 text-zinc-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">5</span>
+                        <span>Walls block your path - plan around them</span>
+                    </li>
+                </ul>
+                <p class="text-xs text-zinc-500 mt-4 pt-3 border-t border-white/5">
+                    Tip: Drag backwards on your path to undo moves
+                </p>
+            </div>
+        </details>
+    </main>
+
+    <!-- Completion Modal -->
+    <div id="completion-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="glass-strong p-6 sm:p-8 rounded-2xl max-w-sm w-full animate-in">
+            <!-- Success Icon -->
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            
+            <h2 class="text-2xl font-bold mb-1 text-center">Complete!</h2>
+            <p class="text-zinc-500 text-sm text-center mb-5">Great work on today's puzzle</p>
+            
+            <!-- Time Display -->
+            <div class="timer-display rounded-xl p-4 text-center mb-4">
+                <div class="text-xs uppercase tracking-wider text-amber-400/60 mb-1">Your Time</div>
+                <div id="final-time" class="text-3xl font-bold mono gold-text gold-glow">0:00</div>
+            </div>
+
+            <p id="percentile-msg" class="text-center text-sm text-zinc-400 mb-5"></p>
+
+            <!-- Initials Form -->
+            <form id="claim-initials-form" class="hidden mb-5">
+                <label class="block text-xs text-zinc-500 mb-2 uppercase tracking-wider">Claim your spot</label>
+                <div class="flex gap-2">
+                    <input 
+                        type="text" 
+                        id="initials-input" 
+                        maxlength="3" 
+                        placeholder="ABC"
+                        class="flex-1 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-center uppercase mono text-lg tracking-widest placeholder:text-zinc-600"
+                    >
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+
+            <!-- Leaderboard -->
+            <div class="mb-5">
+                <h3 class="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                    Today's Top 10
+                </h3>
+                <div id="leaderboard-list" class="text-sm rounded-lg overflow-hidden bg-black/20">
+                    <p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>
+                </div>
+            </div>
+
+            <button id="close-modal-btn" class="btn btn-secondary w-full">Close</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-6 px-4 border-t border-white/5 text-center text-xs text-zinc-600">
+        &copy; 2026 Zachary Zimmerman
+        <span class="mx-2">|</span>
+        <a href="/privacy/" class="hover:text-zinc-400 transition-colors">Privacy</a>
+        <span class="mx-2">|</span>
+        <a href="/terms/" class="hover:text-zinc-400 transition-colors">Terms</a>
+    </footer>
+
+    <script type="module">
+        import { SnakeEngine } from './snake-engine.js';
+        import { SnakeRenderer } from './snake-renderer.js';
+        import { SnakeInput } from './snake-input.js';
+        import { SnakeUI } from './snake-ui.js';
+        import { getPTDateYYYYMMDD } from './snake-utils.js';
+        import { generatePuzzleForDate } from './snake-puzzle-generator.js';
+
+        let engine, renderer, input, ui;
+        let lastTime = Date.now();
+
+        // Fetch puzzle from server, fallback to local generation
+        async function getTodaysPuzzle() {
+            try {
+                const response = await fetch('/api/snake/puzzle');
+                if (response.ok) {
+                    const puzzle = await response.json();
+                    console.log('Puzzle loaded from server (cache:', response.headers.get('X-Cache') || 'N/A', ')');
+                    return puzzle;
+                }
+            } catch (err) {
+                console.warn('Server puzzle fetch failed, using local generation:', err);
+            }
+            
+            // Fallback to local generation
+            const puzzleId = getPTDateYYYYMMDD();
+            return generatePuzzleForDate(puzzleId);
+        }
+
+        async function init() {
+            try {
+                const puzzle = await getTodaysPuzzle();
+                const canvas = document.getElementById('game-canvas');
+                
+                // Update grid size display
+                const gridSizeEl = document.getElementById('grid-size');
+                if (gridSizeEl) {
+                    gridSizeEl.textContent = `${puzzle.width}x${puzzle.height}`;
+                }
+                
+                document.getElementById('loading-state')?.classList.add('hidden');
+                document.getElementById('game-container')?.classList.remove('hidden');
+                
+                engine = new SnakeEngine(puzzle);
+                renderer = new SnakeRenderer(canvas, engine);
+                
+                input = new SnakeInput(canvas, engine, renderer, () => {
+                    renderer.render();
+                    ui.update();
+                });
+                
+                ui = new SnakeUI(engine, reset);
+                
+                gameLoop();
+                
+                window.addEventListener('resize', () => {
+                    renderer.resize();
+                    renderer.render();
+                });
+                
+                renderer.render();
+                ui.update();
+                ui.updatePauseState();
+            } catch (error) {
+                console.error('Failed to initialize game:', error);
+                document.getElementById('loading-state').innerHTML = `
+                    <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-red-500/10 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </div>
+                    <div class="text-red-400 font-medium mb-1">Failed to load</div>
+                    <div class="text-xs text-zinc-500">Please refresh to try again</div>
+                `;
+            }
+        }
+
+        function reset() {
+            engine.reset();
+            renderer.render();
+            ui.resetUI();
+            ui.update();
+        }
+
+        function gameLoop() {
+            const now = Date.now();
+            const delta = now - lastTime;
+            lastTime = now;
+            
+            engine.updateTime(delta);
+            ui.update();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        init();
+        
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/games/snake/sw.js')
+                .then(() => console.log('Service Worker registered'))
+                .catch((err) => console.log('Service Worker registration failed:', err));
+        }
+    </script>
+</body>
+</html>

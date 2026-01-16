@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="Images/web%20icon.png">
+    <link rel="icon" type="image/png" href="/Images/web%20icon.png">
     <title>More Games - Daily Grid</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
@@ -45,13 +45,13 @@
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 glass py-4 px-6 flex justify-between items-center">
         <a href="/" class="flex items-center gap-3 transition-transform hover:scale-105">
-            <img src="Images/web%20icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-lg">
+            <img src="/Images/web%20icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-lg">
             <span class="font-bold text-xl tracking-tight hidden sm:block">Daily Grid</span>
         </a>
         <div class="flex gap-6 text-sm font-medium">
             <a href="/" class="hover:text-amber-500 transition-colors">Home</a>
-            <a href="/games" class="text-amber-500 font-bold">Games</a>
-            <a href="/support" class="hover:text-amber-500 transition-colors">Support</a>
+            <a href="/games/" class="text-amber-500 font-bold">Games</a>
+            <a href="/support/" class="hover:text-amber-500 transition-colors">Support</a>
         </div>
     </nav>
 
@@ -71,24 +71,25 @@
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <!-- Game 1: Daily Grid -->
             <a href="/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-                <img src="Images/web%20icon.png" alt="Daily Grid" class="w-16 h-16 rounded-2xl mb-6 shadow-lg">
+                <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-16 h-16 rounded-2xl mb-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-2">Daily Grid</h2>
-                <p class="text-slate-400 text-sm leading-relaxed mb-6">The original handcrafted star battle ritual. One puzzle, every day.</p>
+                <p class="text-slate-400 text-sm leading-relaxed mb-6">The original handcrafted daily logic puzzle. One puzzle, every day.</p>
                 <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
                     Available Now 
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </span>
             </a>
 
-            <!-- Placeholder 1 -->
-            <div class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start opacity-60">
-                <div class="w-16 h-16 rounded-2xl mb-6 bg-slate-800 flex items-center justify-center">
-                    <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                </div>
-                <h2 class="text-2xl font-bold mb-2 text-slate-300">Mystery Logic</h2>
-                <p class="text-slate-500 text-sm leading-relaxed mb-6">A new way to solve. Under development for a calm, satisfying experience.</p>
-                <span class="mt-auto text-slate-500 font-bold text-sm uppercase tracking-widest italic">Coming Soon</span>
-            </div>
+            <!-- Snake Game Card -->
+            <a href="/games/snake/" class="glass p-8 rounded-[2.5rem] hover:scale-105 transition-transform text-left flex flex-col items-start border-amber-500/10">
+                <img src="/games/snake/snake-logo.png" alt="Snake" class="w-16 h-16 rounded-2xl mb-6">
+                <h2 class="text-2xl font-bold mb-2">Snake</h2>
+                <p class="text-slate-400 text-sm leading-relaxed mb-6">Connect the numbers in order. Fill every cell in one continuous path.</p>
+                <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+                    Play Today's Puzzle
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </span>
+            </a>
 
             <!-- Placeholder 2 -->
             <div class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start opacity-60">
@@ -113,16 +114,15 @@
     <!-- Footer -->
     <footer class="py-12 px-6 border-t border-white/5 text-center mt-auto">
         <div class="max-w-6xl mx-auto">
-            <img src="Images/web%20icon.png" alt="Daily Grid" class="w-12 h-12 rounded-xl mx-auto mb-6 grayscale opacity-50">
-            <p class="text-slate-500 mb-8">&copy; 2025 Zachary Zimmerman. All rights reserved.</p>
+            <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-12 h-12 rounded-xl mx-auto mb-6 grayscale opacity-50">
+            <p class="text-slate-500 mb-8">&copy; 2026 Zachary Zimmerman. All rights reserved.</p>
             <div class="flex justify-center gap-8 text-sm font-medium text-slate-400">
                 <a href="/" class="hover:text-amber-500 transition-colors">Home</a>
-                <a href="/privacy" class="hover:text-amber-500 transition-colors">Privacy Policy</a>
-                <a href="/terms" class="hover:text-amber-500 transition-colors">Terms of Service</a>
-                <a href="/support" class="hover:text-amber-500 transition-colors">Support</a>
+                <a href="/privacy/" class="hover:text-amber-500 transition-colors">Privacy Policy</a>
+                <a href="/terms/" class="hover:text-amber-500 transition-colors">Terms of Service</a>
+                <a href="/support/" class="hover:text-amber-500 transition-colors">Support</a>
             </div>
         </div>
     </footer>
 </body>
 </html>
-

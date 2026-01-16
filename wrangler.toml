@@ -1,0 +1,16 @@
+name = "daily-grid"
+compatibility_date = "2026-01-01"
+pages_build_output_dir = "."
+
+# D1 database binding for leaderboard
+# Production binding is configured via Cloudflare Dashboard
+[[d1_databases]]
+binding = "DB"
+database_name = "daily-grid-db"
+database_id = "ca6a0759-26c7-439e-8a41-ba99959ce15b"
+
+# KV namespace for puzzle caching
+# Production binding is configured via Cloudflare Dashboard
+[[kv_namespaces]]
+binding = "PUZZLE_CACHE"
+id = "PLACEHOLDER_KV_ID"

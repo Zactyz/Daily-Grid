@@ -1,0 +1,98 @@
+// POST /api/snake/complete - Submit completion time
+
+import { getPTDateYYYYMMDD, validateUUID, validateEnv } from '../../_shared/snake-utils-server.js';
+
+export async function onRequest(context) {
+  const { request, env } = context;
+
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
+  try {
+    validateEnv(env);
+    
+    const body = await request.json();
+    const { puzzleId, anonId, timeMs, hintsUsed = 0 } = body;
+
+    const today = getPTDateYYYYMMDD();
+    if (puzzleId !== today) {
+      return new Response(JSON.stringify({ error: 'Invalid puzzle ID' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!validateUUID(anonId)) {
+      return new Response(JSON.stringify({ error: 'Invalid anon ID' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (timeMs < 10000 || timeMs > 3600000) {
+      return new Response(JSON.stringify({ error: 'Invalid time' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    await env.DB.prepare(`
+      INSERT INTO snake_scores (puzzle_id, anon_id, time_ms, hints_used)
+      VALUES (?1, ?2, ?3, ?4)
+      ON CONFLICT(puzzle_id, anon_id) DO UPDATE SET
+        time_ms = MIN(snake_scores.time_ms, excluded.time_ms),
+        hints_used = CASE
+          WHEN excluded.time_ms < snake_scores.time_ms THEN excluded.hints_used
+          ELSE snake_scores.hints_used
+        END
+    `).bind(puzzleId, anonId, timeMs, hintsUsed).run();
+
+    const fasterCountResult = await env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM snake_scores
+      WHERE puzzle_id = ?1 AND time_ms < ?2
+    `).bind(puzzleId, timeMs).first();
+
+    const totalResult = await env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM snake_scores
+      WHERE puzzle_id = ?1
+    `).bind(puzzleId).first();
+
+    const fasterCount = fasterCountResult?.count || 0;
+    const total = totalResult?.count || 1;
+    const rank = fasterCount + 1;
+    const percentile = Math.floor(((total - rank) / Math.max(total, 1)) * 100);
+
+    return new Response(JSON.stringify({
+      success: true,
+      rank,
+      percentile,
+      total
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Complete API error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+}
