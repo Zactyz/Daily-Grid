@@ -252,9 +252,13 @@
     <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
         <!-- Header -->
         <header class="text-center mb-6 w-full">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400/90 text-xs font-medium mb-3 uppercase tracking-wider">
+            <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400/90 text-xs font-medium mb-3 uppercase tracking-wider">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                 Daily Puzzle
+            </div>
+            <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400/90 text-xs font-medium mb-3 uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Practice Mode
             </div>
             <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 gold-text gold-glow">Snake</h1>
             <p class="text-zinc-500 text-sm">Connect numbers. Fill every cell.</p>
@@ -355,6 +359,20 @@
                 </p>
             </div>
         </details>
+
+        <button id="practice-mode-btn" class="w-full max-w-md mt-4 py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-medium hover:bg-white/5 hover:text-white transition-colors flex items-center justify-center gap-2 group">
+            <span>Try Practice Levels</span>
+            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+        </button>
+
+        <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-amber-500/20 text-amber-400 text-sm font-medium hover:bg-amber-500/10 transition-colors flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            <span>Back to Daily Puzzle</span>
+        </button>
     </main>
 
     <!-- Completion Modal -->
@@ -407,6 +425,7 @@
             </div>
 
             <button id="close-modal-btn" class="btn btn-secondary w-full">Close</button>
+            <button id="next-level-btn" class="btn btn-primary w-full hidden">Next Level</button>
         </div>
     </div>
 
@@ -429,16 +448,38 @@
 
         let engine, renderer, input, ui;
         let lastTime = Date.now();
+        let currentMode = 'daily'; // 'daily' or 'practice'
 
         // Generate puzzle client-side (deterministic - same puzzle for everyone on same day)
-        function getTodaysPuzzle() {
-            const puzzleId = getPTDateYYYYMMDD();
+        function getPuzzle(mode) {
+            let puzzleId;
+            if (mode === 'daily') {
+                puzzleId = getPTDateYYYYMMDD();
+            } else {
+                // Random seed for practice mode
+                puzzleId = `practice-${Date.now()}-${Math.random()}`;
+            }
             return generatePuzzleForDate(puzzleId);
         }
 
-        function init() {
+        function init(mode = 'daily') {
+            currentMode = mode;
+            
+            // Update UI State
+            if (mode === 'daily') {
+                document.getElementById('practice-mode-btn').classList.remove('hidden');
+                document.getElementById('back-to-daily-btn').classList.add('hidden');
+                document.getElementById('daily-badge').classList.remove('hidden');
+                document.getElementById('practice-badge').classList.add('hidden');
+            } else {
+                document.getElementById('practice-mode-btn').classList.add('hidden');
+                document.getElementById('back-to-daily-btn').classList.remove('hidden');
+                document.getElementById('daily-badge').classList.add('hidden');
+                document.getElementById('practice-badge').classList.remove('hidden');
+            }
+
             try {
-                const puzzle = getTodaysPuzzle();
+                const puzzle = getPuzzle(mode);
                 const canvas = document.getElementById('game-canvas');
                 
                 // Update grid size display
@@ -458,7 +499,7 @@
                     ui.update();
                 });
                 
-                ui = new SnakeUI(engine, reset);
+                ui = new SnakeUI(engine, reset, nextLevel, currentMode);
                 
                 gameLoop();
                 
@@ -491,6 +532,45 @@
             ui.update();
         }
 
+        function nextLevel() {
+            if (currentMode === 'practice') {
+                init('practice'); // Re-init to generate new puzzle
+            }
+        }
+
+        // New function to handle mode switching and new levels
+        window.startPracticeMode = () => init('practice');
+        window.startDailyMode = () => init('daily');
+
+        // Bind buttons
+        document.getElementById('practice-mode-btn').addEventListener('click', window.startPracticeMode);
+        document.getElementById('back-to-daily-btn').addEventListener('click', window.startDailyMode);
+        
+        // Update reset to handle "Next Level" from UI if we passed a callback?
+        // Actually SnakeUI handles the "Next Level" click by calling onReset()
+        // If we want onReset() to generate a NEW puzzle in practice mode when "Next Level" is clicked...
+        // The SnakeUI code I wrote calls onReset() when Next Level is clicked.
+        // So for practice mode, onReset needs to be smarter or we need a separate callback.
+        
+        // Let's re-read SnakeUI logic for Next Level button:
+        // this.elements.nextLevelBtn?.addEventListener('click', () => {
+        //   this.hideCompletionModal();
+        //   this.onReset(); 
+        // });
+        
+        // So in practice mode, "Next Level" calls reset().
+        // But the "Reset" button (top of screen) ALSO calls reset().
+        // This is a conflict. "Reset" button should clear board. "Next Level" should make new puzzle.
+        
+        // I need to update SnakeUI to take a separate onNextLevel callback or handle it differently.
+        // Or I can check a flag.
+        
+        // Let's fix this in the init function by passing a different callback for Next Level
+        // But SnakeUI only accepts onReset.
+        
+        // Quick fix: Update init to recreate UI with a custom object or method?
+        // Better: Update SnakeUI to accept onNextLevel callback.
+        
         function gameLoop() {
             const now = Date.now();
             const delta = now - lastTime;

@@ -1,9 +1,11 @@
 import { formatTime, getOrCreateAnonId, getPTDateYYYYMMDD } from './snake-utils.js';
 
 export class SnakeUI {
-  constructor(engine, onReset) {
+  constructor(engine, onReset, onNextLevel, mode = 'daily') {
     this.engine = engine;
     this.onReset = onReset;
+    this.onNextLevel = onNextLevel;
+    this.mode = mode;
     
     this.lastUIUpdate = 0;
     this.uiThrottleMs = 100;
@@ -23,11 +25,14 @@ export class SnakeUI {
       claimInitialsForm: document.getElementById('claim-initials-form'),
       initialsInput: document.getElementById('initials-input'),
       leaderboardList: document.getElementById('leaderboard-list'),
-      closeModalBtn: document.getElementById('close-modal-btn')
+      closeModalBtn: document.getElementById('close-modal-btn'),
+      nextLevelBtn: document.getElementById('next-level-btn')
     };
     
     // Check if already submitted for today
-    this.checkIfAlreadySubmitted();
+    if (this.mode === 'daily') {
+      this.checkIfAlreadySubmitted();
+    }
     
     this.setupListeners();
     this.setupVisibilityHandler();
@@ -67,6 +72,14 @@ export class SnakeUI {
       this.elements.completionModal?.classList.remove('hidden');
     });
     this.elements.closeModalBtn?.addEventListener('click', () => this.hideCompletionModal());
+    this.elements.nextLevelBtn?.addEventListener('click', () => {
+      this.hideCompletionModal();
+      if (this.onNextLevel) {
+        this.onNextLevel();
+      } else {
+        this.onReset();
+      }
+    });
     
     // Click on pause overlay to resume
     this.elements.pauseOverlay?.addEventListener('click', () => {
@@ -118,6 +131,11 @@ export class SnakeUI {
     if (this.engine.state.isComplete) {
       this.elements.leaderboardBtn?.classList.remove('hidden');
     } else {
+      this.elements.leaderboardBtn?.classList.add('hidden');
+    }
+    
+    // Hide leaderboard button in practice mode
+    if (this.mode === 'practice') {
       this.elements.leaderboardBtn?.classList.add('hidden');
     }
   }
@@ -201,8 +219,26 @@ export class SnakeUI {
       this.elements.pauseOverlay.classList.add('hidden');
     }
     
-    await this.submitScore(finalTime);
-    await this.loadLeaderboard();
+    if (this.mode === 'daily') {
+      await this.submitScore(finalTime);
+      await this.loadLeaderboard();
+      this.elements.closeModalBtn?.classList.remove('hidden');
+      this.elements.nextLevelBtn?.classList.add('hidden');
+      if (this.elements.leaderboardList) this.elements.leaderboardList.classList.remove('hidden');
+    } else {
+      // Practice mode
+      if (this.elements.percentileMsg) {
+        this.elements.percentileMsg.textContent = 'Practice puzzle complete!';
+      }
+      if (this.elements.claimInitialsForm) {
+        this.elements.claimInitialsForm.classList.add('hidden');
+      }
+      if (this.elements.leaderboardList) {
+        this.elements.leaderboardList.classList.add('hidden');
+      }
+      this.elements.closeModalBtn?.classList.add('hidden');
+      this.elements.nextLevelBtn?.classList.remove('hidden');
+    }
     
     this.elements.completionModal.classList.remove('hidden');
   }
