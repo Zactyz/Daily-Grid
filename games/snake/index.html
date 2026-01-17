@@ -640,6 +640,7 @@
             lastTime = now;
             
             engine.updateTime(delta);
+            renderer.render();
             ui.update();
             
             requestAnimationFrame(gameLoop);
