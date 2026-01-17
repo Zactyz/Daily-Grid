@@ -56,12 +56,12 @@ export class SnakeUI {
       this.modalShown = true; // Don't auto-show modal on reload
     }
     
-    // If score was already submitted today, mark puzzle as complete even if reset
+    // If score was already submitted today but puzzle was reset, restore completed state
     if (this.mode === 'daily' && this.hasSubmittedScore && !this.engine.state.isComplete) {
-      this.engine.state.isComplete = true;
-      this.engine.state.isPaused = true;
-      this.completionTime = this.engine.state.timeMs || 0;
-      this.modalShown = true;
+      if (this.engine.loadCompletedState()) {
+        this.completionTime = this.engine.state.timeMs;
+        this.modalShown = true;
+      }
     }
   }
   
@@ -90,8 +90,8 @@ export class SnakeUI {
     this.elements.pauseBtn?.addEventListener('click', () => this.togglePause());
     this.elements.resetBtn?.addEventListener('click', () => this.confirmReset());
     this.elements.leaderboardBtn?.addEventListener('click', () => {
-      // Show modal if complete or already submitted
-      if (this.engine.state.isComplete || (this.mode === 'daily' && this.hasSubmittedScore)) {
+      // Show modal if complete
+      if (this.engine.state.isComplete) {
         this.showCompletionModal(true); // true = force show without resubmitting
       }
     });
@@ -191,8 +191,8 @@ export class SnakeUI {
       this.showCompletionModal();
     }
 
-    // Show leaderboard button if complete or already submitted today (even if reset)
-    if (this.engine.state.isComplete || (this.mode === 'daily' && this.hasSubmittedScore)) {
+    // Show leaderboard button if complete
+    if (this.engine.state.isComplete) {
       this.elements.leaderboardBtn?.classList.remove('hidden');
     } else {
       this.elements.leaderboardBtn?.classList.add('hidden');

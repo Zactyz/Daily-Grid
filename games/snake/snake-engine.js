@@ -175,9 +175,47 @@ export class SnakeEngine {
     if (isCorrectOrder) {
       this.state.isComplete = true;
       this.state.isPaused = true;
+      this.saveCompletedState(); // Save completed state separately
       return true;
     }
     
+    return false;
+  }
+  
+  // Save completed state separately (doesn't get cleared by reset)
+  saveCompletedState() {
+    const completedKey = `${this.storageKey}_completed`;
+    const completedData = {
+      puzzleId: this.puzzle.id,
+      path: this.state.path,
+      timeMs: this.state.timeMs
+    };
+    try {
+      localStorage.setItem(completedKey, JSON.stringify(completedData));
+    } catch (e) {
+      console.warn('Failed to save completed state:', e);
+    }
+  }
+  
+  // Load completed state (called when user already submitted but reset the puzzle)
+  loadCompletedState() {
+    const completedKey = `${this.storageKey}_completed`;
+    try {
+      const saved = localStorage.getItem(completedKey);
+      if (!saved) return false;
+      
+      const completedData = JSON.parse(saved);
+      if (completedData.puzzleId === this.puzzle.id) {
+        this.state.path = completedData.path || [];
+        this.state.timeMs = completedData.timeMs || 0;
+        this.state.isComplete = true;
+        this.state.isPaused = true;
+        this.state.timerStarted = true;
+        return true;
+      }
+    } catch (e) {
+      console.warn('Failed to load completed state:', e);
+    }
     return false;
   }
   
