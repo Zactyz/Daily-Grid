@@ -82,8 +82,8 @@ export class SnakeUI {
     this.elements.pauseBtn?.addEventListener('click', () => this.togglePause());
     this.elements.resetBtn?.addEventListener('click', () => this.confirmReset());
     this.elements.leaderboardBtn?.addEventListener('click', () => {
-      // If completed, ensure correct modal state is set
-      if (this.engine.state.isComplete) {
+      // Show modal if complete or already submitted
+      if (this.engine.state.isComplete || (this.mode === 'daily' && this.hasSubmittedScore)) {
         this.showCompletionModal(true); // true = force show without resubmitting
       }
     });
