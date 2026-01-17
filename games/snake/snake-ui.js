@@ -12,6 +12,7 @@ export class SnakeUI {
     this.modalShown = false;
     this.completionTime = null; // Lock in time when completed
     this.hasSubmittedScore = false; // Track if score was submitted (only first attempt counts)
+    this.timerWasRunning = false; // Track timer state during reset dialog
     
     this.elements = {
       timer: document.getElementById('timer'),
@@ -70,6 +71,9 @@ export class SnakeUI {
     
     // Update pause button state (handles hiding when complete)
     this.updatePauseState();
+    
+    // Update reset button text/icon based on state
+    this.updateResetButton();
   }
   
   checkIfAlreadySubmitted() {
@@ -143,21 +147,37 @@ export class SnakeUI {
     
     // Reset Modal Logic
     this.elements.confirmResetBtn?.addEventListener('click', () => {
-      this.hideResetModal();
-      // If level was completed, reset timer for fresh replay
-      // If incomplete, keep timer running
       const wasComplete = this.engine.state.isComplete;
+      this.hideResetModal();
+      
       if (wasComplete) {
-        this.engine.reset(false); // Reset timer for replay
+        // Replay: Reset everything including timer, show begin screen
+        this.engine.reset(false);
         this.resetUI();
         this.engine.saveProgress();
+        // Show begin overlay (not pause overlay)
+        this.updateStartOverlay();
       } else {
-        this.onReset(); // Keep timer during play
+        // Reset during play: Keep timer running, resume immediately
+        this.engine.reset(true); // Keep timer
+        this.engine.resume(); // Resume timer (was paused during dialog)
+        this.resetUI();
+        this.engine.state.timerStarted = true; // Keep timer running
+        this.engine.saveProgress();
+        // Hide all overlays - go straight back to playing
+        this.elements.startOverlay?.classList.add('hidden');
+        this.elements.pauseOverlay?.classList.add('hidden');
       }
+      this.updateResetButton();
     });
     
     this.elements.cancelResetBtn?.addEventListener('click', () => {
       this.hideResetModal();
+      // Resume timer if it was running before dialog opened
+      if (this.timerWasRunning) {
+        this.engine.resume();
+        this.updatePauseState();
+      }
     });
     
     // Click on pause overlay to resume
@@ -208,6 +228,7 @@ export class SnakeUI {
     // Show completion modal
     if (this.engine.state.isComplete && !this.modalShown) {
       this.modalShown = true;
+      this.updateResetButton(); // Change to "Replay"
       this.showCompletionModal();
     }
 
@@ -276,6 +297,12 @@ export class SnakeUI {
   }
   
   confirmReset() {
+    // Pause timer during dialog (if running)
+    this.timerWasRunning = this.engine.state.timerStarted && !this.engine.state.isPaused && !this.engine.state.isComplete;
+    if (this.timerWasRunning) {
+      this.engine.pause();
+      this.updatePauseState();
+    }
     this.elements.resetModal?.classList.remove('hidden');
   }
   
@@ -475,6 +502,7 @@ export class SnakeUI {
     }
     this.updatePauseState();
     this.updateStartOverlay();
+    this.updateResetButton();
   }
   
   // Show/hide start overlay based on whether the game has started
@@ -491,8 +519,33 @@ export class SnakeUI {
     
     if (shouldShow) {
       this.elements.startOverlay.classList.remove('hidden');
+      // Hide pause overlay when showing start overlay
+      this.elements.pauseOverlay?.classList.add('hidden');
     } else {
       this.elements.startOverlay.classList.add('hidden');
+    }
+  }
+  
+  // Update reset button text/icon based on completion state
+  updateResetButton() {
+    if (!this.elements.resetBtn) return;
+    
+    if (this.engine.state.isComplete) {
+      // Replay mode - single spin arrow
+      this.elements.resetBtn.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9"/>
+        </svg>
+        Replay
+      `;
+    } else {
+      // Reset mode - double arrow
+      this.elements.resetBtn.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Reset
+      `;
     }
   }
   
