@@ -229,16 +229,10 @@ export class SnakeUI {
     // Update button
     if (this.elements.pauseBtn) {
       if (this.engine.state.isComplete) {
-        // Show "Complete" state - disable interactions
-        this.elements.pauseBtn.innerHTML = `
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-          </svg>
-          Complete
-        `;
-        this.elements.pauseBtn.disabled = true;
-        this.elements.pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        // Hide pause button when complete (leaderboard button shows instead)
+        this.elements.pauseBtn.classList.add('hidden');
       } else if (this.engine.state.isPaused) {
+        this.elements.pauseBtn.classList.remove('hidden');
         this.elements.pauseBtn.innerHTML = `
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
@@ -247,8 +241,8 @@ export class SnakeUI {
           Resume
         `;
         this.elements.pauseBtn.disabled = false;
-        this.elements.pauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
       } else {
+        this.elements.pauseBtn.classList.remove('hidden');
         this.elements.pauseBtn.innerHTML = `
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
@@ -256,7 +250,6 @@ export class SnakeUI {
           Pause
         `;
         this.elements.pauseBtn.disabled = false;
-        this.elements.pauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
       }
     }
     
@@ -463,10 +456,10 @@ export class SnakeUI {
   resetUI() {
     this.completionTime = null;
     this.modalShown = false;
-    // Re-enable pause button
+    // Re-enable and show pause button
     if (this.elements.pauseBtn) {
       this.elements.pauseBtn.disabled = false;
-      this.elements.pauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      this.elements.pauseBtn.classList.remove('hidden');
     }
     this.updatePauseState();
     this.updateStartOverlay();
