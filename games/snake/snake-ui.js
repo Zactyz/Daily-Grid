@@ -15,6 +15,7 @@ export class SnakeUI {
       timer: document.getElementById('timer'),
       pauseBtn: document.getElementById('pause-btn'),
       resetBtn: document.getElementById('reset-btn'),
+      leaderboardBtn: document.getElementById('leaderboard-btn'),
       pauseOverlay: document.getElementById('pause-overlay'),
       completionModal: document.getElementById('completion-modal'),
       finalTime: document.getElementById('final-time'),
@@ -62,6 +63,9 @@ export class SnakeUI {
   setupListeners() {
     this.elements.pauseBtn?.addEventListener('click', () => this.togglePause());
     this.elements.resetBtn?.addEventListener('click', () => this.confirmReset());
+    this.elements.leaderboardBtn?.addEventListener('click', () => {
+      this.elements.completionModal?.classList.remove('hidden');
+    });
     this.elements.closeModalBtn?.addEventListener('click', () => this.hideCompletionModal());
     
     // Click on pause overlay to resume
@@ -108,6 +112,13 @@ export class SnakeUI {
     if (this.engine.state.isComplete && !this.modalShown) {
       this.modalShown = true;
       this.showCompletionModal();
+    }
+
+    // Show leaderboard button if complete
+    if (this.engine.state.isComplete) {
+      this.elements.leaderboardBtn?.classList.remove('hidden');
+    } else {
+      this.elements.leaderboardBtn?.classList.add('hidden');
     }
   }
   
