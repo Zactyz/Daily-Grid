@@ -144,8 +144,16 @@ export class SnakeUI {
     // Reset Modal Logic
     this.elements.confirmResetBtn?.addEventListener('click', () => {
       this.hideResetModal();
-      // Regular reset (during play) keeps timer running
-      this.onReset(); 
+      // If level was completed, reset timer for fresh replay
+      // If incomplete, keep timer running
+      const wasComplete = this.engine.state.isComplete;
+      if (wasComplete) {
+        this.engine.reset(false); // Reset timer for replay
+        this.resetUI();
+        this.engine.saveProgress();
+      } else {
+        this.onReset(); // Keep timer during play
+      }
     });
     
     this.elements.cancelResetBtn?.addEventListener('click', () => {
