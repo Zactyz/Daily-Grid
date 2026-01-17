@@ -28,9 +28,10 @@ export async function onRequest(context) {
     const body = await request.json();
     const { puzzleId, anonId, timeMs, hintsUsed = 0 } = body;
 
-    const today = getPTDateYYYYMMDD();
-    if (puzzleId !== today) {
-      return new Response(JSON.stringify({ error: 'Invalid puzzle ID' }), {
+    // Validate date format (YYYY-MM-DD) but don't strictly enforce "today"
+    // to allow for timezone edge cases and playing yesterday's puzzle
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(puzzleId)) {
+      return new Response(JSON.stringify({ error: 'Invalid puzzle ID format' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
