@@ -55,6 +55,14 @@ export class SnakeUI {
       this.completionTime = this.engine.state.timeMs;
       this.modalShown = true; // Don't auto-show modal on reload
     }
+    
+    // If score was already submitted today, mark puzzle as complete even if reset
+    if (this.mode === 'daily' && this.hasSubmittedScore && !this.engine.state.isComplete) {
+      this.engine.state.isComplete = true;
+      this.engine.state.isPaused = true;
+      this.completionTime = this.engine.state.timeMs || 0;
+      this.modalShown = true;
+    }
   }
   
   checkIfAlreadySubmitted() {
