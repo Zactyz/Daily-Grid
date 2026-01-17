@@ -13,6 +13,7 @@ export class SnakeUI {
     this.completionTime = null; // Lock in time when completed
     this.hasSubmittedScore = false; // Track if score was submitted (only first attempt counts)
     this.timerWasRunning = false; // Track timer state during reset dialog
+    this.isInReplayMode = false; // Track if user is replaying a completed puzzle
     
     this.elements = {
       timer: document.getElementById('timer'),
@@ -41,7 +42,13 @@ export class SnakeUI {
       // Reset Modal
       resetModal: document.getElementById('reset-modal'),
       confirmResetBtn: document.getElementById('confirm-reset-btn'),
-      cancelResetBtn: document.getElementById('cancel-reset-btn')
+      cancelResetBtn: document.getElementById('cancel-reset-btn'),
+      
+      // Exit Replay Modal
+      exitReplayModal: document.getElementById('exit-replay-modal'),
+      confirmExitReplayBtn: document.getElementById('confirm-exit-replay-btn'),
+      cancelExitReplayBtn: document.getElementById('cancel-exit-replay-btn'),
+      exitReplayBtn: document.getElementById('exit-replay-btn')
     };
     
     // Check if already submitted for today
@@ -74,6 +81,9 @@ export class SnakeUI {
     
     // Update reset button text/icon based on state
     this.updateResetButton();
+    
+    // Hide exit replay button initially
+    this.updateExitReplayButton();
   }
   
   checkIfAlreadySubmitted() {
@@ -99,7 +109,20 @@ export class SnakeUI {
   
   setupListeners() {
     this.elements.pauseBtn?.addEventListener('click', () => this.togglePause());
-    this.elements.resetBtn?.addEventListener('click', () => this.confirmReset());
+    this.elements.resetBtn?.addEventListener('click', () => {
+      if (this.engine.state.isComplete) {
+        // Replay: Skip confirmation, reset immediately
+        this.startReplay();
+      } else {
+        // Reset during play: Show confirmation
+        this.confirmReset();
+      }
+    });
+    
+    // Exit Replay button (X) - restore completed state
+    this.elements.exitReplayBtn?.addEventListener('click', () => {
+      this.confirmExitReplay();
+    });
     this.elements.leaderboardBtn?.addEventListener('click', () => {
       // Show modal if complete
       if (this.engine.state.isComplete) {
@@ -180,6 +203,29 @@ export class SnakeUI {
       }
     });
     
+    // Exit Replay Modal Logic
+    this.elements.confirmExitReplayBtn?.addEventListener('click', () => {
+      this.hideExitReplayModal();
+      // Restore completed state
+      if (this.engine.loadCompletedState()) {
+        this.completionTime = this.engine.state.timeMs;
+        this.modalShown = true;
+        this.updatePauseState();
+        this.updateStartOverlay();
+        this.updateResetButton();
+        this.updateExitReplayButton();
+      }
+    });
+    
+    this.elements.cancelExitReplayBtn?.addEventListener('click', () => {
+      this.hideExitReplayModal();
+      // Resume timer
+      if (this.timerWasRunning) {
+        this.engine.resume();
+        this.updatePauseState();
+      }
+    });
+    
     // Click on pause overlay to resume
     this.elements.pauseOverlay?.addEventListener('click', () => {
       if (this.engine.state.isPaused && !this.engine.state.isComplete) {
@@ -228,7 +274,9 @@ export class SnakeUI {
     // Show completion modal
     if (this.engine.state.isComplete && !this.modalShown) {
       this.modalShown = true;
+      this.isInReplayMode = false; // Exit replay mode on completion
       this.updateResetButton(); // Change to "Replay"
+      this.updateExitReplayButton(); // Hide X button
       this.showCompletionModal();
     }
 
@@ -308,6 +356,44 @@ export class SnakeUI {
   
   hideResetModal() {
     this.elements.resetModal?.classList.add('hidden');
+  }
+  
+  // Start replay immediately (no confirmation)
+  startReplay() {
+    this.isInReplayMode = true;
+    this.engine.reset(false); // Reset timer and path
+    this.resetUI();
+    this.engine.saveProgress();
+    this.updateStartOverlay();
+    this.updateExitReplayButton();
+  }
+  
+  confirmExitReplay() {
+    // Pause timer during dialog
+    this.timerWasRunning = this.engine.state.timerStarted && !this.engine.state.isPaused;
+    if (this.timerWasRunning) {
+      this.engine.pause();
+      this.updatePauseState();
+    }
+    this.elements.exitReplayModal?.classList.remove('hidden');
+  }
+  
+  hideExitReplayModal() {
+    this.elements.exitReplayModal?.classList.add('hidden');
+  }
+  
+  // Show/hide exit replay button
+  updateExitReplayButton() {
+    if (!this.elements.exitReplayBtn) return;
+    
+    // Show X button only when in replay mode and puzzle is not yet complete
+    const shouldShow = this.isInReplayMode && !this.engine.state.isComplete;
+    
+    if (shouldShow) {
+      this.elements.exitReplayBtn.classList.remove('hidden');
+    } else {
+      this.elements.exitReplayBtn.classList.add('hidden');
+    }
   }
   
   async showCompletionModal(skipSubmission = false) {
@@ -503,6 +589,7 @@ export class SnakeUI {
     this.updatePauseState();
     this.updateStartOverlay();
     this.updateResetButton();
+    this.updateExitReplayButton();
   }
   
   // Show/hide start overlay based on whether the game has started

@@ -154,6 +154,7 @@ export class SnakeEngine {
     }
     this.state.hintsUsed = 0;
     this.state.isComplete = false;
+    this.state.isPaused = false;
     this.state.timerStarted = false;
     this.clearProgress();
   }
