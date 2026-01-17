@@ -30,6 +30,7 @@ export class SnakeUI {
       nextLevelBtn: document.getElementById('next-level-btn'),
       practiceInfiniteBtn: document.getElementById('practice-infinite-btn'),
       tryAgainBtn: document.getElementById('try-again-btn'),
+      practiceRetryNewBtn: document.getElementById('practice-retry-new-btn'),
       backToDailyCompleteBtn: document.getElementById('back-to-daily-complete-btn'),
       practiceCompleteActions: document.getElementById('practice-complete-actions'),
       
@@ -103,6 +104,13 @@ export class SnakeUI {
       this.engine.reset(false); // Reset timer too for "Try Again"
       this.resetUI();
       this.engine.saveProgress();
+    });
+    
+    this.elements.practiceRetryNewBtn?.addEventListener('click', () => {
+      this.hideCompletionModal();
+      if (this.onNextLevel) {
+        this.onNextLevel(); // Effectively same as "Next Level" but communicates "Try Another"
+      }
     });
     
     this.elements.backToDailyCompleteBtn?.addEventListener('click', () => {
