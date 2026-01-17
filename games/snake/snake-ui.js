@@ -309,6 +309,9 @@ export class SnakeUI {
       
       this.elements.practiceCompleteActions?.classList.remove('hidden');
       this.elements.practiceCompleteActions?.classList.add('flex');
+      
+      // Ensure Next Level button is visible (might have been hidden by Daily mode)
+      this.elements.nextLevelBtn?.classList.remove('hidden');
     }
     
     this.elements.completionModal.classList.remove('hidden');
