@@ -67,6 +67,9 @@ export class SnakeUI {
     
     // Show start overlay if puzzle hasn't been started yet
     this.updateStartOverlay();
+    
+    // Update pause button state (handles hiding when complete)
+    this.updatePauseState();
   }
   
   checkIfAlreadySubmitted() {
@@ -200,10 +203,11 @@ export class SnakeUI {
       this.showCompletionModal();
     }
 
-    // Show leaderboard button if complete
-    if (this.engine.state.isComplete) {
+    // Show leaderboard button if complete (daily mode only)
+    if (this.engine.state.isComplete && this.mode === 'daily') {
       this.elements.leaderboardBtn?.classList.remove('hidden');
-    } else {
+      this.elements.pauseBtn?.classList.add('hidden');
+    } else if (!this.engine.state.isComplete) {
       this.elements.leaderboardBtn?.classList.add('hidden');
     }
     
