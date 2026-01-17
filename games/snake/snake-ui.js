@@ -181,8 +181,8 @@ export class SnakeUI {
       this.showCompletionModal();
     }
 
-    // Show leaderboard button if complete
-    if (this.engine.state.isComplete) {
+    // Show leaderboard button if complete or already submitted today (even if reset)
+    if (this.engine.state.isComplete || (this.mode === 'daily' && this.hasSubmittedScore)) {
       this.elements.leaderboardBtn?.classList.remove('hidden');
     } else {
       this.elements.leaderboardBtn?.classList.add('hidden');
