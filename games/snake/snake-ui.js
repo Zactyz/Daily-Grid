@@ -300,6 +300,17 @@ export class SnakeUI {
       if (this.elements.modalTitle) this.elements.modalTitle.textContent = 'Complete!';
       if (this.elements.modalSubtitle) this.elements.modalSubtitle.textContent = "Great work on today's puzzle";
       
+      // Show leaderboard section with loading state
+      this.elements.leaderboardList?.classList.remove('hidden');
+      this.elements.leaderboardTitle?.classList.remove('hidden');
+      if (this.elements.leaderboardList) {
+        this.elements.leaderboardList.innerHTML = '<p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>';
+      }
+      
+      // Show buttons
+      this.elements.closeModalBtn?.classList.remove('hidden');
+      this.elements.practiceInfiniteBtn?.classList.remove('hidden');
+      
       // Show modal now (content will load)
       this.elements.completionModal.classList.remove('hidden');
       
@@ -308,10 +319,6 @@ export class SnakeUI {
       }
       await this.loadLeaderboard();
       
-      this.elements.closeModalBtn?.classList.remove('hidden');
-      this.elements.practiceInfiniteBtn?.classList.remove('hidden');
-      this.elements.leaderboardList?.classList.remove('hidden');
-      this.elements.leaderboardTitle?.classList.remove('hidden');
       this.elements.percentileMsg?.classList.remove('hidden');
     } else {
       // Practice mode
