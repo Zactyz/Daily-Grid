@@ -1,8 +1,9 @@
 import { normalizeWall, STORAGE_KEYS } from './snake-utils.js';
 
 export class SnakeEngine {
-  constructor(puzzle) {
+  constructor(puzzle, storageKey) {
     this.puzzle = puzzle;
+    this.storageKey = storageKey || STORAGE_KEYS.SNAKE_PROGRESS; // Default to main key if not provided
     this.state = {
       path: [],
       timeMs: 0,
@@ -32,13 +33,13 @@ export class SnakeEngine {
     };
     
     try {
-      localStorage.setItem(STORAGE_KEYS.SNAKE_PROGRESS, JSON.stringify(progress));
+      localStorage.setItem(this.storageKey, JSON.stringify(progress));
     } catch (error) {
       if (error.name === 'QuotaExceededError') {
         console.warn('localStorage quota exceeded, clearing old data');
         try {
-          localStorage.removeItem(STORAGE_KEYS.SNAKE_PROGRESS);
-          localStorage.setItem(STORAGE_KEYS.SNAKE_PROGRESS, JSON.stringify(progress));
+          localStorage.removeItem(this.storageKey);
+          localStorage.setItem(this.storageKey, JSON.stringify(progress));
         } catch (retryError) {
           console.error('Failed to save progress:', retryError);
         }
@@ -50,7 +51,7 @@ export class SnakeEngine {
   
   loadProgress() {
     try {
-      const saved = localStorage.getItem(STORAGE_KEYS.SNAKE_PROGRESS);
+      const saved = localStorage.getItem(this.storageKey);
       if (!saved) return;
       
       const progress = JSON.parse(saved);
@@ -69,7 +70,7 @@ export class SnakeEngine {
   
   clearProgress() {
     try {
-      localStorage.removeItem(STORAGE_KEYS.SNAKE_PROGRESS);
+      localStorage.removeItem(this.storageKey);
     } catch (e) {
       console.warn('Failed to clear progress:', e);
     }
@@ -143,9 +144,11 @@ export class SnakeEngine {
     return true;
   }
   
-  reset() {
+  reset(keepTimer = false) {
     this.state.path = [];
-    this.state.timeMs = 0;
+    if (!keepTimer) {
+        this.state.timeMs = 0;
+    }
     this.state.hintsUsed = 0;
     this.state.isComplete = false;
     this.state.timerStarted = false;

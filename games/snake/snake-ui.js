@@ -25,8 +25,18 @@ export class SnakeUI {
       claimInitialsForm: document.getElementById('claim-initials-form'),
       initialsInput: document.getElementById('initials-input'),
       leaderboardList: document.getElementById('leaderboard-list'),
+      leaderboardTitle: document.getElementById('leaderboard-title'),
       closeModalBtn: document.getElementById('close-modal-btn'),
-      nextLevelBtn: document.getElementById('next-level-btn')
+      nextLevelBtn: document.getElementById('next-level-btn'),
+      practiceInfiniteBtn: document.getElementById('practice-infinite-btn'),
+      tryAgainBtn: document.getElementById('try-again-btn'),
+      backToDailyCompleteBtn: document.getElementById('back-to-daily-complete-btn'),
+      practiceCompleteActions: document.getElementById('practice-complete-actions'),
+      
+      // Reset Modal
+      resetModal: document.getElementById('reset-modal'),
+      confirmResetBtn: document.getElementById('confirm-reset-btn'),
+      cancelResetBtn: document.getElementById('cancel-reset-btn')
     };
     
     // Check if already submitted for today
@@ -71,7 +81,11 @@ export class SnakeUI {
     this.elements.leaderboardBtn?.addEventListener('click', () => {
       this.elements.completionModal?.classList.remove('hidden');
     });
+    
+    // Close Modal Button (Daily Mode)
     this.elements.closeModalBtn?.addEventListener('click', () => this.hideCompletionModal());
+    
+    // Practice Mode Buttons
     this.elements.nextLevelBtn?.addEventListener('click', () => {
       this.hideCompletionModal();
       if (this.onNextLevel) {
@@ -79,6 +93,35 @@ export class SnakeUI {
       } else {
         this.onReset();
       }
+    });
+    
+    this.elements.tryAgainBtn?.addEventListener('click', () => {
+      this.hideCompletionModal();
+      this.engine.reset(false); // Reset timer too for "Try Again"
+      this.resetUI();
+      this.engine.saveProgress();
+    });
+    
+    this.elements.backToDailyCompleteBtn?.addEventListener('click', () => {
+      this.hideCompletionModal();
+      window.startDailyMode();
+    });
+    
+    // Daily Mode: Practice Button
+    this.elements.practiceInfiniteBtn?.addEventListener('click', () => {
+      this.hideCompletionModal();
+      window.startPracticeMode();
+    });
+    
+    // Reset Modal Logic
+    this.elements.confirmResetBtn?.addEventListener('click', () => {
+      this.hideResetModal();
+      // Regular reset (during play) keeps timer running
+      this.onReset(); 
+    });
+    
+    this.elements.cancelResetBtn?.addEventListener('click', () => {
+      this.hideResetModal();
     });
     
     // Click on pause overlay to resume
@@ -198,10 +241,11 @@ export class SnakeUI {
   }
   
   confirmReset() {
-    if (confirm('Reset puzzle? Progress will be lost.')) {
-      this.completionTime = null; // Reset completion time
-      this.onReset();
-    }
+    this.elements.resetModal?.classList.remove('hidden');
+  }
+  
+  hideResetModal() {
+    this.elements.resetModal?.classList.add('hidden');
   }
   
   async showCompletionModal() {
@@ -223,12 +267,19 @@ export class SnakeUI {
       await this.submitScore(finalTime);
       await this.loadLeaderboard();
       this.elements.closeModalBtn?.classList.remove('hidden');
+      this.elements.practiceInfiniteBtn?.classList.remove('hidden');
+      
+      this.elements.practiceCompleteActions?.classList.add('hidden');
       this.elements.nextLevelBtn?.classList.add('hidden');
+      
       if (this.elements.leaderboardList) this.elements.leaderboardList.classList.remove('hidden');
+      if (this.elements.leaderboardTitle) this.elements.leaderboardTitle.classList.remove('hidden');
+      if (this.elements.percentileMsg) this.elements.percentileMsg.classList.remove('hidden');
     } else {
       // Practice mode
       if (this.elements.percentileMsg) {
         this.elements.percentileMsg.textContent = 'Practice puzzle complete!';
+        // Hide "today's top 10" and percentile msg styling if needed
       }
       if (this.elements.claimInitialsForm) {
         this.elements.claimInitialsForm.classList.add('hidden');
@@ -236,8 +287,15 @@ export class SnakeUI {
       if (this.elements.leaderboardList) {
         this.elements.leaderboardList.classList.add('hidden');
       }
+      if (this.elements.leaderboardTitle) {
+        this.elements.leaderboardTitle.classList.add('hidden');
+      }
+      
       this.elements.closeModalBtn?.classList.add('hidden');
-      this.elements.nextLevelBtn?.classList.remove('hidden');
+      this.elements.practiceInfiniteBtn?.classList.add('hidden');
+      
+      this.elements.practiceCompleteActions?.classList.remove('hidden');
+      this.elements.practiceCompleteActions?.classList.add('flex');
     }
     
     this.elements.completionModal.classList.remove('hidden');
