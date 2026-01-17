@@ -33,6 +33,8 @@ export class SnakeUI {
       practiceRetryNewBtn: document.getElementById('practice-retry-new-btn'),
       backToDailyCompleteBtn: document.getElementById('back-to-daily-complete-btn'),
       practiceCompleteActions: document.getElementById('practice-complete-actions'),
+      modalTitle: document.getElementById('modal-title'),
+      modalSubtitle: document.getElementById('modal-subtitle'),
       
       // Reset Modal
       resetModal: document.getElementById('reset-modal'),
@@ -288,12 +290,19 @@ export class SnakeUI {
       if (this.elements.leaderboardList) this.elements.leaderboardList.classList.remove('hidden');
       if (this.elements.leaderboardTitle) this.elements.leaderboardTitle.classList.remove('hidden');
       if (this.elements.percentileMsg) this.elements.percentileMsg.classList.remove('hidden');
+      
+      if (this.elements.modalTitle) this.elements.modalTitle.textContent = 'Complete!';
+      if (this.elements.modalSubtitle) this.elements.modalSubtitle.textContent = "Great work on today's puzzle";
     } else {
       // Practice mode
       if (this.elements.percentileMsg) {
         this.elements.percentileMsg.textContent = 'Practice puzzle complete!';
         // Hide "today's top 10" and percentile msg styling if needed
+        this.elements.percentileMsg.classList.add('hidden'); // Actually hide it to avoid duplicate messages
       }
+      
+      if (this.elements.modalTitle) this.elements.modalTitle.textContent = 'Nice Job!';
+      if (this.elements.modalSubtitle) this.elements.modalSubtitle.textContent = 'Practice puzzle complete';
       if (this.elements.claimInitialsForm) {
         this.elements.claimInitialsForm.classList.add('hidden');
       }
