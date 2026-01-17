@@ -13,7 +13,7 @@ export class SnakeUI {
     this.completionTime = null; // Lock in time when completed
     this.hasSubmittedScore = false; // Track if score was submitted (only first attempt counts)
     this.timerWasRunning = false; // Track timer state during reset dialog
-    this.isInReplayMode = false; // Track if user is replaying a completed puzzle
+    this.isInReplayMode = this.loadReplayMode(); // Track if user is replaying a completed puzzle
     
     this.elements = {
       timer: document.getElementById('timer'),
@@ -66,7 +66,8 @@ export class SnakeUI {
     }
     
     // If score was already submitted today but puzzle was reset, restore completed state
-    if (this.mode === 'daily' && this.hasSubmittedScore && !this.engine.state.isComplete) {
+    // BUT not if user is in replay mode (they intentionally want to replay)
+    if (this.mode === 'daily' && this.hasSubmittedScore && !this.engine.state.isComplete && !this.isInReplayMode) {
       if (this.engine.loadCompletedState()) {
         this.completionTime = this.engine.state.timeMs;
         this.modalShown = true;
@@ -104,6 +105,32 @@ export class SnakeUI {
       this.hasSubmittedScore = true;
     } catch (e) {
       console.warn('Failed to save submission status');
+    }
+  }
+  
+  loadReplayMode() {
+    if (this.mode !== 'daily') return false;
+    try {
+      const puzzleId = getPTDateYYYYMMDD();
+      const replayKey = `dailygrid_replay_${puzzleId}`;
+      return localStorage.getItem(replayKey) === 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  saveReplayMode(isReplaying) {
+    if (this.mode !== 'daily') return;
+    try {
+      const puzzleId = getPTDateYYYYMMDD();
+      const replayKey = `dailygrid_replay_${puzzleId}`;
+      if (isReplaying) {
+        localStorage.setItem(replayKey, 'true');
+      } else {
+        localStorage.removeItem(replayKey);
+      }
+    } catch (e) {
+      console.warn('Failed to save replay mode');
     }
   }
   
@@ -206,6 +233,8 @@ export class SnakeUI {
     // Exit Replay Modal Logic
     this.elements.confirmExitReplayBtn?.addEventListener('click', () => {
       this.hideExitReplayModal();
+      this.isInReplayMode = false;
+      this.saveReplayMode(false);
       // Restore completed state
       if (this.engine.loadCompletedState()) {
         this.completionTime = this.engine.state.timeMs;
@@ -275,6 +304,7 @@ export class SnakeUI {
     if (this.engine.state.isComplete && !this.modalShown) {
       this.modalShown = true;
       this.isInReplayMode = false; // Exit replay mode on completion
+      this.saveReplayMode(false); // Clear from storage too
       this.updateResetButton(); // Change to "Replay"
       this.updateExitReplayButton(); // Hide X button
       this.showCompletionModal();
@@ -361,6 +391,7 @@ export class SnakeUI {
   // Start replay immediately (no confirmation)
   startReplay() {
     this.isInReplayMode = true;
+    this.saveReplayMode(true);
     this.engine.reset(false); // Reset timer and path
     this.resetUI();
     this.engine.saveProgress();
