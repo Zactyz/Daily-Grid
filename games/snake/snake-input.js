@@ -58,8 +58,12 @@ export class SnakeInput {
     
     const existingIdx = this.engine.state.path.findIndex(([px, py]) => px === x && py === y);
     if (existingIdx !== -1) {
-      this.engine.undoToCell(x, y);
-      this.onUpdate();
+      // Prevent accidental deep undo while dragging
+      // Only allow undo if it's the immediately preceding cell (back 1 step)
+      if (existingIdx === this.engine.state.path.length - 2) {
+        this.engine.undoToCell(x, y);
+        this.onUpdate();
+      }
       return;
     }
     
