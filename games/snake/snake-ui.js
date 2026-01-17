@@ -79,7 +79,10 @@ export class SnakeUI {
     this.elements.pauseBtn?.addEventListener('click', () => this.togglePause());
     this.elements.resetBtn?.addEventListener('click', () => this.confirmReset());
     this.elements.leaderboardBtn?.addEventListener('click', () => {
-      this.elements.completionModal?.classList.remove('hidden');
+      // If completed, ensure correct modal state is set
+      if (this.engine.state.isComplete) {
+        this.showCompletionModal(true); // true = force show without resubmitting
+      }
     });
     
     // Close Modal Button (Daily Mode)
@@ -248,7 +251,7 @@ export class SnakeUI {
     this.elements.resetModal?.classList.add('hidden');
   }
   
-  async showCompletionModal() {
+  async showCompletionModal(skipSubmission = false) {
     if (!this.elements.completionModal) return;
     
     // Use the locked completion time
@@ -264,7 +267,9 @@ export class SnakeUI {
     }
     
     if (this.mode === 'daily') {
-      await this.submitScore(finalTime);
+      if (!skipSubmission) {
+        await this.submitScore(finalTime);
+      }
       await this.loadLeaderboard();
       this.elements.closeModalBtn?.classList.remove('hidden');
       this.elements.practiceInfiniteBtn?.classList.remove('hidden');
