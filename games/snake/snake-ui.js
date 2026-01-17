@@ -175,6 +175,7 @@ export class SnakeUI {
       this.engine.reset(false); // Reset timer too for "Try Again"
       this.resetUI();
       this.engine.saveProgress();
+      this.updateStartOverlay(); // Show begin screen
     });
     
     this.elements.practiceRetryNewBtn?.addEventListener('click', () => {
@@ -198,25 +199,30 @@ export class SnakeUI {
     // Reset Modal Logic
     this.elements.confirmResetBtn?.addEventListener('click', () => {
       const wasComplete = this.engine.state.isComplete;
+      const wasInReplay = this.isInReplayMode;
       this.hideResetModal();
       
       if (wasComplete) {
-        // Replay: Reset everything including timer, show begin screen
-        this.engine.reset(false);
-        this.resetUI();
-        this.engine.saveProgress();
-        // Show begin overlay (not pause overlay)
-        this.updateStartOverlay();
-      } else {
-        // Reset during play: Keep timer running, resume immediately
-        this.engine.reset(true); // Keep timer
-        this.engine.resume(); // Resume timer (was paused during dialog)
-        this.resetUI();
-        this.engine.state.timerStarted = true; // Keep timer running
+        // Completed puzzle: Start replay
+        this.startReplay();
+      } else if (wasInReplay) {
+        // In replay mode: Reset but keep timer, stay in replay
+        this.engine.state.path = []; // Clear path only
+        this.engine.resume(); // Resume timer
         this.engine.saveProgress();
         // Hide all overlays - go straight back to playing
         this.elements.startOverlay?.classList.add('hidden');
         this.elements.pauseOverlay?.classList.add('hidden');
+        this.updatePauseState();
+      } else {
+        // Normal play: Keep timer running, resume immediately
+        this.engine.state.path = []; // Clear path only
+        this.engine.resume(); // Resume timer (was paused during dialog)
+        this.engine.saveProgress();
+        // Hide all overlays - go straight back to playing
+        this.elements.startOverlay?.classList.add('hidden');
+        this.elements.pauseOverlay?.classList.add('hidden');
+        this.updatePauseState();
       }
       this.updateResetButton();
     });
