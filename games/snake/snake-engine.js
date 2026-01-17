@@ -29,7 +29,8 @@ export class SnakeEngine {
       path: this.state.path,
       timeMs: this.state.timeMs,
       hintsUsed: this.state.hintsUsed,
-      isComplete: this.state.isComplete
+      isComplete: this.state.isComplete,
+      timerStarted: this.state.timerStarted
     };
     
     try {
@@ -52,7 +53,7 @@ export class SnakeEngine {
   loadProgress() {
     try {
       const saved = localStorage.getItem(this.storageKey);
-      if (!saved) return;
+      if (!saved) return false;
       
       const progress = JSON.parse(saved);
       if (progress.puzzleId === this.puzzle.id) {
@@ -61,11 +62,13 @@ export class SnakeEngine {
         this.state.hintsUsed = progress.hintsUsed || 0;
         this.state.isComplete = progress.isComplete || false;
         this.state.isPaused = this.state.isComplete; // Stay paused if completed
-        this.state.timerStarted = this.state.path.length > 0;
+        this.state.timerStarted = progress.timerStarted || this.state.path.length > 0 || this.state.timeMs > 0;
+        return this.state.timerStarted; // Return true if there's existing progress
       }
     } catch (e) {
       console.warn('Failed to load progress:', e);
     }
+    return false;
   }
   
   clearProgress() {
@@ -225,6 +228,13 @@ export class SnakeEngine {
   
   resume() {
     this.state.isPaused = false;
+  }
+  
+  startTimer() {
+    if (!this.state.timerStarted) {
+      this.state.timerStarted = true;
+      this.saveProgress();
+    }
   }
   
   updateTime(deltaMs) {

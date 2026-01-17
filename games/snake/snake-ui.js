@@ -19,6 +19,7 @@ export class SnakeUI {
       resetBtn: document.getElementById('reset-btn'),
       leaderboardBtn: document.getElementById('leaderboard-btn'),
       pauseOverlay: document.getElementById('pause-overlay'),
+      startOverlay: document.getElementById('start-overlay'),
       completionModal: document.getElementById('completion-modal'),
       finalTime: document.getElementById('final-time'),
       percentileMsg: document.getElementById('percentile-msg'),
@@ -63,6 +64,9 @@ export class SnakeUI {
         this.modalShown = true;
       }
     }
+    
+    // Show start overlay if puzzle hasn't been started yet
+    this.updateStartOverlay();
   }
   
   checkIfAlreadySubmitted() {
@@ -150,6 +154,11 @@ export class SnakeUI {
       if (this.engine.state.isPaused && !this.engine.state.isComplete) {
         this.togglePause();
       }
+    });
+    
+    // Click on start overlay to begin
+    this.elements.startOverlay?.addEventListener('click', () => {
+      this.startGame();
     });
     
     this.elements.claimInitialsForm?.addEventListener('submit', (e) => {
@@ -460,5 +469,33 @@ export class SnakeUI {
       this.elements.pauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
     this.updatePauseState();
+    this.updateStartOverlay();
+  }
+  
+  // Show/hide start overlay based on whether the game has started
+  updateStartOverlay() {
+    if (!this.elements.startOverlay) return;
+    
+    // Show start overlay only if:
+    // - Timer hasn't started yet
+    // - Puzzle is not complete
+    // - No progress (path is empty)
+    const shouldShow = !this.engine.state.timerStarted && 
+                       !this.engine.state.isComplete && 
+                       this.engine.state.path.length === 0;
+    
+    if (shouldShow) {
+      this.elements.startOverlay.classList.remove('hidden');
+    } else {
+      this.elements.startOverlay.classList.add('hidden');
+    }
+  }
+  
+  // Start the game (called when user clicks start overlay)
+  startGame() {
+    if (this.engine.state.timerStarted || this.engine.state.isComplete) return;
+    
+    this.engine.startTimer();
+    this.elements.startOverlay?.classList.add('hidden');
   }
 }
