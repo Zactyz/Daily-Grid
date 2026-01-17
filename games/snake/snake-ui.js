@@ -272,6 +272,17 @@ export class SnakeUI {
   async showCompletionModal(skipSubmission = false) {
     if (!this.elements.completionModal) return;
     
+    // Reset all modal elements to default hidden state first
+    this.elements.closeModalBtn?.classList.add('hidden');
+    this.elements.practiceInfiniteBtn?.classList.add('hidden');
+    this.elements.practiceCompleteActions?.classList.add('hidden');
+    this.elements.practiceCompleteActions?.classList.remove('flex');
+    this.elements.nextLevelBtn?.classList.add('hidden');
+    this.elements.leaderboardList?.classList.add('hidden');
+    this.elements.leaderboardTitle?.classList.add('hidden');
+    this.elements.percentileMsg?.classList.add('hidden');
+    this.elements.claimInitialsForm?.classList.add('hidden');
+    
     // Use the locked completion time
     const finalTime = this.completionTime !== null ? this.completionTime : this.engine.state.timeMs;
     
@@ -285,53 +296,34 @@ export class SnakeUI {
     }
     
     if (this.mode === 'daily') {
+      // Set title/subtitle first
+      if (this.elements.modalTitle) this.elements.modalTitle.textContent = 'Complete!';
+      if (this.elements.modalSubtitle) this.elements.modalSubtitle.textContent = "Great work on today's puzzle";
+      
+      // Show modal now (content will load)
+      this.elements.completionModal.classList.remove('hidden');
+      
       if (!skipSubmission) {
         await this.submitScore(finalTime);
       }
       await this.loadLeaderboard();
+      
       this.elements.closeModalBtn?.classList.remove('hidden');
       this.elements.practiceInfiniteBtn?.classList.remove('hidden');
-      
-      this.elements.practiceCompleteActions?.classList.add('hidden');
-      this.elements.nextLevelBtn?.classList.add('hidden');
-      
-      if (this.elements.leaderboardList) this.elements.leaderboardList.classList.remove('hidden');
-      if (this.elements.leaderboardTitle) this.elements.leaderboardTitle.classList.remove('hidden');
-      if (this.elements.percentileMsg) this.elements.percentileMsg.classList.remove('hidden');
-      
-      if (this.elements.modalTitle) this.elements.modalTitle.textContent = 'Complete!';
-      if (this.elements.modalSubtitle) this.elements.modalSubtitle.textContent = "Great work on today's puzzle";
+      this.elements.leaderboardList?.classList.remove('hidden');
+      this.elements.leaderboardTitle?.classList.remove('hidden');
+      this.elements.percentileMsg?.classList.remove('hidden');
     } else {
       // Practice mode
-      if (this.elements.percentileMsg) {
-        this.elements.percentileMsg.textContent = 'Practice puzzle complete!';
-        // Hide "today's top 10" and percentile msg styling if needed
-        this.elements.percentileMsg.classList.add('hidden'); // Actually hide it to avoid duplicate messages
-      }
-      
       if (this.elements.modalTitle) this.elements.modalTitle.textContent = 'Nice Job!';
       if (this.elements.modalSubtitle) this.elements.modalSubtitle.textContent = 'Practice puzzle complete';
-      if (this.elements.claimInitialsForm) {
-        this.elements.claimInitialsForm.classList.add('hidden');
-      }
-      if (this.elements.leaderboardList) {
-        this.elements.leaderboardList.classList.add('hidden');
-      }
-      if (this.elements.leaderboardTitle) {
-        this.elements.leaderboardTitle.classList.add('hidden');
-      }
-      
-      this.elements.closeModalBtn?.classList.add('hidden');
-      this.elements.practiceInfiniteBtn?.classList.add('hidden');
       
       this.elements.practiceCompleteActions?.classList.remove('hidden');
       this.elements.practiceCompleteActions?.classList.add('flex');
-      
-      // Ensure Next Level button is visible (might have been hidden by Daily mode)
       this.elements.nextLevelBtn?.classList.remove('hidden');
+      
+      this.elements.completionModal.classList.remove('hidden');
     }
-    
-    this.elements.completionModal.classList.remove('hidden');
   }
   
   hideCompletionModal() {
