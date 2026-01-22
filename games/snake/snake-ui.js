@@ -48,7 +48,10 @@ export class SnakeUI {
       exitReplayModal: document.getElementById('exit-replay-modal'),
       confirmExitReplayBtn: document.getElementById('confirm-exit-replay-btn'),
       cancelExitReplayBtn: document.getElementById('cancel-exit-replay-btn'),
-      exitReplayBtn: document.getElementById('exit-replay-btn')
+      exitReplayBtn: document.getElementById('exit-replay-btn'),
+      
+      // Share
+      shareBtn: document.getElementById('share-btn')
     };
     
     // Check if already submitted for today
@@ -277,6 +280,11 @@ export class SnakeUI {
       e.preventDefault();
       this.claimInitials();
     });
+    
+    // Share button
+    this.elements.shareBtn?.addEventListener('click', () => {
+      this.shareResult();
+    });
   }
   
   setupVisibilityHandler() {
@@ -446,6 +454,7 @@ export class SnakeUI {
     this.elements.leaderboardTitle?.classList.add('hidden');
     this.elements.percentileMsg?.classList.add('hidden');
     this.elements.claimInitialsForm?.classList.add('hidden');
+    this.elements.shareBtn?.classList.add('hidden');
     
     // Use the locked completion time
     const finalTime = this.completionTime !== null ? this.completionTime : this.engine.state.timeMs;
@@ -472,6 +481,7 @@ export class SnakeUI {
       }
       
       // Show buttons
+      this.elements.shareBtn?.classList.remove('hidden');
       this.elements.closeModalBtn?.classList.remove('hidden');
       this.elements.practiceInfiniteBtn?.classList.remove('hidden');
       
@@ -612,6 +622,181 @@ export class SnakeUI {
       console.error('Failed to claim initials:', error);
       alert(error.message || 'Failed to save initials. Please try again.');
     }
+  }
+  
+  async shareResult() {
+    const finalTime = this.completionTime !== null ? this.completionTime : this.engine.state.timeMs;
+    const puzzleDate = getPTDateYYYYMMDD();
+    const gridSize = `${this.engine.puzzle.width}x${this.engine.puzzle.height}`;
+    
+    // Generate share image
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Image dimensions (optimized for social sharing)
+    const width = 600;
+    const height = 400;
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Background gradient
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#0a0a0f');
+    gradient.addColorStop(1, '#14141f');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Subtle pattern overlay
+    ctx.fillStyle = 'rgba(240, 198, 104, 0.03)';
+    for (let i = 0; i < width; i += 30) {
+      for (let j = 0; j < height; j += 30) {
+        ctx.fillRect(i, j, 1, 1);
+      }
+    }
+    
+    // Top glow
+    const glowGradient = ctx.createRadialGradient(width/2, 0, 0, width/2, 0, 300);
+    glowGradient.addColorStop(0, 'rgba(240, 198, 104, 0.15)');
+    glowGradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = glowGradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Title
+    ctx.fillStyle = '#f0c674';
+    ctx.font = 'bold 42px "Space Grotesk", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Snake', width/2, 70);
+    
+    // Subtitle
+    ctx.fillStyle = '#71717a';
+    ctx.font = '18px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText('Daily Grid Puzzle', width/2, 100);
+    
+    // Date badge
+    const dateText = this.formatDateForShare(puzzleDate);
+    ctx.fillStyle = 'rgba(240, 198, 104, 0.1)';
+    const badgeWidth = 180;
+    const badgeHeight = 32;
+    const badgeX = (width - badgeWidth) / 2;
+    const badgeY = 120;
+    ctx.beginPath();
+    ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 16);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(240, 198, 104, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    ctx.fillStyle = '#f0c674';
+    ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText(dateText, width/2, badgeY + 21);
+    
+    // Time display box
+    ctx.fillStyle = 'rgba(240, 198, 104, 0.08)';
+    const timeBoxWidth = 240;
+    const timeBoxHeight = 100;
+    const timeBoxX = (width - timeBoxWidth) / 2;
+    const timeBoxY = 175;
+    ctx.beginPath();
+    ctx.roundRect(timeBoxX, timeBoxY, timeBoxWidth, timeBoxHeight, 16);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(240, 198, 104, 0.2)';
+    ctx.stroke();
+    
+    // Time label
+    ctx.fillStyle = 'rgba(240, 198, 104, 0.6)';
+    ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText('MY TIME', width/2, timeBoxY + 28);
+    
+    // Time value
+    ctx.fillStyle = '#f0c674';
+    ctx.font = 'bold 48px "JetBrains Mono", monospace, system-ui';
+    ctx.fillText(formatTime(finalTime), width/2, timeBoxY + 72);
+    
+    // Grid size
+    ctx.fillStyle = '#52525b';
+    ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText(`${gridSize} Grid`, width/2, 310);
+    
+    // Call to action
+    ctx.fillStyle = '#71717a';
+    ctx.font = '16px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText('Can you beat my time?', width/2, 350);
+    
+    // URL
+    ctx.fillStyle = '#52525b';
+    ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText('dailygrid.app/games/snake', width/2, 380);
+    
+    // Convert to blob
+    try {
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const file = new File([blob], 'snake-result.png', { type: 'image/png' });
+      
+      const shareText = `Snake by Daily Grid - ${dateText}\nTime: ${formatTime(finalTime)} (${gridSize})\n\nCan you beat my time?\ndailygrid.app/games/snake`;
+      
+      // Try native share first (mobile)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Snake - Daily Grid',
+          text: shareText,
+          files: [file]
+        });
+      } else if (navigator.share) {
+        // Share without image (some browsers)
+        await navigator.share({
+          title: 'Snake - Daily Grid',
+          text: shareText,
+          url: 'https://dailygrid.app/games/snake'
+        });
+      } else {
+        // Fallback: Copy text to clipboard
+        await navigator.clipboard.writeText(shareText);
+        this.showShareFeedback('Copied to clipboard!');
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Share failed:', error);
+        // Fallback to copying text
+        const shareText = `Snake by Daily Grid - ${this.formatDateForShare(puzzleDate)}\nTime: ${formatTime(finalTime)} (${gridSize})\n\nCan you beat my time?\ndailygrid.app/games/snake`;
+        try {
+          await navigator.clipboard.writeText(shareText);
+          this.showShareFeedback('Copied to clipboard!');
+        } catch (clipError) {
+          this.showShareFeedback('Unable to share');
+        }
+      }
+    }
+  }
+  
+  formatDateForShare(dateStr) {
+    const [year, month, day] = dateStr.split('-');
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+  
+  showShareFeedback(message) {
+    // Temporarily change share button text
+    const btn = this.elements.shareBtn;
+    if (!btn) return;
+    
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = `
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      ${message}
+    `;
+    btn.disabled = true;
+    
+    setTimeout(() => {
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+    }, 2000);
   }
   
   // Reset UI state (called when puzzle is reset)
