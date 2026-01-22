@@ -634,9 +634,9 @@ export class SnakeUI {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Compact image dimensions
-    const width = 540;
-    const height = 320;
+    // Square-ish image dimensions
+    const width = 400;
+    const height = 340;
     canvas.width = width * scale;
     canvas.height = height * scale;
     ctx.scale(scale, scale);
@@ -650,14 +650,14 @@ export class SnakeUI {
     
     // Subtle pattern overlay
     ctx.fillStyle = 'rgba(240, 198, 104, 0.02)';
-    for (let i = 0; i < width; i += 24) {
-      for (let j = 0; j < height; j += 24) {
+    for (let i = 0; i < width; i += 20) {
+      for (let j = 0; j < height; j += 20) {
         ctx.fillRect(i, j, 1, 1);
       }
     }
     
     // Top glow
-    const glowGradient = ctx.createRadialGradient(width/2, 0, 0, width/2, 0, 200);
+    const glowGradient = ctx.createRadialGradient(width/2, 0, 0, width/2, 0, 180);
     glowGradient.addColorStop(0, 'rgba(240, 198, 104, 0.12)');
     glowGradient.addColorStop(1, 'transparent');
     ctx.fillStyle = glowGradient;
@@ -667,21 +667,21 @@ export class SnakeUI {
     const logoLoaded = await this.loadLogoForShare(ctx, width);
     
     // Title with logo
-    const titleY = 52;
+    const titleY = 50;
     ctx.fillStyle = '#f0c674';
-    ctx.font = 'bold 36px "Space Grotesk", system-ui, sans-serif';
+    ctx.font = 'bold 32px "Space Grotesk", system-ui, sans-serif';
     ctx.textAlign = 'center';
     
     if (logoLoaded) {
       // Logo + Snake text side by side
       const textWidth = ctx.measureText('Snake').width;
-      const logoSize = 38;
-      const gap = 10;
+      const logoSize = 34;
+      const gap = 8;
       const totalWidth = logoSize + gap + textWidth;
       const startX = (width - totalWidth) / 2;
       
       // Draw logo (already loaded)
-      ctx.drawImage(this.logoImage, startX, titleY - 30, logoSize, logoSize);
+      ctx.drawImage(this.logoImage, startX, titleY - 26, logoSize, logoSize);
       
       // Draw text
       ctx.textAlign = 'left';
@@ -693,33 +693,33 @@ export class SnakeUI {
     
     // Subtitle
     ctx.fillStyle = '#71717a';
-    ctx.font = '15px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('Daily Grid Puzzle', width/2, titleY + 28);
+    ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText('Daily Grid Puzzle', width/2, titleY + 24);
     
     // Date badge
     const dateText = this.formatDateForShare(puzzleDate);
     ctx.fillStyle = 'rgba(240, 198, 104, 0.1)';
-    const badgeWidth = 170;
-    const badgeHeight = 28;
+    const badgeWidth = 160;
+    const badgeHeight = 26;
     const badgeX = (width - badgeWidth) / 2;
-    const badgeY = titleY + 44;
+    const badgeY = titleY + 38;
     ctx.beginPath();
-    ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 14);
+    ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 13);
     ctx.fill();
     ctx.strokeStyle = 'rgba(240, 198, 104, 0.25)';
     ctx.lineWidth = 1;
     ctx.stroke();
     
     ctx.fillStyle = '#f0c674';
-    ctx.font = '13px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText(dateText, width/2, badgeY + 18);
+    ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText(dateText, width/2, badgeY + 17);
     
     // Time display box
     ctx.fillStyle = 'rgba(240, 198, 104, 0.06)';
-    const timeBoxWidth = 200;
-    const timeBoxHeight = 90;
+    const timeBoxWidth = 180;
+    const timeBoxHeight = 85;
     const timeBoxX = (width - timeBoxWidth) / 2;
-    const timeBoxY = badgeY + 44;
+    const timeBoxY = badgeY + 38;
     ctx.beginPath();
     ctx.roundRect(timeBoxX, timeBoxY, timeBoxWidth, timeBoxHeight, 14);
     ctx.fill();
@@ -728,18 +728,18 @@ export class SnakeUI {
     
     // Time label
     ctx.fillStyle = 'rgba(240, 198, 104, 0.5)';
-    ctx.font = '11px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('MY TIME', width/2, timeBoxY + 24);
+    ctx.font = '10px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText('MY TIME', width/2, timeBoxY + 22);
     
     // Time value
     ctx.fillStyle = '#f0c674';
-    ctx.font = 'bold 42px "JetBrains Mono", monospace, system-ui';
-    ctx.fillText(formatTime(finalTime), width/2, timeBoxY + 64);
+    ctx.font = 'bold 38px "JetBrains Mono", monospace, system-ui';
+    ctx.fillText(formatTime(finalTime), width/2, timeBoxY + 58);
     
     // Grid size below time box
     ctx.fillStyle = '#52525b';
-    ctx.font = '13px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText(`${gridSize} Grid`, width/2, timeBoxY + timeBoxHeight + 20);
+    ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText(`${gridSize} Grid`, width/2, timeBoxY + timeBoxHeight + 18);
     
     // Convert to blob
     try {
