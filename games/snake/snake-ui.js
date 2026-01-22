@@ -629,110 +629,125 @@ export class SnakeUI {
     const puzzleDate = getPTDateYYYYMMDD();
     const gridSize = `${this.engine.puzzle.width}x${this.engine.puzzle.height}`;
     
-    // Generate share image
+    // Generate share image at 2x resolution for HD/Retina
+    const scale = 2;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Image dimensions (optimized for social sharing)
-    const width = 600;
-    const height = 400;
-    canvas.width = width;
-    canvas.height = height;
+    // Compact image dimensions
+    const width = 540;
+    const height = 320;
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    ctx.scale(scale, scale);
     
     // Background gradient
     const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, '#0a0a0f');
-    gradient.addColorStop(1, '#14141f');
+    gradient.addColorStop(1, '#12121a');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
     
     // Subtle pattern overlay
-    ctx.fillStyle = 'rgba(240, 198, 104, 0.03)';
-    for (let i = 0; i < width; i += 30) {
-      for (let j = 0; j < height; j += 30) {
+    ctx.fillStyle = 'rgba(240, 198, 104, 0.02)';
+    for (let i = 0; i < width; i += 24) {
+      for (let j = 0; j < height; j += 24) {
         ctx.fillRect(i, j, 1, 1);
       }
     }
     
     // Top glow
-    const glowGradient = ctx.createRadialGradient(width/2, 0, 0, width/2, 0, 300);
-    glowGradient.addColorStop(0, 'rgba(240, 198, 104, 0.15)');
+    const glowGradient = ctx.createRadialGradient(width/2, 0, 0, width/2, 0, 200);
+    glowGradient.addColorStop(0, 'rgba(240, 198, 104, 0.12)');
     glowGradient.addColorStop(1, 'transparent');
     ctx.fillStyle = glowGradient;
     ctx.fillRect(0, 0, width, height);
     
-    // Title
+    // Load and draw logo
+    const logoLoaded = await this.loadLogoForShare(ctx, width);
+    
+    // Title with logo
+    const titleY = 52;
     ctx.fillStyle = '#f0c674';
-    ctx.font = 'bold 42px "Space Grotesk", system-ui, sans-serif';
+    ctx.font = 'bold 36px "Space Grotesk", system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Snake', width/2, 70);
+    
+    if (logoLoaded) {
+      // Logo + Snake text side by side
+      const textWidth = ctx.measureText('Snake').width;
+      const logoSize = 38;
+      const gap = 10;
+      const totalWidth = logoSize + gap + textWidth;
+      const startX = (width - totalWidth) / 2;
+      
+      // Draw logo (already loaded)
+      ctx.drawImage(this.logoImage, startX, titleY - 30, logoSize, logoSize);
+      
+      // Draw text
+      ctx.textAlign = 'left';
+      ctx.fillText('Snake', startX + logoSize + gap, titleY);
+      ctx.textAlign = 'center';
+    } else {
+      ctx.fillText('Snake', width/2, titleY);
+    }
     
     // Subtitle
     ctx.fillStyle = '#71717a';
-    ctx.font = '18px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('Daily Grid Puzzle', width/2, 100);
+    ctx.font = '15px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText('Daily Grid Puzzle', width/2, titleY + 28);
     
     // Date badge
     const dateText = this.formatDateForShare(puzzleDate);
     ctx.fillStyle = 'rgba(240, 198, 104, 0.1)';
-    const badgeWidth = 180;
-    const badgeHeight = 32;
+    const badgeWidth = 170;
+    const badgeHeight = 28;
     const badgeX = (width - badgeWidth) / 2;
-    const badgeY = 120;
+    const badgeY = titleY + 44;
     ctx.beginPath();
-    ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 16);
+    ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 14);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(240, 198, 104, 0.3)';
+    ctx.strokeStyle = 'rgba(240, 198, 104, 0.25)';
     ctx.lineWidth = 1;
     ctx.stroke();
     
     ctx.fillStyle = '#f0c674';
-    ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText(dateText, width/2, badgeY + 21);
+    ctx.font = '13px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText(dateText, width/2, badgeY + 18);
     
     // Time display box
-    ctx.fillStyle = 'rgba(240, 198, 104, 0.08)';
-    const timeBoxWidth = 240;
-    const timeBoxHeight = 100;
+    ctx.fillStyle = 'rgba(240, 198, 104, 0.06)';
+    const timeBoxWidth = 200;
+    const timeBoxHeight = 90;
     const timeBoxX = (width - timeBoxWidth) / 2;
-    const timeBoxY = 175;
+    const timeBoxY = badgeY + 44;
     ctx.beginPath();
-    ctx.roundRect(timeBoxX, timeBoxY, timeBoxWidth, timeBoxHeight, 16);
+    ctx.roundRect(timeBoxX, timeBoxY, timeBoxWidth, timeBoxHeight, 14);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(240, 198, 104, 0.2)';
+    ctx.strokeStyle = 'rgba(240, 198, 104, 0.15)';
     ctx.stroke();
     
     // Time label
-    ctx.fillStyle = 'rgba(240, 198, 104, 0.6)';
-    ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('MY TIME', width/2, timeBoxY + 28);
+    ctx.fillStyle = 'rgba(240, 198, 104, 0.5)';
+    ctx.font = '11px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText('MY TIME', width/2, timeBoxY + 24);
     
     // Time value
     ctx.fillStyle = '#f0c674';
-    ctx.font = 'bold 48px "JetBrains Mono", monospace, system-ui';
-    ctx.fillText(formatTime(finalTime), width/2, timeBoxY + 72);
+    ctx.font = 'bold 42px "JetBrains Mono", monospace, system-ui';
+    ctx.fillText(formatTime(finalTime), width/2, timeBoxY + 64);
     
-    // Grid size
+    // Grid size below time box
     ctx.fillStyle = '#52525b';
-    ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText(`${gridSize} Grid`, width/2, 310);
-    
-    // Call to action
-    ctx.fillStyle = '#71717a';
-    ctx.font = '16px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('Can you beat my time?', width/2, 350);
-    
-    // URL
-    ctx.fillStyle = '#52525b';
-    ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('dailygrid.app/games/snake', width/2, 380);
+    ctx.font = '13px "Space Grotesk", system-ui, sans-serif';
+    ctx.fillText(`${gridSize} Grid`, width/2, timeBoxY + timeBoxHeight + 20);
     
     // Convert to blob
     try {
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       const file = new File([blob], 'snake-result.png', { type: 'image/png' });
       
-      const shareText = `Snake by Daily Grid - ${dateText}\nTime: ${formatTime(finalTime)} (${gridSize})\n\nCan you beat my time?\ndailygrid.app/games/snake`;
+      // Share text with https:// for clickable link on iPhone
+      const shareText = `Snake by Daily Grid\n${dateText} • ${gridSize}\nTime: ${formatTime(finalTime)}\n\nhttps://dailygrid.app/games/snake`;
       
       // Try native share first (mobile)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -757,7 +772,7 @@ export class SnakeUI {
       if (error.name !== 'AbortError') {
         console.error('Share failed:', error);
         // Fallback to copying text
-        const shareText = `Snake by Daily Grid - ${this.formatDateForShare(puzzleDate)}\nTime: ${formatTime(finalTime)} (${gridSize})\n\nCan you beat my time?\ndailygrid.app/games/snake`;
+        const shareText = `Snake by Daily Grid\n${this.formatDateForShare(puzzleDate)} • ${gridSize}\nTime: ${formatTime(finalTime)}\n\nhttps://dailygrid.app/games/snake`;
         try {
           await navigator.clipboard.writeText(shareText);
           this.showShareFeedback('Copied to clipboard!');
@@ -766,6 +781,24 @@ export class SnakeUI {
         }
       }
     }
+  }
+  
+  async loadLogoForShare(ctx, canvasWidth) {
+    // Load logo image for share card
+    if (this.logoImage) return true;
+    
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        this.logoImage = img;
+        resolve(true);
+      };
+      img.onerror = () => {
+        resolve(false);
+      };
+      img.src = '/games/snake/snake-logo.png';
+    });
   }
   
   formatDateForShare(dateStr) {
