@@ -17,8 +17,8 @@ export class SnakeRenderer {
       pathLineGlow: 'rgba(240, 198, 104, 0.4)',
       number: '#f0c674',
       numberVisited: 'rgba(240, 198, 104, 0.5)',
-      wall: '#e85d5d',           // Solid red-coral for high visibility
-      wallGlow: 'rgba(232, 93, 93, 0.5)',  // Glow effect for walls
+      wall: '#8b6914',           // Darker gold/bronze for on-theme visibility
+      wallGlow: 'rgba(139, 105, 20, 0.6)',  // Glow effect for walls
       dot: '#f0c674'
     };
     
