@@ -17,7 +17,8 @@ export class SnakeRenderer {
       pathLineGlow: 'rgba(240, 198, 104, 0.4)',
       number: '#f0c674',
       numberVisited: 'rgba(240, 198, 104, 0.5)',
-      wall: 'rgba(255, 255, 255, 0.25)',
+      wall: '#e85d5d',           // Solid red-coral for high visibility
+      wallGlow: 'rgba(232, 93, 93, 0.5)',  // Glow effect for walls
       dot: '#f0c674'
     };
     
@@ -124,9 +125,8 @@ export class SnakeRenderer {
   }
   
   drawWalls() {
-    this.ctx.strokeStyle = this.colors.wall;
-    this.ctx.lineWidth = 3;
-    this.ctx.lineCap = 'round';
+    // Calculate wall coordinates once for both glow and main line
+    const wallCoords = [];
     
     for (const wallId of this.engine.wallSet) {
       const [cellA, cellB] = wallId.split('-').map(s => s.split(',').map(Number));
@@ -155,6 +155,27 @@ export class SnakeRenderer {
         y2 = y1 + this.cellSize;
       }
       
+      wallCoords.push({ x1, y1, x2, y2 });
+    }
+    
+    // Draw wall glow (wider, semi-transparent)
+    this.ctx.strokeStyle = this.colors.wallGlow;
+    this.ctx.lineWidth = 8;
+    this.ctx.lineCap = 'round';
+    
+    for (const { x1, y1, x2, y2 } of wallCoords) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(x1, y1);
+      this.ctx.lineTo(x2, y2);
+      this.ctx.stroke();
+    }
+    
+    // Draw main wall line (solid, prominent)
+    this.ctx.strokeStyle = this.colors.wall;
+    this.ctx.lineWidth = 4;
+    this.ctx.lineCap = 'round';
+    
+    for (const { x1, y1, x2, y2 } of wallCoords) {
       this.ctx.beginPath();
       this.ctx.moveTo(x1, y1);
       this.ctx.lineTo(x2, y2);
