@@ -4,18 +4,18 @@ export class PathwaysRenderer {
     this.ctx = canvas.getContext('2d');
     this.engine = engine;
     
-    // Color palette - soft, glowing colors (10 colors to handle fallback cases)
+    // Color palette - distinct, well-separated hues (no similar colors)
     this.colors = [
-      { main: '#f08080', glow: 'rgba(240, 128, 128, 0.4)' },  // Coral
-      { main: '#5fd9c2', glow: 'rgba(95, 217, 194, 0.4)' },   // Mint
-      { main: '#b39ddb', glow: 'rgba(179, 157, 219, 0.4)' },  // Lavender
-      { main: '#f0c674', glow: 'rgba(240, 198, 104, 0.4)' },  // Amber (brand)
-      { main: '#7ec8e3', glow: 'rgba(126, 200, 227, 0.4)' },  // Sky
-      { main: '#f5a6c4', glow: 'rgba(245, 166, 196, 0.4)' },  // Pink
-      { main: '#9ed47a', glow: 'rgba(158, 212, 122, 0.4)' },  // Lime
-      { main: '#ff9f7f', glow: 'rgba(255, 159, 127, 0.4)' },  // Peach
-      { main: '#8ec4e8', glow: 'rgba(142, 196, 232, 0.4)' },  // Light Blue
-      { main: '#dda0dd', glow: 'rgba(221, 160, 221, 0.4)' },  // Plum
+      { main: '#f08080', glow: 'rgba(240, 128, 128, 0.4)' },  // Coral Red
+      { main: '#64b5f6', glow: 'rgba(100, 181, 246, 0.4)' },  // Blue
+      { main: '#a5d6a7', glow: 'rgba(165, 214, 167, 0.4)' },  // Green
+      { main: '#f0c674', glow: 'rgba(240, 198, 104, 0.4)' },  // Amber/Yellow
+      { main: '#ce93d8', glow: 'rgba(206, 147, 216, 0.4)' },  // Purple
+      { main: '#ff8a65', glow: 'rgba(255, 138, 101, 0.4)' },  // Orange
+      { main: '#4dd0e1', glow: 'rgba(77, 208, 225, 0.4)' },   // Cyan
+      { main: '#f48fb1', glow: 'rgba(244, 143, 177, 0.4)' },  // Pink
+      { main: '#fff176', glow: 'rgba(255, 241, 118, 0.4)' },  // Yellow
+      { main: '#90a4ae', glow: 'rgba(144, 164, 174, 0.4)' },  // Gray-Blue
     ];
     
     this.bgColor = '#0a0a0f';
