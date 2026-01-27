@@ -361,4 +361,24 @@ export class PathwaysEngine {
     }
     return null;
   }
+  
+  // Check if a specific color's path is complete (connects both endpoints)
+  isPathComplete(color) {
+    const pair = this.getPair(color);
+    if (!pair) return false;
+    
+    const path = this.state.paths[color] || [];
+    if (path.length < 2) return false;
+    
+    const pathStart = path[0];
+    const pathEnd = path[path.length - 1];
+    
+    // Check if path connects both endpoints (in either direction)
+    const startsAtStart = pathStart[0] === pair.start[0] && pathStart[1] === pair.start[1];
+    const startsAtEnd = pathStart[0] === pair.end[0] && pathStart[1] === pair.end[1];
+    const endsAtStart = pathEnd[0] === pair.start[0] && pathEnd[1] === pair.start[1];
+    const endsAtEnd = pathEnd[0] === pair.end[0] && pathEnd[1] === pair.end[1];
+    
+    return (startsAtStart && endsAtEnd) || (startsAtEnd && endsAtStart);
+  }
 }

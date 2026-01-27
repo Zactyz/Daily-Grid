@@ -49,8 +49,6 @@ export class PathwaysInput {
     // If clicking on an endpoint
     if (endpointColor !== null) {
       const pair = this.engine.getPair(color);
-      const isStartEndpoint = pair.start[0] === x && pair.start[1] === y;
-      const isEndEndpoint = pair.end[0] === x && pair.end[1] === y;
       
       // Check if path exists and where it starts/ends
       if (path.length > 0) {
@@ -59,12 +57,19 @@ export class PathwaysInput {
         const pathStartsHere = pathStart[0] === x && pathStart[1] === y;
         const pathEndsHere = pathEnd[0] === x && pathEnd[1] === y;
         
-        if (pathStartsHere) {
-          // Clicked on the start of existing path - clear path to draw fresh
+        // Check if path is complete (connects both endpoints)
+        const isComplete = this.engine.isPathComplete(color);
+        
+        if (isComplete) {
+          // Path is complete - clicking on either endpoint clears and restarts from here
+          this.engine.clearPath(color);
+          this.engine.addCell(color, x, y);
+        } else if (pathStartsHere) {
+          // Clicked on the start of existing incomplete path - clear and restart
           this.engine.clearPath(color);
           this.engine.addCell(color, x, y);
         } else if (pathEndsHere) {
-          // Clicked on the end of existing path - can continue from here (already set up)
+          // Clicked on the end of existing incomplete path - can continue from here
           // Nothing to do, path is ready to extend
         } else {
           // Path exists but doesn't touch this endpoint - clear and start fresh
