@@ -276,6 +276,7 @@ export class SnakeUI {
         this.updateStartOverlay();
         this.updateResetButton();
         this.updateExitReplayButton();
+        this.updateExternalGamePromo();
       }
     });
     
@@ -436,6 +437,7 @@ export class SnakeUI {
     this.engine.saveProgress();
     this.updateStartOverlay();
     this.updateExitReplayButton();
+    this.updateExternalGamePromo();
   }
   
   confirmExitReplay() {
@@ -497,8 +499,9 @@ export class SnakeUI {
   updateExternalGamePromo() {
     if (!this.elements.externalGamePromo || this.mode !== 'daily') return;
     
-    // Only show if puzzle is complete
-    if (!this.engine.state.isComplete && !this.hasSubmittedScore) {
+    // Hide if actively playing (including replay mode)
+    // Show only when puzzle is complete AND not in replay mode
+    if (!this.engine.state.isComplete || this.isInReplayMode) {
       this.elements.externalGamePromo.classList.add('hidden');
       return;
     }
