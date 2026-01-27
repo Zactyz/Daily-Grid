@@ -200,18 +200,6 @@ export class PathwaysRenderer {
       this.ctx.strokeStyle = this.bgColor;
       this.ctx.lineWidth = 2;
       this.ctx.stroke();
-      
-      // Highlight active color endpoints
-      if (this.engine.state.activeColor === pair.color) {
-        this.ctx.strokeStyle = colorData.main;
-        this.ctx.lineWidth = 3;
-        this.ctx.beginPath();
-        this.ctx.arc(startPx, startPy, endpointRadius + 2, 0, Math.PI * 2);
-        this.ctx.stroke();
-        this.ctx.beginPath();
-        this.ctx.arc(endPx, endPy, endpointRadius + 2, 0, Math.PI * 2);
-        this.ctx.stroke();
-      }
     }
   }
   
