@@ -512,7 +512,7 @@ export class PathwaysUI {
         this.elements.leaderboardList.innerHTML = data.top10.map((entry, idx) => `
           <div class="leaderboard-row flex items-center justify-between px-3 py-2.5 ${idx < data.top10.length - 1 ? 'border-b border-white/5' : ''}">
             <div class="flex items-center gap-3">
-              <span class="w-6 h-6 rounded-md ${entry.rank <= 3 ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-700/50 text-zinc-500'} text-xs font-bold flex items-center justify-center">${entry.rank}</span>
+              <span class="w-6 h-6 rounded-md ${entry.rank <= 3 ? 'bg-rose-500/20 text-rose-400' : 'bg-zinc-700/50 text-zinc-500'} text-xs font-bold flex items-center justify-center">${entry.rank}</span>
               <span class="font-mono text-sm tracking-wider ${entry.initials ? 'text-zinc-300' : 'text-zinc-600'}">${entry.initials || '---'}</span>
             </div>
             <span class="font-mono text-sm text-zinc-400">${formatTime(entry.timeMs)}</span>
@@ -584,7 +584,7 @@ export class PathwaysUI {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
     
-    ctx.fillStyle = 'rgba(240, 198, 104, 0.02)';
+    ctx.fillStyle = 'rgba(240, 128, 128, 0.02)';
     for (let i = 0; i < width; i += 20) {
       for (let j = 0; j < height; j += 20) {
         ctx.fillRect(i, j, 1, 1);
@@ -592,7 +592,7 @@ export class PathwaysUI {
     }
     
     const glowGradient = ctx.createRadialGradient(width/2, 0, 0, width/2, 0, 180);
-    glowGradient.addColorStop(0, 'rgba(240, 198, 104, 0.12)');
+    glowGradient.addColorStop(0, 'rgba(240, 128, 128, 0.12)');
     glowGradient.addColorStop(1, 'transparent');
     ctx.fillStyle = glowGradient;
     ctx.fillRect(0, 0, width, height);
@@ -600,7 +600,7 @@ export class PathwaysUI {
     const logoLoaded = await this.loadLogoForShare(ctx, width);
     
     const titleY = 50;
-    ctx.fillStyle = '#f0c674';
+    ctx.fillStyle = '#f08080';
     ctx.font = 'bold 32px "Space Grotesk", system-ui, sans-serif';
     ctx.textAlign = 'center';
     
@@ -625,7 +625,7 @@ export class PathwaysUI {
     ctx.fillText('Daily Grid Puzzle', width/2, titleY + 24);
     
     const dateText = this.formatDateForShare(puzzleDate);
-    ctx.fillStyle = 'rgba(240, 198, 104, 0.1)';
+    ctx.fillStyle = 'rgba(240, 128, 128, 0.1)';
     const badgeWidth = 160;
     const badgeHeight = 26;
     const badgeX = (width - badgeWidth) / 2;
@@ -633,15 +633,15 @@ export class PathwaysUI {
     ctx.beginPath();
     ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 13);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(240, 198, 104, 0.25)';
+    ctx.strokeStyle = 'rgba(240, 128, 128, 0.25)';
     ctx.lineWidth = 1;
     ctx.stroke();
     
-    ctx.fillStyle = '#f0c674';
+    ctx.fillStyle = '#f08080';
     ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
     ctx.fillText(dateText, width/2, badgeY + 17);
     
-    ctx.fillStyle = 'rgba(240, 198, 104, 0.06)';
+    ctx.fillStyle = 'rgba(240, 128, 128, 0.06)';
     const timeBoxWidth = 180;
     const timeBoxHeight = 85;
     const timeBoxX = (width - timeBoxWidth) / 2;
@@ -649,14 +649,14 @@ export class PathwaysUI {
     ctx.beginPath();
     ctx.roundRect(timeBoxX, timeBoxY, timeBoxWidth, timeBoxHeight, 14);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(240, 198, 104, 0.15)';
+    ctx.strokeStyle = 'rgba(240, 128, 128, 0.15)';
     ctx.stroke();
     
-    ctx.fillStyle = 'rgba(240, 198, 104, 0.5)';
+    ctx.fillStyle = 'rgba(240, 128, 128, 0.5)';
     ctx.font = '10px "Space Grotesk", system-ui, sans-serif';
     ctx.fillText('MY TIME', width/2, timeBoxY + 22);
     
-    ctx.fillStyle = '#f0c674';
+    ctx.fillStyle = '#f08080';
     ctx.font = 'bold 38px "JetBrains Mono", monospace, system-ui';
     ctx.fillText(formatTime(finalTime), width/2, timeBoxY + 58);
     

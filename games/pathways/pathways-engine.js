@@ -122,9 +122,11 @@ export class PathwaysEngine {
       }
     }
     
-    // If path is empty, must start at pair.start
+    // If path is empty, can start at EITHER endpoint (start or end)
     if (path.length === 0) {
-      return pair.start[0] === x && pair.start[1] === y;
+      const isStart = pair.start[0] === x && pair.start[1] === y;
+      const isEnd = pair.end[0] === x && pair.end[1] === y;
+      return isStart || isEnd;
     }
     
     // Must be adjacent to last cell in path
@@ -133,12 +135,17 @@ export class PathwaysEngine {
                       (Math.abs(y - lastY) === 1 && x === lastX);
     if (!isAdjacent) return false;
     
-    // Can end at pair.end
-    if (pair.end[0] === x && pair.end[1] === y) {
+    // Determine which endpoint we started from and which is the target
+    const [firstX, firstY] = path[0];
+    const startedFromStart = firstX === pair.start[0] && firstY === pair.start[1];
+    const targetEndpoint = startedFromStart ? pair.end : pair.start;
+    
+    // Can end at the OTHER endpoint (the one we didn't start from)
+    if (targetEndpoint[0] === x && targetEndpoint[1] === y) {
       return true;
     }
     
-    // Otherwise cell must be empty (not an endpoint of another pair)
+    // Otherwise cell must be empty (not an endpoint of another pair, and not our own starting endpoint)
     for (const otherPair of this.puzzle.pairs) {
       if (otherPair.color !== color) {
         if ((otherPair.start[0] === x && otherPair.start[1] === y) ||
@@ -220,7 +227,7 @@ export class PathwaysEngine {
   }
   
   checkWinCondition() {
-    // All pairs must be connected (path from start to end)
+    // All pairs must be connected (path connecting both endpoints)
     for (const pair of this.puzzle.pairs) {
       const path = this.state.paths[pair.color] || [];
       if (path.length === 0) {
@@ -228,11 +235,18 @@ export class PathwaysEngine {
         return false;
       }
       
-      const start = path[0];
-      const end = path[path.length - 1];
+      const pathStart = path[0];
+      const pathEnd = path[path.length - 1];
       
-      if (start[0] !== pair.start[0] || start[1] !== pair.start[1] ||
-          end[0] !== pair.end[0] || end[1] !== pair.end[1]) {
+      // Path can go in either direction: start->end OR end->start
+      const startsAtStart = pathStart[0] === pair.start[0] && pathStart[1] === pair.start[1];
+      const startsAtEnd = pathStart[0] === pair.end[0] && pathStart[1] === pair.end[1];
+      const endsAtStart = pathEnd[0] === pair.start[0] && pathEnd[1] === pair.start[1];
+      const endsAtEnd = pathEnd[0] === pair.end[0] && pathEnd[1] === pair.end[1];
+      
+      const validPath = (startsAtStart && endsAtEnd) || (startsAtEnd && endsAtStart);
+      
+      if (!validPath) {
         this.state.isComplete = false;
         return false;
       }

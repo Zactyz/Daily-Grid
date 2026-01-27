@@ -17,8 +17,9 @@
     <style>
         :root {
             --brand-bg: #0a0a0f;
-            --brand-gold: #f0c674;
-            --brand-gold-dim: #c9a85c;
+            --brand-accent: #f08080;
+            --brand-accent-dim: #d66a6a;
+            --brand-mint: #5fd9c2;
             --glass-bg: rgba(255, 255, 255, 0.02);
             --glass-border: rgba(255, 255, 255, 0.06);
         }
@@ -34,15 +35,15 @@
             overflow-x: hidden;
         }
         
-        /* Ambient background */
+        /* Ambient background - coral and mint tones */
         body::before {
             content: '';
             position: fixed;
             inset: 0;
             background: 
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(240, 198, 104, 0.08), transparent),
-                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99, 102, 241, 0.05), transparent),
-                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(240, 198, 104, 0.03), transparent);
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(240, 128, 128, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(95, 217, 194, 0.06), transparent),
+                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(179, 157, 219, 0.05), transparent);
             pointer-events: none;
             z-index: -1;
         }
@@ -110,14 +111,14 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-dim));
+            background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-dim));
             color: #0a0a0f;
-            box-shadow: 0 2px 12px rgba(240, 198, 104, 0.25);
+            box-shadow: 0 2px 12px rgba(240, 128, 128, 0.25);
         }
         
         .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(240, 198, 104, 0.35);
+            box-shadow: 0 4px 20px rgba(240, 128, 128, 0.35);
         }
         
         .btn-primary:active {
@@ -137,8 +138,8 @@
         }
         
         .timer-display {
-            background: linear-gradient(135deg, rgba(240, 198, 104, 0.1), rgba(240, 198, 104, 0.05));
-            border: 1px solid rgba(240, 198, 104, 0.2);
+            background: linear-gradient(135deg, rgba(240, 128, 128, 0.1), rgba(95, 217, 194, 0.05));
+            border: 1px solid rgba(240, 128, 128, 0.2);
         }
         
         .stat-card {
@@ -146,12 +147,12 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
-        .gold-text {
-            color: var(--brand-gold);
+        .accent-text {
+            color: var(--brand-accent);
         }
         
-        .gold-glow {
-            text-shadow: 0 0 30px rgba(240, 198, 104, 0.4);
+        .accent-glow {
+            text-shadow: 0 0 30px rgba(240, 128, 128, 0.4);
         }
         
         /* Completion modal enhancements */
@@ -222,12 +223,12 @@
         /* Focus states */
         input:focus {
             outline: none;
-            border-color: var(--brand-gold) !important;
-            box-shadow: 0 0 0 3px rgba(240, 198, 104, 0.15);
+            border-color: var(--brand-accent) !important;
+            box-shadow: 0 0 0 3px rgba(240, 128, 128, 0.15);
         }
         
         button:focus-visible {
-            outline: 2px solid var(--brand-gold);
+            outline: 2px solid var(--brand-accent);
             outline-offset: 2px;
         }
     </style>
@@ -252,23 +253,23 @@
     <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
         <!-- Header -->
         <header class="text-center mb-6 w-full">
-            <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400/90 text-xs font-medium mb-3 uppercase tracking-wider">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400/90 text-xs font-medium mb-3 uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
                 Daily Puzzle
             </div>
-            <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400/90 text-xs font-medium mb-3 uppercase tracking-wider">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400/90 text-xs font-medium mb-3 uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
                 Practice Mode
             </div>
-            <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 gold-text gold-glow">Pathways</h1>
+            <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Pathways</h1>
             <p class="text-zinc-500 text-sm">Connect the colors. Complete the grid.</p>
         </header>
 
         <!-- Stats Row -->
         <div class="flex gap-3 mb-5 w-full max-w-xs">
             <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
-                <div class="text-[10px] uppercase tracking-wider text-amber-400/60 mb-0.5">Time</div>
-                <div id="timer" class="text-xl font-bold mono gold-text">0:00</div>
+                <div class="text-[10px] uppercase tracking-wider text-rose-400/60 mb-0.5">Time</div>
+                <div id="timer" class="text-xl font-bold mono accent-text">0:00</div>
             </div>
             <div class="flex-1 stat-card px-4 py-2.5 rounded-xl text-center">
                 <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Grid</div>
@@ -278,13 +279,13 @@
 
         <!-- Loading State -->
         <div id="loading-state" class="glass-strong p-12 rounded-2xl mb-5 w-full text-center">
-            <div class="text-3xl font-bold gold-text gold-glow mb-3">Generating puzzle</div>
+            <div class="text-3xl font-bold accent-text accent-glow mb-3">Generating puzzle</div>
             <div class="flex items-center justify-center gap-2 text-zinc-400">
                 <span>Please wait</span>
                 <span class="flex gap-1">
-                    <span class="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style="animation-delay: 0s;"></span>
-                    <span class="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style="animation-delay: 0.15s;"></span>
-                    <span class="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style="animation-delay: 0.3s;"></span>
+                    <span class="w-2 h-2 bg-rose-400 rounded-full animate-bounce" style="animation-delay: 0s;"></span>
+                    <span class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 0.15s;"></span>
+                    <span class="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style="animation-delay: 0.3s;"></span>
                 </span>
             </div>
         </div>
@@ -294,8 +295,8 @@
             <canvas id="game-canvas"></canvas>
             <!-- Start Overlay (shown initially for new puzzles) -->
             <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
-                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-600/20 flex items-center justify-center mb-4">
-                    <svg class="w-10 h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-500/30 to-teal-500/20 flex items-center justify-center mb-4">
+                    <svg class="w-10 h-10 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
@@ -318,7 +319,7 @@
         <!-- Control Buttons -->
         <div class="flex gap-3 mb-8">
             <button id="leaderboard-btn" class="btn btn-secondary flex items-center gap-2 hidden">
-                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                 </svg>
                 Leaderboard
@@ -350,15 +351,15 @@
             <div class="px-5 pb-5 pt-1">
                 <ul class="text-zinc-400 space-y-2.5 text-sm">
                     <li class="flex items-start gap-2.5">
-                        <span class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                        <span class="w-5 h-5 rounded-md bg-rose-500/15 text-rose-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
                         <span>Tap a colored dot to select that color</span>
                     </li>
                     <li class="flex items-start gap-2.5">
-                        <span class="w-5 h-5 rounded-md bg-zinc-700/50 text-zinc-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                        <span class="w-5 h-5 rounded-md bg-teal-500/15 text-teal-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
                         <span>Drag to connect the matching colored dots</span>
                     </li>
                     <li class="flex items-start gap-2.5">
-                        <span class="w-5 h-5 rounded-md bg-zinc-700/50 text-zinc-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                        <span class="w-5 h-5 rounded-md bg-violet-500/15 text-violet-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
                         <span>Lines can only go horizontally or vertically (no diagonals)</span>
                     </li>
                     <li class="flex items-start gap-2.5">
@@ -383,7 +384,7 @@
             </svg>
         </button>
 
-        <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-amber-500/20 text-amber-400 text-sm font-medium hover:bg-amber-500/10 transition-colors flex items-center justify-center gap-2">
+        <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-rose-500/20 text-rose-400 text-sm font-medium hover:bg-rose-500/10 transition-colors flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
@@ -398,7 +399,7 @@
             <p class="text-zinc-400 text-sm mb-6">This will clear the board. Your time will keep running.</p>
             <div class="flex gap-3">
                 <button id="cancel-reset-btn" class="btn btn-secondary flex-1">Cancel</button>
-                <button id="confirm-reset-btn" class="btn btn-primary flex-1 bg-amber-500 hover:bg-amber-400 text-black">Reset</button>
+                <button id="confirm-reset-btn" class="btn btn-primary flex-1">Reset</button>
             </div>
         </div>
     </div>
@@ -410,7 +411,7 @@
             <p class="text-zinc-400 text-sm mb-6">Return to your completed puzzle.</p>
             <div class="flex gap-3">
                 <button id="cancel-exit-replay-btn" class="btn btn-secondary flex-1">Cancel</button>
-                <button id="confirm-exit-replay-btn" class="btn btn-primary flex-1 bg-amber-500 hover:bg-amber-400 text-black">Exit</button>
+                <button id="confirm-exit-replay-btn" class="btn btn-primary flex-1">Exit</button>
             </div>
         </div>
     </div>
@@ -419,8 +420,8 @@
     <div id="completion-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
         <div class="glass-strong p-6 sm:p-8 rounded-2xl max-w-sm w-full animate-in">
             <!-- Success Icon -->
-            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center">
-                <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-rose-500/20 to-teal-500/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
             </div>
@@ -430,8 +431,8 @@
             
             <!-- Time Display -->
             <div class="timer-display rounded-xl p-4 text-center mb-4">
-                <div class="text-xs uppercase tracking-wider text-amber-400/60 mb-1">Your Time</div>
-                <div id="final-time" class="text-3xl font-bold mono gold-text gold-glow">0:00</div>
+                <div class="text-xs uppercase tracking-wider text-rose-400/60 mb-1">Your Time</div>
+                <div id="final-time" class="text-3xl font-bold mono accent-text accent-glow">0:00</div>
             </div>
 
             <p id="percentile-msg" class="text-center text-sm text-zinc-400 mb-5"></p>
@@ -454,7 +455,7 @@
             <!-- Leaderboard -->
             <div class="mb-5">
                 <h3 id="leaderboard-title" class="font-semibold text-sm mb-3 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                     </svg>
                     Today's Top 10
@@ -473,7 +474,7 @@
                         Share
                     </button>
                     <button id="practice-infinite-btn" class="hidden btn btn-secondary flex-1 flex items-center justify-center gap-2">
-                         <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
@@ -488,7 +489,7 @@
                         <button id="try-again-btn" class="btn btn-secondary flex-1">Try Again</button>
                         <button id="next-level-btn" class="btn btn-primary flex-1">Next Level</button>
                     </div>
-                    <button id="back-to-daily-complete-btn" class="btn btn-secondary w-full border-amber-500/20 text-amber-400/80 hover:bg-amber-500/10">
+                    <button id="back-to-daily-complete-btn" class="btn btn-secondary w-full border-rose-500/20 text-rose-400/80 hover:bg-rose-500/10">
                         Back to Daily Puzzle
                     </button>
                 </div>

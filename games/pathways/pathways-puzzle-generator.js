@@ -215,8 +215,11 @@ export function generatePuzzleForDate(puzzleId) {
   
   const totalCells = width * height;
   
-  // Number of color pairs: 3-5 depending on grid size
-  const numColors = 3 + Math.floor(paramRandom() * Math.min(3, Math.floor(totalCells / 10)));
+  // Number of color pairs: 4-6 depending on grid size (need more to fill the grid)
+  // For 5x5 (25 cells): 4-5 pairs, for 6x6 (36 cells): 5-6 pairs
+  const minPairs = Math.max(4, Math.floor(totalCells / 7));
+  const maxPairs = Math.min(6, Math.floor(totalCells / 5));
+  const numColors = minPairs + Math.floor(paramRandom() * (maxPairs - minPairs + 1));
   
   // Try to generate a valid solved grid
   for (let attempt = 0; attempt < 200; attempt++) {
@@ -224,7 +227,7 @@ export function generatePuzzleForDate(puzzleId) {
     const random = createSeededRandom(seed);
     
     const result = generateSolvedGrid(width, height, numColors, random);
-    if (result && result.pairs.length >= 3) {
+    if (result && result.pairs.length >= 4) {
       return {
         id: puzzleId,
         width,
@@ -234,17 +237,17 @@ export function generatePuzzleForDate(puzzleId) {
     }
   }
   
-  // Fallback: Try smaller grid
+  // Fallback: Try smaller grid with 4 colors
   const smallerWidth = 5;
   const smallerHeight = 5;
-  const smallerNumColors = 3;
+  const smallerNumColors = 4;
   
   for (let attempt = 0; attempt < 100; attempt++) {
     const seed = baseSeed + 500000 + attempt * 1000;
     const random = createSeededRandom(seed);
     
     const result = generateSolvedGrid(smallerWidth, smallerHeight, smallerNumColors, random);
-    if (result && result.pairs.length >= 3) {
+    if (result && result.pairs.length >= 4) {
       return {
         id: puzzleId,
         width: smallerWidth,
@@ -254,17 +257,18 @@ export function generatePuzzleForDate(puzzleId) {
     }
   }
   
-  // Ultimate fallback - a known solvable 5x5 puzzle
+  // Ultimate fallback - a known solvable 5x5 puzzle with 5 pairs
   console.warn('Using ultimate fallback puzzle for', puzzleId);
   return {
     id: puzzleId,
     width: 5,
     height: 5,
     pairs: [
-      { color: 0, start: [0, 0], end: [2, 0] },
-      { color: 1, start: [0, 2], end: [2, 2] },
-      { color: 2, start: [0, 4], end: [2, 4] },
-      { color: 3, start: [4, 0], end: [4, 4] }
+      { color: 0, start: [0, 0], end: [4, 0] },
+      { color: 1, start: [0, 1], end: [4, 1] },
+      { color: 2, start: [0, 2], end: [4, 2] },
+      { color: 3, start: [0, 3], end: [4, 3] },
+      { color: 4, start: [0, 4], end: [4, 4] }
     ]
   };
 }
