@@ -1,0 +1,21 @@
+{
+  "name": "Pathways by Daily Grid",
+  "short_name": "Pathways",
+  "description": "A calm daily color-connection puzzle. Connect the colors. Complete the grid.",
+  "start_url": "/games/pathways/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/games/pathways/pathways-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "puzzle"],
+  "lang": "en",
+  "dir": "ltr"
+}
