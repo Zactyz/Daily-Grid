@@ -69,7 +69,10 @@ export class SnakeUI {
       nextGamePromo: document.getElementById('next-game-promo'),
       nextGameLink: document.getElementById('next-game-link'),
       nextGameLogo: document.getElementById('next-game-logo'),
-      nextGameText: document.getElementById('next-game-text')
+      nextGameText: document.getElementById('next-game-text'),
+      externalGamePromo: document.getElementById('external-game-promo'),
+      externalGameLogo: document.getElementById('external-game-logo'),
+      externalGameText: document.getElementById('external-game-text')
     };
     
     // Check if already submitted for today
@@ -106,6 +109,9 @@ export class SnakeUI {
     
     // Hide exit replay button initially
     this.updateExitReplayButton();
+    
+    // Show external cross-game promo if applicable
+    this.updateExternalGamePromo();
   }
   
   checkIfAlreadySubmitted() {
@@ -339,6 +345,7 @@ export class SnakeUI {
       this.saveReplayMode(false); // Clear from storage too
       this.updateResetButton(); // Change to "Replay"
       this.updateExitReplayButton(); // Hide X button
+      this.updateExternalGamePromo(); // Show cross-game promo
       this.showCompletionModal();
     }
 
@@ -485,6 +492,32 @@ export class SnakeUI {
     this.elements.nextGameText.className = `font-semibold text-sm ${nextGame.theme.text}`;
     
     this.elements.nextGamePromo.classList.remove('hidden');
+  }
+  
+  updateExternalGamePromo() {
+    if (!this.elements.externalGamePromo || this.mode !== 'daily') return;
+    
+    // Only show if puzzle is complete
+    if (!this.engine.state.isComplete && !this.hasSubmittedScore) {
+      this.elements.externalGamePromo.classList.add('hidden');
+      return;
+    }
+    
+    const uncompleted = this.getUncompletedGames();
+    if (uncompleted.length === 0) {
+      this.elements.externalGamePromo.classList.add('hidden');
+      return;
+    }
+    
+    const nextGame = uncompleted[0];
+    this.elements.externalGamePromo.href = nextGame.path;
+    this.elements.externalGamePromo.className = `w-full max-w-md mt-4 py-3 px-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${nextGame.theme.bg} ${nextGame.theme.border} hover:bg-opacity-20`;
+    this.elements.externalGameLogo.src = nextGame.logo;
+    this.elements.externalGameLogo.alt = nextGame.name;
+    this.elements.externalGameText.textContent = `Play today's ${nextGame.name}`;
+    this.elements.externalGameText.className = `font-semibold text-sm ${nextGame.theme.text}`;
+    
+    this.elements.externalGamePromo.classList.remove('hidden');
   }
   
   async showCompletionModal(skipSubmission = false) {
