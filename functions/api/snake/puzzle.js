@@ -188,8 +188,8 @@ function generatePuzzleForDate(puzzleId) {
   const baseWalls = Math.floor(totalCells / 5);
   const numWalls = baseWalls + Math.floor(paramRandom() * 3);
   
-  // Try to generate a valid path (usually succeeds on first try)
-  for (let attempt = 0; attempt < 50; attempt++) {
+  // Try to generate a valid path (increase attempts for reliability)
+  for (let attempt = 0; attempt < 200; attempt++) {
     const seed = baseSeed + attempt * 1000;
     const random = createSeededRandom(seed);
     
@@ -208,14 +208,40 @@ function generatePuzzleForDate(puzzleId) {
     }
   }
   
-  // Fallback (should rarely happen with Warnsdorff)
-  console.warn('Using fallback puzzle for', puzzleId);
+  // If large grid failed, try smaller grid as fallback
+  const smallerWidth = 5;
+  const smallerHeight = 5;
+  const smallerTotalCells = smallerWidth * smallerHeight;
+  const smallerNumClues = 5 + Math.floor(paramRandom() * 2);
+  const smallerNumWalls = 4 + Math.floor(paramRandom() * 3);
+  
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const seed = baseSeed + 500000 + attempt * 1000;
+    const random = createSeededRandom(seed);
+    
+    const path = generatePath(smallerWidth, smallerHeight, random);
+    if (path && path.length === smallerTotalCells) {
+      const walls = generateWalls(smallerWidth, smallerHeight, path, smallerNumWalls, random);
+      const numbers = placeClues(path, smallerNumClues, random);
+      
+      return {
+        id: puzzleId,
+        width: smallerWidth,
+        height: smallerHeight,
+        numbers,
+        walls
+      };
+    }
+  }
+  
+  // Ultimate fallback (should never happen)
+  console.warn('Using ultimate fallback puzzle for', puzzleId);
   return {
     id: puzzleId,
     width: 5,
     height: 5,
     numbers: { '0,0': 1, '1,2': 2, '2,4': 3, '3,2': 4, '4,0': 5, '4,4': 6 },
-    walls: []
+    walls: ['1,1-2,1', '2,2-2,3', '3,1-3,2']
   };
 }
 
