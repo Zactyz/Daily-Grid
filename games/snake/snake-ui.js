@@ -1,5 +1,17 @@
 import { formatTime, getOrCreateAnonId, getPTDateYYYYMMDD } from './snake-utils.js';
 
+const OTHER_GAMES = [
+  {
+    id: 'pathways',
+    name: 'Pathways',
+    path: '/games/pathways/',
+    logo: '/games/pathways/pathways-logo.png',
+    submittedKeyPrefix: 'dailygrid_pathways_submitted_',
+    theme: { bg: 'bg-rose-500/10', border: 'border-rose-500/30', text: 'text-rose-400' }
+  }
+  // Future games can be added here
+];
+
 export class SnakeUI {
   constructor(engine, onReset, onNextLevel, mode = 'daily') {
     this.engine = engine;
@@ -51,7 +63,13 @@ export class SnakeUI {
       exitReplayBtn: document.getElementById('exit-replay-btn'),
       
       // Share
-      shareBtn: document.getElementById('share-btn')
+      shareBtn: document.getElementById('share-btn'),
+      
+      // Cross-game promotion
+      nextGamePromo: document.getElementById('next-game-promo'),
+      nextGameLink: document.getElementById('next-game-link'),
+      nextGameLogo: document.getElementById('next-game-logo'),
+      nextGameText: document.getElementById('next-game-text')
     };
     
     // Check if already submitted for today
@@ -441,6 +459,34 @@ export class SnakeUI {
     }
   }
   
+  getUncompletedGames() {
+    const puzzleId = getPTDateYYYYMMDD();
+    return OTHER_GAMES.filter(game => {
+      const key = `${game.submittedKeyPrefix}${puzzleId}`;
+      return localStorage.getItem(key) !== 'true';
+    });
+  }
+  
+  showNextGamePromo() {
+    if (!this.elements.nextGamePromo || this.mode !== 'daily') return;
+    
+    const uncompleted = this.getUncompletedGames();
+    if (uncompleted.length === 0) {
+      this.elements.nextGamePromo.classList.add('hidden');
+      return;
+    }
+    
+    const nextGame = uncompleted[0];
+    this.elements.nextGameLink.href = nextGame.path;
+    this.elements.nextGameLink.className = `block w-full py-3 px-4 rounded-xl text-center transition-all ${nextGame.theme.bg} border ${nextGame.theme.border} hover:${nextGame.theme.bg.replace('/10', '/20')}`;
+    this.elements.nextGameLogo.src = nextGame.logo;
+    this.elements.nextGameLogo.alt = nextGame.name;
+    this.elements.nextGameText.textContent = `Play today's ${nextGame.name}`;
+    this.elements.nextGameText.className = `font-semibold text-sm ${nextGame.theme.text}`;
+    
+    this.elements.nextGamePromo.classList.remove('hidden');
+  }
+  
   async showCompletionModal(skipSubmission = false) {
     if (!this.elements.completionModal) return;
     
@@ -494,6 +540,8 @@ export class SnakeUI {
       await this.loadLeaderboard();
       
       this.elements.percentileMsg?.classList.remove('hidden');
+      
+      this.showNextGamePromo();
     } else {
       // Practice mode
       if (this.elements.modalTitle) this.elements.modalTitle.textContent = 'Nice Job!';

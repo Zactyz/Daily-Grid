@@ -451,6 +451,22 @@
                 </div>
             </form>
 
+            <!-- Cross-game promotion (shown if other games not completed) -->
+            <div id="next-game-promo" class="hidden mb-5">
+                <a id="next-game-link" href="#" class="block w-full py-3 px-4 rounded-xl text-center transition-all border">
+                    <div class="flex items-center justify-center gap-3">
+                        <img id="next-game-logo" src="" alt="" class="w-8 h-8 rounded-lg">
+                        <div class="text-left flex-1">
+                            <div id="next-game-text" class="font-semibold text-sm"></div>
+                            <div class="text-xs opacity-70">Continue your daily streak</div>
+                        </div>
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+            </div>
+
             <!-- Leaderboard -->
             <div class="mb-5">
                 <h3 id="leaderboard-title" class="font-semibold text-sm mb-3 flex items-center gap-2">
