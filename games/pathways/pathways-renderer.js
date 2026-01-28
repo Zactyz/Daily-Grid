@@ -4,18 +4,15 @@ export class PathwaysRenderer {
     this.ctx = canvas.getContext('2d');
     this.engine = engine;
     
-    // Color palette - distinct, well-separated hues
+    // Color palette - distinct, well-separated hues (max 7 colors needed)
     this.colors = [
       { main: '#f08080', glow: 'rgba(240, 128, 128, 0.4)' },  // Coral Red
       { main: '#64b5f6', glow: 'rgba(100, 181, 246, 0.4)' },  // Blue
       { main: '#a5d6a7', glow: 'rgba(165, 214, 167, 0.4)' },  // Green
-      { main: '#f0c674', glow: 'rgba(240, 198, 104, 0.4)' },  // Amber/Yellow
+      { main: '#fff176', glow: 'rgba(255, 241, 118, 0.4)' },  // Yellow (replaced amber)
       { main: '#ce93d8', glow: 'rgba(206, 147, 216, 0.4)' },  // Purple
-      { main: '#f48fb1', glow: 'rgba(244, 143, 177, 0.4)' },  // Pink (moved up)
       { main: '#8d6e63', glow: 'rgba(141, 110, 99, 0.4)' },   // Brown
-      { main: '#9e9e9e', glow: 'rgba(158, 158, 158, 0.4)' },  // Gray (neutral, less blue)
-      { main: '#fff176', glow: 'rgba(255, 241, 118, 0.4)' },  // Yellow
-      { main: '#4db6ac', glow: 'rgba(77, 182, 172, 0.4)' },   // Teal
+      { main: '#9e9e9e', glow: 'rgba(158, 158, 158, 0.4)' }   // Gray
     ];
     
     this.bgColor = '#0a0a0f';
@@ -27,8 +24,8 @@ export class PathwaysRenderer {
     
     // Color names for UI hints
     this.colorNames = [
-      'Red', 'Blue', 'Green', 'Amber', 'Purple', 
-      'Orange', 'Cyan', 'Pink', 'Yellow', 'Gray'
+      'Red', 'Blue', 'Green', 'Yellow', 'Purple', 
+      'Brown', 'Gray'
     ];
     
     this.resize();
