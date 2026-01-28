@@ -4,18 +4,17 @@ export class PathwaysRenderer {
     this.ctx = canvas.getContext('2d');
     this.engine = engine;
     
-    // Color palette - distinct, well-separated hues (no similar colors)
+    // Color palette - 8 maximally distinct colors
+    // Chosen for maximum visual separation (no similar reds/oranges/pinks)
     this.colors = [
-      { main: '#f08080', glow: 'rgba(240, 128, 128, 0.4)' },  // Coral Red
-      { main: '#64b5f6', glow: 'rgba(100, 181, 246, 0.4)' },  // Blue
-      { main: '#a5d6a7', glow: 'rgba(165, 214, 167, 0.4)' },  // Green
-      { main: '#f0c674', glow: 'rgba(240, 198, 104, 0.4)' },  // Amber/Yellow
-      { main: '#ce93d8', glow: 'rgba(206, 147, 216, 0.4)' },  // Purple
-      { main: '#ff8a65', glow: 'rgba(255, 138, 101, 0.4)' },  // Orange
-      { main: '#4dd0e1', glow: 'rgba(77, 208, 225, 0.4)' },   // Cyan
-      { main: '#f48fb1', glow: 'rgba(244, 143, 177, 0.4)' },  // Pink
-      { main: '#fff176', glow: 'rgba(255, 241, 118, 0.4)' },  // Yellow
-      { main: '#90a4ae', glow: 'rgba(144, 164, 174, 0.4)' },  // Gray-Blue
+      { main: '#ef5350', glow: 'rgba(239, 83, 80, 0.4)' },    // Red
+      { main: '#42a5f5', glow: 'rgba(66, 165, 245, 0.4)' },   // Blue
+      { main: '#66bb6a', glow: 'rgba(102, 187, 106, 0.4)' },  // Green
+      { main: '#ffca28', glow: 'rgba(255, 202, 40, 0.4)' },   // Yellow/Gold
+      { main: '#ab47bc', glow: 'rgba(171, 71, 188, 0.4)' },   // Purple
+      { main: '#26c6da', glow: 'rgba(38, 198, 218, 0.4)' },   // Cyan
+      { main: '#ec407a', glow: 'rgba(236, 64, 122, 0.4)' },   // Magenta/Pink (distinct from red)
+      { main: '#78909c', glow: 'rgba(120, 144, 156, 0.4)' },  // Blue-Gray
     ];
     
     this.bgColor = '#0a0a0f';
@@ -59,7 +58,6 @@ export class PathwaysRenderer {
     
     this.drawCells();
     this.drawWalls();
-    this.drawCorridorWalls();
     this.drawRequiredCellMarkers();
     this.drawPaths();
     this.drawEndpoints();
@@ -175,83 +173,6 @@ export class PathwaysRenderer {
     this.ctx.lineTo(x, y + radius);
     this.ctx.quadraticCurveTo(x, y, x + radius, y);
     this.ctx.closePath();
-  }
-  
-  drawCorridorWalls() {
-    if (!this.engine.corridorMap || this.engine.corridorMap.size === 0) return;
-    
-    const wallColor = '#8b6914'; // Same as Snake walls for consistency
-    const wallGlow = 'rgba(139, 105, 20, 0.6)';
-    const wallWidth = 3;
-    
-    for (const [cellKey, openDirs] of this.engine.corridorMap) {
-      const [x, y] = cellKey.split(',').map(Number);
-      const px = this.offsetX + x * (this.cellSize + this.gap);
-      const py = this.offsetY + y * (this.cellSize + this.gap);
-      
-      // Draw walls on closed sides
-      this.ctx.strokeStyle = wallGlow;
-      this.ctx.lineWidth = wallWidth + 2;
-      this.ctx.lineCap = 'round';
-      
-      if (!openDirs.includes('north')) {
-        // Wall on north side
-        this.ctx.beginPath();
-        this.ctx.moveTo(px + 4, py);
-        this.ctx.lineTo(px + this.cellSize - 4, py);
-        this.ctx.stroke();
-      }
-      if (!openDirs.includes('south')) {
-        // Wall on south side
-        this.ctx.beginPath();
-        this.ctx.moveTo(px + 4, py + this.cellSize);
-        this.ctx.lineTo(px + this.cellSize - 4, py + this.cellSize);
-        this.ctx.stroke();
-      }
-      if (!openDirs.includes('east')) {
-        // Wall on east side
-        this.ctx.beginPath();
-        this.ctx.moveTo(px + this.cellSize, py + 4);
-        this.ctx.lineTo(px + this.cellSize, py + this.cellSize - 4);
-        this.ctx.stroke();
-      }
-      if (!openDirs.includes('west')) {
-        // Wall on west side
-        this.ctx.beginPath();
-        this.ctx.moveTo(px, py + 4);
-        this.ctx.lineTo(px, py + this.cellSize - 4);
-        this.ctx.stroke();
-      }
-      
-      // Draw main wall lines
-      this.ctx.strokeStyle = wallColor;
-      this.ctx.lineWidth = wallWidth;
-      
-      if (!openDirs.includes('north')) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(px + 4, py);
-        this.ctx.lineTo(px + this.cellSize - 4, py);
-        this.ctx.stroke();
-      }
-      if (!openDirs.includes('south')) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(px + 4, py + this.cellSize);
-        this.ctx.lineTo(px + this.cellSize - 4, py + this.cellSize);
-        this.ctx.stroke();
-      }
-      if (!openDirs.includes('east')) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(px + this.cellSize, py + 4);
-        this.ctx.lineTo(px + this.cellSize, py + this.cellSize - 4);
-        this.ctx.stroke();
-      }
-      if (!openDirs.includes('west')) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(px, py + 4);
-        this.ctx.lineTo(px, py + this.cellSize - 4);
-        this.ctx.stroke();
-      }
-    }
   }
   
   drawRequiredCellMarkers() {

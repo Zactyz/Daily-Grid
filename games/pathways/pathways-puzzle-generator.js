@@ -19,86 +19,112 @@ function isOppositeQuadrant(q1, q2) {
          (q1 === 1 && q2 === 2) || (q1 === 2 && q2 === 1);
 }
 
-// Generate corridor cells (bi-directional movement only)
-// IMPORTANT: Corridors must be compatible with how the solution path passes through the cell
-function generateCorridors(width, height, numCorridors, random, solutionPaths = []) {
-  if (numCorridors === 0) return [];
+// Check if a path can connect two points avoiding other endpoints
+function canConnect(width, height, start, end, allEndpoints, currentPair) {
+  const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+  const startKey = `${start[0]},${start[1]}`;
+  const endKey = `${end[0]},${end[1]}`;
   
-  // Build a map of cell -> directions the solution path uses through that cell
-  // Directions: the solution enters from one direction and exits to another
-  const cellDirections = new Map();
+  // BFS to find if a path exists
+  const visited = new Set();
+  const queue = [[start[0], start[1]]];
+  visited.add(startKey);
   
-  for (const path of solutionPaths) {
-    for (let i = 0; i < path.length; i++) {
-      const [x, y] = path[i];
+  while (queue.length > 0) {
+    const [x, y] = queue.shift();
+    
+    if (x === end[0] && y === end[1]) {
+      return true; // Found a path
+    }
+    
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx;
+      const ny = y + dy;
+      const nKey = `${nx},${ny}`;
+      
+      if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+      if (visited.has(nKey)) continue;
+      
+      // Can visit if: not an endpoint, OR it's our target endpoint
+      if (allEndpoints.has(nKey) && nKey !== endKey) {
+        continue; // Can't pass through other endpoints
+      }
+      
+      visited.add(nKey);
+      queue.push([nx, ny]);
+    }
+  }
+  
+  return false; // No path found
+}
+
+// Verify a puzzle is solvable from the user's perspective
+function isPuzzleSolvable(width, height, pairs) {
+  // Build set of all endpoints
+  const endpoints = new Set();
+  for (const pair of pairs) {
+    endpoints.add(`${pair.start[0]},${pair.start[1]}`);
+    endpoints.add(`${pair.end[0]},${pair.end[1]}`);
+  }
+  
+  const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+  
+  // Check 1: No non-endpoint cell is completely surrounded by endpoints/walls
+  // Every non-endpoint cell needs at least 2 free neighbors to allow paths through
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
       const key = `${x},${y}`;
-      const dirs = new Set();
+      if (endpoints.has(key)) continue; // Skip endpoints themselves
       
-      // Check previous cell (where we came from)
-      if (i > 0) {
-        const [px, py] = path[i - 1];
-        if (px < x) dirs.add('west');
-        else if (px > x) dirs.add('east');
-        else if (py < y) dirs.add('north');
-        else if (py > y) dirs.add('south');
+      // Count non-endpoint neighbors (cells that paths could use)
+      let freeNeighbors = 0;
+      let adjacentEndpoints = [];
+      
+      for (const [dx, dy] of dirs) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+        
+        const nKey = `${nx},${ny}`;
+        if (endpoints.has(nKey)) {
+          adjacentEndpoints.push(nKey);
+        } else {
+          freeNeighbors++;
+        }
       }
       
-      // Check next cell (where we're going)
-      if (i < path.length - 1) {
-        const [nx, ny] = path[i + 1];
-        if (nx < x) dirs.add('west');
-        else if (nx > x) dirs.add('east');
-        else if (ny < y) dirs.add('north');
-        else if (ny > y) dirs.add('south');
-      }
-      
-      cellDirections.set(key, dirs);
-    }
-  }
-  
-  const corridors = [];
-  const usedCells = new Set();
-  
-  // Mark endpoints as used (can't be corridors)
-  for (const path of solutionPaths) {
-    if (path.length > 0) {
-      const [sx, sy] = path[0];
-      const [ex, ey] = path[path.length - 1];
-      usedCells.add(`${sx},${sy}`);
-      usedCells.add(`${ex},${ey}`);
-    }
-  }
-  
-  // Find cells where a corridor is COMPATIBLE with the solution
-  // A cell can be a corridor if the solution only uses 2 opposite directions through it
-  const candidates = [];
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const key = `${x},${y}`;
-      if (usedCells.has(key)) continue;
-      
-      const dirs = cellDirections.get(key);
-      if (!dirs || dirs.size !== 2) continue;
-      
-      const dirArray = Array.from(dirs);
-      // Check if the two directions are opposite (valid for corridor)
-      const isVertical = dirArray.includes('north') && dirArray.includes('south');
-      const isHorizontal = dirArray.includes('east') && dirArray.includes('west');
-      
-      if (isVertical || isHorizontal) {
-        candidates.push({ cell: [x, y], open: isVertical ? ['north', 'south'] : ['east', 'west'] });
+      // A cell with only 1 free neighbor and surrounded by endpoints is a dead end
+      // Unless it's adjacent to exactly one pair's endpoints (then that color must use it)
+      if (freeNeighbors < 2) {
+        // This cell is potentially trapped
+        // It's OK if it's adjacent to an endpoint that MUST pass through it
+        // But if it has 0 free neighbors, it's completely trapped
+        if (freeNeighbors === 0 && adjacentEndpoints.length > 0) {
+          // Cell surrounded by endpoints - impossible to fill
+          return false;
+        }
+        
+        // Cell has only 1 way in/out that's not an endpoint
+        // Check if this creates an impossible situation
+        if (freeNeighbors === 1 && adjacentEndpoints.length >= 2) {
+          // Dead-end cell with multiple adjacent endpoints
+          // Only one color can enter via the free neighbor
+          // The other endpoints can't reach this cell
+          return false;
+        }
       }
     }
   }
   
-  // Shuffle candidates
-  for (let i = candidates.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+  // Check 2: Each color pair can potentially connect
+  // (simplified check - verify endpoints aren't completely blocked)
+  for (const pair of pairs) {
+    if (!canConnect(width, height, pair.start, pair.end, endpoints, pair)) {
+      return false;
+    }
   }
   
-  // Select corridors (already validated to be compatible with solution)
-  return candidates.slice(0, Math.min(numCorridors, candidates.length));
+  return true;
 }
 
 // Generate walls (edges between cells) that DON'T block the solution paths
@@ -196,85 +222,74 @@ function fillGridWithPaths(width, height, numColors, random) {
     paths.push([]);
   }
   
-  // Get edge/corner cells for distant endpoint placement
-  // Strategy: Place pairs on opposite sides/corners for longer paths
-  const edgeCells = [];
-  const cornerCells = [];
-  
-  // Collect edge and corner cells
+  // Get all cells, prioritizing edges (but not corners for seeds - they cluster easily)
+  const allCells = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const isEdge = x === 0 || x === width - 1 || y === 0 || y === height - 1;
-      const isCorner = (x === 0 || x === width - 1) && (y === 0 || y === height - 1);
-      
-      if (isCorner) {
-        cornerCells.push([x, y]);
-      } else if (isEdge) {
-        edgeCells.push([x, y]);
-      }
+      allCells.push([x, y]);
     }
   }
   
-  // Shuffle for randomness
-  for (let i = cornerCells.length - 1; i > 0; i--) {
+  // Shuffle all cells
+  for (let i = allCells.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
-    [cornerCells[i], cornerCells[j]] = [cornerCells[j], cornerCells[i]];
-  }
-  for (let i = edgeCells.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [edgeCells[i], edgeCells[j]] = [edgeCells[j], edgeCells[i]];
+    [allCells[i], allCells[j]] = [allCells[j], allCells[i]];
   }
   
-  // Assign starting cells: prefer corners, then edges, ensuring pairs are distant
+  // Helper to calculate minimum distance to existing seeds
+  function minDistanceToSeeds(x, y, usedCells) {
+    let minDist = Infinity;
+    for (const key of usedCells) {
+      const [ux, uy] = key.split(',').map(Number);
+      const dist = Math.abs(x - ux) + Math.abs(y - uy); // Manhattan distance
+      minDist = Math.min(minDist, dist);
+    }
+    return minDist;
+  }
+  
+  // Assign starting cells: spread them out as much as possible
   const usedCells = new Set();
+  const minSpacing = Math.max(2, Math.floor(Math.min(width, height) / numColors)); // Minimum distance between seeds
   
   for (let color = 0; color < numColors; color++) {
-    let cell = null;
+    let bestCell = null;
+    let bestDist = -1;
     
-    // Try to find a cell on opposite side from previous colors
-    if (color > 0 && paths[color - 1].length > 0) {
-      const [prevX, prevY] = paths[color - 1][0];
-      const prevQuadrant = getQuadrant(prevX, prevY, width, height);
+    // Find cell that maximizes distance from existing seeds
+    for (const [x, y] of allCells) {
+      const key = `${x},${y}`;
+      if (usedCells.has(key)) continue;
       
-      // Find cell in opposite quadrant
-      const candidates = [...cornerCells, ...edgeCells].filter(([x, y]) => {
-        const key = `${x},${y}`;
-        if (usedCells.has(key)) return false;
-        const quad = getQuadrant(x, y, width, height);
-        return isOppositeQuadrant(prevQuadrant, quad);
-      });
-      
-      if (candidates.length > 0) {
-        cell = candidates[Math.floor(random() * candidates.length)];
-      }
-    }
-    
-    // Fallback: use any available corner or edge cell
-    if (!cell) {
-      const candidates = [...cornerCells, ...edgeCells].filter(([x, y]) => {
-        const key = `${x},${y}`;
-        return !usedCells.has(key);
-      });
-      if (candidates.length > 0) {
-        cell = candidates[Math.floor(random() * candidates.length)];
-      }
-    }
-    
-    // Ultimate fallback: any cell
-    if (!cell) {
-      for (let y = 0; y < height && !cell; y++) {
-        for (let x = 0; x < width && !cell; x++) {
-          const key = `${x},${y}`;
-          if (!usedCells.has(key)) {
-            cell = [x, y];
-            break;
-          }
+      if (usedCells.size === 0) {
+        // First seed - prefer non-corner edge cells
+        const isCorner = (x === 0 || x === width - 1) && (y === 0 || y === height - 1);
+        const isEdge = x === 0 || x === width - 1 || y === 0 || y === height - 1;
+        if (isEdge && !isCorner) {
+          bestCell = [x, y];
+          break;
+        }
+      } else {
+        const dist = minDistanceToSeeds(x, y, usedCells);
+        if (dist > bestDist) {
+          bestDist = dist;
+          bestCell = [x, y];
         }
       }
     }
     
-    if (cell) {
-      const [x, y] = cell;
+    // Fallback to any available cell
+    if (!bestCell) {
+      for (const [x, y] of allCells) {
+        const key = `${x},${y}`;
+        if (!usedCells.has(key)) {
+          bestCell = [x, y];
+          break;
+        }
+      }
+    }
+    
+    if (bestCell) {
+      const [x, y] = bestCell;
       usedCells.add(`${x},${y}`);
       grid[y][x] = color;
       paths[color].push([x, y]);
@@ -473,16 +488,9 @@ export function generatePuzzleForDate(puzzleId) {
   }
   // numWalls stays 0 - walls create trap situations in Flow-style games
   
-  // Determine if this puzzle should have corridors (rare feature)
-  let numCorridors = 0;
-  const corridorRoll = paramRandom();
-  if (width === 5 && height === 5) {
-    if (corridorRoll < 0.1) numCorridors = 1; // 10% chance, 1 corridor
-  } else if (width === 6 && height === 6) {
-    if (corridorRoll < 0.15) numCorridors = 1; // 15% chance, 1 corridor
-  } else { // 7x7
-    if (corridorRoll < 0.2) numCorridors = 1; // 20% chance, 1 corridor
-  }
+  // Corridors removed - they created solvability issues
+  // Keep paramRandom() call for backward compatibility with existing puzzle seeds
+  const corridorRoll = paramRandom(); // Consumed but unused
   
   // Determine if this puzzle should have required cells (rare feature)
   let numRequired = 0;
@@ -502,11 +510,13 @@ export function generatePuzzleForDate(puzzleId) {
     
     const result = fillGridWithPaths(width, height, numColors, random);
     if (result && result.pairs.length >= 4) {
+      // CRITICAL: Verify the puzzle is solvable before returning
+      if (!isPuzzleSolvable(width, height, result.pairs)) {
+        continue; // Try another attempt
+      }
+      
       // Generate walls that DON'T block solution paths
       const walls = generateWalls(width, height, numWalls, random, result.solutionPaths);
-      
-      // Generate corridors after paths are created
-      const corridors = generateCorridors(width, height, numCorridors, random, result.solutionPaths);
       
       // Generate required cells from actual solution paths
       const requiredCells = generateRequiredCells(width, height, numRequired, random, result.solutionPaths);
@@ -517,7 +527,6 @@ export function generatePuzzleForDate(puzzleId) {
         height,
         pairs: result.pairs,
         walls: walls,
-        corridors: corridors,
         requiredCells: requiredCells
       };
     }
@@ -530,13 +539,16 @@ export function generatePuzzleForDate(puzzleId) {
     
     const result = fillGridWithPaths(5, 5, 4, random);
     if (result && result.pairs.length >= 4) {
+      // Verify solvability
+      if (!isPuzzleSolvable(5, 5, result.pairs)) {
+        continue;
+      }
       return {
         id: puzzleId,
         width: 5,
         height: 5,
         pairs: result.pairs,
         walls: [],
-        corridors: [],
         requiredCells: []
       };
     }
@@ -555,7 +567,6 @@ export function generatePuzzleForDate(puzzleId) {
       { color: 3, start: [0, 2], end: [4, 2] }
     ],
     walls: [],
-    corridors: [],
     requiredCells: []
   };
 }

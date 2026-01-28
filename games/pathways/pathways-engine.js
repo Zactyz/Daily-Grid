@@ -23,15 +23,6 @@ export class PathwaysEngine {
     // Store walls (edges between cells) as a Set for fast lookup
     this.wallSet = new Set(puzzle.walls || []);
     
-    // Store corridors as a Map: cell key -> open directions
-    this.corridorMap = new Map();
-    if (puzzle.corridors) {
-      for (const corridor of puzzle.corridors) {
-        const [x, y] = corridor.cell;
-        this.corridorMap.set(`${x},${y}`, corridor.open);
-      }
-    }
-    
     // Store required cells as a Map: cell key -> required color
     this.requiredCellMap = new Map();
     if (puzzle.requiredCells) {
@@ -117,43 +108,6 @@ export class PathwaysEngine {
     return this.puzzle.pairs.find(p => p.color === color);
   }
   
-  // Check if movement direction is allowed by corridor constraints
-  // Checks both source (exit) and destination (entry) corridors
-  isDirectionAllowed(fromX, fromY, toX, toY) {
-    // Determine direction of movement
-    const dx = toX - fromX;
-    const dy = toY - fromY;
-    
-    let direction;
-    if (dx === 1 && dy === 0) direction = 'east';
-    else if (dx === -1 && dy === 0) direction = 'west';
-    else if (dx === 0 && dy === 1) direction = 'south';
-    else if (dx === 0 && dy === -1) direction = 'north';
-    else return false; // Not a valid adjacent move
-    
-    // Check if source cell (from) allows exit in this direction
-    const fromKey = `${fromX},${fromY}`;
-    const fromOpenDirs = this.corridorMap.get(fromKey);
-    if (fromOpenDirs && !fromOpenDirs.includes(direction)) {
-      return false; // Can't exit from source corridor in this direction
-    }
-    
-    // Check if destination cell (to) allows entry from opposite direction
-    const toKey = `${toX},${toY}`;
-    const toOpenDirs = this.corridorMap.get(toKey);
-    if (toOpenDirs) {
-      // Need opposite direction for entry
-      const oppositeDir = direction === 'east' ? 'west' : 
-                         direction === 'west' ? 'east' :
-                         direction === 'north' ? 'south' : 'north';
-      if (!toOpenDirs.includes(oppositeDir)) {
-        return false; // Can't enter destination corridor from this direction
-      }
-    }
-    
-    return true;
-  }
-  
   // Check if a cell can be added to a color's path
   canAddCell(color, x, y) {
     if (x < 0 || x >= this.puzzle.width || y < 0 || y >= this.puzzle.height) {
@@ -202,11 +156,6 @@ export class PathwaysEngine {
     // Check if there's a wall between the last cell and this cell
     const wallId = normalizeWall([lastX, lastY], [x, y]);
     if (this.wallSet.has(wallId)) {
-      return false;
-    }
-    
-    // Check if corridor allows this movement direction (checks both source and destination)
-    if (!this.isDirectionAllowed(lastX, lastY, x, y)) {
       return false;
     }
     
