@@ -1,7 +1,7 @@
 // Deterministic puzzle generator for Pathways (Flow) game
 // Generates puzzles by filling a grid completely with snake-like paths
 
-import { createSeededRandom, hashString } from './pathways-utils.js';
+import { createSeededRandom, hashString, normalizeWall } from './pathways-utils.js';
 
 // Helper: Get quadrant (0=top-left, 1=top-right, 2=bottom-left, 3=bottom-right)
 function getQuadrant(x, y, width, height) {
@@ -20,16 +20,13 @@ function isOppositeQuadrant(q1, q2) {
 }
 
 // Generate corridor cells (bi-directional movement only)
-function generateCorridors(width, height, numCorridors, random, blockedCells = [], existingPaths = []) {
+function generateCorridors(width, height, numCorridors, random, existingPaths = []) {
   if (numCorridors === 0) return [];
   
   const corridors = [];
   const usedCells = new Set();
   
-  // Mark blocked cells and endpoints as used
-  for (const [x, y] of blockedCells) {
-    usedCells.add(`${x},${y}`);
-  }
+  // Mark endpoints as used
   for (const path of existingPaths) {
     if (path.length > 0) {
       const [sx, sy] = path[0];
@@ -69,97 +66,47 @@ function generateCorridors(width, height, numCorridors, random, blockedCells = [
   return corridors;
 }
 
-// Generate blocked cells that don't isolate regions
-function generateBlockedCells(width, height, numBlocked, random, existingPaths = []) {
-  if (numBlocked === 0) return [];
+// Generate walls (edges between cells) that add difficulty
+// Walls are stored as normalized edge strings like '1,1-2,1' (between cell [1,1] and [2,1])
+function generateWalls(width, height, numWalls, random) {
+  if (numWalls === 0) return [];
   
-  const blockedCells = [];
-  const usedCells = new Set();
+  const walls = [];
   
-  // Mark endpoint cells as used (can't block endpoints)
-  for (const path of existingPaths) {
-    if (path.length > 0) {
-      const [sx, sy] = path[0];
-      const [ex, ey] = path[path.length - 1];
-      usedCells.add(`${sx},${sy}`);
-      usedCells.add(`${ex},${ey}`);
-    }
-  }
-  
-  // Try to place blocked cells
-  const candidates = [];
+  // Collect all possible internal edges (not on grid boundary)
+  const availableEdges = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const key = `${x},${y}`;
-      if (!usedCells.has(key)) {
-        candidates.push([x, y]);
+      // Horizontal edge (between [x,y] and [x+1,y])
+      if (x < width - 1) {
+        availableEdges.push(normalizeWall([x, y], [x + 1, y]));
+      }
+      // Vertical edge (between [x,y] and [x,y+1])
+      if (y < height - 1) {
+        availableEdges.push(normalizeWall([x, y], [x, y + 1]));
       }
     }
   }
   
-  // Shuffle candidates
-  for (let i = candidates.length - 1; i > 0; i--) {
+  // Shuffle edges
+  for (let i = availableEdges.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
-    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    [availableEdges[i], availableEdges[j]] = [availableEdges[j], availableEdges[i]];
   }
   
-  // Simple connectivity check: ensure no cell is completely isolated
-  const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
-  
-  for (const [x, y] of candidates) {
-    if (blockedCells.length >= numBlocked) break;
-    
-    // Check if blocking this cell would isolate any neighbor
-    let wouldIsolate = false;
-    for (const [dx, dy] of dirs) {
-      const nx = x + dx;
-      const ny = y + dy;
-      if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-      
-      const neighborKey = `${nx},${ny}`;
-      if (usedCells.has(neighborKey) || blockedCells.some(([bx, by]) => bx === nx && by === ny)) {
-        continue; // Neighbor is already used/blocked
-      }
-      
-      // Count open neighbors of this neighbor
-      let openNeighbors = 0;
-      for (const [ddx, ddy] of dirs) {
-        const nnx = nx + ddx;
-        const nny = ny + ddy;
-        if (nnx < 0 || nnx >= width || nny < 0 || nny >= height) continue;
-        const nnKey = `${nnx},${nny}`;
-        if (!usedCells.has(nnKey) && !blockedCells.some(([bx, by]) => bx === nnx && by === nny) &&
-            !(nnx === x && nny === y)) {
-          openNeighbors++;
-        }
-      }
-      
-      if (openNeighbors === 0) {
-        wouldIsolate = true;
-        break;
-      }
-    }
-    
-    if (!wouldIsolate) {
-      blockedCells.push([x, y]);
-      usedCells.add(`${x},${y}`);
-    }
-  }
-  
-  return blockedCells;
+  // Select walls (simple selection - no complex connectivity check needed since
+  // paths can still route around walls, just not through them)
+  return availableEdges.slice(0, Math.min(numWalls, availableEdges.length));
 }
 
 // Generate color-required cells (cells that MUST be covered by a specific color)
-function generateRequiredCells(width, height, numRequired, random, blockedCells = [], pairs = []) {
+function generateRequiredCells(width, height, numRequired, random, pairs = []) {
   if (numRequired === 0 || pairs.length === 0) return [];
   
   const requiredCells = [];
   const usedCells = new Set();
   
-  // Mark blocked cells and endpoints as used (can't require endpoints)
-  for (const [x, y] of blockedCells) {
-    usedCells.add(`${x},${y}`);
-  }
+  // Mark endpoints as used (can't require endpoints)
   for (const pair of pairs) {
     usedCells.add(`${pair.start[0]},${pair.start[1]}`);
     usedCells.add(`${pair.end[0]},${pair.end[1]}`);
@@ -214,16 +161,10 @@ function generateRequiredCells(width, height, numRequired, random, blockedCells 
 }
 
 // Fill the entire grid with colored paths
-function fillGridWithPaths(width, height, numColors, random, blockedCells = []) {
+function fillGridWithPaths(width, height, numColors, random) {
   const totalCells = width * height;
   const grid = Array(height).fill(null).map(() => Array(width).fill(-1));
   const paths = []; // Each path is an array of [x, y] coordinates
-  
-  // Mark blocked cells as -2
-  const blockedSet = new Set(blockedCells.map(([x, y]) => `${x},${y}`));
-  for (const [x, y] of blockedCells) {
-    grid[y][x] = -2; // -2 = blocked
-  }
   
   // Initialize paths array
   for (let i = 0; i < numColors; i++) {
@@ -260,7 +201,6 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
   }
   
   // Assign starting cells: prefer corners, then edges, ensuring pairs are distant
-  // IMPORTANT: Never place endpoints on blocked cells
   const usedCells = new Set();
   
   for (let color = 0; color < numColors; color++) {
@@ -271,11 +211,10 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
       const [prevX, prevY] = paths[color - 1][0];
       const prevQuadrant = getQuadrant(prevX, prevY, width, height);
       
-      // Find cell in opposite quadrant (excluding blocked cells)
+      // Find cell in opposite quadrant
       const candidates = [...cornerCells, ...edgeCells].filter(([x, y]) => {
         const key = `${x},${y}`;
         if (usedCells.has(key)) return false;
-        if (blockedSet.has(key)) return false; // Don't place endpoints on blocked cells
         const quad = getQuadrant(x, y, width, height);
         return isOppositeQuadrant(prevQuadrant, quad);
       });
@@ -285,23 +224,23 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
       }
     }
     
-    // Fallback: use any available corner or edge cell (excluding blocked cells)
+    // Fallback: use any available corner or edge cell
     if (!cell) {
       const candidates = [...cornerCells, ...edgeCells].filter(([x, y]) => {
         const key = `${x},${y}`;
-        return !usedCells.has(key) && !blockedSet.has(key);
+        return !usedCells.has(key);
       });
       if (candidates.length > 0) {
         cell = candidates[Math.floor(random() * candidates.length)];
       }
     }
     
-    // Ultimate fallback: any non-blocked cell
+    // Ultimate fallback: any cell
     if (!cell) {
       for (let y = 0; y < height && !cell; y++) {
         for (let x = 0; x < width && !cell; x++) {
           const key = `${x},${y}`;
-          if (!usedCells.has(key) && !blockedSet.has(key)) {
+          if (!usedCells.has(key)) {
             cell = [x, y];
             break;
           }
@@ -372,9 +311,6 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
           const ny = cy + dy;
           
           if (nx >= 0 && nx < width && ny >= 0 && ny < height && grid[ny][nx] === -1) {
-            // Check if this cell is blocked
-            if (blockedSet.has(`${nx},${ny}`)) continue;
-            
             grid[ny][nx] = color;
             if (addToFront) {
               path.unshift([nx, ny]);
@@ -397,7 +333,7 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
       
       for (let y = 0; y < height && !foundEmpty; y++) {
         for (let x = 0; x < width && !foundEmpty; x++) {
-          if (grid[y][x] !== -1) continue; // Skip non-empty (including blocked -2)
+          if (grid[y][x] !== -1) continue; // Skip non-empty cells
           
           // Found an empty cell - check its neighbors
           for (const [dx, dy] of dirs) {
@@ -405,7 +341,7 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
             const ny = y + dy;
             
             if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-            if (grid[ny][nx] === -1 || grid[ny][nx] === -2) continue; // Skip empty and blocked
+            if (grid[ny][nx] === -1) continue; // Skip empty cells
             
             const neighborColor = grid[ny][nx];
             const neighborPath = paths[neighborColor];
@@ -441,7 +377,7 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
     }
   }
   
-  // Final verification: check if grid is completely filled (excluding blocked cells)
+  // Final verification: check if grid is completely filled
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       if (grid[y][x] === -1) {
@@ -468,7 +404,7 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
     });
   }
   
-  return { pairs: result, blockedCells: blockedCells };
+  return { pairs: result };
 }
 
 // Main export: Generate puzzle for a given date string
@@ -496,15 +432,15 @@ export function generatePuzzleForDate(puzzleId) {
   
   const totalCells = width * height;
   
-  // Determine if this puzzle should have blocked cells (probability by grid size)
-  let numBlocked = 0;
-  const blockedRoll = paramRandom();
+  // Determine if this puzzle should have walls (probability by grid size)
+  let numWalls = 0;
+  const wallsRoll = paramRandom();
   if (width === 5 && height === 5) {
-    if (blockedRoll < 0.3) numBlocked = 1; // 30% chance, 0-1 blocked
+    if (wallsRoll < 0.4) numWalls = 2 + Math.floor(paramRandom() * 3); // 40% chance, 2-4 walls
   } else if (width === 6 && height === 6) {
-    if (blockedRoll < 0.4) numBlocked = 1 + Math.floor(paramRandom() * 2); // 40% chance, 1-2 blocked
+    if (wallsRoll < 0.5) numWalls = 3 + Math.floor(paramRandom() * 4); // 50% chance, 3-6 walls
   } else { // 7x7
-    if (blockedRoll < 0.5) numBlocked = 1 + Math.floor(paramRandom() * 3); // 50% chance, 1-3 blocked
+    if (wallsRoll < 0.6) numWalls = 4 + Math.floor(paramRandom() * 5); // 60% chance, 4-8 walls
   }
   
   // Determine if this puzzle should have corridors (probability by grid size)
@@ -534,45 +470,45 @@ export function generatePuzzleForDate(puzzleId) {
     const seed = baseSeed + attempt * 1000;
     const random = createSeededRandom(seed);
     
-    // Generate blocked cells first (avoid edges where endpoints will be)
-    const blockedCells = generateBlockedCells(width, height, numBlocked, random, []);
-    
-    const result = fillGridWithPaths(width, height, numColors, random, blockedCells);
+    const result = fillGridWithPaths(width, height, numColors, random);
     if (result && result.pairs.length >= 4) {
+      // Generate walls (edges between cells)
+      const walls = generateWalls(width, height, numWalls, random);
+      
       // Generate corridors after paths are created
-      const corridors = generateCorridors(width, height, numCorridors, random, blockedCells, result.pairs.map(p => {
+      const corridors = generateCorridors(width, height, numCorridors, random, result.pairs.map(p => {
         // Reconstruct path from start to end (simplified - actual path would be more complex)
         return [p.start, p.end];
       }));
       
       // Generate required cells after paths are created
-      const requiredCells = generateRequiredCells(width, height, numRequired, random, blockedCells, result.pairs);
+      const requiredCells = generateRequiredCells(width, height, numRequired, random, result.pairs);
       
       return {
         id: puzzleId,
         width,
         height,
         pairs: result.pairs,
-        blockedCells: result.blockedCells || [],
+        walls: walls,
         corridors: corridors,
         requiredCells: requiredCells
       };
     }
   }
   
-  // Fallback: Try 5x5 with 4 colors (minimum), no blocked cells
+  // Fallback: Try 5x5 with 4 colors (minimum), no walls
   for (let attempt = 0; attempt < 300; attempt++) {
     const seed = baseSeed + 600000 + attempt * 1000;
     const random = createSeededRandom(seed);
     
-    const result = fillGridWithPaths(5, 5, 4, random, []);
+    const result = fillGridWithPaths(5, 5, 4, random);
     if (result && result.pairs.length >= 4) {
       return {
         id: puzzleId,
         width: 5,
         height: 5,
         pairs: result.pairs,
-        blockedCells: [],
+        walls: [],
         corridors: [],
         requiredCells: []
       };
@@ -591,7 +527,7 @@ export function generatePuzzleForDate(puzzleId) {
       { color: 2, start: [2, 0], end: [2, 4] },
       { color: 3, start: [0, 2], end: [4, 2] }
     ],
-    blockedCells: [],
+    walls: [],
     corridors: [],
     requiredCells: []
   };

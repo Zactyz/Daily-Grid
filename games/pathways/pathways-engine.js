@@ -1,4 +1,4 @@
-import { STORAGE_KEYS } from './pathways-utils.js';
+import { STORAGE_KEYS, normalizeWall } from './pathways-utils.js';
 
 export class PathwaysEngine {
   constructor(puzzle, storageKey) {
@@ -20,13 +20,8 @@ export class PathwaysEngine {
       this.state.paths[pair.color] = [];
     }
     
-    // Store blocked cells as a Set for fast lookup
-    this.blockedCells = new Set();
-    if (puzzle.blockedCells) {
-      for (const [x, y] of puzzle.blockedCells) {
-        this.blockedCells.add(`${x},${y}`);
-      }
-    }
+    // Store walls (edges between cells) as a Set for fast lookup
+    this.wallSet = new Set(puzzle.walls || []);
     
     // Store corridors as a Map: cell key -> open directions
     this.corridorMap = new Map();
@@ -165,11 +160,6 @@ export class PathwaysEngine {
       return false;
     }
     
-    // Check if cell is blocked
-    if (this.blockedCells.has(`${x},${y}`)) {
-      return false;
-    }
-    
     const pair = this.getPair(color);
     if (!pair) return false;
     
@@ -208,6 +198,12 @@ export class PathwaysEngine {
     const isAdjacent = (Math.abs(x - lastX) === 1 && y === lastY) ||
                       (Math.abs(y - lastY) === 1 && x === lastX);
     if (!isAdjacent) return false;
+    
+    // Check if there's a wall between the last cell and this cell
+    const wallId = normalizeWall([lastX, lastY], [x, y]);
+    if (this.wallSet.has(wallId)) {
+      return false;
+    }
     
     // Check if corridor allows this movement direction (checks both source and destination)
     if (!this.isDirectionAllowed(lastX, lastY, x, y)) {
@@ -331,10 +327,8 @@ export class PathwaysEngine {
       }
     }
     
-    // All non-blocked cells must be filled
+    // All cells must be filled
     const totalCells = this.puzzle.width * this.puzzle.height;
-    const blockedCount = this.blockedCells.size;
-    const expectedFilledCells = totalCells - blockedCount;
     const filledCells = new Set();
     
     for (const path of Object.values(this.state.paths)) {
@@ -343,7 +337,7 @@ export class PathwaysEngine {
       }
     }
     
-    if (filledCells.size !== expectedFilledCells) {
+    if (filledCells.size !== totalCells) {
       this.state.isComplete = false;
       return false;
     }

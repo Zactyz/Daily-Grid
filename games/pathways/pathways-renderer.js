@@ -58,7 +58,7 @@ export class PathwaysRenderer {
     this.ctx.fillRect(0, 0, this.displayWidth, this.displayHeight);
     
     this.drawCells();
-    this.drawBlockedCells();
+    this.drawWalls();
     this.drawCorridorWalls();
     this.drawRequiredCellMarkers();
     this.drawPaths();
@@ -80,11 +80,6 @@ export class PathwaysRenderer {
     const px = this.offsetX + x * (this.cellSize + this.gap);
     const py = this.offsetY + y * (this.cellSize + this.gap);
     
-    // Skip blocked cells (drawn separately)
-    if (this.engine.blockedCells && this.engine.blockedCells.has(`${x},${y}`)) {
-      return;
-    }
-    
     // Determine fill color
     let fillColor = this.cellEmpty;
     if (cellColor !== null && this.colors[cellColor]) {
@@ -103,38 +98,67 @@ export class PathwaysRenderer {
     this.ctx.stroke();
   }
   
-  drawBlockedCells() {
-    if (!this.engine.blockedCells || this.engine.blockedCells.size === 0) return;
+  drawWalls() {
+    if (!this.engine.wallSet || this.engine.wallSet.size === 0) return;
     
-    const cornerRadius = Math.min(8, this.cellSize * 0.12);
-    const blockedColor = '#3a3a4a'; // Dark gray-blue, distinct from empty cells
-    const blockedPattern = '#2a2a3a'; // Even darker for pattern
+    // Coral/rose color for Pathways walls (distinct from Snake's gold)
+    const wallColor = '#e05555';
+    const wallGlow = 'rgba(224, 85, 85, 0.5)';
     
-    for (const cellKey of this.engine.blockedCells) {
-      const [x, y] = cellKey.split(',').map(Number);
-      const px = this.offsetX + x * (this.cellSize + this.gap);
-      const py = this.offsetY + y * (this.cellSize + this.gap);
+    // Calculate wall coordinates once for both glow and main line
+    const wallCoords = [];
+    
+    for (const wallId of this.engine.wallSet) {
+      const [cellA, cellB] = wallId.split('-').map(s => s.split(',').map(Number));
+      const [ax, ay] = cellA;
+      const [bx, by] = cellB;
       
-      // Draw blocked cell background
-      this.ctx.fillStyle = blockedColor;
-      this.roundRect(px, py, this.cellSize, this.cellSize, cornerRadius);
-      this.ctx.fill();
+      let x1, y1, x2, y2;
       
-      // Draw diagonal hatch pattern for "impassable" visual
-      this.ctx.strokeStyle = blockedPattern;
-      this.ctx.lineWidth = 1.5;
-      const spacing = 4;
-      for (let i = -this.cellSize; i < this.cellSize * 2; i += spacing) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(px + i, py);
-        this.ctx.lineTo(px + i + this.cellSize, py + this.cellSize);
-        this.ctx.stroke();
+      if (ax === bx) {
+        // Vertical wall (cells stacked vertically)
+        const x = ax;
+        const maxY = Math.max(ay, by);
+        
+        x1 = this.offsetX + x * (this.cellSize + this.gap);
+        y1 = this.offsetY + maxY * (this.cellSize + this.gap) - this.gap / 2;
+        x2 = x1 + this.cellSize;
+        y2 = y1;
+      } else {
+        // Horizontal wall (cells side by side)
+        const y = ay;
+        const maxX = Math.max(ax, bx);
+        
+        x1 = this.offsetX + maxX * (this.cellSize + this.gap) - this.gap / 2;
+        y1 = this.offsetY + y * (this.cellSize + this.gap);
+        x2 = x1;
+        y2 = y1 + this.cellSize;
       }
       
-      // Border (darker)
-      this.ctx.strokeStyle = '#1a1a2a';
-      this.ctx.lineWidth = 1;
-      this.roundRect(px, py, this.cellSize, this.cellSize, cornerRadius);
+      wallCoords.push({ x1, y1, x2, y2 });
+    }
+    
+    // Draw wall glow (wider, semi-transparent)
+    this.ctx.strokeStyle = wallGlow;
+    this.ctx.lineWidth = 8;
+    this.ctx.lineCap = 'round';
+    
+    for (const { x1, y1, x2, y2 } of wallCoords) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(x1, y1);
+      this.ctx.lineTo(x2, y2);
+      this.ctx.stroke();
+    }
+    
+    // Draw main wall line (solid, prominent)
+    this.ctx.strokeStyle = wallColor;
+    this.ctx.lineWidth = 4;
+    this.ctx.lineCap = 'round';
+    
+    for (const { x1, y1, x2, y2 } of wallCoords) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(x1, y1);
+      this.ctx.lineTo(x2, y2);
       this.ctx.stroke();
     }
   }
