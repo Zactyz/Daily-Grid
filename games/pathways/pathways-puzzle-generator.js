@@ -20,14 +20,47 @@ function isOppositeQuadrant(q1, q2) {
 }
 
 // Generate corridor cells (bi-directional movement only)
-function generateCorridors(width, height, numCorridors, random, existingPaths = []) {
+// IMPORTANT: Corridors must be compatible with how the solution path passes through the cell
+function generateCorridors(width, height, numCorridors, random, solutionPaths = []) {
   if (numCorridors === 0) return [];
+  
+  // Build a map of cell -> directions the solution path uses through that cell
+  // Directions: the solution enters from one direction and exits to another
+  const cellDirections = new Map();
+  
+  for (const path of solutionPaths) {
+    for (let i = 0; i < path.length; i++) {
+      const [x, y] = path[i];
+      const key = `${x},${y}`;
+      const dirs = new Set();
+      
+      // Check previous cell (where we came from)
+      if (i > 0) {
+        const [px, py] = path[i - 1];
+        if (px < x) dirs.add('west');
+        else if (px > x) dirs.add('east');
+        else if (py < y) dirs.add('north');
+        else if (py > y) dirs.add('south');
+      }
+      
+      // Check next cell (where we're going)
+      if (i < path.length - 1) {
+        const [nx, ny] = path[i + 1];
+        if (nx < x) dirs.add('west');
+        else if (nx > x) dirs.add('east');
+        else if (ny < y) dirs.add('north');
+        else if (ny > y) dirs.add('south');
+      }
+      
+      cellDirections.set(key, dirs);
+    }
+  }
   
   const corridors = [];
   const usedCells = new Set();
   
-  // Mark endpoints as used
-  for (const path of existingPaths) {
+  // Mark endpoints as used (can't be corridors)
+  for (const path of solutionPaths) {
     if (path.length > 0) {
       const [sx, sy] = path[0];
       const [ex, ey] = path[path.length - 1];
@@ -36,13 +69,24 @@ function generateCorridors(width, height, numCorridors, random, existingPaths = 
     }
   }
   
-  // Avoid edge cells for corridors (they're better for endpoints)
+  // Find cells where a corridor is COMPATIBLE with the solution
+  // A cell can be a corridor if the solution only uses 2 opposite directions through it
   const candidates = [];
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       const key = `${x},${y}`;
-      if (!usedCells.has(key)) {
-        candidates.push([x, y]);
+      if (usedCells.has(key)) continue;
+      
+      const dirs = cellDirections.get(key);
+      if (!dirs || dirs.size !== 2) continue;
+      
+      const dirArray = Array.from(dirs);
+      // Check if the two directions are opposite (valid for corridor)
+      const isVertical = dirArray.includes('north') && dirArray.includes('south');
+      const isHorizontal = dirArray.includes('east') && dirArray.includes('west');
+      
+      if (isVertical || isHorizontal) {
+        candidates.push({ cell: [x, y], open: isVertical ? ['north', 'south'] : ['east', 'west'] });
       }
     }
   }
@@ -53,17 +97,8 @@ function generateCorridors(width, height, numCorridors, random, existingPaths = 
     [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
   }
   
-  // Create corridors: randomly choose vertical (north/south) or horizontal (east/west)
-  for (let i = 0; i < Math.min(numCorridors, candidates.length); i++) {
-    const [x, y] = candidates[i];
-    const isVertical = random() < 0.5;
-    corridors.push({
-      cell: [x, y],
-      open: isVertical ? ['north', 'south'] : ['east', 'west']
-    });
-  }
-  
-  return corridors;
+  // Select corridors (already validated to be compatible with solution)
+  return candidates.slice(0, Math.min(numCorridors, candidates.length));
 }
 
 // Generate walls (edges between cells) that DON'T block the solution paths
@@ -111,40 +146,19 @@ function generateWalls(width, height, numWalls, random, solutionPaths = []) {
 }
 
 // Generate color-required cells (cells that MUST be covered by a specific color)
-function generateRequiredCells(width, height, numRequired, random, pairs = []) {
-  if (numRequired === 0 || pairs.length === 0) return [];
+// IMPORTANT: Required cells must be on the ACTUAL solution path for that color
+function generateRequiredCells(width, height, numRequired, random, solutionPaths = []) {
+  if (numRequired === 0 || solutionPaths.length === 0) return [];
   
   const requiredCells = [];
-  const usedCells = new Set();
   
-  // Mark endpoints as used (can't require endpoints)
-  for (const pair of pairs) {
-    usedCells.add(`${pair.start[0]},${pair.start[1]}`);
-    usedCells.add(`${pair.end[0]},${pair.end[1]}`);
-  }
-  
-  // Pick cells that are likely to be on paths (between endpoints)
+  // Build candidates from actual solution path cells (excluding endpoints)
   const candidates = [];
-  for (const pair of pairs) {
-    const [sx, sy] = pair.start;
-    const [ex, ey] = pair.end;
-    
-    // Pick a cell roughly between the endpoints
-    const midX = Math.floor((sx + ex) / 2);
-    const midY = Math.floor((sy + ey) / 2);
-    
-    // Try cells near the midpoint
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const x = midX + dx;
-        const y = midY + dy;
-        if (x >= 0 && x < width && y >= 0 && y < height) {
-          const key = `${x},${y}`;
-          if (!usedCells.has(key)) {
-            candidates.push({ cell: [x, y], color: pair.color });
-          }
-        }
-      }
+  for (let colorIdx = 0; colorIdx < solutionPaths.length; colorIdx++) {
+    const path = solutionPaths[colorIdx];
+    // Skip first and last cells (endpoints)
+    for (let i = 1; i < path.length - 1; i++) {
+      candidates.push({ cell: path[i], color: colorIdx });
     }
   }
   
@@ -491,8 +505,8 @@ export function generatePuzzleForDate(puzzleId) {
       // Generate corridors after paths are created
       const corridors = generateCorridors(width, height, numCorridors, random, result.solutionPaths);
       
-      // Generate required cells after paths are created
-      const requiredCells = generateRequiredCells(width, height, numRequired, random, result.pairs);
+      // Generate required cells from actual solution paths
+      const requiredCells = generateRequiredCells(width, height, numRequired, random, result.solutionPaths);
       
       return {
         id: puzzleId,
