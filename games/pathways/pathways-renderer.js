@@ -58,6 +58,9 @@ export class PathwaysRenderer {
     this.ctx.fillRect(0, 0, this.displayWidth, this.displayHeight);
     
     this.drawCells();
+    this.drawBlockedCells();
+    this.drawCorridorWalls();
+    this.drawRequiredCellMarkers();
     this.drawPaths();
     this.drawEndpoints();
   }
@@ -77,6 +80,11 @@ export class PathwaysRenderer {
     const px = this.offsetX + x * (this.cellSize + this.gap);
     const py = this.offsetY + y * (this.cellSize + this.gap);
     
+    // Skip blocked cells (drawn separately)
+    if (this.engine.blockedCells && this.engine.blockedCells.has(`${x},${y}`)) {
+      return;
+    }
+    
     // Determine fill color
     let fillColor = this.cellEmpty;
     if (cellColor !== null && this.colors[cellColor]) {
@@ -95,6 +103,42 @@ export class PathwaysRenderer {
     this.ctx.stroke();
   }
   
+  drawBlockedCells() {
+    if (!this.engine.blockedCells || this.engine.blockedCells.size === 0) return;
+    
+    const cornerRadius = Math.min(8, this.cellSize * 0.12);
+    const blockedColor = '#3a3a4a'; // Dark gray-blue, distinct from empty cells
+    const blockedPattern = '#2a2a3a'; // Even darker for pattern
+    
+    for (const cellKey of this.engine.blockedCells) {
+      const [x, y] = cellKey.split(',').map(Number);
+      const px = this.offsetX + x * (this.cellSize + this.gap);
+      const py = this.offsetY + y * (this.cellSize + this.gap);
+      
+      // Draw blocked cell background
+      this.ctx.fillStyle = blockedColor;
+      this.roundRect(px, py, this.cellSize, this.cellSize, cornerRadius);
+      this.ctx.fill();
+      
+      // Draw diagonal hatch pattern for "impassable" visual
+      this.ctx.strokeStyle = blockedPattern;
+      this.ctx.lineWidth = 1.5;
+      const spacing = 4;
+      for (let i = -this.cellSize; i < this.cellSize * 2; i += spacing) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(px + i, py);
+        this.ctx.lineTo(px + i + this.cellSize, py + this.cellSize);
+        this.ctx.stroke();
+      }
+      
+      // Border (darker)
+      this.ctx.strokeStyle = '#1a1a2a';
+      this.ctx.lineWidth = 1;
+      this.roundRect(px, py, this.cellSize, this.cellSize, cornerRadius);
+      this.ctx.stroke();
+    }
+  }
+  
   roundRect(x, y, width, height, radius) {
     this.ctx.beginPath();
     this.ctx.moveTo(x + radius, y);
@@ -107,6 +151,147 @@ export class PathwaysRenderer {
     this.ctx.lineTo(x, y + radius);
     this.ctx.quadraticCurveTo(x, y, x + radius, y);
     this.ctx.closePath();
+  }
+  
+  drawCorridorWalls() {
+    if (!this.engine.corridorMap || this.engine.corridorMap.size === 0) return;
+    
+    const wallColor = '#8b6914'; // Same as Snake walls for consistency
+    const wallGlow = 'rgba(139, 105, 20, 0.6)';
+    const wallWidth = 3;
+    
+    for (const [cellKey, openDirs] of this.engine.corridorMap) {
+      const [x, y] = cellKey.split(',').map(Number);
+      const px = this.offsetX + x * (this.cellSize + this.gap);
+      const py = this.offsetY + y * (this.cellSize + this.gap);
+      
+      // Draw walls on closed sides
+      this.ctx.strokeStyle = wallGlow;
+      this.ctx.lineWidth = wallWidth + 2;
+      this.ctx.lineCap = 'round';
+      
+      if (!openDirs.includes('north')) {
+        // Wall on north side
+        this.ctx.beginPath();
+        this.ctx.moveTo(px + 4, py);
+        this.ctx.lineTo(px + this.cellSize - 4, py);
+        this.ctx.stroke();
+      }
+      if (!openDirs.includes('south')) {
+        // Wall on south side
+        this.ctx.beginPath();
+        this.ctx.moveTo(px + 4, py + this.cellSize);
+        this.ctx.lineTo(px + this.cellSize - 4, py + this.cellSize);
+        this.ctx.stroke();
+      }
+      if (!openDirs.includes('east')) {
+        // Wall on east side
+        this.ctx.beginPath();
+        this.ctx.moveTo(px + this.cellSize, py + 4);
+        this.ctx.lineTo(px + this.cellSize, py + this.cellSize - 4);
+        this.ctx.stroke();
+      }
+      if (!openDirs.includes('west')) {
+        // Wall on west side
+        this.ctx.beginPath();
+        this.ctx.moveTo(px, py + 4);
+        this.ctx.lineTo(px, py + this.cellSize - 4);
+        this.ctx.stroke();
+      }
+      
+      // Draw main wall lines
+      this.ctx.strokeStyle = wallColor;
+      this.ctx.lineWidth = wallWidth;
+      
+      if (!openDirs.includes('north')) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(px + 4, py);
+        this.ctx.lineTo(px + this.cellSize - 4, py);
+        this.ctx.stroke();
+      }
+      if (!openDirs.includes('south')) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(px + 4, py + this.cellSize);
+        this.ctx.lineTo(px + this.cellSize - 4, py + this.cellSize);
+        this.ctx.stroke();
+      }
+      if (!openDirs.includes('east')) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(px + this.cellSize, py + 4);
+        this.ctx.lineTo(px + this.cellSize, py + this.cellSize - 4);
+        this.ctx.stroke();
+      }
+      if (!openDirs.includes('west')) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(px, py + 4);
+        this.ctx.lineTo(px, py + this.cellSize - 4);
+        this.ctx.stroke();
+      }
+    }
+  }
+  
+  drawRequiredCellMarkers() {
+    if (!this.engine.requiredCellMap || this.engine.requiredCellMap.size === 0) return;
+    
+    for (const [cellKey, requiredColor] of this.engine.requiredCellMap) {
+      const [x, y] = cellKey.split(',').map(Number);
+      const px = this.offsetX + x * (this.cellSize + this.gap);
+      const py = this.offsetY + y * (this.cellSize + this.gap);
+      
+      // Get the color data for the required color
+      const colorData = this.colors[requiredColor];
+      if (!colorData) continue;
+      
+      // Check if cell is currently filled with correct color
+      const actualColor = this.engine.getCellColor(x, y);
+      const isCorrect = actualColor === requiredColor;
+      
+      // Draw colored ring/glow around the cell
+      const ringWidth = 4;
+      const ringRadius = this.cellSize / 2 + ringWidth / 2;
+      
+      // Outer glow
+      if (!isCorrect) {
+        // If wrong color or empty, show pulsing glow
+        const glowAlpha = 0.6 + Math.sin(Date.now() / 500) * 0.2; // Pulsing effect
+        // Convert hex to rgba
+        const hex = colorData.main.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${glowAlpha})`;
+      } else {
+        // If correct, show subtle glow
+        this.ctx.strokeStyle = colorData.glow;
+      }
+      this.ctx.lineWidth = ringWidth + 4;
+      this.ctx.beginPath();
+      this.ctx.arc(px + this.cellSize / 2, py + this.cellSize / 2, ringRadius, 0, Math.PI * 2);
+      this.ctx.stroke();
+      
+      // Main ring
+      this.ctx.strokeStyle = colorData.main;
+      this.ctx.lineWidth = ringWidth;
+      this.ctx.beginPath();
+      this.ctx.arc(px + this.cellSize / 2, py + this.cellSize / 2, ringRadius, 0, Math.PI * 2);
+      this.ctx.stroke();
+      
+      // If wrong color, add visual conflict indicator
+      if (actualColor !== null && actualColor !== requiredColor) {
+        // Draw X mark or red border flash
+        this.ctx.strokeStyle = '#ff4444';
+        this.ctx.lineWidth = 2;
+        const centerX = px + this.cellSize / 2;
+        const centerY = py + this.cellSize / 2;
+        const crossSize = this.cellSize * 0.3;
+        this.ctx.beginPath();
+        this.ctx.moveTo(centerX - crossSize, centerY - crossSize);
+        this.ctx.lineTo(centerX + crossSize, centerY + crossSize);
+        this.ctx.moveTo(centerX + crossSize, centerY - crossSize);
+        this.ctx.lineTo(centerX - crossSize, centerY + crossSize);
+        this.ctx.stroke();
+      }
+    }
   }
   
   drawPaths() {

@@ -20,6 +20,32 @@ export class PathwaysEngine {
       this.state.paths[pair.color] = [];
     }
     
+    // Store blocked cells as a Set for fast lookup
+    this.blockedCells = new Set();
+    if (puzzle.blockedCells) {
+      for (const [x, y] of puzzle.blockedCells) {
+        this.blockedCells.add(`${x},${y}`);
+      }
+    }
+    
+    // Store corridors as a Map: cell key -> open directions
+    this.corridorMap = new Map();
+    if (puzzle.corridors) {
+      for (const corridor of puzzle.corridors) {
+        const [x, y] = corridor.cell;
+        this.corridorMap.set(`${x},${y}`, corridor.open);
+      }
+    }
+    
+    // Store required cells as a Map: cell key -> required color
+    this.requiredCellMap = new Map();
+    if (puzzle.requiredCells) {
+      for (const req of puzzle.requiredCells) {
+        const [x, y] = req.cell;
+        this.requiredCellMap.set(`${x},${y}`, req.color);
+      }
+    }
+    
     this.lastSaveTime = 0;
     this.saveThrottleMs = 5000;
     
@@ -96,9 +122,51 @@ export class PathwaysEngine {
     return this.puzzle.pairs.find(p => p.color === color);
   }
   
+  // Check if movement direction is allowed by corridor constraints
+  // Checks both source (exit) and destination (entry) corridors
+  isDirectionAllowed(fromX, fromY, toX, toY) {
+    // Determine direction of movement
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    
+    let direction;
+    if (dx === 1 && dy === 0) direction = 'east';
+    else if (dx === -1 && dy === 0) direction = 'west';
+    else if (dx === 0 && dy === 1) direction = 'south';
+    else if (dx === 0 && dy === -1) direction = 'north';
+    else return false; // Not a valid adjacent move
+    
+    // Check if source cell (from) allows exit in this direction
+    const fromKey = `${fromX},${fromY}`;
+    const fromOpenDirs = this.corridorMap.get(fromKey);
+    if (fromOpenDirs && !fromOpenDirs.includes(direction)) {
+      return false; // Can't exit from source corridor in this direction
+    }
+    
+    // Check if destination cell (to) allows entry from opposite direction
+    const toKey = `${toX},${toY}`;
+    const toOpenDirs = this.corridorMap.get(toKey);
+    if (toOpenDirs) {
+      // Need opposite direction for entry
+      const oppositeDir = direction === 'east' ? 'west' : 
+                         direction === 'west' ? 'east' :
+                         direction === 'north' ? 'south' : 'north';
+      if (!toOpenDirs.includes(oppositeDir)) {
+        return false; // Can't enter destination corridor from this direction
+      }
+    }
+    
+    return true;
+  }
+  
   // Check if a cell can be added to a color's path
   canAddCell(color, x, y) {
     if (x < 0 || x >= this.puzzle.width || y < 0 || y >= this.puzzle.height) {
+      return false;
+    }
+    
+    // Check if cell is blocked
+    if (this.blockedCells.has(`${x},${y}`)) {
       return false;
     }
     
@@ -129,11 +197,21 @@ export class PathwaysEngine {
       return isStart || isEnd;
     }
     
+    // If path is already complete (reached target endpoint), don't allow more cells
+    if (this.isPathComplete(color)) {
+      return false;
+    }
+    
     // Must be adjacent to last cell in path
     const [lastX, lastY] = path[path.length - 1];
     const isAdjacent = (Math.abs(x - lastX) === 1 && y === lastY) ||
                       (Math.abs(y - lastY) === 1 && x === lastX);
     if (!isAdjacent) return false;
+    
+    // Check if corridor allows this movement direction (checks both source and destination)
+    if (!this.isDirectionAllowed(lastX, lastY, x, y)) {
+      return false;
+    }
     
     // Determine which endpoint we started from and which is the target
     const [firstX, firstY] = path[0];
@@ -252,8 +330,10 @@ export class PathwaysEngine {
       }
     }
     
-    // All cells must be filled
+    // All non-blocked cells must be filled
     const totalCells = this.puzzle.width * this.puzzle.height;
+    const blockedCount = this.blockedCells.size;
+    const expectedFilledCells = totalCells - blockedCount;
     const filledCells = new Set();
     
     for (const path of Object.values(this.state.paths)) {
@@ -262,9 +342,19 @@ export class PathwaysEngine {
       }
     }
     
-    if (filledCells.size !== totalCells) {
+    if (filledCells.size !== expectedFilledCells) {
       this.state.isComplete = false;
       return false;
+    }
+    
+    // Check that all required cells are covered by the correct color
+    for (const [cellKey, requiredColor] of this.requiredCellMap) {
+      const [x, y] = cellKey.split(',').map(Number);
+      const actualColor = this.getCellColor(x, y);
+      if (actualColor !== requiredColor) {
+        this.state.isComplete = false;
+        return false;
+      }
     }
     
     // Win!
