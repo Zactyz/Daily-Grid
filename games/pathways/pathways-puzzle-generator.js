@@ -232,15 +232,6 @@ function fillGridWithPaths(width, height, numColors, random, walls = [], bridges
     return null; // Not enough valid paths
   }
   
-  // Check which bridges were actually used by 2 colors
-  const usedBridges = [];
-  for (const [key, colors] of Object.entries(bridgeUsage)) {
-    if (colors.length === 2) {
-      const [x, y] = key.split(',').map(Number);
-      usedBridges.push([x, y]);
-    }
-  }
-  
   // Re-number colors to be sequential and build solution paths map
   const result = [];
   const solutionPaths = {};
@@ -252,6 +243,22 @@ function fillGridWithPaths(width, height, numColors, random, walls = [], bridges
       end: path[path.length - 1]
     });
     solutionPaths[i] = path;
+  }
+  
+  // Collect all endpoint positions
+  const endpointSet = new Set();
+  for (const pair of result) {
+    endpointSet.add(`${pair.start[0]},${pair.start[1]}`);
+    endpointSet.add(`${pair.end[0]},${pair.end[1]}`);
+  }
+  
+  // Check which bridges were actually used by 2 colors AND are not endpoints
+  const usedBridges = [];
+  for (const [key, colors] of Object.entries(bridgeUsage)) {
+    if (colors.length === 2 && !endpointSet.has(key)) {
+      const [x, y] = key.split(',').map(Number);
+      usedBridges.push([x, y]);
+    }
   }
   
   return { pairs: result, solutionPaths, usedBridges };
@@ -479,17 +486,25 @@ export function generatePuzzleForDate(puzzleId) {
     }
   }
   
-  // Ultimate fallback
+  // Ultimate fallback - simple horizontal stripes (always solvable)
   console.warn('Using ultimate fallback puzzle for', puzzleId);
   return {
     id: puzzleId,
     width: 5,
     height: 5,
     pairs: [
-      { color: 0, start: [0, 0], end: [4, 4] },
-      { color: 1, start: [4, 0], end: [0, 4] },
-      { color: 2, start: [2, 0], end: [2, 4] },
-      { color: 3, start: [0, 2], end: [4, 2] }
-    ]
+      { color: 0, start: [0, 0], end: [4, 0] },
+      { color: 1, start: [0, 1], end: [4, 1] },
+      { color: 2, start: [0, 2], end: [4, 2] },
+      { color: 3, start: [0, 3], end: [4, 3] },
+      { color: 4, start: [0, 4], end: [4, 4] }
+    ],
+    solution: {
+      0: [[0,0], [1,0], [2,0], [3,0], [4,0]],
+      1: [[0,1], [1,1], [2,1], [3,1], [4,1]],
+      2: [[0,2], [1,2], [2,2], [3,2], [4,2]],
+      3: [[0,3], [1,3], [2,3], [3,3], [4,3]],
+      4: [[0,4], [1,4], [2,4], [3,4], [4,4]]
+    }
   };
 }

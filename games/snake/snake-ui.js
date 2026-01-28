@@ -543,14 +543,15 @@ export class SnakeUI {
     
     this.solutionShown = true;
     this.engine.state.path = [...this.engine.puzzle.solution];
-    this.engine.state.isComplete = true;
+    
+    // Mark as viewing solution but NOT complete (no modal, allows review)
     this.engine.state.isPaused = true;
     
-    // Hide the button
+    // Hide the show solution button
     this.elements.showSolutionBtn?.classList.add('hidden');
     
     // Show a message
-    this.showValidationMessage('Solution revealed! Try another puzzle.');
+    this.showValidationMessage('Solution revealed! Use Reset to try again.');
   }
   
   getUncompletedGames() {
@@ -1005,6 +1006,7 @@ export class SnakeUI {
   resetUI() {
     this.completionTime = null;
     this.modalShown = false;
+    this.solutionShown = false; // Reset so Show Solution button can reappear
     // Re-enable and show pause button
     if (this.elements.pauseBtn) {
       this.elements.pauseBtn.disabled = false;
@@ -1014,6 +1016,7 @@ export class SnakeUI {
     this.updateStartOverlay();
     this.updateResetButton();
     this.updateExitReplayButton();
+    this.updateShowSolutionButton();
   }
   
   // Show/hide start overlay based on whether the game has started
