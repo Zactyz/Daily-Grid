@@ -79,7 +79,10 @@ export class SnakeUI {
       validationMessageText: document.getElementById('validation-message-text'),
       
       // Show solution (practice mode)
-      showSolutionBtn: document.getElementById('show-solution-btn')
+      showSolutionBtn: document.getElementById('show-solution-btn'),
+      solutionActions: document.getElementById('solution-actions'),
+      solutionRetryBtn: document.getElementById('solution-retry-btn'),
+      solutionNextBtn: document.getElementById('solution-next-btn')
     };
     
     this.validationTimeout = null;
@@ -239,6 +242,18 @@ export class SnakeUI {
     // Show Solution Button (practice mode only)
     this.elements.showSolutionBtn?.addEventListener('click', () => {
       this.showSolution();
+    });
+    
+    // Solution revealed action buttons
+    this.elements.solutionRetryBtn?.addEventListener('click', () => {
+      this.engine.reset(false);
+      this.resetUI();
+      this.engine.saveProgress();
+      this.updateStartOverlay();
+    });
+    
+    this.elements.solutionNextBtn?.addEventListener('click', () => {
+      window.startPracticeMode();
     });
     
     // Reset Modal Logic
@@ -547,11 +562,15 @@ export class SnakeUI {
     // Mark as viewing solution but NOT complete (no modal, allows review)
     this.engine.state.isPaused = true;
     
-    // Hide the show solution button
+    // Hide the show solution button and pause button
     this.elements.showSolutionBtn?.classList.add('hidden');
+    this.elements.pauseBtn?.classList.add('hidden');
+    
+    // Show the solution action buttons
+    this.elements.solutionActions?.classList.remove('hidden');
     
     // Show a message
-    this.showValidationMessage('Solution revealed! Use Reset to try again.');
+    this.showValidationMessage('Solution revealed!');
   }
   
   getUncompletedGames() {
@@ -1012,6 +1031,8 @@ export class SnakeUI {
       this.elements.pauseBtn.disabled = false;
       this.elements.pauseBtn.classList.remove('hidden');
     }
+    // Hide solution action buttons
+    this.elements.solutionActions?.classList.add('hidden');
     this.updatePauseState();
     this.updateStartOverlay();
     this.updateResetButton();

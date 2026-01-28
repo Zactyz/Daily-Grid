@@ -212,13 +212,14 @@ export function generatePuzzleForDate(puzzleId) {
   
   // Ultimate fallback (should never happen)
   console.warn('Using ultimate fallback puzzle for', puzzleId);
+  // Numbers placed in order along the boustrophedon path:
+  // Position 0: [0,0]=1, Position 4: [4,0]=2, Position 10: [0,2]=3, Position 24: [4,4]=4
   return {
     id: puzzleId,
     width: 5,
     height: 5,
-    numbers: { '0,0': 1, '4,0': 2, '4,4': 3, '0,4': 4 },
+    numbers: { '0,0': 1, '4,0': 2, '0,2': 3, '4,4': 4 },
     walls: [],
-    // Simple snake path going around the grid
     solution: [
       [0,0], [1,0], [2,0], [3,0], [4,0],
       [4,1], [3,1], [2,1], [1,1], [0,1],

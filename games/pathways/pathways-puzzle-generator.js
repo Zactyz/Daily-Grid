@@ -75,9 +75,9 @@ function fillGridWithPaths(width, height, numColors, random, walls = [], bridges
     if (bridgeUsage.hasOwnProperty(key)) {
       // Bridge cell - can have up to 2 different colors
       const usage = bridgeUsage[key];
+      if (usage.includes(color)) return false; // Same color already used this bridge - don't double back!
       if (usage.length === 0) return true;
-      if (usage.length === 1 && usage[0] !== color) return true;
-      if (usage.includes(color)) return true; // Same color can extend through
+      if (usage.length === 1) return true; // Second color can cross
       return false; // Already has 2 colors
     }
     
@@ -177,6 +177,10 @@ function fillGridWithPaths(width, height, numColors, random, walls = [], bridges
         for (let x = 0; x < width && !foundEmpty; x++) {
           if (grid[y][x] !== -1) continue;
           
+          // Skip if this is a bridge cell (bridges are handled differently)
+          const targetKey = `${x},${y}`;
+          if (bridgeUsage.hasOwnProperty(targetKey)) continue;
+          
           // Found an empty cell - check its neighbors
           for (const [dx, dy] of dirs) {
             const nx = x + dx;
@@ -185,27 +189,30 @@ function fillGridWithPaths(width, height, numColors, random, walls = [], bridges
             if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
             if (grid[ny][nx] < 0) continue; // Wall or empty
             
-            const neighborColor = grid[ny][nx];
-            const neighborPath = paths[neighborColor];
-            
-            // Check if [nx, ny] is at the start or end of its path
-            const isAtStart = neighborPath[0][0] === nx && neighborPath[0][1] === ny;
-            const isAtEnd = neighborPath[neighborPath.length - 1][0] === nx && 
-                           neighborPath[neighborPath.length - 1][1] === ny;
-            
-            if (isAtStart) {
-              markCell(x, y, neighborColor);
-              neighborPath.unshift([x, y]);
-              foundEmpty = true;
-              extended = true;
-              break;
-            } else if (isAtEnd) {
-              markCell(x, y, neighborColor);
-              neighborPath.push([x, y]);
-              foundEmpty = true;
-              extended = true;
-              break;
+            // For each path, check if [nx, ny] is at the start or end
+            for (let neighborColor = 0; neighborColor < paths.length; neighborColor++) {
+              const neighborPath = paths[neighborColor];
+              if (neighborPath.length === 0) continue;
+              
+              const isAtStart = neighborPath[0][0] === nx && neighborPath[0][1] === ny;
+              const isAtEnd = neighborPath[neighborPath.length - 1][0] === nx && 
+                             neighborPath[neighborPath.length - 1][1] === ny;
+              
+              if (isAtStart) {
+                markCell(x, y, neighborColor);
+                neighborPath.unshift([x, y]);
+                foundEmpty = true;
+                extended = true;
+                break;
+              } else if (isAtEnd) {
+                markCell(x, y, neighborColor);
+                neighborPath.push([x, y]);
+                foundEmpty = true;
+                extended = true;
+                break;
+              }
             }
+            if (foundEmpty) break;
           }
         }
       }
@@ -232,6 +239,45 @@ function fillGridWithPaths(width, height, numColors, random, walls = [], bridges
     return null; // Not enough valid paths
   }
   
+  // Validate paths have no duplicate cells (catches bugs like doubling back)
+  for (const path of validPaths) {
+    const seen = new Set();
+    for (const [x, y] of path) {
+      const key = `${x},${y}`;
+      // Allow bridges to appear twice (from different colors) but same path shouldn't revisit
+      if (seen.has(key)) {
+        return null; // Path has duplicate - invalid
+      }
+      seen.add(key);
+    }
+  }
+  
+  // Count how many cells should be filled (total - walls)
+  let wallCount = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (grid[y][x] === -2) wallCount++;
+    }
+  }
+  const expectedCells = width * height - wallCount;
+  
+  // Count cells covered by valid paths
+  let coveredCells = 0;
+  for (const path of validPaths) {
+    coveredCells += path.length;
+  }
+  
+  // Verify solution covers all non-wall cells
+  // (bridges count once per path, so we need to account for them)
+  let bridgeCells = 0;
+  for (const usage of Object.values(bridgeUsage)) {
+    if (usage.length === 2) bridgeCells++; // Bridge used by 2 colors = counted twice
+  }
+  
+  if (coveredCells - bridgeCells !== expectedCells) {
+    return null; // Solution doesn't cover all cells
+  }
+  
   // Re-number colors to be sequential and build solution paths map
   const result = [];
   const solutionPaths = {};
@@ -250,6 +296,18 @@ function fillGridWithPaths(width, height, numColors, random, walls = [], bridges
   for (const pair of result) {
     endpointSet.add(`${pair.start[0]},${pair.start[1]}`);
     endpointSet.add(`${pair.end[0]},${pair.end[1]}`);
+  }
+  
+  // Verify no two endpoints are at the same position
+  if (endpointSet.size !== result.length * 2) {
+    return null; // Overlapping endpoints - invalid
+  }
+  
+  // Verify no endpoint is on a bridge
+  for (const key of endpointSet) {
+    if (bridgeUsage.hasOwnProperty(key)) {
+      return null; // Endpoint on bridge - invalid
+    }
   }
   
   // Check which bridges were actually used by 2 colors AND are not endpoints
