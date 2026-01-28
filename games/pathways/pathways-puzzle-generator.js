@@ -66,24 +66,36 @@ function generateCorridors(width, height, numCorridors, random, existingPaths = 
   return corridors;
 }
 
-// Generate walls (edges between cells) that add difficulty
+// Generate walls (edges between cells) that DON'T block the solution paths
 // Walls are stored as normalized edge strings like '1,1-2,1' (between cell [1,1] and [2,1])
-function generateWalls(width, height, numWalls, random) {
+function generateWalls(width, height, numWalls, random, solutionPaths = []) {
   if (numWalls === 0) return [];
   
-  const walls = [];
+  // Build set of edges used by solution paths (these cannot be walls)
+  const solutionEdges = new Set();
+  for (const path of solutionPaths) {
+    for (let i = 0; i < path.length - 1; i++) {
+      solutionEdges.add(normalizeWall(path[i], path[i + 1]));
+    }
+  }
   
-  // Collect all possible internal edges (not on grid boundary)
+  // Collect all possible internal edges that are NOT part of solution paths
   const availableEdges = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       // Horizontal edge (between [x,y] and [x+1,y])
       if (x < width - 1) {
-        availableEdges.push(normalizeWall([x, y], [x + 1, y]));
+        const edge = normalizeWall([x, y], [x + 1, y]);
+        if (!solutionEdges.has(edge)) {
+          availableEdges.push(edge);
+        }
       }
       // Vertical edge (between [x,y] and [x,y+1])
       if (y < height - 1) {
-        availableEdges.push(normalizeWall([x, y], [x, y + 1]));
+        const edge = normalizeWall([x, y], [x, y + 1]);
+        if (!solutionEdges.has(edge)) {
+          availableEdges.push(edge);
+        }
       }
     }
   }
@@ -94,8 +106,7 @@ function generateWalls(width, height, numWalls, random) {
     [availableEdges[i], availableEdges[j]] = [availableEdges[j], availableEdges[i]];
   }
   
-  // Select walls (simple selection - no complex connectivity check needed since
-  // paths can still route around walls, just not through them)
+  // Select walls from edges that don't block the solution
   return availableEdges.slice(0, Math.min(numWalls, availableEdges.length));
 }
 
@@ -395,6 +406,7 @@ function fillGridWithPaths(width, height, numColors, random) {
   
   // Re-number colors to be sequential
   const result = [];
+  const solutionPaths = [];
   for (let i = 0; i < validPaths.length; i++) {
     const path = validPaths[i];
     result.push({
@@ -402,9 +414,10 @@ function fillGridWithPaths(width, height, numColors, random) {
       start: path[0],
       end: path[path.length - 1]
     });
+    solutionPaths.push(path); // Keep full path for wall generation
   }
   
-  return { pairs: result };
+  return { pairs: result, solutionPaths: solutionPaths };
 }
 
 // Main export: Generate puzzle for a given date string
@@ -432,37 +445,37 @@ export function generatePuzzleForDate(puzzleId) {
   
   const totalCells = width * height;
   
-  // Determine if this puzzle should have walls (probability by grid size)
+  // Determine if this puzzle should have walls (lower probability, fewer walls)
   let numWalls = 0;
   const wallsRoll = paramRandom();
   if (width === 5 && height === 5) {
-    if (wallsRoll < 0.4) numWalls = 2 + Math.floor(paramRandom() * 3); // 40% chance, 2-4 walls
+    if (wallsRoll < 0.25) numWalls = 1 + Math.floor(paramRandom() * 2); // 25% chance, 1-2 walls
   } else if (width === 6 && height === 6) {
-    if (wallsRoll < 0.5) numWalls = 3 + Math.floor(paramRandom() * 4); // 50% chance, 3-6 walls
+    if (wallsRoll < 0.35) numWalls = 1 + Math.floor(paramRandom() * 3); // 35% chance, 1-3 walls
   } else { // 7x7
-    if (wallsRoll < 0.6) numWalls = 4 + Math.floor(paramRandom() * 5); // 60% chance, 4-8 walls
+    if (wallsRoll < 0.4) numWalls = 2 + Math.floor(paramRandom() * 3); // 40% chance, 2-4 walls
   }
   
-  // Determine if this puzzle should have corridors (probability by grid size)
+  // Determine if this puzzle should have corridors (rare feature)
   let numCorridors = 0;
   const corridorRoll = paramRandom();
   if (width === 5 && height === 5) {
-    if (corridorRoll < 0.2) numCorridors = 1; // 20% chance, 0-1 corridor
+    if (corridorRoll < 0.1) numCorridors = 1; // 10% chance, 1 corridor
   } else if (width === 6 && height === 6) {
-    if (corridorRoll < 0.3) numCorridors = Math.floor(paramRandom() * 3); // 30% chance, 0-2 corridors
+    if (corridorRoll < 0.15) numCorridors = 1; // 15% chance, 1 corridor
   } else { // 7x7
-    if (corridorRoll < 0.35) numCorridors = 1 + Math.floor(paramRandom() * 2); // 35% chance, 1-2 corridors
+    if (corridorRoll < 0.2) numCorridors = 1; // 20% chance, 1 corridor
   }
   
-  // Determine if this puzzle should have required cells (probability by grid size)
+  // Determine if this puzzle should have required cells (rare feature)
   let numRequired = 0;
   const requiredRoll = paramRandom();
   if (width === 5 && height === 5) {
-    if (requiredRoll < 0.15) numRequired = 1; // 15% chance, 0-1 required
+    if (requiredRoll < 0.1) numRequired = 1; // 10% chance, 1 required
   } else if (width === 6 && height === 6) {
-    if (requiredRoll < 0.2) numRequired = Math.floor(paramRandom() * 3); // 20% chance, 0-2 required
+    if (requiredRoll < 0.15) numRequired = 1; // 15% chance, 1 required
   } else { // 7x7
-    if (requiredRoll < 0.25) numRequired = 1 + Math.floor(paramRandom() * 2); // 25% chance, 1-2 required
+    if (requiredRoll < 0.2) numRequired = 1 + Math.floor(paramRandom() * 2); // 20% chance, 1-2 required
   }
   
   // Try to generate a valid filled grid
@@ -472,14 +485,11 @@ export function generatePuzzleForDate(puzzleId) {
     
     const result = fillGridWithPaths(width, height, numColors, random);
     if (result && result.pairs.length >= 4) {
-      // Generate walls (edges between cells)
-      const walls = generateWalls(width, height, numWalls, random);
+      // Generate walls that DON'T block solution paths
+      const walls = generateWalls(width, height, numWalls, random, result.solutionPaths);
       
       // Generate corridors after paths are created
-      const corridors = generateCorridors(width, height, numCorridors, random, result.pairs.map(p => {
-        // Reconstruct path from start to end (simplified - actual path would be more complex)
-        return [p.start, p.end];
-      }));
+      const corridors = generateCorridors(width, height, numCorridors, random, result.solutionPaths);
       
       // Generate required cells after paths are created
       const requiredCells = generateRequiredCells(width, height, numRequired, random, result.pairs);
