@@ -260,6 +260,7 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
   }
   
   // Assign starting cells: prefer corners, then edges, ensuring pairs are distant
+  // IMPORTANT: Never place endpoints on blocked cells
   const usedCells = new Set();
   
   for (let color = 0; color < numColors; color++) {
@@ -270,10 +271,11 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
       const [prevX, prevY] = paths[color - 1][0];
       const prevQuadrant = getQuadrant(prevX, prevY, width, height);
       
-      // Find cell in opposite quadrant
+      // Find cell in opposite quadrant (excluding blocked cells)
       const candidates = [...cornerCells, ...edgeCells].filter(([x, y]) => {
         const key = `${x},${y}`;
         if (usedCells.has(key)) return false;
+        if (blockedSet.has(key)) return false; // Don't place endpoints on blocked cells
         const quad = getQuadrant(x, y, width, height);
         return isOppositeQuadrant(prevQuadrant, quad);
       });
@@ -283,22 +285,23 @@ function fillGridWithPaths(width, height, numColors, random, blockedCells = []) 
       }
     }
     
-    // Fallback: use any available corner or edge cell
+    // Fallback: use any available corner or edge cell (excluding blocked cells)
     if (!cell) {
       const candidates = [...cornerCells, ...edgeCells].filter(([x, y]) => {
-        return !usedCells.has(`${x},${y}`);
+        const key = `${x},${y}`;
+        return !usedCells.has(key) && !blockedSet.has(key);
       });
       if (candidates.length > 0) {
         cell = candidates[Math.floor(random() * candidates.length)];
       }
     }
     
-    // Ultimate fallback: any cell
+    // Ultimate fallback: any non-blocked cell
     if (!cell) {
       for (let y = 0; y < height && !cell; y++) {
         for (let x = 0; x < width && !cell; x++) {
           const key = `${x},${y}`;
-          if (!usedCells.has(key)) {
+          if (!usedCells.has(key) && !blockedSet.has(key)) {
             cell = [x, y];
             break;
           }
