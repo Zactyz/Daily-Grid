@@ -177,11 +177,16 @@ export class SnakeUI {
     }
   }
   
-  // Helper to replace element (removes all old listeners)
+  // Helper to replace element (removes all old listeners by cloning)
   replaceElement(el) {
     if (!el) return null;
+    if (!el.parentNode) {
+      // Element not in DOM - can't replace, but shouldn't happen for our static HTML elements
+      console.warn('replaceElement: element has no parent', el.id);
+      return el;
+    }
     const newEl = el.cloneNode(true);
-    el.parentNode?.replaceChild(newEl, el);
+    el.parentNode.replaceChild(newEl, el);
     return newEl;
   }
   
@@ -581,9 +586,10 @@ export class SnakeUI {
     // Mark as viewing solution but NOT complete (no modal, allows review)
     this.engine.state.isPaused = true;
     
-    // Hide the show solution button and pause button
+    // Hide the show solution button, pause button, and reset button
     this.elements.showSolutionBtn?.classList.add('hidden');
     this.elements.pauseBtn?.classList.add('hidden');
+    this.elements.resetBtn?.classList.add('hidden');
     
     // Show the solution action buttons
     this.elements.solutionActions?.classList.remove('hidden');
@@ -1050,6 +1056,8 @@ export class SnakeUI {
       this.elements.pauseBtn.disabled = false;
       this.elements.pauseBtn.classList.remove('hidden');
     }
+    // Show reset button again
+    this.elements.resetBtn?.classList.remove('hidden');
     // Hide solution action buttons
     this.elements.solutionActions?.classList.add('hidden');
     this.updatePauseState();

@@ -4,18 +4,18 @@ export class PathwaysRenderer {
     this.ctx = canvas.getContext('2d');
     this.engine = engine;
     
-    // Color palette - distinct, well-separated hues (no similar colors)
+    // Color palette - distinct, well-separated hues
     this.colors = [
       { main: '#f08080', glow: 'rgba(240, 128, 128, 0.4)' },  // Coral Red
       { main: '#64b5f6', glow: 'rgba(100, 181, 246, 0.4)' },  // Blue
       { main: '#a5d6a7', glow: 'rgba(165, 214, 167, 0.4)' },  // Green
       { main: '#f0c674', glow: 'rgba(240, 198, 104, 0.4)' },  // Amber/Yellow
       { main: '#ce93d8', glow: 'rgba(206, 147, 216, 0.4)' },  // Purple
-      { main: '#ff8a65', glow: 'rgba(255, 138, 101, 0.4)' },  // Orange
-      { main: '#4dd0e1', glow: 'rgba(77, 208, 225, 0.4)' },   // Cyan
-      { main: '#f48fb1', glow: 'rgba(244, 143, 177, 0.4)' },  // Pink
+      { main: '#f48fb1', glow: 'rgba(244, 143, 177, 0.4)' },  // Pink (moved up)
+      { main: '#8d6e63', glow: 'rgba(141, 110, 99, 0.4)' },   // Brown
+      { main: '#9e9e9e', glow: 'rgba(158, 158, 158, 0.4)' },  // Gray (neutral, less blue)
       { main: '#fff176', glow: 'rgba(255, 241, 118, 0.4)' },  // Yellow
-      { main: '#90a4ae', glow: 'rgba(144, 164, 174, 0.4)' },  // Gray-Blue
+      { main: '#4db6ac', glow: 'rgba(77, 182, 172, 0.4)' },   // Teal
     ];
     
     this.bgColor = '#0a0a0f';
