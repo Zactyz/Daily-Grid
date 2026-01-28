@@ -183,7 +183,8 @@ export class PathwaysEngine {
     }
     
     // Check if cell is occupied by another color's path
-    for (const [otherColor, otherPath] of Object.entries(this.state.paths)) {
+    for (const [otherColorStr, otherPath] of Object.entries(this.state.paths)) {
+      const otherColor = parseInt(otherColorStr, 10);
       if (otherColor !== color && otherPath) {
         const occupied = otherPath.some(([px, py]) => px === x && py === y);
         if (occupied) return false;
