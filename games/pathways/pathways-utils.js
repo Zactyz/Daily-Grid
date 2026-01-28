@@ -51,15 +51,6 @@ export function formatTime(ms) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Normalize wall ID (edge between two cells) for consistent comparison
-export function normalizeWall(a, b) {
-  const [ax, ay] = a;
-  const [bx, by] = b;
-  const s1 = `${ax},${ay}`;
-  const s2 = `${bx},${by}`;
-  return (s1 < s2) ? `${s1}-${s2}` : `${s2}-${s1}`;
-}
-
 // Seeded PRNG (mulberry32) - produces deterministic sequence from seed
 export function createSeededRandom(seed) {
   let state = seed;

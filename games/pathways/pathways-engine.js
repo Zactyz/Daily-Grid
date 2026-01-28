@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, normalizeWall } from './pathways-utils.js';
+import { STORAGE_KEYS } from './pathways-utils.js';
 
 export class PathwaysEngine {
   constructor(puzzle, storageKey) {
@@ -18,18 +18,6 @@ export class PathwaysEngine {
     // Initialize paths with empty arrays for each color
     for (const pair of puzzle.pairs) {
       this.state.paths[pair.color] = [];
-    }
-    
-    // Store walls (edges between cells) as a Set for fast lookup
-    this.wallSet = new Set(puzzle.walls || []);
-    
-    // Store required cells as a Map: cell key -> required color
-    this.requiredCellMap = new Map();
-    if (puzzle.requiredCells) {
-      for (const req of puzzle.requiredCells) {
-        const [x, y] = req.cell;
-        this.requiredCellMap.set(`${x},${y}`, req.color);
-      }
     }
     
     this.lastSaveTime = 0;
@@ -127,8 +115,7 @@ export class PathwaysEngine {
     }
     
     // Check if cell is occupied by another color's path
-    for (const [otherColorStr, otherPath] of Object.entries(this.state.paths)) {
-      const otherColor = parseInt(otherColorStr, 10);
+    for (const [otherColor, otherPath] of Object.entries(this.state.paths)) {
       if (otherColor !== color && otherPath) {
         const occupied = otherPath.some(([px, py]) => px === x && py === y);
         if (occupied) return false;
@@ -152,12 +139,6 @@ export class PathwaysEngine {
     const isAdjacent = (Math.abs(x - lastX) === 1 && y === lastY) ||
                       (Math.abs(y - lastY) === 1 && x === lastX);
     if (!isAdjacent) return false;
-    
-    // Check if there's a wall between the last cell and this cell
-    const wallId = normalizeWall([lastX, lastY], [x, y]);
-    if (this.wallSet.has(wallId)) {
-      return false;
-    }
     
     // Determine which endpoint we started from and which is the target
     const [firstX, firstY] = path[0];
@@ -289,16 +270,6 @@ export class PathwaysEngine {
     if (filledCells.size !== totalCells) {
       this.state.isComplete = false;
       return false;
-    }
-    
-    // Check that all required cells are covered by the correct color
-    for (const [cellKey, requiredColor] of this.requiredCellMap) {
-      const [x, y] = cellKey.split(',').map(Number);
-      const actualColor = this.getCellColor(x, y);
-      if (actualColor !== requiredColor) {
-        this.state.isComplete = false;
-        return false;
-      }
     }
     
     // Win!
