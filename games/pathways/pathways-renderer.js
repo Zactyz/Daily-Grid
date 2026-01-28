@@ -132,69 +132,73 @@ export class PathwaysRenderer {
   
   drawObstacles() {
     const obstacle = this.engine.puzzle.obstacle;
-    if (!obstacle) return;
+    if (!obstacle || !obstacle.cells) return;
     
     const cornerRadius = Math.min(8, this.cellSize * 0.12);
     
     if (obstacle.type === 'bridge') {
-      // Draw bridge indicator (crossing arrows)
-      const px = this.offsetX + obstacle.x * (this.cellSize + this.gap);
-      const py = this.offsetY + obstacle.y * (this.cellSize + this.gap);
-      const cx = px + this.cellSize / 2;
-      const cy = py + this.cellSize / 2;
-      
-      // Blue glow background
-      this.ctx.fillStyle = this.bridgeColor;
-      this.roundRect(px, py, this.cellSize, this.cellSize, cornerRadius);
-      this.ctx.fill();
-      
-      // Draw bridge symbol (two crossing lines)
-      this.ctx.strokeStyle = 'rgba(100, 200, 255, 0.8)';
-      this.ctx.lineWidth = 2;
-      const size = this.cellSize * 0.2;
-      
-      // Horizontal line with gap
-      this.ctx.beginPath();
-      this.ctx.moveTo(cx - size * 1.5, cy);
-      this.ctx.lineTo(cx - size * 0.3, cy);
-      this.ctx.moveTo(cx + size * 0.3, cy);
-      this.ctx.lineTo(cx + size * 1.5, cy);
-      this.ctx.stroke();
-      
-      // Vertical line (continuous - over the gap)
-      this.ctx.beginPath();
-      this.ctx.moveTo(cx, cy - size * 1.5);
-      this.ctx.lineTo(cx, cy + size * 1.5);
-      this.ctx.stroke();
+      // Draw each bridge
+      for (const [bx, by] of obstacle.cells) {
+        const px = this.offsetX + bx * (this.cellSize + this.gap);
+        const py = this.offsetY + by * (this.cellSize + this.gap);
+        const cx = px + this.cellSize / 2;
+        const cy = py + this.cellSize / 2;
+        
+        // Blue glow background
+        this.ctx.fillStyle = this.bridgeColor;
+        this.roundRect(px, py, this.cellSize, this.cellSize, cornerRadius);
+        this.ctx.fill();
+        
+        // Draw bridge symbol (two crossing lines)
+        this.ctx.strokeStyle = 'rgba(100, 200, 255, 0.8)';
+        this.ctx.lineWidth = 2;
+        const size = this.cellSize * 0.2;
+        
+        // Horizontal line with gap
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx - size * 1.5, cy);
+        this.ctx.lineTo(cx - size * 0.3, cy);
+        this.ctx.moveTo(cx + size * 0.3, cy);
+        this.ctx.lineTo(cx + size * 1.5, cy);
+        this.ctx.stroke();
+        
+        // Vertical line (continuous - over the gap)
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy - size * 1.5);
+        this.ctx.lineTo(cx, cy + size * 1.5);
+        this.ctx.stroke();
+      }
       
     } else if (obstacle.type === 'checkpoint') {
-      // Draw checkpoint indicator (small colored ring)
-      const px = this.offsetX + obstacle.x * (this.cellSize + this.gap);
-      const py = this.offsetY + obstacle.y * (this.cellSize + this.gap);
-      const cx = px + this.cellSize / 2;
-      const cy = py + this.cellSize / 2;
-      
-      const colorData = this.colors[obstacle.color];
-      if (colorData) {
-        // Outer glow ring
-        this.ctx.strokeStyle = this.checkpointGlow;
-        this.ctx.lineWidth = 6;
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, this.cellSize * 0.3, 0, Math.PI * 2);
-        this.ctx.stroke();
+      // Draw each checkpoint
+      for (const cp of obstacle.cells) {
+        const px = this.offsetX + cp.x * (this.cellSize + this.gap);
+        const py = this.offsetY + cp.y * (this.cellSize + this.gap);
+        const cx = px + this.cellSize / 2;
+        const cy = py + this.cellSize / 2;
         
-        // Inner colored ring
-        this.ctx.strokeStyle = colorData.main;
-        this.ctx.lineWidth = 3;
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, this.cellSize * 0.3, 0, Math.PI * 2);
-        this.ctx.stroke();
-        
-        // Small inner dot
-        this.ctx.fillStyle = colorData.main + '66';
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, this.cellSize * 0.1, 0, Math.PI * 2);
-        this.ctx.fill();
+        const colorData = this.colors[cp.color];
+        if (colorData) {
+          // Outer glow ring
+          this.ctx.strokeStyle = this.checkpointGlow;
+          this.ctx.lineWidth = 6;
+          this.ctx.beginPath();
+          this.ctx.arc(cx, cy, this.cellSize * 0.3, 0, Math.PI * 2);
+          this.ctx.stroke();
+          
+          // Inner colored ring
+          this.ctx.strokeStyle = colorData.main;
+          this.ctx.lineWidth = 3;
+          this.ctx.beginPath();
+          this.ctx.arc(cx, cy, this.cellSize * 0.3, 0, Math.PI * 2);
+          this.ctx.stroke();
+          
+          // Small inner dot
+          this.ctx.fillStyle = colorData.main + '66';
+          this.ctx.beginPath();
+          this.ctx.arc(cx, cy, this.cellSize * 0.1, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
       }
     }
   }

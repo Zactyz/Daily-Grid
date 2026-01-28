@@ -457,26 +457,36 @@ export class PathwaysUI {
     if (!this.elements.obstacleHint || !this.elements.obstacleHintText) return;
     
     const obstacle = this.engine.puzzle.obstacle;
-    if (!obstacle) {
+    if (!obstacle || !obstacle.cells || obstacle.cells.length === 0) {
       this.elements.obstacleHint.classList.add('hidden');
       return;
     }
     
     let hintText = '';
     let hintClass = '';
+    const count = obstacle.cells.length;
+    const plural = count > 1;
     
     switch (obstacle.type) {
       case 'wall':
-        hintText = 'Blocked cells cannot be crossed';
+        hintText = plural 
+          ? `${count} blocked cells cannot be crossed`
+          : 'Blocked cell cannot be crossed';
         hintClass = 'bg-zinc-500/15 border-zinc-500/25 text-zinc-300';
         break;
       case 'bridge':
-        hintText = 'Bridge: Two paths may cross here';
+        hintText = plural
+          ? `${count} bridges: Two paths may cross at each`
+          : 'Bridge: Two paths may cross here';
         hintClass = 'bg-sky-500/15 border-sky-500/25 text-sky-300';
         break;
       case 'checkpoint':
-        const colorName = this.renderer?.getColorName(obstacle.color) || 'The colored';
-        hintText = `Checkpoint: ${colorName} path must pass through the marked cell`;
+        if (plural) {
+          hintText = `${count} checkpoints: Paths must pass through marked cells`;
+        } else {
+          const colorName = this.renderer?.getColorName(obstacle.cells[0]?.color) || 'The colored';
+          hintText = `Checkpoint: ${colorName} path must pass through the marked cell`;
+        }
         hintClass = 'bg-amber-500/15 border-amber-500/25 text-amber-300';
         break;
       default:

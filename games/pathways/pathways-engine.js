@@ -104,7 +104,18 @@ export class PathwaysEngine {
   
   isBridgeCell(x, y) {
     if (this.puzzle.obstacle?.type !== 'bridge') return false;
-    return this.puzzle.obstacle.x === x && this.puzzle.obstacle.y === y;
+    return this.puzzle.obstacle.cells?.some(([bx, by]) => bx === x && by === y);
+  }
+  
+  isCheckpointCell(x, y) {
+    if (this.puzzle.obstacle?.type !== 'checkpoint') return false;
+    return this.puzzle.obstacle.cells?.some(cp => cp.x === x && cp.y === y);
+  }
+  
+  getCheckpointColor(x, y) {
+    if (this.puzzle.obstacle?.type !== 'checkpoint') return null;
+    const cp = this.puzzle.obstacle.cells?.find(cp => cp.x === x && cp.y === y);
+    return cp ? cp.color : null;
   }
   
   canAddCell(color, x, y) {
@@ -293,13 +304,15 @@ export class PathwaysEngine {
       gridFilled = false;
     }
     
-    // Check checkpoint constraint
-    if (this.puzzle.obstacle?.type === 'checkpoint') {
-      const cp = this.puzzle.obstacle;
-      const path = this.state.paths[cp.color] || [];
-      const passesThrough = path.some(([x, y]) => x === cp.x && y === cp.y);
-      if (this.isPathComplete(cp.color) && !passesThrough) {
-        checkpointMissed = true;
+    // Check checkpoint constraints (may have multiple checkpoints)
+    if (this.puzzle.obstacle?.type === 'checkpoint' && this.puzzle.obstacle.cells) {
+      for (const cp of this.puzzle.obstacle.cells) {
+        const path = this.state.paths[cp.color] || [];
+        const passesThrough = path.some(([x, y]) => x === cp.x && y === cp.y);
+        if (this.isPathComplete(cp.color) && !passesThrough) {
+          checkpointMissed = true;
+          break;
+        }
       }
     }
     
@@ -332,14 +345,15 @@ export class PathwaysEngine {
       }
     }
     
-    // Check checkpoint constraint if present
-    if (this.puzzle.obstacle?.type === 'checkpoint') {
-      const cp = this.puzzle.obstacle;
-      const path = this.state.paths[cp.color] || [];
-      const passesThrough = path.some(([x, y]) => x === cp.x && y === cp.y);
-      if (!passesThrough) {
-        this.state.isComplete = false;
-        return false;
+    // Check checkpoint constraints if present (may have multiple)
+    if (this.puzzle.obstacle?.type === 'checkpoint' && this.puzzle.obstacle.cells) {
+      for (const cp of this.puzzle.obstacle.cells) {
+        const path = this.state.paths[cp.color] || [];
+        const passesThrough = path.some(([x, y]) => x === cp.x && y === cp.y);
+        if (!passesThrough) {
+          this.state.isComplete = false;
+          return false;
+        }
       }
     }
     
