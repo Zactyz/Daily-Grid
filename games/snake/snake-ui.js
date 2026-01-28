@@ -177,7 +177,26 @@ export class SnakeUI {
     }
   }
   
+  // Helper to replace element (removes all old listeners)
+  replaceElement(el) {
+    if (!el) return null;
+    const newEl = el.cloneNode(true);
+    el.parentNode?.replaceChild(newEl, el);
+    return newEl;
+  }
+  
   setupListeners() {
+    // Replace elements that may have accumulated listeners from previous UI instances
+    // This ensures clean listener state for buttons that stay visible across mode changes
+    this.elements.showSolutionBtn = this.replaceElement(this.elements.showSolutionBtn);
+    this.elements.solutionRetryBtn = this.replaceElement(this.elements.solutionRetryBtn);
+    this.elements.solutionNextBtn = this.replaceElement(this.elements.solutionNextBtn);
+    this.elements.practiceInfiniteBtn = this.replaceElement(this.elements.practiceInfiniteBtn);
+    this.elements.backToDailyCompleteBtn = this.replaceElement(this.elements.backToDailyCompleteBtn);
+    this.elements.nextLevelBtn = this.replaceElement(this.elements.nextLevelBtn);
+    this.elements.tryAgainBtn = this.replaceElement(this.elements.tryAgainBtn);
+    this.elements.practiceRetryNewBtn = this.replaceElement(this.elements.practiceRetryNewBtn);
+    
     this.elements.pauseBtn?.addEventListener('click', () => this.togglePause());
     this.elements.resetBtn?.addEventListener('click', () => {
       if (this.engine.state.isComplete) {
