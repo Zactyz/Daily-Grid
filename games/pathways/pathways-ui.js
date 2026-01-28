@@ -225,6 +225,8 @@ export class PathwaysUI {
     
     this.elements.backToDailyCompleteBtn?.addEventListener('click', () => {
       this.hideCompletionModal();
+      // Hide solution actions before switching modes
+      this.elements.solutionActions?.classList.add('hidden');
       window.startDailyMode();
     });
     
@@ -242,11 +244,15 @@ export class PathwaysUI {
     });
     
     this.elements.solutionNextBtn?.addEventListener('click', () => {
+      // Hide solution actions before switching to new puzzle
+      this.elements.solutionActions?.classList.add('hidden');
       window.startPracticeMode();
     });
     
     this.elements.practiceInfiniteBtn?.addEventListener('click', () => {
       this.hideCompletionModal();
+      // Hide solution actions before switching modes
+      this.elements.solutionActions?.classList.add('hidden');
       window.startPracticeMode();
     });
     

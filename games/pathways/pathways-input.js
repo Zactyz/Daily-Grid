@@ -22,6 +22,15 @@ export class PathwaysInput {
     this.canvas.addEventListener('pointerleave', this.handlePointerUp.bind(this));
   }
   
+  // Update touch behavior based on game state (allow scrolling when complete/paused)
+  updateTouchBehavior() {
+    if (this.engine.state.isComplete || this.engine.state.isPaused) {
+      this.canvas.style.touchAction = 'auto';
+    } else {
+      this.canvas.style.touchAction = 'none';
+    }
+  }
+  
   handlePointerDown(e) {
     if (this.engine.state.isPaused || this.engine.state.isComplete) return;
     

@@ -33,6 +33,7 @@
             background: var(--brand-bg);
             color: #e8e8ed;
             overflow-x: hidden;
+            overflow-y: auto;
         }
         
         /* Ambient background - coral and mint tones */
@@ -233,7 +234,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col overflow-y-auto">
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6">
         <div class="max-w-5xl mx-auto flex justify-between items-center">
@@ -677,6 +678,7 @@
             engine.updateTime(delta);
             renderer.render();
             ui.update();
+            input.updateTouchBehavior();
             
             requestAnimationFrame(gameLoop);
         }

@@ -254,12 +254,16 @@ export class SnakeUI {
     
     this.elements.backToDailyCompleteBtn?.addEventListener('click', () => {
       this.hideCompletionModal();
+      // Hide solution actions before switching modes
+      this.elements.solutionActions?.classList.add('hidden');
       window.startDailyMode();
     });
     
     // Daily Mode: Practice Button
     this.elements.practiceInfiniteBtn?.addEventListener('click', () => {
       this.hideCompletionModal();
+      // Hide solution actions before switching modes
+      this.elements.solutionActions?.classList.add('hidden');
       window.startPracticeMode();
     });
     
@@ -277,6 +281,8 @@ export class SnakeUI {
     });
     
     this.elements.solutionNextBtn?.addEventListener('click', () => {
+      // Hide solution actions before switching to new puzzle
+      this.elements.solutionActions?.classList.add('hidden');
       window.startPracticeMode();
     });
     
