@@ -459,16 +459,11 @@ export function generatePuzzleForDate(puzzleId) {
   
   const totalCells = width * height;
   
-  // Determine if this puzzle should have walls (lower probability, fewer walls)
-  let numWalls = 0;
-  const wallsRoll = paramRandom();
-  if (width === 5 && height === 5) {
-    if (wallsRoll < 0.25) numWalls = 1 + Math.floor(paramRandom() * 2); // 25% chance, 1-2 walls
-  } else if (width === 6 && height === 6) {
-    if (wallsRoll < 0.35) numWalls = 1 + Math.floor(paramRandom() * 3); // 35% chance, 1-3 walls
-  } else { // 7x7
-    if (wallsRoll < 0.4) numWalls = 2 + Math.floor(paramRandom() * 3); // 40% chance, 2-4 walls
-  }
+  // Walls disabled - they force a single solution which is too restrictive
+  // In Flow-style games, walls create trap situations if the user takes any
+  // path different from the generated solution. Unlike Snake which has numbered
+  // clues, Pathways has no guidance, making walls very frustrating.
+  const numWalls = 0;
   
   // Determine if this puzzle should have corridors (rare feature)
   let numCorridors = 0;
