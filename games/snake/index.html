@@ -265,7 +265,7 @@
         </header>
 
         <!-- Stats Row -->
-        <div class="flex gap-3 mb-5 w-full max-w-xs">
+        <div class="flex gap-3 mb-3 w-full max-w-xs">
             <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
                 <div class="text-[10px] uppercase tracking-wider text-amber-400/60 mb-0.5">Time</div>
                 <div id="timer" class="text-xl font-bold mono gold-text">0:00</div>
@@ -274,6 +274,11 @@
                 <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Grid</div>
                 <div id="grid-size" class="text-xl font-bold mono text-zinc-300">5x5</div>
             </div>
+        </div>
+
+        <!-- Validation Message (shown when path complete but wrong order) -->
+        <div id="validation-message" class="hidden w-full max-w-xs mb-3 px-3 py-2 rounded-lg bg-amber-500/15 border border-amber-500/25 text-amber-300 text-xs text-center animate-pulse">
+            <span id="validation-message-text"></span>
         </div>
 
         <!-- Loading State -->
@@ -400,6 +405,15 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
             <span>Back to Daily Puzzle</span>
+        </button>
+
+        <!-- Show Solution (practice mode only) -->
+        <button id="show-solution-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            <span>Show Solution</span>
         </button>
     </main>
 
@@ -589,13 +603,15 @@
                 
                 engine = new SnakeEngine(puzzle, storageKey);
                 renderer = new SnakeRenderer(canvas, engine);
+                ui = new SnakeUI(engine, reset, nextLevel, currentMode);
                 
                 input = new SnakeInput(canvas, engine, renderer, () => {
                     renderer.render();
                     ui.update();
+                }, () => {
+                    // Validation check callback
+                    ui.checkAndShowValidation();
                 });
-                
-                ui = new SnakeUI(engine, reset, nextLevel, currentMode);
                 
                 gameLoop();
                 

@@ -177,7 +177,8 @@ export function generatePuzzleForDate(puzzleId) {
         width,
         height,
         numbers,
-        walls
+        walls,
+        solution: path // Include solution for "Show Solution" feature
       };
     }
   }
@@ -203,7 +204,8 @@ export function generatePuzzleForDate(puzzleId) {
         width: smallerWidth,
         height: smallerHeight,
         numbers,
-        walls
+        walls,
+        solution: path // Include solution for "Show Solution" feature
       };
     }
   }

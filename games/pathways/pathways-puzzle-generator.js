@@ -439,7 +439,8 @@ export function generatePuzzleForDate(puzzleId) {
         id: puzzleId,
         width,
         height,
-        pairs: result.pairs
+        pairs: result.pairs,
+        solution: result.solutionPaths // Include solution for "Show Solution" feature
       };
       
       // Add obstacle info
@@ -472,7 +473,8 @@ export function generatePuzzleForDate(puzzleId) {
         id: puzzleId,
         width: 5,
         height: 5,
-        pairs: result.pairs
+        pairs: result.pairs,
+        solution: result.solutionPaths // Include solution for "Show Solution" feature
       };
     }
   }

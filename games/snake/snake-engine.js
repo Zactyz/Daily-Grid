@@ -159,6 +159,37 @@ export class SnakeEngine {
     this.clearProgress();
   }
   
+  getValidationState() {
+    const totalCells = this.puzzle.width * this.puzzle.height;
+    const gridFilled = this.state.path.length === totalCells;
+    
+    // Check number order
+    const visitedNumbers = [];
+    for (const [x, y] of this.state.path) {
+      const num = this.numberMap[`${x},${y}`];
+      if (num !== undefined) {
+        visitedNumbers.push(num);
+      }
+    }
+    
+    const expectedNumbers = Object.values(this.numberMap).sort((a, b) => a - b);
+    const numbersCorrectOrder = visitedNumbers.length === expectedNumbers.length &&
+                                visitedNumbers.every((num, i) => num === expectedNumbers[i]);
+    
+    // Find where the order goes wrong
+    let wrongOrderAt = null;
+    if (!numbersCorrectOrder && visitedNumbers.length > 0) {
+      for (let i = 0; i < visitedNumbers.length; i++) {
+        if (visitedNumbers[i] !== expectedNumbers[i]) {
+          wrongOrderAt = { expected: expectedNumbers[i], got: visitedNumbers[i] };
+          break;
+        }
+      }
+    }
+    
+    return { gridFilled, numbersCorrectOrder, wrongOrderAt };
+  }
+  
   checkWinCondition() {
     if (this.state.path.length !== this.puzzle.width * this.puzzle.height) {
       return false;

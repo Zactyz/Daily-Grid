@@ -1,9 +1,10 @@
 export class SnakeInput {
-  constructor(canvas, engine, renderer, onUpdate) {
+  constructor(canvas, engine, renderer, onUpdate, onValidationCheck) {
     this.canvas = canvas;
     this.engine = engine;
     this.renderer = renderer;
     this.onUpdate = onUpdate;
+    this.onValidationCheck = onValidationCheck || (() => {});
     
     this.setupListeners();
   }
@@ -73,6 +74,10 @@ export class SnakeInput {
   }
   
   handlePointerUp(e) {
+    if (this.engine.state.isDragging) {
+      // Check for validation messages when user finishes a drag
+      this.onValidationCheck();
+    }
     this.engine.state.isDragging = false;
     try {
       this.canvas.releasePointerCapture?.(e.pointerId);

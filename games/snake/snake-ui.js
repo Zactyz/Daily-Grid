@@ -72,8 +72,18 @@ export class SnakeUI {
       nextGameText: document.getElementById('next-game-text'),
       externalGamePromo: document.getElementById('external-game-promo'),
       externalGameLogo: document.getElementById('external-game-logo'),
-      externalGameText: document.getElementById('external-game-text')
+      externalGameText: document.getElementById('external-game-text'),
+      
+      // Validation messages
+      validationMessage: document.getElementById('validation-message'),
+      validationMessageText: document.getElementById('validation-message-text'),
+      
+      // Show solution (practice mode)
+      showSolutionBtn: document.getElementById('show-solution-btn')
     };
+    
+    this.validationTimeout = null;
+    this.solutionShown = false;
     
     // Check if already submitted for today
     if (this.mode === 'daily') {
@@ -112,6 +122,9 @@ export class SnakeUI {
     
     // Show external cross-game promo if applicable
     this.updateExternalGamePromo();
+    
+    // Show solution button (practice mode only)
+    this.updateShowSolutionButton();
   }
   
   checkIfAlreadySubmitted() {
@@ -221,6 +234,11 @@ export class SnakeUI {
     this.elements.practiceInfiniteBtn?.addEventListener('click', () => {
       this.hideCompletionModal();
       window.startPracticeMode();
+    });
+    
+    // Show Solution Button (practice mode only)
+    this.elements.showSolutionBtn?.addEventListener('click', () => {
+      this.showSolution();
     });
     
     // Reset Modal Logic
@@ -466,6 +484,73 @@ export class SnakeUI {
     } else {
       this.elements.exitReplayBtn.classList.add('hidden');
     }
+  }
+  
+  showValidationMessage(message) {
+    if (!this.elements.validationMessage || !this.elements.validationMessageText) return;
+    
+    // Clear any existing timeout
+    if (this.validationTimeout) {
+      clearTimeout(this.validationTimeout);
+    }
+    
+    this.elements.validationMessageText.textContent = message;
+    this.elements.validationMessage.classList.remove('hidden');
+    
+    // Auto-hide after 3 seconds
+    this.validationTimeout = setTimeout(() => {
+      this.hideValidationMessage();
+    }, 3000);
+  }
+  
+  hideValidationMessage() {
+    if (!this.elements.validationMessage) return;
+    this.elements.validationMessage.classList.add('hidden');
+    if (this.validationTimeout) {
+      clearTimeout(this.validationTimeout);
+      this.validationTimeout = null;
+    }
+  }
+  
+  checkAndShowValidation() {
+    const validation = this.engine.getValidationState();
+    
+    if (validation.gridFilled && !validation.numbersCorrectOrder) {
+      if (validation.wrongOrderAt) {
+        this.showValidationMessage(`Numbers must be visited in order! Expected ${validation.wrongOrderAt.expected}, found ${validation.wrongOrderAt.got}`);
+      } else {
+        this.showValidationMessage('Numbers must be visited in order!');
+      }
+    }
+  }
+  
+  updateShowSolutionButton() {
+    if (!this.elements.showSolutionBtn) return;
+    
+    // Only show in practice mode and when not already showing solution
+    if (this.mode === 'practice' && !this.solutionShown && !this.engine.state.isComplete) {
+      this.elements.showSolutionBtn.classList.remove('hidden');
+    } else {
+      this.elements.showSolutionBtn.classList.add('hidden');
+    }
+  }
+  
+  showSolution() {
+    if (!this.engine.puzzle.solution) {
+      this.showValidationMessage('Solution not available for this puzzle');
+      return;
+    }
+    
+    this.solutionShown = true;
+    this.engine.state.path = [...this.engine.puzzle.solution];
+    this.engine.state.isComplete = true;
+    this.engine.state.isPaused = true;
+    
+    // Hide the button
+    this.elements.showSolutionBtn?.classList.add('hidden');
+    
+    // Show a message
+    this.showValidationMessage('Solution revealed! Try another puzzle.');
   }
   
   getUncompletedGames() {

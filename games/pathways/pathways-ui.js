@@ -68,10 +68,14 @@ export class PathwaysUI {
       obstacleHint: document.getElementById('obstacle-hint'),
       obstacleHintText: document.getElementById('obstacle-hint-text'),
       validationMessage: document.getElementById('validation-message'),
-      validationMessageText: document.getElementById('validation-message-text')
+      validationMessageText: document.getElementById('validation-message-text'),
+      
+      // Show solution (practice mode)
+      showSolutionBtn: document.getElementById('show-solution-btn')
     };
     
     this.validationTimeout = null;
+    this.solutionShown = false;
     
     if (this.mode === 'daily') {
       this.checkIfAlreadySubmitted();
@@ -98,6 +102,7 @@ export class PathwaysUI {
     this.updateExitReplayButton();
     this.updateExternalGamePromo();
     this.updateObstacleHint();
+    this.updateShowSolutionButton();
   }
   
   setRenderer(renderer) {
@@ -195,6 +200,11 @@ export class PathwaysUI {
     this.elements.backToDailyCompleteBtn?.addEventListener('click', () => {
       this.hideCompletionModal();
       window.startDailyMode();
+    });
+    
+    // Show Solution Button (practice mode only)
+    this.elements.showSolutionBtn?.addEventListener('click', () => {
+      this.showSolution();
     });
     
     this.elements.practiceInfiniteBtn?.addEventListener('click', () => {
@@ -507,6 +517,43 @@ export class PathwaysUI {
     } else if (validation.checkpointMissed) {
       this.showValidationMessage('Path must go through the checkpoint!');
     }
+  }
+  
+  updateShowSolutionButton() {
+    if (!this.elements.showSolutionBtn) return;
+    
+    // Only show in practice mode and when not already showing solution
+    if (this.mode === 'practice' && !this.solutionShown && !this.engine.state.isComplete) {
+      this.elements.showSolutionBtn.classList.remove('hidden');
+    } else {
+      this.elements.showSolutionBtn.classList.add('hidden');
+    }
+  }
+  
+  showSolution() {
+    if (!this.engine.puzzle.solution) {
+      this.showValidationMessage('Solution not available for this puzzle');
+      return;
+    }
+    
+    this.solutionShown = true;
+    
+    // Set the paths from the solution
+    for (const pair of this.engine.puzzle.pairs) {
+      const solutionPath = this.engine.puzzle.solution[pair.color];
+      if (solutionPath) {
+        this.engine.state.paths[pair.color] = [...solutionPath];
+      }
+    }
+    
+    this.engine.state.isComplete = true;
+    this.engine.state.isPaused = true;
+    
+    // Hide the button
+    this.elements.showSolutionBtn?.classList.add('hidden');
+    
+    // Show a message
+    this.showValidationMessage('Solution revealed! Try another puzzle.');
   }
   
   getUncompletedGames() {
