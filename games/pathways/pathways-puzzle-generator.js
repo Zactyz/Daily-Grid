@@ -459,11 +459,19 @@ export function generatePuzzleForDate(puzzleId) {
   
   const totalCells = width * height;
   
-  // Walls disabled - they force a single solution which is too restrictive
-  // In Flow-style games, walls create trap situations if the user takes any
-  // path different from the generated solution. Unlike Snake which has numbered
-  // clues, Pathways has no guidance, making walls very frustrating.
-  const numWalls = 0;
+  // Walls disabled - they force a single solution which is too restrictive.
+  // IMPORTANT: Keep the paramRandom() calls to preserve the seeded sequence
+  // for backward compatibility with existing puzzles.
+  let numWalls = 0;
+  const wallsRoll = paramRandom(); // Keep for sequence compatibility
+  if (width === 5 && height === 5) {
+    if (wallsRoll < 0.25) paramRandom(); // Was: numWalls = 1 + Math.floor(paramRandom() * 2)
+  } else if (width === 6 && height === 6) {
+    if (wallsRoll < 0.35) paramRandom(); // Was: numWalls = 1 + Math.floor(paramRandom() * 3)
+  } else { // 7x7
+    if (wallsRoll < 0.4) paramRandom(); // Was: numWalls = 2 + Math.floor(paramRandom() * 3)
+  }
+  // numWalls stays 0 - walls create trap situations in Flow-style games
   
   // Determine if this puzzle should have corridors (rare feature)
   let numCorridors = 0;
