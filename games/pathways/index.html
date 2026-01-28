@@ -266,7 +266,7 @@
         </header>
 
         <!-- Stats Row -->
-        <div class="flex gap-3 mb-5 w-full max-w-xs">
+        <div class="flex gap-3 mb-3 w-full max-w-xs">
             <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
                 <div class="text-[10px] uppercase tracking-wider text-rose-400/60 mb-0.5">Time</div>
                 <div id="timer" class="text-xl font-bold mono accent-text">0:00</div>
@@ -275,6 +275,16 @@
                 <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Grid</div>
                 <div id="grid-size" class="text-xl font-bold mono text-zinc-300">5x5</div>
             </div>
+        </div>
+
+        <!-- Obstacle Hint (shown when puzzle has special obstacle) -->
+        <div id="obstacle-hint" class="hidden w-full max-w-xs mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs text-center">
+            <span id="obstacle-hint-text"></span>
+        </div>
+
+        <!-- Validation Message (shown when paths complete but grid not full) -->
+        <div id="validation-message" class="hidden w-full max-w-xs mb-3 px-3 py-2 rounded-lg bg-rose-500/15 border border-rose-500/25 text-rose-300 text-xs text-center animate-pulse">
+            <span id="validation-message-text"></span>
         </div>
 
         <!-- Loading State -->
@@ -586,13 +596,16 @@
                 
                 engine = new PathwaysEngine(puzzle, storageKey);
                 renderer = new PathwaysRenderer(canvas, engine);
+                ui = new PathwaysUI(engine, reset, nextLevel, currentMode);
+                ui.setRenderer(renderer);
                 
                 input = new PathwaysInput(canvas, engine, renderer, () => {
                     renderer.render();
                     ui.update();
+                }, () => {
+                    // Validation check callback - triggered when user finishes a drag
+                    ui.checkAndShowValidation();
                 });
-                
-                ui = new PathwaysUI(engine, reset, nextLevel, currentMode);
                 
                 gameLoop();
                 

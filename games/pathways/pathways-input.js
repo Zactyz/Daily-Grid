@@ -1,9 +1,10 @@
 export class PathwaysInput {
-  constructor(canvas, engine, renderer, onUpdate) {
+  constructor(canvas, engine, renderer, onUpdate, onValidationCheck) {
     this.canvas = canvas;
     this.engine = engine;
     this.renderer = renderer;
     this.onUpdate = onUpdate;
+    this.onValidationCheck = onValidationCheck || (() => {});
     
     this.isDragging = false;
     this.dragColor = null;
@@ -134,6 +135,10 @@ export class PathwaysInput {
   }
   
   handlePointerUp(e) {
+    if (this.isDragging) {
+      // Check for validation messages when user finishes a drag
+      this.onValidationCheck();
+    }
     this.isDragging = false;
     this.dragColor = null;
     try {

@@ -18,6 +18,7 @@ export class PathwaysUI {
     this.onReset = onReset;
     this.onNextLevel = onNextLevel;
     this.mode = mode;
+    this.renderer = null; // Set via setRenderer()
     
     this.lastUIUpdate = 0;
     this.uiThrottleMs = 100;
@@ -63,8 +64,14 @@ export class PathwaysUI {
       nextGameText: document.getElementById('next-game-text'),
       externalGamePromo: document.getElementById('external-game-promo'),
       externalGameLogo: document.getElementById('external-game-logo'),
-      externalGameText: document.getElementById('external-game-text')
+      externalGameText: document.getElementById('external-game-text'),
+      obstacleHint: document.getElementById('obstacle-hint'),
+      obstacleHintText: document.getElementById('obstacle-hint-text'),
+      validationMessage: document.getElementById('validation-message'),
+      validationMessageText: document.getElementById('validation-message-text')
     };
+    
+    this.validationTimeout = null;
     
     if (this.mode === 'daily') {
       this.checkIfAlreadySubmitted();
@@ -90,6 +97,13 @@ export class PathwaysUI {
     this.updateResetButton();
     this.updateExitReplayButton();
     this.updateExternalGamePromo();
+    this.updateObstacleHint();
+  }
+  
+  setRenderer(renderer) {
+    this.renderer = renderer;
+    // Update obstacle hint now that we have the renderer for color names
+    this.updateObstacleHint();
   }
   
   checkIfAlreadySubmitted() {
@@ -410,6 +424,78 @@ export class PathwaysUI {
       this.elements.exitReplayBtn.classList.remove('hidden');
     } else {
       this.elements.exitReplayBtn.classList.add('hidden');
+    }
+  }
+  
+  showValidationMessage(message) {
+    if (!this.elements.validationMessage || !this.elements.validationMessageText) return;
+    
+    // Clear any existing timeout
+    if (this.validationTimeout) {
+      clearTimeout(this.validationTimeout);
+    }
+    
+    this.elements.validationMessageText.textContent = message;
+    this.elements.validationMessage.classList.remove('hidden');
+    
+    // Auto-hide after 3 seconds
+    this.validationTimeout = setTimeout(() => {
+      this.hideValidationMessage();
+    }, 3000);
+  }
+  
+  hideValidationMessage() {
+    if (!this.elements.validationMessage) return;
+    this.elements.validationMessage.classList.add('hidden');
+    if (this.validationTimeout) {
+      clearTimeout(this.validationTimeout);
+      this.validationTimeout = null;
+    }
+  }
+  
+  updateObstacleHint() {
+    if (!this.elements.obstacleHint || !this.elements.obstacleHintText) return;
+    
+    const obstacle = this.engine.puzzle.obstacle;
+    if (!obstacle) {
+      this.elements.obstacleHint.classList.add('hidden');
+      return;
+    }
+    
+    let hintText = '';
+    let hintClass = '';
+    
+    switch (obstacle.type) {
+      case 'wall':
+        hintText = 'Blocked cells cannot be crossed';
+        hintClass = 'bg-zinc-500/15 border-zinc-500/25 text-zinc-300';
+        break;
+      case 'bridge':
+        hintText = 'Bridge: Two paths may cross here';
+        hintClass = 'bg-sky-500/15 border-sky-500/25 text-sky-300';
+        break;
+      case 'checkpoint':
+        const colorName = this.renderer?.getColorName(obstacle.color) || 'The colored';
+        hintText = `Checkpoint: ${colorName} path must pass through the marked cell`;
+        hintClass = 'bg-amber-500/15 border-amber-500/25 text-amber-300';
+        break;
+      default:
+        this.elements.obstacleHint.classList.add('hidden');
+        return;
+    }
+    
+    this.elements.obstacleHintText.textContent = hintText;
+    this.elements.obstacleHint.className = `w-full max-w-xs mb-3 px-3 py-2 rounded-lg text-xs text-center ${hintClass}`;
+    this.elements.obstacleHint.classList.remove('hidden');
+  }
+  
+  checkAndShowValidation() {
+    const validation = this.engine.getValidationState();
+    
+    if (validation.allPathsComplete && !validation.gridFilled) {
+      this.showValidationMessage('All cells must be filled!');
+    } else if (validation.checkpointMissed) {
+      this.showValidationMessage('Path must go through the checkpoint!');
     }
   }
   

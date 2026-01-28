@@ -97,8 +97,23 @@ export class PathwaysEngine {
   }
   
   // Check if a cell can be added to a color's path
+  isWallCell(x, y) {
+    if (this.puzzle.obstacle?.type !== 'wall') return false;
+    return this.puzzle.obstacle.cells?.some(([wx, wy]) => wx === x && wy === y);
+  }
+  
+  isBridgeCell(x, y) {
+    if (this.puzzle.obstacle?.type !== 'bridge') return false;
+    return this.puzzle.obstacle.x === x && this.puzzle.obstacle.y === y;
+  }
+  
   canAddCell(color, x, y) {
     if (x < 0 || x >= this.puzzle.width || y < 0 || y >= this.puzzle.height) {
+      return false;
+    }
+    
+    // Check if cell is a wall
+    if (this.isWallCell(x, y)) {
       return false;
     }
     
@@ -115,10 +130,27 @@ export class PathwaysEngine {
     }
     
     // Check if cell is occupied by another color's path
+    // Bridge cells allow exactly 2 paths to cross
+    const isBridge = this.isBridgeCell(x, y);
     for (const [otherColor, otherPath] of Object.entries(this.state.paths)) {
       if (otherColor !== color && otherPath) {
         const occupied = otherPath.some(([px, py]) => px === x && py === y);
-        if (occupied) return false;
+        if (occupied) {
+          // Allow crossing at bridge cell (but only one other path)
+          if (isBridge) {
+            // Count how many other colors use this bridge
+            let bridgeUsers = 0;
+            for (const [c, p] of Object.entries(this.state.paths)) {
+              if (c !== color && p && p.some(([px, py]) => px === x && py === y)) {
+                bridgeUsers++;
+              }
+            }
+            // Only allow if exactly 1 other path uses it
+            if (bridgeUsers > 1) return false;
+          } else {
+            return false;
+          }
+        }
       }
     }
     
@@ -231,6 +263,49 @@ export class PathwaysEngine {
     this.clearProgress();
   }
   
+  getValidationState() {
+    let allPathsComplete = true;
+    let gridFilled = true;
+    let checkpointMissed = false;
+    
+    // Check if all paths connect their endpoints
+    for (const pair of this.puzzle.pairs) {
+      if (!this.isPathComplete(pair.color)) {
+        allPathsComplete = false;
+      }
+    }
+    
+    // Count filled cells (excluding walls)
+    const filledCells = new Set();
+    for (const path of Object.values(this.state.paths)) {
+      for (const [x, y] of path) {
+        filledCells.add(`${x},${y}`);
+      }
+    }
+    
+    // Calculate required cells (total - walls)
+    let requiredCells = this.puzzle.width * this.puzzle.height;
+    if (this.puzzle.obstacle?.type === 'wall' && this.puzzle.obstacle.cells) {
+      requiredCells -= this.puzzle.obstacle.cells.length;
+    }
+    
+    if (filledCells.size < requiredCells) {
+      gridFilled = false;
+    }
+    
+    // Check checkpoint constraint
+    if (this.puzzle.obstacle?.type === 'checkpoint') {
+      const cp = this.puzzle.obstacle;
+      const path = this.state.paths[cp.color] || [];
+      const passesThrough = path.some(([x, y]) => x === cp.x && y === cp.y);
+      if (this.isPathComplete(cp.color) && !passesThrough) {
+        checkpointMissed = true;
+      }
+    }
+    
+    return { allPathsComplete, gridFilled, checkpointMissed };
+  }
+  
   checkWinCondition() {
     // All pairs must be connected (path connecting both endpoints)
     for (const pair of this.puzzle.pairs) {
@@ -257,17 +332,31 @@ export class PathwaysEngine {
       }
     }
     
-    // All cells must be filled
-    const totalCells = this.puzzle.width * this.puzzle.height;
-    const filledCells = new Set();
+    // Check checkpoint constraint if present
+    if (this.puzzle.obstacle?.type === 'checkpoint') {
+      const cp = this.puzzle.obstacle;
+      const path = this.state.paths[cp.color] || [];
+      const passesThrough = path.some(([x, y]) => x === cp.x && y === cp.y);
+      if (!passesThrough) {
+        this.state.isComplete = false;
+        return false;
+      }
+    }
     
+    // All cells must be filled (excluding walls)
+    let requiredCells = this.puzzle.width * this.puzzle.height;
+    if (this.puzzle.obstacle?.type === 'wall' && this.puzzle.obstacle.cells) {
+      requiredCells -= this.puzzle.obstacle.cells.length;
+    }
+    
+    const filledCells = new Set();
     for (const path of Object.values(this.state.paths)) {
       for (const [x, y] of path) {
         filledCells.add(`${x},${y}`);
       }
     }
     
-    if (filledCells.size !== totalCells) {
+    if (filledCells.size !== requiredCells) {
       this.state.isComplete = false;
       return false;
     }

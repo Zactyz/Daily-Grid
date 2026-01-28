@@ -172,8 +172,9 @@ function fillGridWithPaths(width, height, numColors, random) {
     return null; // Not enough valid paths
   }
   
-  // Re-number colors to be sequential
+  // Re-number colors to be sequential and build solution paths map
   const result = [];
+  const solutionPaths = {};
   for (let i = 0; i < validPaths.length; i++) {
     const path = validPaths[i];
     result.push({
@@ -181,9 +182,104 @@ function fillGridWithPaths(width, height, numColors, random) {
       start: path[0],
       end: path[path.length - 1]
     });
+    solutionPaths[i] = path;
   }
   
-  return { pairs: result };
+  return { pairs: result, solutionPaths };
+}
+
+// Add obstacle to a generated puzzle
+// Returns obstacle object or null
+function addObstacle(puzzle, solutionPaths, random) {
+  // 25% chance of each obstacle type, 25% no obstacle
+  const obstacleRoll = random();
+  
+  if (obstacleRoll < 0.25) {
+    // Wall obstacle: Add 1-2 blocked cells
+    // We need to find cells that can be removed from paths without breaking them
+    // For simplicity, we'll add walls adjacent to the grid edges that aren't endpoints
+    const wallCells = [];
+    const edgeCells = [];
+    
+    // Find edge cells that aren't endpoints
+    for (let y = 0; y < puzzle.height; y++) {
+      for (let x = 0; x < puzzle.width; x++) {
+        if (x === 0 || x === puzzle.width - 1 || y === 0 || y === puzzle.height - 1) {
+          // Check if this is an endpoint
+          const isEndpoint = puzzle.pairs.some(p => 
+            (p.start[0] === x && p.start[1] === y) || 
+            (p.end[0] === x && p.end[1] === y)
+          );
+          if (!isEndpoint) {
+            edgeCells.push([x, y]);
+          }
+        }
+      }
+    }
+    
+    // Pick 1-2 random edge cells for walls
+    if (edgeCells.length >= 1) {
+      const numWalls = Math.min(edgeCells.length, 1 + Math.floor(random() * 2));
+      for (let i = edgeCells.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [edgeCells[i], edgeCells[j]] = [edgeCells[j], edgeCells[i]];
+      }
+      for (let i = 0; i < numWalls; i++) {
+        wallCells.push(edgeCells[i]);
+      }
+      
+      if (wallCells.length > 0) {
+        return { type: 'wall', cells: wallCells };
+      }
+    }
+  } else if (obstacleRoll < 0.50) {
+    // Bridge obstacle: Pick a cell in the middle of a path (not endpoint)
+    // Two paths can cross here
+    const candidates = [];
+    
+    for (const pair of puzzle.pairs) {
+      const path = solutionPaths[pair.color];
+      if (path && path.length >= 4) {
+        // Get middle cells (not start or end)
+        for (let i = 1; i < path.length - 1; i++) {
+          const [x, y] = path[i];
+          // Prefer cells not on edge for visual clarity
+          if (x > 0 && x < puzzle.width - 1 && y > 0 && y < puzzle.height - 1) {
+            candidates.push({ x, y, color: pair.color });
+          }
+        }
+      }
+    }
+    
+    if (candidates.length > 0) {
+      const idx = Math.floor(random() * candidates.length);
+      const chosen = candidates[idx];
+      return { type: 'bridge', x: chosen.x, y: chosen.y };
+    }
+  } else if (obstacleRoll < 0.75) {
+    // Checkpoint obstacle: A specific cell that a specific color MUST pass through
+    const candidates = [];
+    
+    for (const pair of puzzle.pairs) {
+      const path = solutionPaths[pair.color];
+      if (path && path.length >= 4) {
+        // Get middle cells
+        for (let i = 1; i < path.length - 1; i++) {
+          const [x, y] = path[i];
+          candidates.push({ x, y, color: pair.color });
+        }
+      }
+    }
+    
+    if (candidates.length > 0) {
+      const idx = Math.floor(random() * candidates.length);
+      const chosen = candidates[idx];
+      return { type: 'checkpoint', x: chosen.x, y: chosen.y, color: chosen.color };
+    }
+  }
+  
+  // No obstacle (25% of time, or if we couldn't create one)
+  return null;
 }
 
 // Main export: Generate puzzle for a given date string
@@ -218,12 +314,21 @@ export function generatePuzzleForDate(puzzleId) {
     
     const result = fillGridWithPaths(width, height, numColors, random);
     if (result && result.pairs.length >= 4) {
-      return {
+      const puzzle = {
         id: puzzleId,
         width,
         height,
         pairs: result.pairs
       };
+      
+      // Try to add an obstacle
+      const obstacleRandom = createSeededRandom(baseSeed + 999999);
+      const obstacle = addObstacle(puzzle, result.solutionPaths || {}, obstacleRandom);
+      if (obstacle) {
+        puzzle.obstacle = obstacle;
+      }
+      
+      return puzzle;
     }
   }
   
@@ -239,6 +344,7 @@ export function generatePuzzleForDate(puzzleId) {
         width: 5,
         height: 5,
         pairs: result.pairs
+        // No obstacle for fallback puzzles
       };
     }
   }
