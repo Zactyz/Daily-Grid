@@ -346,11 +346,12 @@ export class PathwaysEngine {
     }
     
     // Check checkpoint constraints if present (may have multiple)
+    // Only check for completed paths (consistent with getValidationState)
     if (this.puzzle.obstacle?.type === 'checkpoint' && this.puzzle.obstacle.cells) {
       for (const cp of this.puzzle.obstacle.cells) {
         const path = this.state.paths[cp.color] || [];
         const passesThrough = path.some(([x, y]) => x === cp.x && y === cp.y);
-        if (!passesThrough) {
+        if (this.isPathComplete(cp.color) && !passesThrough) {
           this.state.isComplete = false;
           return false;
         }
