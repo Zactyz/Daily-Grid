@@ -150,9 +150,19 @@
             backdrop-filter: blur(8px);
         }
 
-        /* details marker */
+        /* details marker (match Snake/Pathways) */
+        details summary { list-style: none; }
         details summary::-webkit-details-marker { display: none; }
         details summary::marker { content: ''; }
+        details summary::after {
+            content: '+';
+            float: right;
+            font-weight: 300;
+            font-size: 1.25rem;
+            color: #71717a;
+            transition: transform 0.2s ease;
+        }
+        details[open] summary::after { transform: rotate(45deg); }
 
         /* grid cells */
         .grid-cell {
@@ -251,9 +261,8 @@
 
         <!-- Clues (collapsible; collapsed by default) -->
         <details id="clues-panel" class="glass-strong rounded-xl w-full max-w-md mb-4">
-            <summary class="px-5 py-4 flex items-center justify-between cursor-pointer select-none">
-                <h2 class="font-semibold text-sm text-zinc-300">Clues</h2>
-                <div class="text-[11px] text-zinc-500">Tap to expand</div>
+            <summary class="cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">
+                Clues
             </summary>
             <div class="px-5 pb-5 pt-1">
                 <ol id="clues" class="space-y-2 text-sm text-zinc-200 list-decimal list-inside"></ol>
