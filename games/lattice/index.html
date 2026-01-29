@@ -16,8 +16,6 @@
     <style>
         :root {
             --brand-bg: #0a0a0f;
-            --brand-ink: #0a0a0f;
-            /* Lattice accent: cool silver */
             --brand-accent: #c7ceda;
             --brand-accent-dim: #8f98aa;
             --glass-bg: rgba(255, 255, 255, 0.02);
@@ -34,20 +32,18 @@
             overflow-y: auto;
         }
 
-        /* Ambient background */
         body::before {
             content: '';
             position: fixed;
             inset: 0;
             background:
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(240, 198, 104, 0.08), transparent),
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(199, 206, 218, 0.07), transparent),
                 radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99, 102, 241, 0.05), transparent),
-                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(240, 198, 104, 0.03), transparent);
+                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(199, 206, 218, 0.03), transparent);
             pointer-events: none;
             z-index: -1;
         }
 
-        /* Subtle grid pattern */
         body::after {
             content: '';
             position: fixed;
@@ -99,23 +95,47 @@
 
         .btn-primary {
             background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-dim));
-            color: var(--brand-ink);
-            box-shadow: 0 2px 12px rgba(240, 198, 104, 0.25);
+            color: #0a0a0f;
+            box-shadow: 0 2px 12px rgba(199, 206, 218, 0.22);
         }
 
-        .btn-primary:hover { transform: translateY(-1px); }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(199, 206, 218, 0.28);
+        }
 
         .btn-secondary {
             background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #e8e8ed;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a1a1aa;
         }
 
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #e8e8ed;
         }
 
+        .timer-display {
+            background: linear-gradient(135deg, rgba(199, 206, 218, 0.10), rgba(199, 206, 218, 0.05));
+            border: 1px solid rgba(199, 206, 218, 0.20);
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .accent-text { color: var(--brand-accent); }
+        .accent-glow { text-shadow: 0 0 30px rgba(199, 206, 218, 0.35); }
+
+        /* modal */
+        .modal-backdrop {
+            background: rgba(5, 5, 10, 0.9);
+            backdrop-filter: blur(8px);
+        }
+
+        /* grid cells */
         .grid-cell {
             user-select: none;
             width: 44px;
@@ -128,207 +148,237 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
         }
+        .grid-cell:hover { transform: translateY(-1px); border-color: rgba(199,206,218,0.25); }
+        .grid-cell.state-blank { background: rgba(255,255,255,0.035); }
+        .grid-cell.state-no { background: rgba(255,255,255,0.02); color: rgba(232,232,237,0.62); }
+        .grid-cell.state-yes { background: rgba(199,206,218,0.10); border-color: rgba(199,206,218,0.35); color: rgba(199,206,218,0.95); }
 
-        .grid-cell:hover {
-            transform: translateY(-1px);
-            border-color: rgba(199, 206, 218, 0.25);
-        }
-        .grid-cell.state-blank {
-            background: rgba(255,255,255,0.035);
-        }
-        .grid-cell.state-no {
-            background: rgba(255,255,255,0.02);
-            color: rgba(232,232,237,0.62);
-        }
-        .grid-cell.state-yes {
-            background: rgba(199,206,218,0.10);
-            border-color: rgba(199,206,218,0.35);
-            color: rgba(199,206,218,0.95);
-        }
-
-        .nav-blur {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: rgba(10,10,15,0.7);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem 0.8rem;
-            border-radius: 999px;
-            background: rgba(240, 198, 104, 0.10);
-            border: 1px solid rgba(240, 198, 104, 0.16);
-            color: rgba(240, 198, 104, 0.9);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-        }
-
-        .stat-card {
-            padding: 1rem 1.25rem;
-            border-radius: 14px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
-            color: rgba(232,232,237,0.55);
-        }
-
-        .stat-value {
-            font-size: 42px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-        }
-
-        /* Make table headers compact + wrap gracefully */
         th {
             max-width: 120px;
             white-space: normal;
             word-break: break-word;
             line-height: 1.1;
         }
-        @media (max-width: 480px) {
-            th { max-width: 92px; }
-        }
-
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 18px;
-            z-index: 100;
-        }
-
-        .modal-backdrop.show { display: flex; }
+        @media (max-width: 480px) { th { max-width: 92px; } }
 
         /* Clue states */
         .clue-neutral { color: rgba(232,232,237,0.90); }
         .clue-satisfied { color: rgba(34, 197, 94, 0.95); text-decoration: line-through; text-decoration-thickness: 2px; }
         .clue-conflict { color: rgba(239, 68, 68, 0.95); }
 
+        /* Leaderboard row hover */
+        .leaderboard-row { transition: background 0.15s ease; }
+        .leaderboard-row:hover { background: rgba(255, 255, 255, 0.03); }
+
+        /* Focus states */
+        input:focus {
+            outline: none;
+            border-color: var(--brand-accent) !important;
+            box-shadow: 0 0 0 3px rgba(199, 206, 218, 0.15);
+        }
+        button:focus-visible {
+            outline: 2px solid var(--brand-accent);
+            outline-offset: 2px;
+        }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col overflow-y-auto">
 
-    <!-- Top nav (match Snake/Pathways) -->
-    <nav class="nav-blur">
-        <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-3">
-                <img src="/games/lattice/lattice-logo.svg" alt="Daily Grid" class="w-10 h-10 rounded-xl">
+    <!-- Navigation (match Snake/Pathways) -->
+    <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <a href="/games/lattice/" class="flex items-center gap-2.5 transition-all hover:opacity-80">
+                <img src="/games/lattice/lattice-logo.svg" alt="Lattice Logo" class="w-9 h-9 rounded-lg">
+                <span class="font-semibold text-lg tracking-tight hidden sm:block">Lattice</span>
             </a>
-            <div class="flex gap-6 text-sm font-medium text-zinc-300">
-                <a href="/" class="hover:text-amber-300 transition-colors">Home</a>
-                <a href="/games/" class="hover:text-amber-300 transition-colors">Games</a>
-                <a href="/support/" class="hover:text-amber-300 transition-colors">Support</a>
+            <div class="flex gap-5 text-sm font-medium text-zinc-400">
+                <a href="/" class="hover:text-white transition-colors">Home</a>
+                <a href="/games/" class="text-white">Games</a>
+                <a href="/support/" class="hover:text-white transition-colors">Support</a>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto px-5 py-6">
-        <div class="text-center mt-2">
-            <span id="mode-badge" class="badge"><span class="w-2 h-2 rounded-full" style="background: var(--brand-accent);"></span> Daily Puzzle</span>
-            <h1 class="text-5xl font-bold mt-4">Lattice</h1>
-            <p class="text-zinc-400 mt-2">Logic-grid deduction. Find the one true matching.</p>
+    <!-- Main Game (shell match) -->
+    <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
+
+        <!-- Header -->
+        <header class="text-center mb-6 w-full">
+            <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-200/90 text-xs font-medium mb-3 uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background: var(--brand-accent);"></span>
+                Daily Puzzle
+            </div>
+            <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400/90 text-xs font-medium mb-3 uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Practice Mode
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Lattice</h1>
+            <p class="text-zinc-500 text-sm">Logic-grid deduction. Find the one true matching.</p>
+        </header>
+
+        <!-- Stats Row -->
+        <div class="flex gap-3 mb-3 w-full max-w-xs">
+            <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
+                <div class="text-[10px] uppercase tracking-wider text-white/50 mb-0.5">Time</div>
+                <div id="timer" class="text-xl font-bold mono accent-text">0:00</div>
+            </div>
+            <div class="flex-1 stat-card px-4 py-2.5 rounded-xl text-center">
+                <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Grid</div>
+                <div id="grid-size" class="text-xl font-bold mono text-zinc-300">3x3</div>
+            </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 max-w-xl mx-auto mt-6">
-            <div class="glass-strong stat-card text-center">
-                <div class="stat-label">Time</div>
-                <div id="timer" class="mono stat-value">0:00.0</div>
-            </div>
-            <div class="glass-strong stat-card text-center">
-                <div class="stat-label">Grid</div>
-                <div id="grid-size" class="mono stat-value">—</div>
+        <!-- Game Container (board tables) -->
+        <div id="game-container" class="glass-strong p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
+            <div id="board" class="overflow-auto"></div>
+
+            <!-- Pause Overlay (match pattern) -->
+            <div id="pause-overlay" class="hidden absolute inset-0 bg-black/60 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10">
+                <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
+                    </svg>
+                </div>
+                <span class="text-2xl font-bold text-white tracking-wide">Paused</span>
+                <span class="text-sm text-white/60 mt-1">Tap to resume</span>
             </div>
         </div>
 
-        <section class="glass-strong rounded-3xl p-4 mt-6">
-            <div id="board" class="overflow-auto max-w-4xl mx-auto"></div>
+        <!-- Clues (always visible) -->
+        <section class="glass-strong rounded-xl w-full max-w-md mb-5">
+            <div class="px-5 py-4 flex items-center justify-between">
+                <h2 class="font-semibold text-sm text-zinc-300">Clues</h2>
+                <div class="text-[11px] text-zinc-500">Tap: blank → × → ✓</div>
+            </div>
+            <div class="px-5 pb-5 pt-1">
+                <ol id="clues" class="space-y-2 text-sm text-zinc-200 list-decimal list-inside"></ol>
+            </div>
         </section>
 
-        <div class="max-w-5xl mx-auto mt-6 grid lg:grid-cols-3 gap-6">
-            <section class="glass rounded-3xl p-5 lg:col-span-2">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-bold">Clues</h2>
-                    <div class="text-xs text-zinc-500">Tap a cell: blank → × → ✓</div>
-                </div>
-                <ol id="clues" class="mt-3 space-y-2 text-sm text-zinc-200 list-decimal list-inside"></ol>
-            </section>
-
-            <aside class="glass rounded-3xl p-5">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-bold text-zinc-300">Today’s Top 10</h3>
-                    <button id="practice" class="btn btn-secondary">Practice</button>
-                </div>
-                <div id="leaderboard" class="text-xs text-zinc-500">Finish today’s puzzle to see your rank.</div>
-
-                <div class="mt-4 flex gap-3">
-                    <button id="reset" class="btn btn-secondary flex-1">Reset</button>
-                    <button id="check" class="btn btn-primary flex-1">Check</button>
-                </div>
-            </aside>
+        <!-- Control Buttons (match: Leaderboard / Pause / Reset; no Check) -->
+        <div class="flex gap-3 mb-8">
+            <button id="leaderboard-btn" class="btn btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+                Leaderboard
+            </button>
+            <button id="pause-btn" class="btn btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
+                </svg>
+                Pause
+            </button>
+            <button id="reset-btn" class="btn btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Reset
+            </button>
         </div>
+
+        <!-- Practice Mode Button (match) -->
+        <button id="practice-mode-btn" class="w-full max-w-md mt-1 py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-medium hover:bg-white/5 hover:text-white transition-colors flex items-center justify-center gap-2 group">
+            <span>Try Practice Levels</span>
+            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+        </button>
+
+        <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-white/10 text-zinc-300 text-sm font-medium hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            <span>Back to Daily Puzzle</span>
+        </button>
+
     </main>
 
-    <!-- Completion modal (pattern-match) -->
-    <div id="completion-modal" class="modal-backdrop" role="dialog" aria-modal="true">
-        <div class="glass-strong rounded-3xl p-6 w-full max-w-lg text-center">
-            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background: rgba(199,206,218,0.10); border: 1px solid rgba(199,206,218,0.18);">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(199,206,218,0.95)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
+    <!-- Completion Modal (copy structure from Snake, with silver accent) -->
+    <div id="completion-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="glass-strong p-6 sm:p-8 rounded-2xl max-w-sm w-full animate-in">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl" style="background: rgba(199,206,218,0.12); display:flex; align-items:center; justify-content:center;">
+                <svg class="w-8 h-8" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
             </div>
-            <h2 class="text-2xl font-bold" id="modal-title">Solved!</h2>
-            <p class="text-zinc-400 mt-1" id="modal-subtitle">Great work on today’s puzzle</p>
 
-            <div class="glass rounded-2xl py-4 mt-5">
-                <div class="text-xs uppercase tracking-[0.2em] text-zinc-500">Your Time</div>
-                <div id="final-time" class="mono text-5xl font-extrabold mt-1">0:00.0</div>
+            <h2 id="modal-title" class="text-2xl font-bold mb-1 text-center">Solved!</h2>
+            <p id="modal-subtitle" class="text-zinc-500 text-sm text-center mb-5">Great work on today's puzzle</p>
+
+            <div class="timer-display rounded-xl p-4 text-center mb-4">
+                <div class="text-xs uppercase tracking-wider text-white/50 mb-1">Your Time</div>
+                <div id="final-time" class="text-3xl font-bold mono accent-text accent-glow">0:00</div>
             </div>
 
-            <div id="percentile-msg" class="text-sm text-zinc-400 mt-4"> </div>
+            <p id="percentile-msg" class="text-center text-sm text-zinc-400 mb-5"></p>
 
-            <div id="claim-initials-form" class="mt-4 hidden">
-                <div class="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Claim initials (Top 10)</div>
+            <form id="claim-initials-form" class="hidden mb-5">
+                <label class="block text-xs text-zinc-500 mb-2 uppercase tracking-wider">Claim your spot</label>
                 <div class="flex gap-3">
-                    <input id="initials-input" maxlength="3" placeholder="ABC" class="mono flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-lg tracking-widest outline-none focus:border-white/20" />
-                    <button id="claim-initials-btn" class="btn btn-primary">Save</button>
+                    <input type="text" id="initials-input" maxlength="3" placeholder="ABC" class="flex-1 min-w-0 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-center uppercase mono text-lg tracking-widest placeholder:text-zinc-600" />
+                    <button type="submit" class="btn btn-primary flex-shrink-0 px-6">Save</button>
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-2">You have 10 minutes after solving.</div>
-            </div>
+            </form>
 
-            <div id="next-game-promo" class="mt-5 hidden">
-                <a id="next-game-link" href="/games/snake/" class="glass rounded-2xl p-4 flex items-center gap-3 border border-white/5 hover:border-white/10 transition-colors">
-                    <img id="next-game-logo" src="/games/snake/snake-logo.png" class="w-10 h-10 rounded-xl" alt="Next game" />
-                    <div class="flex-1 text-left">
-                        <div class="text-sm font-bold" id="next-game-text">Play today’s Snake</div>
-                        <div class="text-xs text-zinc-500">Continue your daily streak</div>
+            <div id="next-game-promo" class="hidden mb-5">
+                <a id="next-game-link" href="#" class="block w-full py-3 px-4 rounded-xl text-center transition-all border border-white/10 hover:bg-white/5">
+                    <div class="flex items-center justify-center gap-3">
+                        <img id="next-game-logo" src="" alt="" class="w-8 h-8 rounded-lg" />
+                        <div class="text-left flex-1">
+                            <div id="next-game-text" class="font-semibold text-sm"></div>
+                            <div class="text-xs opacity-70">Continue your daily streak</div>
+                        </div>
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
                     </div>
-                    <div class="text-zinc-500">›</div>
                 </a>
             </div>
 
-            <div class="mt-5 flex gap-3">
-                <button id="share-btn" class="btn btn-primary flex-1">Share</button>
-                <button id="close-modal-btn" class="btn btn-secondary flex-1">Close</button>
+            <div class="mb-5">
+                <h3 id="leaderboard-title" class="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                    Today's Top 10
+                </h3>
+                <div id="leaderboard-list" class="text-sm rounded-lg overflow-hidden bg-black/20">
+                    <p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <div class="flex gap-3">
+                    <button id="share-btn" class="btn btn-primary flex-1 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        </svg>
+                        Share
+                    </button>
+                    <button id="practice-infinite-btn" class="btn btn-secondary flex-1 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Practice
+                    </button>
+                    <button id="close-modal-btn" class="btn btn-secondary flex-1">Close</button>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="py-6 px-4 border-t border-white/5 text-center text-xs text-zinc-600">
+        &copy; 2026 Zachary Zimmerman
+        <span class="mx-2">|</span>
+        <a href="/privacy/" class="hover:text-zinc-400 transition-colors">Privacy</a>
+        <span class="mx-2">|</span>
+        <a href="/terms/" class="hover:text-zinc-400 transition-colors">Terms</a>
+    </footer>
 
     <script type="module" src="./lattice-ui.js"></script>
 </body>
