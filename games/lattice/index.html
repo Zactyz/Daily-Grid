@@ -133,10 +133,10 @@
         /* Optional zebra-stripe title */
         .lattice-title {
             background-image: repeating-linear-gradient(-25deg,
-              rgba(240,240,245,0.92) 0 10px,
-              rgba(15,15,20,0.85) 10px 14px,
-              rgba(125,211,252,0.85) 14px 18px,
-              rgba(15,15,20,0.85) 18px 22px
+              rgba(240,240,245,0.92) 0 12px,
+              rgba(15,15,20,0.85) 12px 13px,
+              rgba(125,211,252,0.85) 13px 15px,
+              rgba(15,15,20,0.85) 15px 16px
             );
             -webkit-background-clip: text;
             background-clip: text;
@@ -149,6 +149,10 @@
             background: rgba(5, 5, 10, 0.9);
             backdrop-filter: blur(8px);
         }
+
+        /* details marker */
+        details summary::-webkit-details-marker { display: none; }
+        details summary::marker { content: ''; }
 
         /* grid cells */
         .grid-cell {
@@ -191,7 +195,7 @@
         input:focus {
             outline: none;
             border-color: var(--brand-accent) !important;
-            box-shadow: 0 0 0 3px rgba(199, 206, 218, 0.15);
+            box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.15);
         }
         button:focus-visible {
             outline: 2px solid var(--brand-accent);
@@ -245,9 +249,33 @@
             </div>
         </div>
 
+        <!-- Clues (collapsible; collapsed by default) -->
+        <details id="clues-panel" class="glass-strong rounded-xl w-full max-w-md mb-4">
+            <summary class="px-5 py-4 flex items-center justify-between cursor-pointer select-none">
+                <h2 class="font-semibold text-sm text-zinc-300">Clues</h2>
+                <div class="text-[11px] text-zinc-500">Tap to expand</div>
+            </summary>
+            <div class="px-5 pb-5 pt-1">
+                <ol id="clues" class="space-y-2 text-sm text-zinc-200 list-decimal list-inside"></ol>
+            </div>
+        </details>
+
         <!-- Game Container (board tables) -->
         <div id="game-container" class="glass-strong p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
             <div id="board" class="overflow-auto"></div>
+        </div>
+
+        <!-- Begin Overlay (hides clues + grid until start) -->
+        <div id="begin-overlay" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+            <div class="glass-strong p-7 rounded-2xl max-w-sm w-full text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/10 flex items-center justify-center">
+                    <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-10 h-10 rounded-xl" />
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Ready?</h2>
+                <p class="text-zinc-500 text-sm mb-6">Timer starts when you begin.</p>
+                <button id="begin-btn" class="btn btn-primary w-full">Begin</button>
+                <button id="begin-peek-btn" class="mt-3 w-full py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-medium hover:bg-white/5 hover:text-white transition-colors">Peek at clues</button>
+            </div>
         </div>
 
         <!-- Full-screen pause overlay (also blurs clues) -->
@@ -263,16 +291,6 @@
             </div>
         </div>
 
-        <!-- Clues (always visible) -->
-        <section class="glass-strong rounded-xl w-full max-w-md mb-5">
-            <div class="px-5 py-4 flex items-center justify-between">
-                <h2 class="font-semibold text-sm text-zinc-300">Clues</h2>
-                <div class="text-[11px] text-zinc-500">Use the clues to deduce the matches</div>
-            </div>
-            <div class="px-5 pb-5 pt-1">
-                <ol id="clues" class="space-y-2 text-sm text-zinc-200 list-decimal list-inside"></ol>
-            </div>
-        </section>
 
         <!-- Control Buttons (match: Leaderboard / Pause / Reset; no Check) -->
         <div class="flex gap-3 mb-8">

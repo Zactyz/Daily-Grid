@@ -11,6 +11,12 @@ const els = {
   // board
   board: document.getElementById('board'),
   clues: document.getElementById('clues'),
+  cluesPanel: document.getElementById('clues-panel'),
+
+  // begin overlay
+  beginOverlay: document.getElementById('begin-overlay'),
+  beginBtn: document.getElementById('begin-btn'),
+  beginPeekBtn: document.getElementById('begin-peek-btn'),
 
   // controls
   leaderboardBtn: document.getElementById('leaderboard-btn'),
@@ -54,6 +60,7 @@ let timerInt = null;
 let timerStarted = false;
 let isPaused = false;
 let hasSolved = false;
+let isPrestart = true;
 
 // state[cat][row][col] => 0 blank, 1 X, 2 ✓
 let state = null;
@@ -85,8 +92,35 @@ function getElapsedMs() {
   return Math.max(0, performance.now() - startedAt);
 }
 
+function setPrestart(show) {
+  isPrestart = show;
+  if (els.beginOverlay) {
+    if (show) els.beginOverlay.classList.remove('hidden');
+    else els.beginOverlay.classList.add('hidden');
+  }
+
+  // hide main UI until start
+  if (els.gameContainer) {
+    if (show) els.gameContainer.classList.add('hidden');
+    else els.gameContainer.classList.remove('hidden');
+  }
+  if (els.cluesPanel) {
+    if (show) els.cluesPanel.classList.add('hidden');
+    else els.cluesPanel.classList.remove('hidden');
+  }
+
+  // controls disabled
+  for (const b of [els.pauseBtn, els.resetBtn, els.leaderboardBtn]) {
+    if (!b) continue;
+    b.disabled = show;
+    b.style.opacity = show ? '0.45' : '';
+    b.style.pointerEvents = show ? 'none' : '';
+  }
+}
+
 function ensureTimerStarted() {
   if (timerStarted) return;
+  if (isPrestart) return;
   startTimer({ resumeElapsedMs: 0 });
   saveProgress(true);
 }
@@ -647,6 +681,7 @@ function render() {
         div.addEventListener('click', () => {
           if (hasSolved) return;
           if (isPaused) return;
+          if (isPrestart) return;
           ensureTimerStarted();
           toggleCell(cat.category, i, j);
           render();
@@ -724,9 +759,12 @@ async function startDaily() {
   updateClueStyles();
 
   if (timerStarted) {
+    setPrestart(false);
     startTimer({ resumeElapsedMs });
   } else {
+    stopTimer();
     els.timer.textContent = formatTime(0);
+    setPrestart(true);
   }
 }
 
@@ -742,9 +780,27 @@ async function startPractice() {
   render();
   updateClueStyles();
   els.timer.textContent = formatTime(0);
+  setPrestart(true);
 }
 
 function wireUI() {
+  els.beginBtn?.addEventListener('click', () => {
+    setPrestart(false);
+    startTimer({ resumeElapsedMs: 0 });
+    saveProgress(true);
+  });
+
+  els.beginPeekBtn?.addEventListener('click', () => {
+    // allow player to read clues before starting
+    setPrestart(false);
+    // keep timer stopped
+    stopTimer();
+    timerStarted = false;
+    els.timer.textContent = formatTime(0);
+    // open clues panel when peeking
+    try { els.cluesPanel.open = true; } catch {}
+  });
+
   els.resetBtn?.addEventListener('click', () => {
     if (mode === 'daily') {
       // reset board, keep timer running (match other games)
