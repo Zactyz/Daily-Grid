@@ -2,15 +2,22 @@ import { LatticeEngine } from './lattice-engine.js';
 import { getPTDateYYYYMMDD, parseCsv, hashString, createSeededRandom, getOrCreateAnonId, formatTime } from './lattice-utils.js';
 
 const els = {
-  title: document.getElementById('title'),
   timer: document.getElementById('timer'),
+  gridSize: document.getElementById('grid-size'),
   board: document.getElementById('board'),
   clues: document.getElementById('clues'),
   check: document.getElementById('check'),
   reset: document.getElementById('reset'),
-  practice: document.getElementById('new-practice'),
-  modePill: document.getElementById('mode-pill'),
-  leaderboard: document.getElementById('leaderboard')
+  practice: document.getElementById('practice'),
+  leaderboard: document.getElementById('leaderboard'),
+
+  // modal
+  completionModal: document.getElementById('completion-modal'),
+  finalTime: document.getElementById('final-time'),
+  percentileMsg: document.getElementById('percentile-msg'),
+  closeModalBtn: document.getElementById('close-modal-btn'),
+  shareBtn: document.getElementById('share-btn'),
+  modeBadge: document.getElementById('mode-badge')
 };
 
 let puzzle = null;
@@ -43,12 +50,16 @@ function initState() {
 }
 
 function render() {
-  els.modePill.classList.remove('hidden');
-  els.modePill.textContent = puzzle.mode === 'practice' ? 'Practice' : 'Daily';
+  // badge
+  if (els.modeBadge) {
+    els.modeBadge.innerHTML = puzzle.mode === 'practice'
+      ? '<span class="w-2 h-2 rounded-full bg-zinc-400"></span> Practice'
+      : '<span class="w-2 h-2 rounded-full bg-amber-400"></span> Daily Puzzle';
+  }
 
-  const dateLabel = puzzle.mode === 'daily' ? puzzle.puzzleId : 'Practice';
-  const sizeLabel = `${puzzle.size}×${puzzle.size}`;
-  els.title.textContent = `Lattice — ${dateLabel} (${sizeLabel})`;
+  if (els.gridSize) {
+    els.gridSize.textContent = `${puzzle.size}x${puzzle.size}`;
+  }
 
   // clues
   els.clues.innerHTML = '';
@@ -58,9 +69,9 @@ function render() {
     els.clues.appendChild(li);
   });
 
-  // board: identity rows and one grid per category
+  // board: render each category table (identity x other)
   const container = document.createElement('div');
-  container.className = 'space-y-6';
+  container.className = 'space-y-8';
 
   const identity = puzzle.categories.find(c => c.category === puzzle.identityCategory);
 
@@ -70,15 +81,11 @@ function render() {
     const section = document.createElement('section');
 
     const header = document.createElement('div');
-    header.className = 'flex items-center justify-between mb-2';
+    header.className = 'flex items-center justify-between mb-3 px-1';
     const h = document.createElement('h3');
     h.className = 'text-lg font-bold';
     h.textContent = `${labelCategory(identity.category)} × ${labelCategory(cat.category)}`;
-    const hint = document.createElement('div');
-    hint.className = 'text-xs text-zinc-500';
-    hint.textContent = 'Tap cells';
     header.appendChild(h);
-    header.appendChild(hint);
 
     const tableWrap = document.createElement('div');
     tableWrap.className = 'overflow-auto';
@@ -86,7 +93,6 @@ function render() {
     const table = document.createElement('table');
     table.className = 'w-full border-separate border-spacing-2';
 
-    // head
     const thead = document.createElement('thead');
     const trh = document.createElement('tr');
     const th0 = document.createElement('th');
@@ -109,13 +115,13 @@ function render() {
       rowLabel.className = 'text-sm text-zinc-200 pr-2';
       rowLabel.textContent = identity.values[i];
       tr.appendChild(rowLabel);
+
       for (let j = 0; j < puzzle.size; j++) {
         const td = document.createElement('td');
         const div = document.createElement('div');
         div.className = cellClass(state[cat.category][i][j]);
         div.textContent = cellText(state[cat.category][i][j]);
         div.addEventListener('click', () => {
-          // cycle 0->1->2->0
           state[cat.category][i][j] = (state[cat.category][i][j] + 1) % 3;
           div.className = cellClass(state[cat.category][i][j]);
           div.textContent = cellText(state[cat.category][i][j]);
@@ -225,6 +231,33 @@ async function startPractice(engine) {
   els.leaderboard.textContent = 'Practice mode — no leaderboard.';
 }
 
+function showCompletionModal({ timeMs, rankText }) {
+  if (!els.completionModal) return;
+  els.finalTime.textContent = formatTime(timeMs);
+  if (els.percentileMsg) els.percentileMsg.textContent = rankText || '';
+  els.completionModal.classList.add('show');
+}
+
+function hideCompletionModal() {
+  els.completionModal?.classList.remove('show');
+}
+
+async function shareResult(timeMs) {
+  const date = puzzle.mode === 'daily' ? puzzle.puzzleId : 'practice';
+  const text = `Lattice (${puzzle.size}x${puzzle.size}) — ${date}\n${formatTime(timeMs)}\nhttps://daily-grid.pages.dev/games/lattice/`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ text });
+    } else {
+      await navigator.clipboard.writeText(text);
+      alert('Copied share text');
+    }
+  } catch (_) {
+    // ignore
+  }
+}
+
 async function submitScore(timeMs) {
   const anonId = getOrCreateAnonId();
   const puzzleId = puzzle.puzzleId;
@@ -264,7 +297,13 @@ function wireUI(engine) {
   });
 
   els.practice.addEventListener('click', async () => {
+    hideCompletionModal();
     await startPractice(engine);
+  });
+
+  els.closeModalBtn?.addEventListener('click', hideCompletionModal);
+  els.completionModal?.addEventListener('click', (e) => {
+    if (e.target === els.completionModal) hideCompletionModal();
   });
 
   els.check.addEventListener('click', async () => {
@@ -280,14 +319,20 @@ function wireUI(engine) {
     if (puzzle.mode === 'daily') {
       try {
         const data = await submitScore(timeMs);
-        alert(`Solved! Time: ${formatTime(timeMs)}\nRank: ${data.rank}/${data.total}`);
+        const rankText = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
+        showCompletionModal({ timeMs, rankText });
         await loadLeaderboard();
       } catch (e) {
-        alert(`Solved! Time: ${formatTime(timeMs)}\n(Leaderboard unavailable)`);
+        showCompletionModal({ timeMs, rankText: 'Leaderboard temporarily unavailable' });
       }
     } else {
-      alert(`Solved! Time: ${formatTime(timeMs)}`);
+      showCompletionModal({ timeMs, rankText: 'Practice puzzle complete' });
     }
+  });
+
+  els.shareBtn?.addEventListener('click', async () => {
+    const timeMs = performance.now() - startedAt;
+    await shareResult(timeMs);
   });
 }
 
