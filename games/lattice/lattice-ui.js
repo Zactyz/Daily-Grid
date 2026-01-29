@@ -16,7 +16,6 @@ const els = {
   // begin overlay
   beginOverlay: document.getElementById('begin-overlay'),
   beginBtn: document.getElementById('begin-btn'),
-  beginPeekBtn: document.getElementById('begin-peek-btn'),
 
   // controls
   leaderboardBtn: document.getElementById('leaderboard-btn'),
@@ -788,17 +787,6 @@ function wireUI() {
     setPrestart(false);
     startTimer({ resumeElapsedMs: 0 });
     saveProgress(true);
-  });
-
-  els.beginPeekBtn?.addEventListener('click', () => {
-    // allow player to read clues before starting
-    setPrestart(false);
-    // keep timer stopped
-    stopTimer();
-    timerStarted = false;
-    els.timer.textContent = formatTime(0);
-    // open clues panel when peeking
-    try { els.cluesPanel.open = true; } catch {}
   });
 
   els.resetBtn?.addEventListener('click', () => {
