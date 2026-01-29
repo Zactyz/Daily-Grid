@@ -1,5 +1,5 @@
 import { LatticeEngine } from './lattice-engine.js';
-import { getPTDateYYYYMMDD, parseCsv, hashString, createSeededRandom, getOrCreateAnonId, formatTime } from './lattice-utils.js';
+import { getPTDateYYYYMMDD, parseCsv, getOrCreateAnonId, formatTime } from './lattice-utils.js';
 
 const els = {
   timer: document.getElementById('timer'),
@@ -23,7 +23,16 @@ const els = {
 let puzzle = null;
 let startedAt = null;
 let timerInt = null;
-let state = null; // user marks
+
+// state[cat][row][col] => 0 blank, 1 X, 2 ✓
+let state = null;
+// manualX[cat][row][col] => boolean
+let manualX = null;
+// autoX[cat][row][col] => Set(anchorId)
+let autoX = null;
+
+let engine = null;
+let hasSolved = false;
 
 function startTimer() {
   startedAt = performance.now();
@@ -42,15 +51,276 @@ function stopTimer() {
 function initState() {
   const size = puzzle.size;
   state = {};
+  manualX = {};
+  autoX = {};
   for (const cat of puzzle.categories) {
     if (cat.category === puzzle.identityCategory) continue;
-    // matrix [idIndex][valueIndex] => 0 blank, 1 no, 2 yes
     state[cat.category] = Array.from({ length: size }, () => Array.from({ length: size }, () => 0));
+    manualX[cat.category] = Array.from({ length: size }, () => Array.from({ length: size }, () => false));
+    autoX[cat.category] = Array.from({ length: size }, () => Array.from({ length: size }, () => new Set()));
   }
 }
 
+function labelCategory(cat) {
+  if (cat === 'name') return 'Name';
+  if (cat === 'job') return 'Job';
+  if (cat === 'country') return 'Country';
+  return cat.charAt(0).toUpperCase() + cat.slice(1);
+}
+
+function cellText(v) {
+  if (v === 1) return '×';
+  if (v === 2) return '✓';
+  return '';
+}
+
+function cellClass(v) {
+  const base = 'grid-cell mono';
+  if (v === 1) return `${base} state-no`;
+  if (v === 2) return `${base} state-yes`;
+  return `${base} state-blank`;
+}
+
+function anchorId(catKey, row, col) {
+  return `${catKey}:${row}:${col}`;
+}
+
+function findRowYes(catKey, row) {
+  const size = puzzle.size;
+  let yes = -1;
+  for (let j = 0; j < size; j++) {
+    if (state[catKey][row][j] === 2) {
+      if (yes !== -1) return { kind: 'conflict' };
+      yes = j;
+    }
+  }
+  return yes === -1 ? { kind: 'none' } : { kind: 'one', col: yes };
+}
+
+function findColYes(catKey, col) {
+  const size = puzzle.size;
+  let yes = -1;
+  for (let i = 0; i < size; i++) {
+    if (state[catKey][i][col] === 2) {
+      if (yes !== -1) return { kind: 'conflict' };
+      yes = i;
+    }
+  }
+  return yes === -1 ? { kind: 'none' } : { kind: 'one', row: yes };
+}
+
+function applyAutoX(catKey, row, col, anchor, desiredX) {
+  // desiredX: true => add auto-x; false => remove auto-x
+  const set = autoX[catKey][row][col];
+  if (desiredX) set.add(anchor);
+  else set.delete(anchor);
+
+  const shouldBeX = set.size > 0;
+  const isManual = manualX[catKey][row][col];
+
+  if (state[catKey][row][col] === 2) return; // don't overwrite a ✓
+
+  if (shouldBeX || isManual) {
+    state[catKey][row][col] = 1;
+  } else {
+    state[catKey][row][col] = 0;
+  }
+}
+
+function setCellBlank(catKey, row, col) {
+  // Clears manual X if present; respects autoX
+  if (state[catKey][row][col] === 1) {
+    manualX[catKey][row][col] = false;
+    const shouldBeX = autoX[catKey][row][col].size > 0;
+    state[catKey][row][col] = shouldBeX ? 1 : 0;
+  } else {
+    state[catKey][row][col] = 0;
+  }
+}
+
+function clearYes(catKey, row, col) {
+  if (state[catKey][row][col] !== 2) return;
+
+  const a = anchorId(catKey, row, col);
+  const size = puzzle.size;
+
+  // Remove auto X created by this yes
+  for (let j = 0; j < size; j++) {
+    if (j === col) continue;
+    applyAutoX(catKey, row, j, a, false);
+  }
+  for (let i = 0; i < size; i++) {
+    if (i === row) continue;
+    applyAutoX(catKey, i, col, a, false);
+  }
+
+  // Clear this cell to blank (no manual)
+  state[catKey][row][col] = 0;
+}
+
+function setYes(catKey, row, col) {
+  const size = puzzle.size;
+
+  // If there's an existing yes in the row, clear it first
+  const existingRow = findRowYes(catKey, row);
+  if (existingRow.kind === 'one' && existingRow.col !== col) {
+    clearYes(catKey, row, existingRow.col);
+  }
+
+  // If there's an existing yes in the col, clear it first
+  const existingCol = findColYes(catKey, col);
+  if (existingCol.kind === 'one' && existingCol.row !== row) {
+    clearYes(catKey, existingCol.row, col);
+  }
+
+  // Overwrite any X state in this cell
+  state[catKey][row][col] = 2;
+  manualX[catKey][row][col] = false;
+  autoX[catKey][row][col].clear();
+
+  const a = anchorId(catKey, row, col);
+
+  // Auto-X the rest of the row and col
+  for (let j = 0; j < size; j++) {
+    if (j === col) continue;
+    applyAutoX(catKey, row, j, a, true);
+  }
+  for (let i = 0; i < size; i++) {
+    if (i === row) continue;
+    applyAutoX(catKey, i, col, a, true);
+  }
+}
+
+function toggleCell(catKey, row, col) {
+  const cur = state[catKey][row][col];
+
+  // Cycle: blank -> X -> ✓ -> blank
+  if (cur === 0) {
+    state[catKey][row][col] = 1;
+    manualX[catKey][row][col] = true;
+    return;
+  }
+
+  if (cur === 1) {
+    // X -> ✓
+    setYes(catKey, row, col);
+    return;
+  }
+
+  if (cur === 2) {
+    // ✓ -> blank
+    clearYes(catKey, row, col);
+    return;
+  }
+}
+
+function evaluateClue(idx) {
+  const clue = puzzle.clues[idx];
+  const size = puzzle.size;
+
+  // helper to get row assignment status for a category
+  const rowYes = (catKey, row) => {
+    let yes = -1;
+    for (let j = 0; j < size; j++) {
+      if (state[catKey][row][j] === 2) {
+        if (yes !== -1) return { kind: 'conflict' };
+        yes = j;
+      }
+    }
+    return yes === -1 ? { kind: 'none' } : { kind: 'one', col: yes };
+  };
+
+  if (clue.kind === 'idEq') {
+    const m = state[clue.category];
+    const cell = m[clue.idIndex][clue.valueIndex];
+    const ry = rowYes(clue.category, clue.idIndex);
+    if (cell === 2) return 'satisfied';
+    if (cell === 1) return 'conflict';
+    if (ry.kind === 'one' && ry.col !== clue.valueIndex) return 'conflict';
+    if (ry.kind === 'conflict') return 'conflict';
+    return 'neutral';
+  }
+
+  if (clue.kind === 'idNeq') {
+    const m = state[clue.category];
+    const cell = m[clue.idIndex][clue.valueIndex];
+    const ry = rowYes(clue.category, clue.idIndex);
+    if (cell === 2) return 'conflict';
+    if (cell === 1) return 'satisfied';
+    if (ry.kind === 'one' && ry.col !== clue.valueIndex) return 'satisfied';
+    if (ry.kind === 'conflict') return 'conflict';
+    return 'neutral';
+  }
+
+  if (clue.kind === 'link') {
+    const aCat = clue.a.category;
+    const bCat = clue.b.category;
+    const aVal = clue.a.valueIndex;
+    const bVal = clue.b.valueIndex;
+
+    // Find if any row has aCat == aVal as ✓
+    let aRow = -1;
+    for (let i = 0; i < size; i++) {
+      if (state[aCat][i][aVal] === 2) { aRow = i; break; }
+    }
+
+    let bRow = -1;
+    for (let i = 0; i < size; i++) {
+      if (state[bCat][i][bVal] === 2) { bRow = i; break; }
+    }
+
+    if (aRow !== -1) {
+      const bCell = state[bCat][aRow][bVal];
+      const bAssigned = rowYes(bCat, aRow);
+      if (bCell === 2) return 'satisfied';
+      if (bCell === 1) return 'conflict';
+      if (bAssigned.kind === 'one' && bAssigned.col !== bVal) return 'conflict';
+      if (bAssigned.kind === 'conflict') return 'conflict';
+      return 'neutral';
+    }
+
+    if (bRow !== -1) {
+      const aCell = state[aCat][bRow][aVal];
+      const aAssigned = rowYes(aCat, bRow);
+      if (aCell === 2) return 'satisfied';
+      if (aCell === 1) return 'conflict';
+      if (aAssigned.kind === 'one' && aAssigned.col !== aVal) return 'conflict';
+      if (aAssigned.kind === 'conflict') return 'conflict';
+      return 'neutral';
+    }
+
+    return 'neutral';
+  }
+
+  return 'neutral';
+}
+
+function updateClueStyles() {
+  const items = els.clues?.querySelectorAll('li[data-clue-idx]') || [];
+  items.forEach((li) => {
+    const idx = Number(li.dataset.clueIdx);
+    const status = evaluateClue(idx);
+    li.classList.remove('clue-neutral', 'clue-satisfied', 'clue-conflict');
+    li.classList.add(`clue-${status}`);
+  });
+}
+
+function tryAutoSolve() {
+  if (hasSolved) return;
+  const result = checkSolved();
+  if (!result.ok) return;
+  hasSolved = true;
+  stopTimer();
+  const timeMs = performance.now() - startedAt;
+  // emulate pressing check
+  handleSolved(timeMs).catch(() => {
+    showCompletionModal({ timeMs, rankText: puzzle.mode === 'daily' ? 'Leaderboard temporarily unavailable' : 'Practice puzzle complete' });
+  });
+}
+
 function render() {
-  // badge
+  hasSolved = false;
+
   if (els.modeBadge) {
     els.modeBadge.innerHTML = puzzle.mode === 'practice'
       ? '<span class="w-2 h-2 rounded-full bg-zinc-400"></span> Practice'
@@ -63,13 +333,15 @@ function render() {
 
   // clues
   els.clues.innerHTML = '';
-  puzzle.clueTexts.forEach((t) => {
+  puzzle.clueTexts.forEach((t, idx) => {
     const li = document.createElement('li');
     li.textContent = t;
+    li.dataset.clueIdx = String(idx);
+    li.className = 'clue-neutral';
     els.clues.appendChild(li);
   });
 
-  // board: render each category table (identity x other)
+  // board
   const container = document.createElement('div');
   container.className = 'space-y-8';
 
@@ -121,11 +393,16 @@ function render() {
         const div = document.createElement('div');
         div.className = cellClass(state[cat.category][i][j]);
         div.textContent = cellText(state[cat.category][i][j]);
+
         div.addEventListener('click', () => {
-          state[cat.category][i][j] = (state[cat.category][i][j] + 1) % 3;
-          div.className = cellClass(state[cat.category][i][j]);
-          div.textContent = cellText(state[cat.category][i][j]);
+          if (hasSolved) return;
+          toggleCell(cat.category, i, j);
+          // rerender whole board (simple + safe)
+          render();
+          updateClueStyles();
+          tryAutoSolve();
         });
+
         td.appendChild(div);
         tr.appendChild(td);
       }
@@ -144,26 +421,6 @@ function render() {
   els.board.appendChild(container);
 }
 
-function labelCategory(cat) {
-  if (cat === 'name') return 'Name';
-  if (cat === 'job') return 'Job';
-  if (cat === 'country') return 'Country';
-  return cat.charAt(0).toUpperCase() + cat.slice(1);
-}
-
-function cellText(v) {
-  if (v === 1) return '×';
-  if (v === 2) return '✓';
-  return '';
-}
-
-function cellClass(v) {
-  const base = 'grid-cell mono';
-  if (v === 1) return `${base} state-no`;
-  if (v === 2) return `${base} state-yes`;
-  return `${base} state-blank`;
-}
-
 function checkSolved() {
   const size = puzzle.size;
   const identityCategory = puzzle.identityCategory;
@@ -171,7 +428,6 @@ function checkSolved() {
   for (const cat of puzzle.categories) {
     if (cat.category === identityCategory) continue;
     const matrix = state[cat.category];
-    // For each identity row: must have exactly one ✓ and it must be correct
     for (let i = 0; i < size; i++) {
       let yes = -1;
       for (let j = 0; j < size; j++) {
@@ -214,19 +470,21 @@ async function loadDataset() {
   return { byCategory, rolesByCategory };
 }
 
-async function startDaily(engine) {
+async function startDaily() {
   const puzzleId = getPTDateYYYYMMDD();
   puzzle = engine.generateDaily(puzzleId);
   initState();
   render();
+  updateClueStyles();
   startTimer();
   await loadLeaderboard();
 }
 
-async function startPractice(engine) {
+async function startPractice() {
   puzzle = engine.generatePractice();
   initState();
   render();
+  updateClueStyles();
   startTimer();
   els.leaderboard.textContent = 'Practice mode — no leaderboard.';
 }
@@ -253,7 +511,7 @@ async function shareResult(timeMs) {
       await navigator.clipboard.writeText(text);
       alert('Copied share text');
     }
-  } catch (_) {
+  } catch {
     // ignore
   }
 }
@@ -290,15 +548,29 @@ async function loadLeaderboard() {
   }).join('');
 }
 
-function wireUI(engine) {
+async function handleSolved(timeMs) {
+  if (puzzle.mode !== 'daily') {
+    showCompletionModal({ timeMs, rankText: 'Practice puzzle complete' });
+    return;
+  }
+
+  const data = await submitScore(timeMs);
+  const rankText = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
+  showCompletionModal({ timeMs, rankText });
+  await loadLeaderboard();
+}
+
+function wireUI() {
   els.reset.addEventListener('click', () => {
     initState();
     render();
+    updateClueStyles();
+    hasSolved = false;
   });
 
   els.practice.addEventListener('click', async () => {
     hideCompletionModal();
-    await startPractice(engine);
+    await startPractice();
   });
 
   els.closeModalBtn?.addEventListener('click', hideCompletionModal);
@@ -313,20 +585,16 @@ function wireUI(engine) {
       return;
     }
 
+    if (hasSolved) return;
+    hasSolved = true;
+
     stopTimer();
     const timeMs = performance.now() - startedAt;
 
-    if (puzzle.mode === 'daily') {
-      try {
-        const data = await submitScore(timeMs);
-        const rankText = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
-        showCompletionModal({ timeMs, rankText });
-        await loadLeaderboard();
-      } catch (e) {
-        showCompletionModal({ timeMs, rankText: 'Leaderboard temporarily unavailable' });
-      }
-    } else {
-      showCompletionModal({ timeMs, rankText: 'Practice puzzle complete' });
+    try {
+      await handleSolved(timeMs);
+    } catch {
+      showCompletionModal({ timeMs, rankText: puzzle.mode === 'daily' ? 'Leaderboard temporarily unavailable' : 'Practice puzzle complete' });
     }
   });
 
@@ -339,12 +607,11 @@ function wireUI(engine) {
 (async function main() {
   try {
     const dataset = await loadDataset();
-    const engine = new LatticeEngine(dataset);
-    wireUI(engine);
-    await startDaily(engine);
+    engine = new LatticeEngine(dataset);
+    wireUI();
+    await startDaily();
   } catch (e) {
     console.error(e);
-    els.title.textContent = 'Failed to load Lattice';
-    els.board.innerHTML = `<div class="text-sm text-red-300">${String(e)}</div>`;
+    if (els.board) els.board.innerHTML = `<div class="text-sm text-red-300">${String(e)}</div>`;
   }
 })();
