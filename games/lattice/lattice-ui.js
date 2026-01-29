@@ -17,7 +17,16 @@ const els = {
   percentileMsg: document.getElementById('percentile-msg'),
   closeModalBtn: document.getElementById('close-modal-btn'),
   shareBtn: document.getElementById('share-btn'),
-  modeBadge: document.getElementById('mode-badge')
+  modeBadge: document.getElementById('mode-badge'),
+  modalTitle: document.getElementById('modal-title'),
+  modalSubtitle: document.getElementById('modal-subtitle'),
+  claimInitialsForm: document.getElementById('claim-initials-form'),
+  initialsInput: document.getElementById('initials-input'),
+  claimInitialsBtn: document.getElementById('claim-initials-btn'),
+  nextGamePromo: document.getElementById('next-game-promo'),
+  nextGameLink: document.getElementById('next-game-link'),
+  nextGameLogo: document.getElementById('next-game-logo'),
+  nextGameText: document.getElementById('next-game-text')
 };
 
 let puzzle = null;
@@ -34,8 +43,13 @@ let autoX = null;
 let engine = null;
 let hasSolved = false;
 
-function startTimer() {
-  startedAt = performance.now();
+const STORAGE_PREFIX = 'dailygrid_lattice_progress_';
+let saveThrottleMs = 2500;
+let lastSaveAt = 0;
+
+function startTimer({ resumeElapsedMs = 0 } = {}) {
+  // Keep time across refresh by storing an epoch start.
+  startedAt = performance.now() - resumeElapsedMs;
   clearInterval(timerInt);
   timerInt = setInterval(() => {
     const ms = performance.now() - startedAt;
@@ -46,6 +60,80 @@ function startTimer() {
 function stopTimer() {
   clearInterval(timerInt);
   timerInt = null;
+}
+
+function getElapsedMs() {
+  if (startedAt == null) return 0;
+  return Math.max(0, performance.now() - startedAt);
+}
+
+function storageKeyForPuzzle() {
+  const id = puzzle?.mode === 'daily' ? puzzle.puzzleId : 'practice';
+  return `${STORAGE_PREFIX}${id}`;
+}
+
+function serializeAutoXSets() {
+  const out = {};
+  for (const catKey of Object.keys(autoX)) {
+    out[catKey] = autoX[catKey].map(row => row.map(set => Array.from(set)));
+  }
+  return out;
+}
+
+function deserializeAutoXSets(raw) {
+  const out = {};
+  for (const catKey of Object.keys(raw || {})) {
+    out[catKey] = raw[catKey].map(row => row.map(arr => new Set(arr || [])));
+  }
+  return out;
+}
+
+function saveProgress(force = false) {
+  if (!puzzle) return;
+  if (puzzle.mode !== 'daily') return; // only persist daily
+
+  const now = Date.now();
+  if (!force && now - lastSaveAt < saveThrottleMs) return;
+  lastSaveAt = now;
+
+  const payload = {
+    puzzleId: puzzle.puzzleId,
+    size: puzzle.size,
+    identityCategory: puzzle.identityCategory,
+    categories: puzzle.categories.map(c => c.category),
+
+    // timer
+    timerStarted: true,
+    startedAtEpochMs: Date.now() - getElapsedMs(),
+
+    // marks
+    state,
+    manualX,
+    autoX: serializeAutoXSets(),
+
+    // solved state
+    hasSolved
+  };
+
+  try {
+    localStorage.setItem(storageKeyForPuzzle(), JSON.stringify(payload));
+  } catch (e) {
+    console.warn('Failed to save lattice progress', e);
+  }
+}
+
+function loadProgressForPuzzle(puzzleId) {
+  const key = `${STORAGE_PREFIX}${puzzleId}`;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    if (payload?.puzzleId !== puzzleId) return null;
+    return payload;
+  } catch (e) {
+    console.warn('Failed to load lattice progress', e);
+    return null;
+  }
 }
 
 function initState() {
@@ -324,7 +412,7 @@ function render() {
   if (els.modeBadge) {
     els.modeBadge.innerHTML = puzzle.mode === 'practice'
       ? '<span class="w-2 h-2 rounded-full bg-zinc-400"></span> Practice'
-      : '<span class="w-2 h-2 rounded-full bg-amber-400"></span> Daily Puzzle';
+      : '<span class="w-2 h-2 rounded-full" style="background: var(--brand-accent);"></span> Daily Puzzle';
   }
 
   if (els.gridSize) {
@@ -401,6 +489,7 @@ function render() {
           render();
           updateClueStyles();
           tryAutoSolve();
+          saveProgress(false);
         });
 
         td.appendChild(div);
@@ -474,9 +563,30 @@ async function startDaily() {
   const puzzleId = getPTDateYYYYMMDD();
   puzzle = engine.generateDaily(puzzleId);
   initState();
+
+  // restore progress
+  const saved = loadProgressForPuzzle(puzzleId);
+  let resumeElapsedMs = 0;
+  if (saved) {
+    try {
+      // marks
+      state = saved.state || state;
+      manualX = saved.manualX || manualX;
+      autoX = deserializeAutoXSets(saved.autoX || serializeAutoXSets());
+      hasSolved = !!saved.hasSolved;
+
+      // timer
+      if (saved.startedAtEpochMs) {
+        resumeElapsedMs = Math.max(0, Date.now() - saved.startedAtEpochMs);
+      }
+    } catch (e) {
+      console.warn('Failed to restore lattice progress', e);
+    }
+  }
+
   render();
   updateClueStyles();
-  startTimer();
+  startTimer({ resumeElapsedMs });
   await loadLeaderboard();
 }
 
@@ -485,7 +595,7 @@ async function startPractice() {
   initState();
   render();
   updateClueStyles();
-  startTimer();
+  startTimer({ resumeElapsedMs: 0 });
   els.leaderboard.textContent = 'Practice mode — no leaderboard.';
 }
 
@@ -548,16 +658,92 @@ async function loadLeaderboard() {
   }).join('');
 }
 
-async function handleSolved(timeMs) {
-  if (puzzle.mode !== 'daily') {
-    showCompletionModal({ timeMs, rankText: 'Practice puzzle complete' });
+function showNextGamePromo() {
+  // Mirror Snake/Pathways: promote the other daily game
+  if (!els.nextGamePromo || !els.nextGameLink || !els.nextGameLogo || !els.nextGameText) return;
+  // Pick Snake for now
+  els.nextGameLink.href = '/games/snake/';
+  els.nextGameLogo.src = '/games/snake/snake-logo.png';
+  els.nextGameText.textContent = "Play today's Snake";
+  els.nextGamePromo.classList.remove('hidden');
+}
+
+function markSubmitted() {
+  if (puzzle.mode !== 'daily') return;
+  try {
+    const key = `dailygrid_lattice_submitted_${puzzle.puzzleId}`;
+    localStorage.setItem(key, 'true');
+  } catch {}
+}
+
+function hasSubmittedToday() {
+  if (puzzle.mode !== 'daily') return false;
+  try {
+    const key = `dailygrid_lattice_submitted_${puzzle.puzzleId}`;
+    return localStorage.getItem(key) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+async function claimInitials() {
+  const initials = els.initialsInput?.value?.toUpperCase().trim();
+  if (!initials || initials.length > 3) {
+    alert('Please enter 1-3 letters');
     return;
   }
 
-  const data = await submitScore(timeMs);
-  const rankText = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
-  showCompletionModal({ timeMs, rankText });
+  const anonId = getOrCreateAnonId();
+  const puzzleId = puzzle.puzzleId;
+
+  const response = await fetch('/api/lattice/claim-initials', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ puzzleId, anonId, initials })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to claim initials');
+  }
+
+  els.claimInitialsForm?.classList.add('hidden');
   await loadLeaderboard();
+}
+
+async function handleSolved(timeMs) {
+  if (puzzle.mode !== 'daily') {
+    if (els.modalTitle) els.modalTitle.textContent = 'Solved!';
+    if (els.modalSubtitle) els.modalSubtitle.textContent = 'Practice puzzle complete';
+    showCompletionModal({ timeMs, rankText: 'Practice puzzle complete' });
+    showNextGamePromo();
+    return;
+  }
+
+  if (els.modalTitle) els.modalTitle.textContent = 'Solved!';
+  if (els.modalSubtitle) els.modalSubtitle.textContent = "Great work on today's puzzle";
+
+  // Only submit once per day
+  if (!hasSubmittedToday()) {
+    const data = await submitScore(timeMs);
+    markSubmitted();
+
+    const rankText = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
+    showCompletionModal({ timeMs, rankText });
+
+    // show initials claim if top 10
+    if (data.rank <= 10) {
+      els.claimInitialsForm?.classList.remove('hidden');
+    } else {
+      els.claimInitialsForm?.classList.add('hidden');
+    }
+  } else {
+    showCompletionModal({ timeMs, rankText: 'Score already submitted for today' });
+    els.claimInitialsForm?.classList.add('hidden');
+  }
+
+  await loadLeaderboard();
+  showNextGamePromo();
 }
 
 function wireUI() {
@@ -566,6 +752,7 @@ function wireUI() {
     render();
     updateClueStyles();
     hasSolved = false;
+    saveProgress(true);
   });
 
   els.practice.addEventListener('click', async () => {
@@ -576,6 +763,14 @@ function wireUI() {
   els.closeModalBtn?.addEventListener('click', hideCompletionModal);
   els.completionModal?.addEventListener('click', (e) => {
     if (e.target === els.completionModal) hideCompletionModal();
+  });
+
+  els.claimInitialsBtn?.addEventListener('click', async () => {
+    try {
+      await claimInitials();
+    } catch (e) {
+      alert(e.message || 'Failed to claim initials');
+    }
   });
 
   els.check.addEventListener('click', async () => {
@@ -589,18 +784,28 @@ function wireUI() {
     hasSolved = true;
 
     stopTimer();
-    const timeMs = performance.now() - startedAt;
+    const timeMs = getElapsedMs();
 
     try {
       await handleSolved(timeMs);
     } catch {
       showCompletionModal({ timeMs, rankText: puzzle.mode === 'daily' ? 'Leaderboard temporarily unavailable' : 'Practice puzzle complete' });
     }
+
+    saveProgress(true);
   });
 
   els.shareBtn?.addEventListener('click', async () => {
-    const timeMs = performance.now() - startedAt;
+    const timeMs = getElapsedMs();
     await shareResult(timeMs);
+  });
+
+  // background save
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveProgress(true);
+  });
+  window.addEventListener('beforeunload', () => {
+    saveProgress(true);
   });
 }
 
