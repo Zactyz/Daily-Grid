@@ -16,8 +16,9 @@
     <style>
         :root {
             --brand-bg: #0a0a0f;
-            --brand-accent: #c7ceda;
-            --brand-accent-dim: #8f98aa;
+            /* Ice blue accent */
+            --brand-accent: #7dd3fc;
+            --brand-accent-dim: #38bdf8;
             --glass-bg: rgba(255, 255, 255, 0.02);
             --glass-border: rgba(255, 255, 255, 0.06);
         }
@@ -37,9 +38,9 @@
             position: fixed;
             inset: 0;
             background:
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(199, 206, 218, 0.07), transparent),
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(125, 211, 252, 0.07), transparent),
                 radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99, 102, 241, 0.05), transparent),
-                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(199, 206, 218, 0.03), transparent);
+                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(125, 211, 252, 0.03), transparent);
             pointer-events: none;
             z-index: -1;
         }
@@ -96,12 +97,12 @@
         .btn-primary {
             background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-dim));
             color: #0a0a0f;
-            box-shadow: 0 2px 12px rgba(199, 206, 218, 0.22);
+            box-shadow: 0 2px 12px rgba(125, 211, 252, 0.22);
         }
 
         .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(199, 206, 218, 0.28);
+            box-shadow: 0 4px 20px rgba(125, 211, 252, 0.28);
         }
 
         .btn-secondary {
@@ -117,8 +118,8 @@
         }
 
         .timer-display {
-            background: linear-gradient(135deg, rgba(199, 206, 218, 0.10), rgba(199, 206, 218, 0.05));
-            border: 1px solid rgba(199, 206, 218, 0.20);
+            background: linear-gradient(135deg, rgba(125, 211, 252, 0.10), rgba(125, 211, 252, 0.05));
+            border: 1px solid rgba(125, 211, 252, 0.20);
         }
 
         .stat-card {
@@ -127,7 +128,21 @@
         }
 
         .accent-text { color: var(--brand-accent); }
-        .accent-glow { text-shadow: 0 0 30px rgba(199, 206, 218, 0.35); }
+        .accent-glow { text-shadow: 0 0 30px rgba(125, 211, 252, 0.35); }
+
+        /* Optional zebra-stripe title */
+        .lattice-title {
+            background-image: repeating-linear-gradient(-25deg,
+              rgba(240,240,245,0.92) 0 10px,
+              rgba(15,15,20,0.85) 10px 14px,
+              rgba(125,211,252,0.85) 14px 18px,
+              rgba(15,15,20,0.85) 18px 22px
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: none;
+        }
 
         /* modal */
         .modal-backdrop {
@@ -150,10 +165,10 @@
             cursor: pointer;
             transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
         }
-        .grid-cell:hover { transform: translateY(-1px); border-color: rgba(199,206,218,0.25); }
-        .grid-cell.state-blank { background: rgba(255,255,255,0.035); }
-        .grid-cell.state-no { background: rgba(255,255,255,0.02); color: rgba(232,232,237,0.62); }
-        .grid-cell.state-yes { background: rgba(199,206,218,0.10); border-color: rgba(199,206,218,0.35); color: rgba(199,206,218,0.95); }
+        .grid-cell:hover { transform: translateY(-1px); border-color: rgba(125,211,252,0.25); }
+        .grid-cell.state-blank { background: rgba(255,255,255,0.055); }
+        .grid-cell.state-no { background: rgba(255,255,255,0.03); color: rgba(232,232,237,0.62); }
+        .grid-cell.state-yes { background: rgba(125,211,252,0.12); border-color: rgba(125,211,252,0.40); color: rgba(125,211,252,0.98); }
 
         th {
             max-width: 120px;
@@ -214,7 +229,7 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                 Practice Mode
             </div>
-            <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Lattice</h1>
+            <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 lattice-title">Lattice</h1>
             <p class="text-zinc-500 text-sm">Logic-grid deduction. Find the one true matching.</p>
         </header>
 
@@ -233,16 +248,18 @@
         <!-- Game Container (board tables) -->
         <div id="game-container" class="glass-strong p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
             <div id="board" class="overflow-auto"></div>
+        </div>
 
-            <!-- Pause Overlay (match pattern) -->
-            <div id="pause-overlay" class="hidden absolute inset-0 bg-black/60 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10">
-                <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
+        <!-- Full-screen pause overlay (also blurs clues) -->
+        <div id="pause-overlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-50 cursor-pointer">
+            <div class="glass-strong p-6 rounded-2xl text-center max-w-xs w-full mx-4">
+                <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-4 mx-auto">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
                     </svg>
                 </div>
                 <span class="text-2xl font-bold text-white tracking-wide">Paused</span>
-                <span class="text-sm text-white/60 mt-1">Tap to resume</span>
+                <div class="text-sm text-white/60 mt-1">Tap anywhere to resume</div>
             </div>
         </div>
 
@@ -250,7 +267,7 @@
         <section class="glass-strong rounded-xl w-full max-w-md mb-5">
             <div class="px-5 py-4 flex items-center justify-between">
                 <h2 class="font-semibold text-sm text-zinc-300">Clues</h2>
-                <div class="text-[11px] text-zinc-500">Tap: blank → × → ✓</div>
+                <div class="text-[11px] text-zinc-500">Use the clues to deduce the matches</div>
             </div>
             <div class="px-5 pb-5 pt-1">
                 <ol id="clues" class="space-y-2 text-sm text-zinc-200 list-decimal list-inside"></ol>
@@ -279,8 +296,38 @@
             </button>
         </div>
 
-        <!-- Practice Mode Button (match) -->
-        <button id="practice-mode-btn" class="w-full max-w-md mt-1 py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-medium hover:bg-white/5 hover:text-white transition-colors flex items-center justify-center gap-2 group">
+        <!-- How to Play (match style) -->
+        <details class="glass-strong rounded-xl w-full max-w-md">
+            <summary class="cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">
+                How to Play
+            </summary>
+            <div class="px-5 pb-5 pt-1">
+                <ul class="text-zinc-400 space-y-2.5 text-sm">
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-white/10 text-white/80 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                        <span>Each row (identity) matches exactly one item in each column category.</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-white/10 text-white/80 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                        <span>Tap cells to mark: blank → <strong>×</strong> (no) → <strong>✓</strong> (yes).</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-white/10 text-white/80 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                        <span>Placing a ✓ auto-fills × in the rest of that row and column.</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-white/10 text-white/80 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span>
+                        <span>Clues turn <span style="color: rgba(34,197,94,0.95)">green</span> when satisfied and <span style="color: rgba(239,68,68,0.95)">red</span> when contradicted.</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-md bg-white/10 text-white/80 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">5</span>
+                        <span>When everything is correct, you’ll complete the puzzle automatically.</span>
+                    </li>
+                </ul>
+            </div>
+        </details>
+
+        <button id="practice-mode-btn" class="w-full max-w-md mt-4 py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-medium hover:bg-white/5 hover:text-white transition-colors flex items-center justify-center gap-2 group">
             <span>Try Practice Levels</span>
             <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
@@ -299,7 +346,7 @@
     <!-- Completion Modal (copy structure from Snake, with silver accent) -->
     <div id="completion-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
         <div class="glass-strong p-6 sm:p-8 rounded-2xl max-w-sm w-full animate-in">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl" style="background: rgba(199,206,218,0.12); display:flex; align-items:center; justify-content:center;">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl" style="background: rgba(125,211,252,0.12); display:flex; align-items:center; justify-content:center;">
                 <svg class="w-8 h-8" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>

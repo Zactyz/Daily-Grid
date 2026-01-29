@@ -601,17 +601,29 @@ function render() {
     tableWrap.className = 'overflow-auto';
 
     const table = document.createElement('table');
-    table.className = 'w-full border-separate border-spacing-1';
+    table.className = 'w-auto table-fixed border-separate border-spacing-1 mx-auto';
+
+    // fixed column widths so the boxes form an actual grid
+    const colgroup = document.createElement('colgroup');
+    const col0 = document.createElement('col');
+    col0.style.width = '110px';
+    colgroup.appendChild(col0);
+    for (let j = 0; j < puzzle.size; j++) {
+      const col = document.createElement('col');
+      col.style.width = '56px';
+      colgroup.appendChild(col);
+    }
+    table.appendChild(colgroup);
 
     const thead = document.createElement('thead');
     const trh = document.createElement('tr');
     const th0 = document.createElement('th');
-    th0.className = 'text-left text-xs text-zinc-500 px-2';
+    th0.className = 'text-left text-xs text-zinc-500 pr-2';
     th0.textContent = labelCategory(identity.category);
     trh.appendChild(th0);
     for (let j = 0; j < puzzle.size; j++) {
       const th = document.createElement('th');
-      th.className = 'text-xs text-zinc-400 px-1';
+      th.className = 'text-xs text-zinc-400 px-1 text-center';
       th.textContent = cat.values[j];
       trh.appendChild(th);
     }
