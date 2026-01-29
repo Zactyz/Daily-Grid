@@ -32,6 +32,7 @@ const els = {
 let puzzle = null;
 let startedAt = null;
 let timerInt = null;
+let timerStarted = false;
 
 // state[cat][row][col] => 0 blank, 1 X, 2 ✓
 let state = null;
@@ -48,6 +49,7 @@ let saveThrottleMs = 2500;
 let lastSaveAt = 0;
 
 function startTimer({ resumeElapsedMs = 0 } = {}) {
+  timerStarted = true;
   // Keep time across refresh by storing an epoch start.
   startedAt = performance.now() - resumeElapsedMs;
   clearInterval(timerInt);
@@ -60,6 +62,13 @@ function startTimer({ resumeElapsedMs = 0 } = {}) {
 function stopTimer() {
   clearInterval(timerInt);
   timerInt = null;
+}
+
+function ensureTimerStarted() {
+  if (timerStarted) return;
+  // Start at 0 and persist start time
+  startTimer({ resumeElapsedMs: 0 });
+  saveProgress(true);
 }
 
 function getElapsedMs() {
@@ -103,8 +112,8 @@ function saveProgress(force = false) {
     categories: puzzle.categories.map(c => c.category),
 
     // timer
-    timerStarted: true,
-    startedAtEpochMs: Date.now() - getElapsedMs(),
+    timerStarted: !!timerStarted,
+    startedAtEpochMs: timerStarted ? (Date.now() - getElapsedMs()) : null,
 
     // marks
     state,
@@ -431,7 +440,7 @@ function render() {
 
   // board
   const container = document.createElement('div');
-  container.className = 'space-y-8';
+  container.className = 'space-y-5';
 
   const identity = puzzle.categories.find(c => c.category === puzzle.identityCategory);
 
@@ -451,7 +460,7 @@ function render() {
     tableWrap.className = 'overflow-auto';
 
     const table = document.createElement('table');
-    table.className = 'w-full border-separate border-spacing-2';
+    table.className = 'w-full border-separate border-spacing-1';
 
     const thead = document.createElement('thead');
     const trh = document.createElement('tr');
@@ -484,6 +493,7 @@ function render() {
 
         div.addEventListener('click', () => {
           if (hasSolved) return;
+          ensureTimerStarted();
           toggleCell(cat.category, i, j);
           // rerender whole board (simple + safe)
           render();
@@ -576,8 +586,11 @@ async function startDaily() {
       hasSolved = !!saved.hasSolved;
 
       // timer
-      if (saved.startedAtEpochMs) {
+      if (saved.timerStarted && saved.startedAtEpochMs) {
+        timerStarted = true;
         resumeElapsedMs = Math.max(0, Date.now() - saved.startedAtEpochMs);
+      } else {
+        timerStarted = false;
       }
     } catch (e) {
       console.warn('Failed to restore lattice progress', e);
@@ -586,7 +599,13 @@ async function startDaily() {
 
   render();
   updateClueStyles();
-  startTimer({ resumeElapsedMs });
+
+  if (timerStarted) {
+    startTimer({ resumeElapsedMs });
+  } else {
+    els.timer.textContent = formatTime(0);
+  }
+
   await loadLeaderboard();
 }
 
@@ -774,6 +793,8 @@ function wireUI() {
   });
 
   els.check.addEventListener('click', async () => {
+    ensureTimerStarted();
+
     const result = checkSolved();
     if (!result.ok) {
       alert(result.reason);

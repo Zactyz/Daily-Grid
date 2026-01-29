@@ -192,6 +192,17 @@
             letter-spacing: -0.03em;
         }
 
+        /* Make table headers compact + wrap gracefully */
+        th {
+            max-width: 120px;
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.1;
+        }
+        @media (max-width: 480px) {
+            th { max-width: 92px; }
+        }
+
         .modal-backdrop {
             position: fixed;
             inset: 0;
@@ -247,7 +258,7 @@
         </div>
 
         <section class="glass-strong rounded-3xl p-4 mt-6">
-            <div id="board" class="overflow-auto"></div>
+            <div id="board" class="overflow-auto max-w-4xl mx-auto"></div>
         </section>
 
         <div class="max-w-5xl mx-auto mt-6 grid lg:grid-cols-3 gap-6">
