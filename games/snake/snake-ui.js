@@ -8,6 +8,15 @@ const OTHER_GAMES = [
     logo: '/games/pathways/pathways-logo.png',
     submittedKeyPrefix: 'dailygrid_pathways_submitted_',
     theme: { bg: 'bg-rose-500/10', border: 'border-rose-500/30', text: 'text-rose-400' }
+  },
+  {
+    id: 'lattice',
+    name: 'Lattice',
+    path: '/games/lattice/',
+    // cache-bust so iOS/Safari actually refreshes
+    logo: '/games/lattice/lattice-logo.png?v=2',
+    submittedKeyPrefix: 'dailygrid_lattice_submitted_',
+    theme: { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400' }
   }
   // Future games can be added here
 ];
