@@ -680,11 +680,11 @@ function render() {
     // fixed column widths so the boxes form an actual grid
     const colgroup = document.createElement('colgroup');
     const col0 = document.createElement('col');
-    col0.style.width = '120px';
+    col0.style.width = '128px';
     colgroup.appendChild(col0);
     for (let j = 0; j < puzzle.size; j++) {
       const col = document.createElement('col');
-      col.style.width = '66px';
+      col.style.width = '72px';
       colgroup.appendChild(col);
     }
     table.appendChild(colgroup);
