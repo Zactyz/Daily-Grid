@@ -26,6 +26,7 @@ const els = {
   // overlays
   pauseOverlay: document.getElementById('pause-overlay'),
   gameContainer: document.getElementById('game-container'),
+  undoBtn: document.getElementById('undo-btn'),
 
   // modal
   completionModal: document.getElementById('completion-modal'),
@@ -64,6 +65,9 @@ let isPrestart = true;
 let state = null;
 let manualX = null;
 let autoX = null;
+
+let undoStack = [];
+const UNDO_LIMIT = 200;
 
 const STORAGE_PREFIX = 'dailygrid_lattice_progress_';
 let saveThrottleMs = 2500;
@@ -285,6 +289,40 @@ function deserializeAutoXSets(raw) {
     out[catKey] = raw[catKey].map(row => row.map(arr => new Set(arr || [])));
   }
   return out;
+}
+
+function clonePlain(obj) {
+  // structuredClone is ideal but not universal in older runtimes.
+  try { return structuredClone(obj); } catch {}
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function snapshotForUndo() {
+  return {
+    state: clonePlain(state),
+    manualX: clonePlain(manualX),
+    autoX: serializeAutoXSets()
+  };
+}
+
+function restoreFromUndo(snap) {
+  state = snap.state;
+  manualX = snap.manualX;
+  autoX = deserializeAutoXSets(snap.autoX);
+}
+
+function pushUndo() {
+  undoStack.push(snapshotForUndo());
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  updateUndoButton();
+}
+
+function updateUndoButton() {
+  if (!els.undoBtn) return;
+  const disabled = isPrestart || isPaused || hasSolved || undoStack.length === 0;
+  els.undoBtn.disabled = disabled;
+  els.undoBtn.style.opacity = disabled ? '0.45' : '';
+  els.undoBtn.style.pointerEvents = disabled ? 'none' : '';
 }
 
 function storageKeyForPuzzleId(puzzleId) {
@@ -678,6 +716,10 @@ function render() {
           if (hasSolved) return;
           if (isPaused) return;
           if (isPrestart) return;
+
+          // snapshot BEFORE mutation
+          pushUndo();
+
           ensureTimerStarted();
           toggleCell(cat.category, i, j);
           render();
@@ -735,6 +777,7 @@ async function startDaily() {
   const puzzleId = getPTDateYYYYMMDD();
   puzzle = engine.generateDaily(puzzleId);
   initState();
+  undoStack = [];
 
   const saved = loadProgressForPuzzleId(puzzleId);
   let resumeElapsedMs = 0;
@@ -768,6 +811,7 @@ async function startPractice() {
   setMode('practice');
   puzzle = engine.generatePractice();
   initState();
+  undoStack = [];
   timerStarted = false;
   hasSolved = false;
   isPaused = false;
@@ -784,16 +828,30 @@ function wireUI() {
     setPrestart(false);
     startTimer({ resumeElapsedMs: 0 });
     saveProgress(true);
+    updateUndoButton();
+  });
+
+  els.undoBtn?.addEventListener('click', () => {
+    if (isPrestart || isPaused || hasSolved) return;
+    const snap = undoStack.pop();
+    if (!snap) return;
+    restoreFromUndo(snap);
+    render();
+    updateClueStyles();
+    saveProgress(true);
+    updateUndoButton();
   });
 
   els.resetBtn?.addEventListener('click', () => {
     if (mode === 'daily') {
       // reset board, keep timer running (match other games)
       initState();
+      undoStack = [];
       render();
       updateClueStyles();
       hasSolved = false;
       saveProgress(true);
+      updateUndoButton();
     } else {
       startPractice();
     }
