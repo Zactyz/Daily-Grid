@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/games/lattice/lattice-logo.svg">
+  <title>Lattice by Daily Grid</title>
+  <meta name="description" content="Lattice: a calm daily logic-grid puzzle." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand-bg: #0a0a0f;
+      --brand-gold: #f0c674;
+      --brand-gold-dim: #c9a85c;
+      --glass-bg: rgba(255, 255, 255, 0.02);
+      --glass-border: rgba(255, 255, 255, 0.06);
+    }
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--brand-bg);
+      color: #e8e8ed;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(240, 198, 104, 0.08), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99, 102, 241, 0.05), transparent),
+        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(240, 198, 104, 0.03), transparent);
+      pointer-events: none;
+      z-index: -1;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+    }
+    .btn {
+      padding: 0.55rem 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-dim));
+      color: #0a0a0f;
+    }
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #e8e8ed;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(240, 198, 104, 0.12);
+      border: 1px solid rgba(240, 198, 104, 0.18);
+      color: rgba(240, 198, 104, 0.95);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .grid-cell {
+      user-select: none;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
+    }
+    .grid-cell:hover { transform: translateY(-1px); border-color: rgba(240,198,104,0.25); }
+    .grid-cell.state-blank { background: rgba(255,255,255,0.02); }
+    .grid-cell.state-no { background: rgba(255,255,255,0.02); color: rgba(232,232,237,0.6); }
+    .grid-cell.state-yes { background: rgba(240,198,104,0.12); border-color: rgba(240,198,104,0.35); color: rgba(240,198,104,0.95); }
+    .sticky-head { position: sticky; top: 0; background: rgba(10,10,15,0.9); backdrop-filter: blur(16px); }
+  </style>
+</head>
+<body>
+  <nav class="sticky-head z-50 glass px-5 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <a class="flex items-center gap-3" href="/games/">
+        <img src="/Images/web%20icon.png" class="w-9 h-9 rounded-xl" alt="Daily Grid" />
+        <div>
+          <div class="font-bold leading-tight">Lattice</div>
+          <div class="text-xs text-zinc-400">Daily logic grid</div>
+        </div>
+      </a>
+      <div class="flex items-center gap-3">
+        <span id="mode-pill" class="pill hidden">Daily</span>
+        <button id="new-practice" class="btn btn-secondary">Practice</button>
+        <button id="reset" class="btn btn-secondary">Reset</button>
+        <button id="check" class="btn btn-primary">Check</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-5 py-6">
+    <div class="grid lg:grid-cols-3 gap-6">
+      <section class="lg:col-span-2 glass rounded-3xl p-5">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+          <div>
+            <div class="text-sm text-zinc-400">Today</div>
+            <h1 id="title" class="text-3xl font-bold tracking-tight">Loading…</h1>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="text-sm text-zinc-400">Timer</div>
+            <div id="timer" class="mono text-lg">0:00.0</div>
+          </div>
+        </div>
+
+        <div id="board" class="overflow-auto"></div>
+        <div id="board-hint" class="text-xs text-zinc-500 mt-4">Tap a cell to cycle: blank → X → ✓</div>
+      </section>
+
+      <aside class="glass rounded-3xl p-5">
+        <h2 class="text-xl font-bold mb-3">Clues</h2>
+        <ol id="clues" class="space-y-2 text-sm text-zinc-200 list-decimal list-inside"></ol>
+        <div class="mt-6">
+          <h3 class="text-sm font-bold text-zinc-300 mb-2">Leaderboard</h3>
+          <div id="leaderboard" class="text-xs text-zinc-500">Finish today’s puzzle to see your rank.</div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script type="module" src="./lattice-ui.js"></script>
+</body>
+</html>
