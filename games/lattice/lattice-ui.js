@@ -675,16 +675,18 @@ function render() {
     tableWrap.className = 'overflow-auto';
 
     const table = document.createElement('table');
-    table.className = 'w-auto table-fixed border-separate border-spacing-1 mx-auto';
+    table.className = 'w-auto table-fixed border-separate mx-auto';
+    // slightly tighter spacing so the grid feels more like Snake tiles
+    table.style.borderSpacing = '4px';
 
     // fixed column widths so the boxes form an actual grid
     const colgroup = document.createElement('colgroup');
     const col0 = document.createElement('col');
-    col0.style.width = '128px';
+    col0.style.width = '120px';
     colgroup.appendChild(col0);
     for (let j = 0; j < puzzle.size; j++) {
       const col = document.createElement('col');
-      col.style.width = '72px';
+      col.style.width = '64px';
       colgroup.appendChild(col);
     }
     table.appendChild(colgroup);
@@ -697,7 +699,7 @@ function render() {
     trh.appendChild(th0);
     for (let j = 0; j < puzzle.size; j++) {
       const th = document.createElement('th');
-      th.className = 'text-xs text-zinc-400 px-1 text-center';
+      th.className = 'text-xs text-zinc-400 px-0 text-center leading-tight';
       th.textContent = cat.values[j];
       trh.appendChild(th);
     }
