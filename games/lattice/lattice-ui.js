@@ -13,9 +13,8 @@ const els = {
   clues: document.getElementById('clues'),
   cluesPanel: document.getElementById('clues-panel'),
 
-  // begin overlay
-  beginOverlay: document.getElementById('begin-overlay'),
-  beginBtn: document.getElementById('begin-btn'),
+  // start overlay
+  startOverlay: document.getElementById('start-overlay'),
 
   // controls
   leaderboardBtn: document.getElementById('leaderboard-btn'),
@@ -93,16 +92,14 @@ function getElapsedMs() {
 
 function setPrestart(show) {
   isPrestart = show;
-  if (els.beginOverlay) {
-    if (show) els.beginOverlay.classList.remove('hidden');
-    else els.beginOverlay.classList.add('hidden');
+
+  // Keep board visible but block interaction with start overlay
+  if (els.startOverlay) {
+    if (show) els.startOverlay.classList.remove('hidden');
+    else els.startOverlay.classList.add('hidden');
   }
 
-  // hide main UI until start
-  if (els.gameContainer) {
-    if (show) els.gameContainer.classList.add('hidden');
-    else els.gameContainer.classList.remove('hidden');
-  }
+  // Hide clues until start (match vibe of other games)
   if (els.cluesPanel) {
     if (show) els.cluesPanel.classList.add('hidden');
     else els.cluesPanel.classList.remove('hidden');
@@ -783,7 +780,7 @@ async function startPractice() {
 }
 
 function wireUI() {
-  els.beginBtn?.addEventListener('click', () => {
+  els.startOverlay?.addEventListener('click', () => {
     setPrestart(false);
     startTimer({ resumeElapsedMs: 0 });
     saveProgress(true);
