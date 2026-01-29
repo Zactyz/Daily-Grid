@@ -165,10 +165,12 @@
         details[open] summary::after { transform: rotate(45deg); }
 
         /* prestart dim/blur (to ensure iOS shows the effect) */
-        #game-container.prestart #board {
+        #game-container.prestart #board,
+        #game-container.prestart #undo-btn {
             filter: grayscale(1) blur(2px);
             opacity: 0.65;
         }
+        #game-container.prestart #undo-btn { pointer-events: none; }
 
         /* grid cells */
         .grid-cell {
@@ -277,7 +279,7 @@
 
         <!-- Game Container (board tables) -->
         <div id="game-container" class="glass-strong p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
-            <button id="undo-btn" class="absolute top-3 right-3 z-20 btn btn-secondary w-10 h-10 p-0 flex items-center justify-center" title="Undo" aria-label="Undo">
+            <button id="undo-btn" class="absolute top-3 right-3 z-10 btn btn-secondary w-10 h-10 p-0 flex items-center justify-center" title="Undo" aria-label="Undo">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l-4-4 4-4" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10h9a6 6 0 110 12h-1" />
@@ -286,7 +288,7 @@
             <div id="board" class="overflow-auto"></div>
 
             <!-- Start Overlay (match Snake/Pathways) -->
-            <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
+            <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-30 cursor-pointer">
                 <div class="w-20 h-20 rounded-2xl flex items-center justify-center mb-4" style="background: linear-gradient(135deg, rgba(125,211,252,0.25), rgba(125,211,252,0.10));">
                     <svg class="w-10 h-10" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
