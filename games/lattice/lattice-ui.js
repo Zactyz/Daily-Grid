@@ -54,6 +54,36 @@ let engine = null;
 let puzzle = null;
 let mode = 'daily'; // 'daily' | 'practice'
 
+const OTHER_GAMES = [
+  {
+    id: 'snake',
+    name: 'Snake',
+    path: '/games/snake/',
+    logo: '/games/snake/snake-logo.png',
+    submittedKeyPrefix: 'dailygrid_submitted_',
+    theme: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400' }
+  },
+  {
+    id: 'pathways',
+    name: 'Pathways',
+    path: '/games/pathways/',
+    logo: '/games/pathways/pathways-logo.png',
+    submittedKeyPrefix: 'dailygrid_pathways_submitted_',
+    theme: { bg: 'bg-rose-500/10', border: 'border-rose-500/30', text: 'text-rose-400' }
+  }
+];
+
+function getUncompletedGames(puzzleId) {
+  return OTHER_GAMES.filter(game => {
+    try {
+      const key = `${game.submittedKeyPrefix}${puzzleId}`;
+      return localStorage.getItem(key) !== 'true';
+    } catch {
+      return true;
+    }
+  });
+}
+
 let startedAt = null;
 let timerInt = null;
 let timerStarted = false;
@@ -514,9 +544,31 @@ function resume() {
 
 function showNextGamePromo() {
   if (!els.nextGamePromo || !els.nextGameLink || !els.nextGameLogo || !els.nextGameText) return;
-  els.nextGameLink.href = '/games/snake/';
-  els.nextGameLogo.src = '/games/snake/snake-logo.png';
-  els.nextGameText.textContent = "Play today's Snake";
+
+  // Consistent with Snake/Pathways: only show cross-game promo for today's daily puzzle.
+  // (Practice mode completion shouldn't nag about streak completion.)
+  if (mode !== 'daily') {
+    els.nextGamePromo.classList.add('hidden');
+    return;
+  }
+
+  const puzzleId = puzzle?.puzzleId || getPTDateYYYYMMDD();
+  const uncompleted = getUncompletedGames(puzzleId);
+
+  if (uncompleted.length === 0) {
+    els.nextGamePromo.classList.add('hidden');
+    return;
+  }
+
+  const nextGame = uncompleted[0];
+  els.nextGameLink.href = nextGame.path;
+  // Match styling used in other games
+  els.nextGameLink.className = `block w-full py-3 px-4 rounded-xl text-center transition-all ${nextGame.theme.bg} border ${nextGame.theme.border} hover:${nextGame.theme.bg.replace('/10', '/20')}`;
+  els.nextGameLogo.src = nextGame.logo;
+  els.nextGameLogo.alt = nextGame.name;
+  els.nextGameText.textContent = `Play today's ${nextGame.name}`;
+  els.nextGameText.className = `font-semibold text-sm ${nextGame.theme.text}`;
+
   els.nextGamePromo.classList.remove('hidden');
 }
 

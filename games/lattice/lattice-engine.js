@@ -48,7 +48,13 @@ export class LatticeEngine {
   _generate(seed, meta) {
     const rnd = createSeededRandom(seed);
 
-    // Choose size: 3 (60%) or 4 (40%)
+    // Choose size + number of other categories (tables).
+    // Tables shown = number of non-identity categories (otherCount).
+    // We want more variety:
+    // - 3x3 with 2 tables (classic)
+    // - 3x3 with 3 tables (harder, more variety)
+    // - 4x4 with 2 tables (bigger grid but not too many tables)
+    // - 4x4 with 3 tables (full-size)
     const size = rnd() < 0.6 ? 3 : 4;
 
     const identityCandidates = ['name', 'job', 'country'].filter(c => this.dataset.byCategory.has(c));
@@ -58,7 +64,18 @@ export class LatticeEngine {
       .filter(c => c !== identityCategory)
       .filter(c => this.dataset.rolesByCategory.get(c) !== 'identity');
 
-    const otherCount = size === 3 ? 2 : 3;
+    let otherCount;
+    if (size === 3) {
+      // 3x3: 50% 2 tables, 50% 3 tables
+      otherCount = rnd() < 0.5 ? 2 : 3;
+    } else {
+      // 4x4: 60% 2 tables, 40% 3 tables
+      otherCount = rnd() < 0.6 ? 2 : 3;
+    }
+
+    // If dataset can't support the desired count, fall back safely.
+    otherCount = Math.max(1, Math.min(otherCount, otherCandidates.length));
+
     const otherCategories = pickN(otherCandidates, otherCount, rnd);
 
     const categories = [identityCategory, ...otherCategories];

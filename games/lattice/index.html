@@ -201,13 +201,21 @@
         th {
             max-width: 150px;
             white-space: normal;
-            /* Prefer wrapping on spaces (avoid mid-word breaks) */
+            /* Wrap nicely, but allow breaking long tokens when needed */
             word-break: normal;
-            overflow-wrap: normal;
+            overflow-wrap: anywhere;
             hyphens: auto;
             line-height: 1.15;
+            text-align: center;
         }
         @media (max-width: 480px) { th { max-width: 120px; } }
+
+        /* Leaderboard: keep modal buttons reachable even with a full Top 10 */
+        #leaderboard-list {
+            max-height: 40vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
 
         /* Clue states */
         .clue-neutral { color: rgba(232,232,237,0.90); }
@@ -297,7 +305,7 @@
             <div id="board" class="overflow-auto"></div>
 
             <!-- Start Overlay (match Snake/Pathways) -->
-            <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-30 cursor-pointer">
+            <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-start pt-10 z-30 cursor-pointer">
                 <div class="w-20 h-20 rounded-2xl flex items-center justify-center mb-4" style="background: linear-gradient(135deg, rgba(125,211,252,0.25), rgba(125,211,252,0.10));">
                     <svg class="w-10 h-10" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
