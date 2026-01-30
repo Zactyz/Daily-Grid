@@ -38,6 +38,12 @@ const els = {
   shareBtn: document.getElementById('share-btn'),
   practiceInfiniteBtn: document.getElementById('practice-infinite-btn'),
 
+  // practice complete actions (modal)
+  practiceCompleteActions: document.getElementById('practice-complete-actions'),
+  tryAgainBtn: document.getElementById('try-again-btn'),
+  nextLevelBtn: document.getElementById('next-level-btn'),
+  backToDailyCompleteBtn: document.getElementById('back-to-daily-complete-btn'),
+
   claimInitialsForm: document.getElementById('claim-initials-form'),
   initialsInput: document.getElementById('initials-input'),
 
@@ -175,9 +181,6 @@ function setMode(nextMode) {
     els.practiceModeBtn?.classList.remove('hidden');
     els.backToDailyBtn?.classList.add('hidden');
 
-    // Leaderboard: daily only
-    els.leaderboardBtn?.classList.remove('hidden');
-
     // Practice-only controls
     els.showSolutionBtn?.classList.add('hidden');
     els.solutionActions?.classList.add('hidden');
@@ -187,13 +190,12 @@ function setMode(nextMode) {
     els.practiceModeBtn?.classList.add('hidden');
     els.backToDailyBtn?.classList.remove('hidden');
 
-    // Leaderboard: hide in practice (match other games)
-    els.leaderboardBtn?.classList.add('hidden');
-
     // Practice-only controls
     els.showSolutionBtn?.classList.remove('hidden');
     els.solutionActions?.classList.add('hidden');
   }
+
+  updateLeaderboardButton();
 }
 
 function initState() {
@@ -379,6 +381,20 @@ function updateUndoButton() {
   els.undoBtn.disabled = disabled;
   els.undoBtn.style.opacity = disabled ? '0.45' : '';
   els.undoBtn.style.pointerEvents = disabled ? 'none' : '';
+}
+
+function updateLeaderboardButton() {
+  // Match Snake/Pathways: leaderboard button only appears once completed (daily mode only)
+  if (!els.leaderboardBtn) return;
+
+  if (mode === 'daily' && hasSolved) {
+    els.leaderboardBtn.classList.remove('hidden');
+    els.pauseBtn?.classList.add('hidden');
+  } else {
+    els.leaderboardBtn.classList.add('hidden');
+    // In daily unsolved, pause button should be visible
+    if (mode === 'daily') els.pauseBtn?.classList.remove('hidden');
+  }
 }
 
 function storageKeyForPuzzleId(puzzleId) {
@@ -670,10 +686,41 @@ async function claimInitials(initials) {
 function showSolvedModal({ timeMs, rankText, showInitials }) {
   els.finalTime.textContent = formatTime(timeMs);
   if (els.percentileMsg) els.percentileMsg.textContent = rankText || '';
-  if (els.claimInitialsForm) {
-    if (showInitials) els.claimInitialsForm.classList.remove('hidden');
-    else els.claimInitialsForm.classList.add('hidden');
+
+  // Reset modal sections to match Snake/Pathways behavior
+  // Daily: show leaderboard area + share/practice buttons
+  // Practice: hide leaderboard + show practice completion actions
+  if (mode === 'daily') {
+    els.practiceCompleteActions?.classList.add('hidden');
+    els.practiceCompleteActions?.classList.remove('flex');
+
+    els.shareBtn?.classList.remove('hidden');
+    els.practiceInfiniteBtn?.classList.remove('hidden');
+    els.closeModalBtn?.classList.remove('hidden');
+
+    // Leaderboard section shown in daily modal (content may still be loading)
+    els.leaderboardTitle?.classList.remove('hidden');
+    els.leaderboardList?.classList.remove('hidden');
+
+    if (els.claimInitialsForm) {
+      if (showInitials) els.claimInitialsForm.classList.remove('hidden');
+      else els.claimInitialsForm.classList.add('hidden');
+    }
+  } else {
+    // Practice mode
+    els.shareBtn?.classList.add('hidden');
+    els.practiceInfiniteBtn?.classList.add('hidden');
+    els.closeModalBtn?.classList.remove('hidden');
+
+    els.claimInitialsForm?.classList.add('hidden');
+    els.nextGamePromo?.classList.add('hidden');
+    els.leaderboardTitle?.classList.add('hidden');
+    els.leaderboardList?.classList.add('hidden');
+
+    els.practiceCompleteActions?.classList.remove('hidden');
+    els.practiceCompleteActions?.classList.add('flex');
   }
+
   showCompletionModal();
 }
 
@@ -682,13 +729,14 @@ async function handleSolved() {
   stopTimer();
 
   if (mode !== 'daily') {
-    // Practice mode: no leaderboard, no cross-game streak promo
-    showSolvedModal({ timeMs, rankText: 'Practice puzzle complete', showInitials: false });
-    els.nextGamePromo?.classList.add('hidden');
-    els.leaderboardTitle?.classList.add('hidden');
-    els.leaderboardList?.classList.add('hidden');
+    if (els.modalTitle) els.modalTitle.textContent = 'Nice Job!';
+    if (els.modalSubtitle) els.modalSubtitle.textContent = 'Practice puzzle complete';
+    showSolvedModal({ timeMs, rankText: '', showInitials: false });
     return;
   }
+
+  if (els.modalTitle) els.modalTitle.textContent = 'Solved!';
+  if (els.modalSubtitle) els.modalSubtitle.textContent = "Great work on today's puzzle";
 
   if (!hasSubmittedToday()) {
     const data = await submitScore(timeMs);
@@ -702,6 +750,7 @@ async function handleSolved() {
 
   showNextGamePromo();
   await loadLeaderboardIntoModal();
+  updateLeaderboardButton();
   saveProgress(true);
 }
 
@@ -755,6 +804,7 @@ function tryAutoSolve() {
   const solved = checkSolved();
   if (!solved.ok) return;
   hasSolved = true;
+  updateLeaderboardButton();
   handleSolved().catch(() => {
     // ignore
   });
@@ -927,6 +977,8 @@ async function startDaily() {
 
   render();
   updateClueStyles();
+  updateUndoButton();
+  updateLeaderboardButton();
 
   if (timerStarted) {
     setPrestart(false);
@@ -950,6 +1002,8 @@ async function startPractice() {
   showPauseOverlay(false);
   render();
   updateClueStyles();
+  updateUndoButton();
+  updateLeaderboardButton();
   els.timer.textContent = formatTime(0);
   setPrestart(true);
 
@@ -1038,6 +1092,37 @@ function wireUI() {
   });
 
   els.backToDailyBtn?.addEventListener('click', () => startDaily());
+
+  // Practice complete actions (modal)
+  els.tryAgainBtn?.addEventListener('click', () => {
+    if (mode !== 'practice') return;
+    hideCompletionModal();
+    // Reset current practice puzzle
+    initState();
+    undoStack = [];
+    timerStarted = false;
+    hasSolved = false;
+    isPaused = false;
+    stopTimer();
+    showPauseOverlay(false);
+    render();
+    updateClueStyles();
+    els.timer.textContent = formatTime(0);
+    setPrestart(true);
+    els.showSolutionBtn?.classList.remove('hidden');
+    els.solutionActions?.classList.add('hidden');
+    updateUndoButton();
+    updateLeaderboardButton();
+  });
+  els.nextLevelBtn?.addEventListener('click', () => {
+    if (mode !== 'practice') return;
+    hideCompletionModal();
+    startPractice();
+  });
+  els.backToDailyCompleteBtn?.addEventListener('click', () => {
+    hideCompletionModal();
+    startDaily();
+  });
 
   // Practice: show solution + actions
   els.showSolutionBtn?.addEventListener('click', () => showSolution());

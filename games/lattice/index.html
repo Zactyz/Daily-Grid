@@ -333,7 +333,7 @@
 
         <!-- Control Buttons (match: Leaderboard / Pause / Reset; no Check) -->
         <div class="flex gap-3 mb-8">
-            <button id="leaderboard-btn" class="btn btn-secondary flex items-center gap-2">
+            <button id="leaderboard-btn" class="btn btn-secondary flex items-center gap-2 hidden">
                 <svg class="w-4 h-4" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                 </svg>
@@ -489,6 +489,17 @@
                         Practice
                     </button>
                     <button id="close-modal-btn" class="btn btn-secondary flex-1">Close</button>
+                </div>
+
+                <!-- Practice Mode Buttons (match other games) -->
+                <div id="practice-complete-actions" class="hidden flex-col gap-3">
+                    <div class="flex gap-3">
+                        <button id="try-again-btn" class="btn btn-secondary flex-1">Try Again</button>
+                        <button id="next-level-btn" class="btn btn-primary flex-1">Next Puzzle</button>
+                    </div>
+                    <button id="back-to-daily-complete-btn" class="btn btn-secondary w-full border-emerald-500/20 text-emerald-300/80 hover:bg-emerald-500/10">
+                        Back to Daily Puzzle
+                    </button>
                 </div>
             </div>
         </div>
