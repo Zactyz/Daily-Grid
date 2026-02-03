@@ -705,6 +705,7 @@ function showSolvedModal({ timeMs, rankText, showInitials }) {
 async function handleSolved() {
   const timeMs = getElapsedMs();
   stopTimer();
+  timerStarted = false;
 
   if (mode !== 'daily') {
     if (els.modalTitle) els.modalTitle.textContent = 'Nice Job!';
