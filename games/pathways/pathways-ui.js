@@ -1,25 +1,13 @@
 import { formatTime, getOrCreateAnonId, getPTDateYYYYMMDD } from './pathways-utils.js';
+import { getUncompletedGames as getCrossGamePromo } from '../common/games.js';
+import {
+  buildShareText,
+  shareWithFallback,
+  formatDateForShare,
+  loadLogoForShare,
+  showShareFeedback
+} from '../common/share.js';
 
-const OTHER_GAMES = [
-  {
-    id: 'snake',
-    name: 'Snake',
-    path: '/games/snake/',
-    logo: '/games/snake/snake-logo.png',
-    submittedKeyPrefix: 'dailygrid_submitted_',
-    theme: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400' }
-  },
-  {
-    id: 'lattice',
-    name: 'Lattice',
-    path: '/games/lattice/',
-    // cache-bust so iOS/Safari actually refreshes
-    logo: '/games/lattice/lattice-logo.png?v=2',
-    submittedKeyPrefix: 'dailygrid_lattice_submitted_',
-    theme: { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400' }
-  }
-  // Future games can be added here
-];
 
 export class PathwaysUI {
   constructor(engine, onReset, onNextLevel, mode = 'daily') {
@@ -616,12 +604,9 @@ export class PathwaysUI {
   
   getUncompletedGames() {
     const puzzleId = getPTDateYYYYMMDD();
-    return OTHER_GAMES.filter(game => {
-      const key = `${game.submittedKeyPrefix}${puzzleId}`;
-      return localStorage.getItem(key) !== 'true';
-    });
+    return getCrossGamePromo('pathways', puzzleId);
   }
-  
+
   showNextGamePromo() {
     if (!this.elements.nextGamePromo || this.mode !== 'daily') return;
     
@@ -848,64 +833,64 @@ export class PathwaysUI {
     const finalTime = this.completionTime !== null ? this.completionTime : this.engine.state.timeMs;
     const puzzleDate = getPTDateYYYYMMDD();
     const gridSize = `${this.engine.puzzle.width}x${this.engine.puzzle.height}`;
-    
+
     const scale = 2;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
+
     const width = 400;
     const height = 340;
     canvas.width = width * scale;
     canvas.height = height * scale;
     ctx.scale(scale, scale);
-    
+
     const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, '#0a0a0f');
     gradient.addColorStop(1, '#12121a');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
-    
+
     ctx.fillStyle = 'rgba(240, 128, 128, 0.02)';
     for (let i = 0; i < width; i += 20) {
       for (let j = 0; j < height; j += 20) {
         ctx.fillRect(i, j, 1, 1);
       }
     }
-    
+
     const glowGradient = ctx.createRadialGradient(width/2, 0, 0, width/2, 0, 180);
     glowGradient.addColorStop(0, 'rgba(240, 128, 128, 0.12)');
     glowGradient.addColorStop(1, 'transparent');
     ctx.fillStyle = glowGradient;
     ctx.fillRect(0, 0, width, height);
-    
-    const logoLoaded = await this.loadLogoForShare(ctx, width);
-    
+
+    const logoImage = await loadLogoForShare('/games/pathways/pathways-logo.png');
+
     const titleY = 50;
     ctx.fillStyle = '#f08080';
     ctx.font = 'bold 32px "Space Grotesk", system-ui, sans-serif';
     ctx.textAlign = 'center';
-    
-    if (logoLoaded) {
+
+    if (logoImage) {
       const textWidth = ctx.measureText('Pathways').width;
       const logoSize = 34;
       const gap = 8;
       const totalWidth = logoSize + gap + textWidth;
       const startX = (width - totalWidth) / 2;
-      
-      ctx.drawImage(this.logoImage, startX, titleY - 26, logoSize, logoSize);
-      
+
+      ctx.drawImage(logoImage, startX, titleY - 26, logoSize, logoSize);
+
       ctx.textAlign = 'left';
       ctx.fillText('Pathways', startX + logoSize + gap, titleY);
       ctx.textAlign = 'center';
     } else {
       ctx.fillText('Pathways', width/2, titleY);
     }
-    
+
     ctx.fillStyle = '#71717a';
     ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
     ctx.fillText('Daily Grid Puzzle', width/2, titleY + 24);
-    
-    const dateText = this.formatDateForShare(puzzleDate);
+
+    const dateText = formatDateForShare(puzzleDate);
     ctx.fillStyle = 'rgba(240, 128, 128, 0.1)';
     const badgeWidth = 160;
     const badgeHeight = 26;
@@ -917,11 +902,11 @@ export class PathwaysUI {
     ctx.strokeStyle = 'rgba(240, 128, 128, 0.25)';
     ctx.lineWidth = 1;
     ctx.stroke();
-    
+
     ctx.fillStyle = '#f08080';
     ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
     ctx.fillText(dateText, width/2, badgeY + 17);
-    
+
     ctx.fillStyle = 'rgba(240, 128, 128, 0.06)';
     const timeBoxWidth = 180;
     const timeBoxHeight = 85;
@@ -932,102 +917,44 @@ export class PathwaysUI {
     ctx.fill();
     ctx.strokeStyle = 'rgba(240, 128, 128, 0.15)';
     ctx.stroke();
-    
+
     ctx.fillStyle = 'rgba(240, 128, 128, 0.5)';
     ctx.font = '10px "Space Grotesk", system-ui, sans-serif';
     ctx.fillText('MY TIME', width/2, timeBoxY + 22);
-    
+
     ctx.fillStyle = '#f08080';
     ctx.font = 'bold 38px "JetBrains Mono", monospace, system-ui';
     ctx.fillText(formatTime(finalTime), width/2, timeBoxY + 58);
-    
+
     ctx.fillStyle = '#52525b';
     ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
     ctx.fillText(`${gridSize} Grid`, width/2, timeBoxY + timeBoxHeight + 18);
-    
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const file = new File([blob], 'pathways-result.png', { type: 'image/png' });
+
+    const shareText = buildShareText({
+      gameName: 'Pathways',
+      puzzleLabel: dateText,
+      gridLabel: gridSize,
+      timeText: formatTime(finalTime),
+      shareUrl: 'https://dailygrid.app/games/pathways/'
+    });
+
     try {
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      const file = new File([blob], 'pathways-result.png', { type: 'image/png' });
-      
-      const shareText = `Pathways by Daily Grid\n${dateText} • ${gridSize}\nTime: ${formatTime(finalTime)}\n\nhttps://dailygrid.app/games/pathways`;
-      
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'Pathways - Daily Grid',
-          text: shareText,
-          files: [file]
-        });
-      } else if (navigator.share) {
-        await navigator.share({
-          title: 'Pathways - Daily Grid',
-          text: shareText,
-          url: 'https://dailygrid.app/games/pathways'
-        });
-      } else {
-        await navigator.clipboard.writeText(shareText);
-        this.showShareFeedback('Copied to clipboard!');
-      }
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Share failed:', error);
-        const shareText = `Pathways by Daily Grid\n${this.formatDateForShare(puzzleDate)} • ${gridSize}\nTime: ${formatTime(finalTime)}\n\nhttps://dailygrid.app/games/pathways`;
-        try {
-          await navigator.clipboard.writeText(shareText);
-          this.showShareFeedback('Copied to clipboard!');
-        } catch (clipError) {
-          this.showShareFeedback('Unable to share');
-        }
-      }
+      await shareWithFallback({
+        shareText,
+        shareTitle: 'Pathways - Daily Grid',
+        shareUrl: 'https://dailygrid.app/games/pathways/',
+        shareFile: file,
+        onCopy: () => showShareFeedback(this.elements.shareBtn, 'Copied to clipboard!'),
+        onError: () => showShareFeedback(this.elements.shareBtn, 'Unable to share')
+      });
+    } catch (shareError) {
+      console.error('share helper failure', shareError);
+      showShareFeedback(this.elements.shareBtn, 'Unable to share');
     }
   }
-  
-  async loadLogoForShare(ctx, canvasWidth) {
-    if (this.logoImage) return true;
-    
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        this.logoImage = img;
-        resolve(true);
-      };
-      img.onerror = () => {
-        resolve(false);
-      };
-      img.src = '/games/pathways/pathways-logo.png';
-    });
-  }
-  
-  formatDateForShare(dateStr) {
-    const [year, month, day] = dateStr.split('-');
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  }
-  
-  showShareFeedback(message) {
-    const btn = this.elements.shareBtn;
-    if (!btn) return;
-    
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = `
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-      </svg>
-      ${message}
-    `;
-    btn.disabled = true;
-    
-    setTimeout(() => {
-      btn.innerHTML = originalHTML;
-      btn.disabled = false;
-    }, 2000);
-  }
-  
   resetUI() {
     this.completionTime = null;
     this.modalShown = false;

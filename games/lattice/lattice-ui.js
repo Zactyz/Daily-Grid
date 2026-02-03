@@ -1,6 +1,10 @@
 import { LatticeEngine } from './lattice-engine.js';
 import { getPTDateYYYYMMDD, parseCsv, getOrCreateAnonId, formatTime } from './lattice-utils.js';
 
+import { getUncompletedGames as getCrossGamePromo } from '../common/games.js';
+
+import { buildShareText, shareWithFallback } from '../common/share.js';
+
 const els = {
   // header
   timer: document.getElementById('timer'),
@@ -66,34 +70,8 @@ let engine = null;
 let puzzle = null;
 let mode = 'daily'; // 'daily' | 'practice'
 
-const OTHER_GAMES = [
-  {
-    id: 'snake',
-    name: 'Snake',
-    path: '/games/snake/',
-    logo: '/games/snake/snake-logo.png',
-    submittedKeyPrefix: 'dailygrid_submitted_',
-    theme: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400' }
-  },
-  {
-    id: 'pathways',
-    name: 'Pathways',
-    path: '/games/pathways/',
-    logo: '/games/pathways/pathways-logo.png',
-    submittedKeyPrefix: 'dailygrid_pathways_submitted_',
-    theme: { bg: 'bg-rose-500/10', border: 'border-rose-500/30', text: 'text-rose-400' }
-  }
-];
-
 function getUncompletedGames(puzzleId) {
-  return OTHER_GAMES.filter(game => {
-    try {
-      const key = `${game.submittedKeyPrefix}${puzzleId}`;
-      return localStorage.getItem(key) !== 'true';
-    } catch {
-      return true;
-    }
-  });
+  return getCrossGamePromo('lattice', puzzleId);
 }
 
 let startedAt = null;
@@ -1149,15 +1127,27 @@ function wireUI() {
   });
 
   els.shareBtn?.addEventListener('click', async () => {
-    const date = mode === 'daily' ? puzzle.puzzleId : 'practice';
-    const text = `Lattice (${puzzle.size}x${puzzle.size}) — ${date}\n${formatTime(getElapsedMs())}\nhttps://daily-grid.pages.dev/games/lattice/`;
+    const dateLabel = mode === 'daily' ? puzzle.puzzleId : 'practice';
+    const shareText = buildShareText({
+      gameName: 'Lattice',
+      puzzleLabel: dateLabel,
+      gridLabel: `${puzzle.size}x${puzzle.size}`,
+      timeText: formatTime(getElapsedMs()),
+      shareUrl: 'https://daily-grid.pages.dev/games/lattice/'
+    });
+
     try {
-      if (navigator.share) await navigator.share({ text });
-      else {
-        await navigator.clipboard.writeText(text);
-        alert('Copied share text');
-      }
-    } catch {}
+      await shareWithFallback({
+        shareText,
+        shareTitle: 'Lattice - Daily Grid',
+        shareUrl: 'https://daily-grid.pages.dev/games/lattice/',
+        onCopy: () => alert('Copied share text'),
+        onError: () => alert('Unable to share')
+      });
+    } catch (shareError) {
+      console.error('share helper failure', shareError);
+      alert('Unable to share');
+    }
   });
 
   document.addEventListener('visibilitychange', () => {
