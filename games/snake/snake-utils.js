@@ -5,7 +5,8 @@ export {
   getOrCreateAnonId,
   formatTime,
   createSeededRandom,
-  hashString
+  hashString,
+  normalizeWall
 } from '../common/utils.js';
 
 export const STORAGE_KEYS = {

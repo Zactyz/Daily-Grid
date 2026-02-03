@@ -69,3 +69,11 @@ export function hashString(str) {
   }
   return Math.abs(hash);
 }
+
+export function normalizeWall(a, b) {
+  const [ax, ay] = a;
+  const [bx, by] = b;
+  const s1 = `${ax},${ay}`;
+  const s2 = `${bx},${by}`;
+  return (s1 < s2) ? `${s1}-${s2}` : `${s2}-${s1}`;
+}
