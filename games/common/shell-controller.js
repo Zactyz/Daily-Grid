@@ -188,7 +188,7 @@ export function createShellController(adapter, elementOverrides = null) {
 
   function updatePauseState() {
     if (elements.pauseBtn) {
-      if (adapter.isComplete()) {
+      if (adapter.isComplete() || adapter.isSolutionShown?.()) {
         elements.pauseBtn.classList.add('hidden');
       } else {
         elements.pauseBtn.classList.remove('hidden');
@@ -214,6 +214,11 @@ export function createShellController(adapter, elementOverrides = null) {
 
   function updateResetButton() {
     if (!elements.resetBtn) return;
+    if (adapter.isSolutionShown?.()) {
+      elements.resetBtn.classList.add('hidden');
+      return;
+    }
+    elements.resetBtn.classList.remove('hidden');
     elements.resetBtn.innerHTML = RESET_ICON;
   }
 

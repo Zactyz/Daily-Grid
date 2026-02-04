@@ -84,6 +84,7 @@ export class SnakeUI {
       this.resetUI();
     });
     this.elements.solutionNextBtn?.addEventListener('click', () => {
+      this.resetUI();
       this.onNextLevel?.();
     });
   }

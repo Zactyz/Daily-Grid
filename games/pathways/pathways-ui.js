@@ -93,6 +93,7 @@ export class PathwaysUI {
       this.resetUI();
     });
     this.elements.solutionNextBtn?.addEventListener('click', () => {
+      this.resetUI();
       this.onNextLevel?.();
     });
   }
