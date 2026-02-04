@@ -715,12 +715,12 @@ function generatePuzzle(seedString) {
     const edges = buildVisibilityEdges(islands);
     if (edges.length < islands.length - 1) continue;
 
-    const degreeMap = new Map(islands.map(island => [island.id, 0]));
+    const degreeOptions = new Map(islands.map(island => [island.id, 0]));
     edges.forEach(edge => {
-      degreeMap.set(edge.a, degreeMap.get(edge.a) + 1);
-      degreeMap.set(edge.b, degreeMap.get(edge.b) + 1);
+      degreeOptions.set(edge.a, degreeOptions.get(edge.a) + 1);
+      degreeOptions.set(edge.b, degreeOptions.get(edge.b) + 1);
     });
-    const degrees = Array.from(degreeMap.values());
+    const degrees = Array.from(degreeOptions.values());
     const avgDegree = degrees.reduce((a, b) => a + b, 0) / degrees.length;
     const maxDegree = Math.max(...degrees);
     if (edges.length < islands.length + 1) continue;
