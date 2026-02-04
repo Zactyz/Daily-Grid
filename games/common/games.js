@@ -37,6 +37,24 @@ const GAME_META = [
     submittedKeyPrefix: 'dailygrid_bits_submitted_',
     theme: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400' },
     shareUrl: 'https://dailygrid.app/games/bits/'
+  },
+  {
+    id: 'hashi',
+    name: 'Bridgeworks',
+    path: '/games/hashi/',
+    logo: '/games/hashi/hashi-logo.svg',
+    submittedKeyPrefix: 'dailygrid_hashi_submitted_',
+    theme: { bg: 'bg-sky-500/10', border: 'border-sky-400/30', text: 'text-sky-300' },
+    shareUrl: 'https://dailygrid.app/games/hashi/'
+  },
+  {
+    id: 'shikaku',
+    name: 'Parcel',
+    path: '/games/shikaku/',
+    logo: '/games/shikaku/shikaku-logo.svg',
+    submittedKeyPrefix: 'dailygrid_shikaku_submitted_',
+    theme: { bg: 'bg-amber-300/15', border: 'border-amber-300/30', text: 'text-amber-200' },
+    shareUrl: 'https://dailygrid.app/games/shikaku/'
   }
 ];
 

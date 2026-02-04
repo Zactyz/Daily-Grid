@@ -61,14 +61,14 @@
             <div class="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm font-semibold mb-6 uppercase tracking-widest">
                 Daily Challenges
             </div>
-            <h1 class="text-5xl lg:text-6xl font-black mb-6">Explore <span class="gold-gradient">Daily Puzzles</span></h1>
+            <h1 class="text-5xl lg:text-6xl font-black mb-6"><span class="gold-gradient">Daily Puzzles</span></h1>
             <p class="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
                 Handcrafted logic puzzles released every day. Choose your challenge, sharpen your mind, compete on the leaderboard.
             </p>
         </header>
 
         <!-- Games Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
+        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <!-- Game 1: Daily Grid -->
             <a href="/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
                 <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-16 h-16 rounded-2xl mb-6 shadow-lg">
@@ -114,16 +114,37 @@
             </a>
 
             <!-- Bits Game Card -->
-            <a href="/games/bits/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-emerald-500/20">
+            <a href="/games/bits/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
                 <img src="/games/bits/bits-logo.svg" alt="Bits" class="w-16 h-16 rounded-2xl mb-6">
                 <h2 class="text-2xl font-bold mb-2">Bits</h2>
-                <p class="text-slate-400 text-sm leading-relaxed mb-6">Neon binary puzzle: balance the ones and zeroes without letting triples line up.</p>
-                <span class="mt-auto text-emerald-400 font-bold text-sm flex items-center gap-2">
+                <p class="text-slate-400 text-sm leading-relaxed mb-6">Balance the binary grid with elegant 0s and 1s.</p>
+                <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
                     Play Today's Puzzle
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </span>
             </a>
 
+            <!-- Bridgeworks Game Card -->
+            <a href="/games/hashi/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+                <img src="/games/hashi/hashi-logo.svg" alt="Bridgeworks" class="w-16 h-16 rounded-2xl mb-6">
+                <h2 class="text-2xl font-bold mb-2">Bridgeworks</h2>
+                <p class="text-slate-400 text-sm leading-relaxed mb-6">Link numbered islands into a single elegant bridge network.</p>
+                <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+                    Play Today's Puzzle
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </span>
+            </a>
+
+            <!-- Parcel Game Card -->
+            <a href="/games/shikaku/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+                <img src="/games/shikaku/shikaku-logo.svg" alt="Parcel" class="w-16 h-16 rounded-2xl mb-6">
+                <h2 class="text-2xl font-bold mb-2">Parcel</h2>
+                <p class="text-slate-400 text-sm leading-relaxed mb-6">Divide the grid into perfect rectangles that match every clue.</p>
+                <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+                    Play Today's Puzzle
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </span>
+            </a>
         </div>
         
         <!-- Practice Mode Info -->
