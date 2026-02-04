@@ -33,6 +33,13 @@ let completionMs = null;
 let tickInterval = null;
 let pointerDownIsland = null;
 let visibilityEdges = [];
+let solutionShown = false;
+const solutionEls = {
+  showSolutionBtn: document.getElementById('show-solution-btn'),
+  solutionActions: document.getElementById('solution-actions'),
+  solutionRetryBtn: document.getElementById('solution-retry-btn'),
+  solutionNextBtn: document.getElementById('solution-next-btn')
+};
 
 function makeRng(seedString) {
   let seed = 1779033703 ^ seedString.length;
@@ -79,6 +86,40 @@ function canvasPointFor(island) {
 
 function updateVisibilityEdges() {
   visibilityEdges = buildVisibilityEdges(puzzle.islands);
+}
+
+function updateSolutionUI() {
+  if (!solutionEls.showSolutionBtn || !solutionEls.solutionActions) return;
+  if (currentMode !== 'practice') {
+    solutionEls.showSolutionBtn.classList.add('hidden');
+    solutionEls.solutionActions.classList.add('hidden');
+    return;
+  }
+  if (solutionShown) {
+    solutionEls.showSolutionBtn.classList.add('hidden');
+    solutionEls.solutionActions.classList.remove('hidden');
+  } else {
+    solutionEls.showSolutionBtn.classList.remove('hidden');
+    solutionEls.solutionActions.classList.add('hidden');
+  }
+}
+
+function showSolution() {
+  if (currentMode !== 'practice' || solutionShown || !puzzle?.solutionEdges) return;
+  bridges.clear();
+  puzzle.solutionEdges.forEach((edge) => {
+    if (!edge || edge.count <= 0) return;
+    bridges.set(edgeId(edge.a, edge.b), edge.count);
+  });
+  solutionShown = true;
+  isComplete = true;
+  completionMs = completionMs ?? getElapsedMs();
+  isPaused = true;
+  timerStarted = true;
+  updateProgressText();
+  updateSolutionUI();
+  draw();
+  shell?.update();
 }
 
 function edgeId(a, b) {
@@ -239,6 +280,7 @@ function resetPuzzle({ resetTimer }) {
   selected = null;
   isComplete = false;
   completionMs = null;
+  solutionShown = false;
 
   if (resetTimer) {
     baseElapsed = 0;
@@ -248,6 +290,7 @@ function resetPuzzle({ resetTimer }) {
   }
 
   updateProgressText();
+  updateSolutionUI();
   draw();
   saveProgress();
   shell?.update();
@@ -736,25 +779,23 @@ function generatePuzzle(seedString) {
     });
 
     const visited = new Set();
-    const treeEdges = new Set();
     const stack = [islands[0].id];
     visited.add(islands[0].id);
+
+    const edgeCounts = new Array(edges.length).fill(0);
     while (stack.length) {
       const current = stack.pop();
       const neighbors = shuffleInPlace([...adjacency.get(current)], rng);
       for (const neighbor of neighbors) {
         if (visited.has(neighbor.id)) continue;
+        const crossingBlocked = crossings.get(neighbor.idx).some(cross => edgeCounts[cross] > 0);
+        if (crossingBlocked) continue;
         visited.add(neighbor.id);
-        treeEdges.add(neighbor.idx);
+        edgeCounts[neighbor.idx] = 1;
         stack.push(neighbor.id);
       }
     }
     if (visited.size !== islands.length) continue;
-
-    const edgeCounts = new Array(edges.length).fill(0);
-    treeEdges.forEach((idx) => {
-      edgeCounts[idx] = 1;
-    });
 
     const edgeOrder = shuffleInPlace(edges.map((_, idx) => idx), rng);
     for (const idx of edgeOrder) {
@@ -904,6 +945,7 @@ function resetPracticePuzzle() {
   completionMs = null;
   updateProgressText();
   setDateLabel();
+  updateSolutionUI();
   if (els.islandCount) els.islandCount.textContent = String(puzzle.islands.length);
   draw();
   shell?.update();
@@ -927,6 +969,7 @@ function switchMode(mode) {
   initState();
   updateProgressText();
   setDateLabel();
+  updateSolutionUI();
   if (els.islandCount) els.islandCount.textContent = String(puzzle.islands.length);
   draw();
   shell?.update();
@@ -947,6 +990,8 @@ function initShell() {
     isPaused: () => isPaused,
     isStarted: () => timerStarted,
     hasProgress: () => bridges.size > 0,
+    isSolutionShown: () => solutionShown,
+    shouldShowCompletionModal: () => !solutionShown,
     pause: () => pauseTimer(),
     resume: () => resumeTimer(),
     startGame: () => startTimer(),
@@ -1008,6 +1053,7 @@ function init() {
   initState();
   updateProgressText();
   setDateLabel();
+  updateSolutionUI();
   draw();
   initShell();
   ensureTicker();
@@ -1019,6 +1065,9 @@ document.addEventListener('DOMContentLoaded', () => {
   els.canvas?.addEventListener('pointerdown', handlePointerDown);
   els.canvas?.addEventListener('pointerup', handlePointerUp);
   els.canvas?.addEventListener('pointerleave', handlePointerLeave);
+  solutionEls.showSolutionBtn?.addEventListener('click', showSolution);
+  solutionEls.solutionRetryBtn?.addEventListener('click', () => resetPuzzle({ resetTimer: true }));
+  solutionEls.solutionNextBtn?.addEventListener('click', () => resetPracticePuzzle());
   window.startPracticeMode = () => switchMode('practice');
   window.startDailyMode = () => switchMode('daily');
   window.addEventListener('beforeunload', saveProgress);
