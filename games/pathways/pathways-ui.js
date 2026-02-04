@@ -68,7 +68,10 @@ export class PathwaysUI {
       getAnonId: () => getOrCreateAnonId(),
       getCompletionPayload: () => ({ timeMs: this.engine.state.timeMs, hintsUsed: 0 }),
       getShareFile: () => this.buildShareImage(),
-      getDailyModalTitle: () => 'All pathways connected!'
+      shouldShowCompletionModal: () => !this.solutionShown,
+      isSolutionShown: () => this.solutionShown,
+      disableReplay: true,
+      pauseOnHide: true
     });
 
     this.setupCustomListeners();
@@ -205,6 +208,8 @@ export class PathwaysUI {
     }
 
     this.engine.state.isPaused = true;
+    this.engine.state.isComplete = true;
+    this.engine.state.timerStarted = true;
 
     this.elements.showSolutionBtn?.classList.add('hidden');
     this.elements.solutionActions?.classList.remove('hidden');

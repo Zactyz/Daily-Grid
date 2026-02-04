@@ -41,4 +41,7 @@ This document describes the adapter interface expected by `games/common/shell-co
 - `onReplayStateChange(enabled)`
 - `allowLeaderboardWhenIncomplete` (boolean)
 - `shouldShowCompletionModal()` -> boolean
+- `isSolutionShown()` -> boolean
+- `disableReplay` (boolean)
+- `pauseOnHide` (boolean)
 - `saveProgress()`

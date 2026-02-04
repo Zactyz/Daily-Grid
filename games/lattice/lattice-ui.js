@@ -1167,7 +1167,8 @@ function wireUI() {
     getAnonId: () => getOrCreateAnonId(),
     getCompletionPayload: () => ({ timeMs: Math.floor(completionMs ?? getElapsedMs()), hintsUsed: 0 }),
     shouldShowCompletionModal: () => !solutionShown,
-    disableShellTimer: true,
+    disableShellTimer: false,
+    disableReplay: true,
     getShareFile: () => buildShareCard({
       gameName: 'Lattice',
       logoPath: '/games/lattice/lattice-logo.png?v=2',

@@ -9,13 +9,6 @@ const RESET_ICON = `
   Reset
 `;
 
-const REPLAY_ICON = `
-  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9"/>
-  </svg>
-  Replay
-`;
-
 const PAUSE_ICON = `
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
@@ -83,6 +76,7 @@ export function createShellController(adapter, elementOverrides = null) {
   let hasSubmittedScore = false;
   let isInReplayMode = false;
   let timerWasRunning = false;
+  let autoPausedByVisibility = false;
   let lastPuzzleId = null;
   let lastMode = null;
   let toastTimeout = null;
@@ -110,6 +104,7 @@ export function createShellController(adapter, elementOverrides = null) {
   }
 
   function loadReplayMode() {
+    if (adapter.disableReplay) return false;
     if (!meta?.replayKeyPrefix) return false;
     if (adapter.getMode() !== 'daily') return false;
     try {
@@ -120,6 +115,7 @@ export function createShellController(adapter, elementOverrides = null) {
   }
 
   function saveReplayMode(enabled) {
+    if (adapter.disableReplay) return;
     if (!meta?.replayKeyPrefix) return;
     if (adapter.getMode() !== 'daily') return;
     try {
@@ -143,7 +139,7 @@ export function createShellController(adapter, elementOverrides = null) {
     completionMs = adapter.getCompletionMs?.() ?? null;
 
     hasSubmittedScore = mode === 'daily' ? loadSubmittedState() : false;
-    isInReplayMode = mode === 'daily' ? loadReplayMode() : false;
+    isInReplayMode = (mode === 'daily' && !adapter.disableReplay) ? loadReplayMode() : false;
 
     if (adapter.isComplete() && !isInReplayMode) {
       completionMs = adapter.getCompletionMs?.() ?? completionMs;
@@ -218,11 +214,15 @@ export function createShellController(adapter, elementOverrides = null) {
 
   function updateResetButton() {
     if (!elements.resetBtn) return;
-    elements.resetBtn.innerHTML = adapter.isComplete() ? REPLAY_ICON : RESET_ICON;
+    elements.resetBtn.innerHTML = RESET_ICON;
   }
 
   function updateLeaderboardButton() {
     if (!elements.leaderboardBtn) return;
+    if (adapter.isSolutionShown?.()) {
+      elements.leaderboardBtn.classList.add('hidden');
+      return;
+    }
     if (adapter.getMode() !== 'daily') {
       elements.leaderboardBtn.classList.add('hidden');
       return;
@@ -234,7 +234,7 @@ export function createShellController(adapter, elementOverrides = null) {
 
   function updateExitReplayButton() {
     if (!elements.exitReplayBtn) return;
-    if (adapter.getMode() === 'daily' && isInReplayMode && !adapter.isComplete()) {
+    if (!adapter.disableReplay && adapter.getMode() === 'daily' && isInReplayMode && !adapter.isComplete()) {
       elements.exitReplayBtn.classList.remove('hidden');
     } else {
       elements.exitReplayBtn.classList.add('hidden');
@@ -387,8 +387,10 @@ export function createShellController(adapter, elementOverrides = null) {
     if (elements.finalTime) elements.finalTime.textContent = adapter.formatTime(finalTime || 0);
 
     if (adapter.getMode() === 'daily') {
+      const shareMeta = adapter.getShareMeta?.() || {};
+      const gameName = shareMeta.gameName || meta?.name || adapter.gameId;
       const dailyTitle = adapter.getDailyModalTitle?.() || 'Solved!';
-      const dailySubtitle = adapter.getDailyModalSubtitle?.() || "Great work on today's puzzle";
+      const dailySubtitle = adapter.getDailyModalSubtitle?.() || `Great job on today's ${gameName}`;
       if (elements.modalTitle) elements.modalTitle.textContent = dailyTitle;
       if (elements.modalSubtitle) elements.modalSubtitle.textContent = dailySubtitle;
 
@@ -515,11 +517,7 @@ export function createShellController(adapter, elementOverrides = null) {
     });
 
     elements.resetBtn?.addEventListener('click', () => {
-      if (adapter.isComplete()) {
-        startReplay();
-      } else {
-        confirmReset();
-      }
+      confirmReset();
     });
 
     elements.confirmResetBtn?.addEventListener('click', () => {
@@ -597,6 +595,21 @@ export function createShellController(adapter, elementOverrides = null) {
 
     elements.backToDailyBtn?.addEventListener('click', () => {
       adapter.onStartDaily?.();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (adapter.pauseOnHide === false) return;
+      if (document.visibilityState === 'hidden') {
+        if (adapter.isStarted() && !adapter.isPaused() && !adapter.isComplete()) {
+          adapter.pause();
+          updatePauseState();
+          autoPausedByVisibility = true;
+        }
+      } else if (autoPausedByVisibility) {
+        adapter.resume();
+        updatePauseState();
+        autoPausedByVisibility = false;
+      }
     });
   }
 

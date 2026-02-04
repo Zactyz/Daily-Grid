@@ -23,8 +23,7 @@ export function formatTime(ms) {
   const total = Math.max(0, Math.floor(ms));
   const m = Math.floor(total / 60000);
   const s = Math.floor((total % 60000) / 1000);
-  const d = Math.floor((total % 1000) / 100);
-  return `${m}:${String(s).padStart(2, '0')}.${d}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 export function createSeededRandom(seed) {
