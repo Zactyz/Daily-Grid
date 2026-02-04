@@ -37,6 +37,24 @@ const GAME_META = [
     submittedKeyPrefix: 'dailygrid_bits_submitted_',
     theme: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400' },
     shareUrl: 'https://dailygrid.app/games/bits/'
+  },
+  {
+    id: 'pipes',
+    name: 'Pipes',
+    path: '/games/pipes/',
+    logo: '/games/pipes/pipes-logo.svg',
+    submittedKeyPrefix: 'dailygrid_pipes_submitted_',
+    theme: { bg: 'bg-emerald-500/10', border: 'border-amber-400/30', text: 'text-emerald-300' },
+    shareUrl: 'https://dailygrid.app/games/pipes/'
+  },
+  {
+    id: 'shingoki',
+    name: 'Shingoki',
+    path: '/games/shingoki/',
+    logo: '/games/shingoki/shingoki-logo.svg',
+    submittedKeyPrefix: 'dailygrid_shingoki_submitted_',
+    theme: { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400' },
+    shareUrl: 'https://dailygrid.app/games/shingoki/'
   }
 ];
 

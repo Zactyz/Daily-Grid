@@ -17,28 +17,38 @@ const solutionRows = [
 const solutionGrid = solutionRows.map(row => row.split('').map(Number));
 
 const clueCells = [
-  { r: 0, c: 0, bit: 0 },
-  { r: 0, c: 2, bit: 0 },
-  { r: 0, c: 4, bit: 0 },
-  { r: 1, c: 1, bit: 0 },
-  { r: 1, c: 3, bit: 0 },
+  { r: 0, c: 1, bit: 1 },
+  { r: 1, c: 0, bit: 1 },
   { r: 1, c: 5, bit: 0 },
-  { r: 2, c: 0, bit: 0 },
-  { r: 2, c: 2, bit: 1 },
-  { r: 2, c: 3, bit: 0 },
-  { r: 3, c: 1, bit: 0 },
-  { r: 3, c: 2, bit: 0 },
-  { r: 3, c: 4, bit: 1 },
+  { r: 2, c: 4, bit: 0 },
+  { r: 3, c: 3, bit: 1 },
   { r: 4, c: 2, bit: 1 },
-  { r: 4, c: 4, bit: 1 },
   { r: 5, c: 0, bit: 1 },
-  { r: 5, c: 3, bit: 1 }
+  { r: 5, c: 5, bit: 0 }
+];
+
+const adjacencyHints = [
+  { r: 0, c: 0, dir: 'right', type: 'different' },
+  { r: 0, c: 1, dir: 'down', type: 'different' },
+  { r: 0, c: 2, dir: 'right', type: 'different' },
+  { r: 0, c: 3, dir: 'right', type: 'different' },
+  { r: 1, c: 0, dir: 'down', type: 'different' },
+  { r: 1, c: 2, dir: 'down', type: 'equal' },
+  { r: 2, c: 1, dir: 'right', type: 'equal' },
+  { r: 2, c: 3, dir: 'right', type: 'equal' },
+  { r: 2, c: 4, dir: 'down', type: 'different' },
+  { r: 3, c: 1, dir: 'right', type: 'equal' },
+  { r: 3, c: 2, dir: 'down', type: 'different' },
+  { r: 4, c: 0, dir: 'right', type: 'equal' },
+  { r: 4, c: 3, dir: 'down', type: 'different' },
+  { r: 5, c: 1, dir: 'right', type: 'different' }
 ];
 
 const descriptor = {
   puzzleId: getPTDateYYYYMMDD(),
   solution: solutionRows,
-  clues: clueCells
+  clues: clueCells,
+  adjacencies: adjacencyHints
 };
 
 const els = {
@@ -99,10 +109,30 @@ function buildCells() {
         c,
         value,
         isClue,
-        element: null
+        element: null,
+        hints: { right: null, down: null }
       });
     }
   }
+  applyAdjacencyHints();
+}
+
+function applyAdjacencyHints() {
+  if (!descriptor.adjacencies) return;
+  cells.forEach(cell => {
+    cell.hints.right = null;
+    cell.hints.down = null;
+  });
+  descriptor.adjacencies.forEach(({ r, c, dir, type }) => {
+    if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return;
+    const cell = cells[r * GRID_SIZE + c];
+    if (!cell) return;
+    if (dir === 'right' && c < GRID_SIZE - 1) {
+      cell.hints.right = type;
+    } else if (dir === 'down' && r < GRID_SIZE - 1) {
+      cell.hints.down = type;
+    }
+  });
 }
 
 function createGrid() {
@@ -133,6 +163,20 @@ function updateCellAppearance(cell) {
   element.disabled = cell.isClue;
   const label = `Row ${cell.r + 1}, column ${cell.c + 1}${cell.isClue ? ' (clue)' : ''}${cell.value !== null ? `, ${cell.value}` : ''}`;
   element.setAttribute('aria-label', label);
+  renderCellHints(cell);
+}
+
+function renderCellHints(cell) {
+  if (!cell.element) return;
+  cell.element.querySelectorAll('.adj-hint').forEach(el => el.remove());
+  if (!cell.hints) return;
+  Object.entries(cell.hints).forEach(([dir, type]) => {
+    if (!type) return;
+    const span = document.createElement('span');
+    span.className = 'adj-hint adj-hint-' + dir + ' ' + type;
+    span.textContent = type === 'equal' ? '=' : '×';
+    cell.element.appendChild(span);
+  });
 }
 
 function updateProgressText() {

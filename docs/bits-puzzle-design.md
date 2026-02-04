@@ -15,7 +15,7 @@
 | ``columnTotals`` | `Array<number>` | Recomputed column counts after placement (always [3,3,3,3,3,3] for a valid solution; stored purely for auditing). |
 | ``metadata`` | `object` | e.g., ``{ builtFromSeed: talk-through steps, difficultyRank: 1-3 }`` for diagnostics/QA.
 
-These descriptors are small, cache-friendly JSONs that can be stored in ``PUZZLE_CACHE`` (shared with Snake/Pathways) and returned directly from ``/api/bits/puzzle``. The server-side generation never exposes ``clues`` that would allow someone to reverse-engineer the puzzle outside the UI (the full solution is kept inside the cached object and only used during clue selection/validation). 
+These descriptors are small, cache-friendly JSONs that can be stored in ``PUZZLE_CACHE`` (shared with Snake/Pathways) and returned directly from ``/api/bits/puzzle``. The server-side generation never exposes ``clues`` that would allow someone to reverse-engineer the puzzle outside the UI (the full solution is kept inside the cached object and only used during clue selection/validation).
 
 ## 2. Runtime grid state (client-local model)
 
@@ -40,7 +40,7 @@ interface BitsGridState {
 }
 ```
 
-This state is persisted with the ``STORAGE_KEYS`` pattern used by Pathways (add ``BITS_PROGRESS`` to ``pathways-utils`` so the storage lookups feel identical). On load we compare ``storageState.puzzleId`` to ``getPTDateYYYYMMDD()``; if it matches we reuse the cached grid, otherwise we discard it and start from the new descriptor. 
+This state is persisted with the ``STORAGE_KEYS`` pattern used by Pathways (add ``BITS_PROGRESS`` to ``pathways-utils`` so the storage lookups feel identical). On load we compare ``storageState.puzzleId`` to ``getPTDateYYYYMMDD()``; if it matches we reuse the cached grid, otherwise we discard it and start from the new descriptor.
 
 ## 3. Deterministic generator plan
 
@@ -53,7 +53,13 @@ This state is persisted with the ``STORAGE_KEYS`` pattern used by Pathways (add 
 
 If generation fails after a bounded number of attempts (e.g., 200 tries to pick rows/new removal order), we increment a secondary seed (``seed + attemptIndex``) and try again, which keeps the process deterministic per puzzle but ensures recovery from pathological seeds.
 
-## 4. Seed ⇒ puzzleId mapping
+## 4. Binairo+ adjacency hints
+
+To mirror the Binairo+ variant we expose a small set of adjacency clues in the descriptor via the ``adjacencies`` array. Each hint is ```{ r, c, dir, type }``` pointing at the cell at (r,c), the edge (``right`` or ``down``), and whether the neighbor should match (``equal``) or differ (``different``). The UI draws ``=`` and ``×`` symbols between those cells so the player can prune options without relying on dozens of prefills.
+
+Generation samples about 8–12 adjacency edges from the completed solution, preferring edges that sit near ambiguous rows or columns. We still derive the selection from ``createSeededRandom(seed)``, so the hints stay deterministic and can be cached alongside the rest of the descriptor. Because the adjacency list lives in the descriptor, the UI, any cache rehydration path, and regression tests always replay the same clues for a given puzzle.
+
+## 5. Seed ⇒ puzzleId mapping
 
 | value | formula | reason |
 | --- | --- | --- |
@@ -62,9 +68,9 @@ If generation fails after a bounded number of attempts (e.g., 200 tries to pick 
 | ``rowOrderSeed`` | ``seed ^ 0xA3F1C6B7`` (or similar) | Each subsystem (row selection, clue removal, difficulty tweaks) derives its own PRNG by mixing in a constant so we can sample reproducibly without having to pass huge state objects through the pipeline. |
 | ``clueSeed`` | ``hashString(seed + ':clues')`` | For logging/verifying we store how the clue selection seed maps back to ``puzzleId``; the descriptor includes it so we can rerun the clue pass during regression tests. |
 
-The puzzle payload returned from ``/api/bits/puzzle`` simply includes ``puzzleId`` (to synchronize storage), and the client replays the generator if it needs to validate a move (for example, to highlight winning rows). Because the generator is deterministic, we can even offer an offline "solve" mode by recomputing ``solution`` on the fly using ``hashString`` + ``createSeededRandom`` (no extra storage needed). 
+The puzzle payload returned from ``/api/bits/puzzle`` simply includes ``puzzleId`` (to synchronize storage), and the client replays the generator if it needs to validate a move (for example, to highlight winning rows). Because the generator is deterministic, we can even offer an offline "solve" mode by recomputing ``solution`` on the fly using ``hashString`` + ``createSeededRandom`` (no extra storage needed).
 
-## 5. Shared helpers / infrastructure re-use
+## 6. Shared helpers / infrastructure re-use
 
 | helper | source | usage in Bits |
 | --- | --- | --- |
@@ -78,7 +84,7 @@ The puzzle payload returned from ``/api/bits/puzzle`` simply includes ``puzzleId
 
 Because the server already exposes leaderboard endpoints for Snake/Pathways/Lattice, Bits reuses the same endpoints (`complete`, `leaderboard`, `claim-initials`) but with ``bits_scores`` as the backing table, so we do not need to write new APIs beyond the puzzle generator and the UI hook that calls it.
 
-## 6. Next steps / implementation notes
+## 7. Next steps / implementation notes
 
 1. Build ``games/bits/bits-generator.js`` (or similar) that exports ``generateBitsDescriptor(puzzleId)`` using the above steps; export helper versions of the row library for tests.  
 2. Create ``functions/api/bits/puzzle.[js|ts]`` that tries ``PUZZLE_CACHE`` first and falls back to ``generateBitsDescriptor`` when the cache miss occurs.  
