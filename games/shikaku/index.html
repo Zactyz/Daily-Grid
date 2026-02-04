@@ -244,7 +244,7 @@
 
     <div class="flex gap-3 mb-3 w-full max-w-xs">
       <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
-        <div class="text-[10px] uppercase tracking-wider text-emerald-400/60 mb-0.5">Time</div>
+        <div class="text-[10px] uppercase tracking-wider text-amber-200/70 mb-0.5">Time</div>
         <div id="timer" class="text-xl font-bold mono accent-text">0:00</div>
       </div>
       <div class="flex-1 stat-card px-4 py-2.5 rounded-xl text-center">
@@ -257,8 +257,8 @@
       <div id="parcel-grid"></div>
 
       <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
-        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 flex items-center justify-center mb-4">
-          <svg class="w-10 h-10 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-300/30 to-amber-500/20 flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
@@ -280,7 +280,7 @@
 
     <div class="flex gap-3 mb-8">
       <button id="leaderboard-btn" class="btn btn-secondary flex items-center gap-2 hidden">
-        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
         </svg>
         Leaderboard
@@ -308,9 +308,9 @@
       <summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">How to Play</summary>
       <div class="px-5 pb-5 pt-1">
         <ul class="text-zinc-400 space-y-2.5 text-sm">
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Each clue number must be the area of its rectangle.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Drag to define rectangles that include exactly one clue.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Rectangles cannot overlap and must cover the grid.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-300/15 text-amber-200 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Each clue number must be the area of its rectangle.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-300/15 text-amber-200 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Drag to define rectangles that include exactly one clue.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-300/15 text-amber-200 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Rectangles cannot overlap and must cover the grid.</span></li>
         </ul>
       </div>
     </details>
@@ -333,7 +333,7 @@
       </svg>
     </a>
 
-    <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-emerald-500/20 text-emerald-300 text-sm font-medium hover:bg-emerald-500/10 transition-colors flex items-center justify-center gap-2">
+    <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-amber-300/25 text-amber-200 text-sm font-medium hover:bg-amber-200/10 transition-colors flex items-center justify-center gap-2">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
       </svg>
@@ -369,8 +369,8 @@
 
   <div id="completion-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4">
     <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
-      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-        <svg class="w-8 h-8 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-300/10 flex items-center justify-center">
+        <svg class="w-8 h-8 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>
       </div>
@@ -378,7 +378,7 @@
       <p id="modal-subtitle" class="text-sm text-white/60 text-center mb-4">Great job on today's Parcel</p>
 
       <div class="timer-display rounded-xl p-4 text-center mb-4">
-        <div class="text-xs uppercase tracking-wider text-emerald-400/60 mb-1">Your Time</div>
+        <div class="text-xs uppercase tracking-wider text-amber-200/70 mb-1">Your Time</div>
         <div id="final-time" class="text-3xl font-bold mono accent-text">0:00</div>
       </div>
 
@@ -393,10 +393,10 @@
         <a id="next-game-link" href="#" class="flex items-center gap-3">
           <img id="next-game-logo" src="" alt="" class="w-10 h-10 rounded-xl">
           <div class="flex-1">
-            <p id="next-game-text" class="font-semibold text-sm text-emerald-200"></p>
-            <p class="text-xs text-emerald-100/70">Continue your streak</p>
+            <p id="next-game-text" class="font-semibold text-sm text-amber-200"></p>
+            <p class="text-xs text-amber-100/70">Continue your streak</p>
           </div>
-          <span class="text-emerald-400 text-sm font-semibold uppercase tracking-wide">Play</span>
+          <span class="text-amber-200 text-sm font-semibold uppercase tracking-wide">Play</span>
         </a>
       </div>
 
