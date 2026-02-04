@@ -1,382 +1,301 @@
-import { getPTDateYYYYMMDD, getOrCreateAnonId, formatTime } from './shingoki-utils.js';
-import { getUncompletedGames } from '../common/games.js';
-import { buildShareText, formatDateForShare, shareWithFallback, showShareFeedback } from '../common/share.js';
+import { getPTDateYYYYMMDD, getOrCreateAnonId, formatTime } from '../common/utils.js';
+import { createShellController } from '../common/shell-controller.js';
+import { formatDateForShare } from '../common/share.js';
+import { buildShareCard } from '../common/share-card.js';
+import { ShingokiEngine } from './shingoki-engine.js';
+import { ShingokiRenderer } from './shingoki-renderer.js';
+import { ShingokiInput } from './shingoki-input.js';
 
-const API_COMPLETE = '/api/shingoki/complete';
-const API_LEADERBOARD = '/api/shingoki/leaderboard';
-const API_CLAIM = '/api/shingoki/claim-initials';
-const SHARE_URL = 'https://dailygrid.app/games/shingoki/';
-const GAME_NAME = 'Sentinel Loop';
-const SUBMITTED_KEY_PREFIX = 'dailygrid_shingoki_submitted_';
+const STATE_PREFIX = 'dailygrid_shingoki_state_';
 
-export class ShingokiUI {
-  constructor(engine, renderer) {
-    this.engine = engine;
-    this.renderer = renderer;
-    this.puzzleId = getPTDateYYYYMMDD();
-    this.anonId = getOrCreateAnonId();
-    this.completionTime = null;
-    this.modalShown = false;
-    this.submissionInFlight = false;
-    this.claimInFlight = false;
-    this.hasSubmittedScore = this.loadSubmissionFlag();
+const els = {
+  canvas: document.getElementById('shingoki-canvas'),
+  progress: document.getElementById('progress-text'),
+  puzzleDate: document.getElementById('puzzle-date'),
+  gridSize: document.getElementById('grid-size')
+};
 
-    this.elements = {
-      timer: document.getElementById('timer'),
-      gridSize: document.getElementById('grid-size'),
-      pauseBtn: document.getElementById('pause-btn'),
-      resetBtn: document.getElementById('reset-btn'),
-      leaderboardBtn: document.getElementById('leaderboard-btn'),
-      startOverlay: document.getElementById('start-overlay'),
-      pauseOverlay: document.getElementById('pause-overlay'),
-      completionModal: document.getElementById('completion-modal'),
-      finalTime: document.getElementById('final-time'),
-      percentileMsg: document.getElementById('percentile-msg'),
-      leaderboardList: document.getElementById('leaderboard-list'),
-      leaderboardTitle: document.getElementById('leaderboard-title'),
-      claimInitialsForm: document.getElementById('claim-initials-form'),
-      initialsInput: document.getElementById('initials-input'),
-      claimFeedback: document.getElementById('claim-initials-feedback'),
-      shareBtn: document.getElementById('share-btn'),
-      closeModalBtn: document.getElementById('close-modal-btn'),
-      nextGamePromo: document.getElementById('next-game-promo'),
-      nextGameLink: document.getElementById('next-game-link'),
-      nextGameLogo: document.getElementById('next-game-logo'),
-      nextGameText: document.getElementById('next-game-text'),
-      externalGamePromo: document.getElementById('external-game-promo'),
-      externalGameLogo: document.getElementById('external-game-logo'),
-      externalGameText: document.getElementById('external-game-text')
-    };
+let engine;
+let renderer;
+let input;
+let shell = null;
+let currentMode = 'daily';
+let puzzleId = getPTDateYYYYMMDD();
+let puzzleSeed = puzzleId;
+let completionMs = null;
+let tickInterval = null;
+let lastTimestamp = 0;
 
-    if (this.elements.gridSize) {
-      this.elements.gridSize.textContent = this.engine.getGridLabel();
-    }
+function getPuzzleIdForMode(mode) {
+  if (mode === 'practice') return `practice-${puzzleSeed}`;
+  return getPTDateYYYYMMDD();
+}
 
-    this.setupListeners();
-    this.updateLeaderboardButton();
-    this.updateStartOverlay();
-    this.updatePauseOverlay();
+function getStateKey() {
+  return `${STATE_PREFIX}${currentMode}_${puzzleId}`;
+}
+
+function updateProgress() {
+  if (!engine || !els.progress) return;
+  const current = engine.getPlayerEdges().length;
+  const target = engine.puzzle.solutionEdges.size;
+  els.progress.textContent = `Loop progress: ${current} / ${target} segments`;
+}
+
+function setDateLabel() {
+  if (!els.puzzleDate) return;
+  if (currentMode === 'practice') {
+    els.puzzleDate.textContent = 'Practice';
+    return;
+  }
+  els.puzzleDate.textContent = puzzleId;
+}
+
+function setGridLabel() {
+  if (!els.gridSize || !engine) return;
+  els.gridSize.textContent = engine.getGridLabel();
+}
+
+function startTimer() {
+  engine?.startTimer();
+  saveProgress();
+}
+
+function pauseTimer() {
+  engine?.pause();
+  saveProgress();
+}
+
+function resumeTimer() {
+  engine?.resume();
+  saveProgress();
+}
+
+function resetPuzzle({ resetTimer }) {
+  if (!engine) return;
+  engine.playerEdges.clear();
+  engine.isComplete = false;
+
+  if (resetTimer) {
+    engine.timeMs = 0;
+    engine.timerStarted = false;
+    engine.isPaused = false;
   }
 
-  setupListeners() {
-    this.elements.startOverlay?.addEventListener('click', () => this.startGame());
-    this.elements.pauseBtn?.addEventListener('click', () => this.togglePause());
-    this.elements.resetBtn?.addEventListener('click', () => this.resetBoard());
-    this.elements.leaderboardBtn?.addEventListener('click', () => {
-      if (this.engine.isComplete) this.showCompletionModal(true);
-    });
-    this.elements.closeModalBtn?.addEventListener('click', () => this.hideCompletionModal());
-    this.elements.shareBtn?.addEventListener('click', () => this.shareResult());
-    this.elements.claimInitialsForm?.addEventListener('submit', (event) => {
-      event.preventDefault();
-      this.claimInitials();
-    });
-  }
+  completionMs = null;
+  updateProgress();
+  renderer?.render();
+  saveProgress();
+  shell?.update();
+}
 
-  handleUserInteraction() {
-    if (!this.engine.timerStarted && !this.engine.isComplete) {
-      this.startGame();
+function completeIfSolved() {
+  if (!engine) return;
+  if (!engine.isComplete) return;
+  completionMs = completionMs ?? engine.timeMs;
+  saveProgress();
+  shell?.update();
+}
+
+function handleInteraction() {
+  if (!engine || engine.isComplete) return;
+  if (!engine.timerStarted) startTimer();
+  if (engine.isPaused) resumeTimer();
+  updateProgress();
+  renderer?.render();
+  completeIfSolved();
+}
+
+function loadState() {
+  if (currentMode !== 'daily') return null;
+  try {
+    const raw = localStorage.getItem(getStateKey());
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.edges)) return null;
+    if (data.timerStarted && !data.isComplete && !data.isPaused) {
+      data.isPaused = true;
     }
-  }
-
-  startGame() {
-    this.engine.startTimer();
-    this.elements.startOverlay?.classList.add('hidden');
-    this.updatePauseButton();
-    this.updateStartOverlay();
-  }
-
-  togglePause() {
-    if (this.engine.isComplete) return;
-    if (this.engine.isPaused) {
-      this.engine.resume();
-    } else {
-      this.engine.pause();
-    }
-    this.updatePauseButton();
-    this.updatePauseOverlay();
-  }
-
-  resetBoard() {
-    this.engine.reset();
-    this.completionTime = null;
-    this.modalShown = false;
-    this.hasSubmittedScore = this.loadSubmissionFlag();
-    this.elements.percentileMsg?.classList.add('hidden');
-    this.hideCompletionModal();
-    this.elements.leaderboardBtn?.classList.add('hidden');
-    if (this.elements.claimInitialsForm) {
-      this.elements.claimInitialsForm.classList.add('hidden');
-    }
-    if (this.elements.claimFeedback) {
-      this.elements.claimFeedback.textContent = '';
-    }
-    this.elements.pauseOverlay?.classList.add('hidden');
-    this.elements.startOverlay?.classList.remove('hidden');
-    this.elements.externalGamePromo?.classList.add('hidden');
-    this.elements.nextGamePromo?.classList.add('hidden');
-    this.updatePauseButton();
-    this.updateStartOverlay();
-    this.renderer.render();
-  }
-
-  update() {
-    this.updateTimerDisplay();
-    this.updateStartOverlay();
-    this.updatePauseOverlay();
-    this.updateLeaderboardButton();
-
-    if (this.engine.isComplete) {
-      if (this.completionTime === null) {
-        this.completionTime = this.engine.timeMs;
-      }
-      if (!this.modalShown) {
-        this.showCompletionModal();
-        this.elements.leaderboardBtn?.classList.remove('hidden');
-      }
-    }
-  }
-
-  updateTimerDisplay() {
-    if (!this.elements.timer) return;
-    const displayTime = this.engine.isComplete && this.completionTime !== null
-      ? this.completionTime
-      : this.engine.timeMs;
-    this.elements.timer.textContent = formatTime(displayTime);
-  }
-
-  updateStartOverlay() {
-    if (!this.elements.startOverlay) return;
-    const shouldShow = !this.engine.timerStarted && !this.engine.isComplete;
-    this.elements.startOverlay.classList.toggle('hidden', !shouldShow);
-  }
-
-  updatePauseOverlay() {
-    if (!this.elements.pauseOverlay) return;
-    if (this.engine.isComplete) {
-      this.elements.pauseOverlay.classList.add('hidden');
-      return;
-    }
-    this.elements.pauseOverlay.classList.toggle('hidden', !this.engine.isPaused);
-  }
-
-  updatePauseButton() {
-    if (!this.elements.pauseBtn) return;
-    this.elements.pauseBtn.textContent = this.engine.isPaused ? 'Resume' : 'Pause';
-  }
-
-  updateLeaderboardButton() {
-    if (!this.elements.leaderboardBtn) return;
-    if (this.engine.isComplete) {
-      this.elements.leaderboardBtn.classList.remove('hidden');
-    } else {
-      this.elements.leaderboardBtn.classList.add('hidden');
-    }
-  }
-
-  async showCompletionModal(force = false) {
-    if (!this.elements.completionModal) return;
-    if (this.modalShown && !force) return;
-    this.modalShown = true;
-    this.elements.completionModal.classList.remove('hidden');
-    document.body.classList.add('modal-open');
-    if (this.elements.finalTime) {
-      this.elements.finalTime.textContent = formatTime(this.completionTime || this.engine.timeMs);
-    }
-    this.elements.percentileMsg?.classList.remove('hidden');
-    if (this.elements.percentileMsg) {
-      this.elements.percentileMsg.textContent = 'Submitting your time…';
-    }
-    if (this.elements.leaderboardList) {
-      this.elements.leaderboardList.innerHTML = '<p class="text-xs text-stone-500 text-center py-6">Loading leaderboard…</p>';
-    }
-    this.elements.shareBtn?.classList.remove('hidden');
-    if (this.elements.claimInitialsForm) {
-      this.elements.claimInitialsForm.classList.add('hidden');
-    }
-    await this.submitScore();
-    await this.loadLeaderboard();
-    this.updateCrossGamePromo();
-  }
-
-  hideCompletionModal() {
-    if (!this.elements.completionModal) return;
-    this.elements.completionModal.classList.add('hidden');
-    this.modalShown = false;
-    document.body.classList.remove('modal-open');
-  }
-
-  async submitScore() {
-    if (this.hasSubmittedScore || this.submissionInFlight) {
-      if (this.elements.percentileMsg) {
-        this.elements.percentileMsg.textContent = 'Score already submitted for today.';
-      }
-      return;
-    }
-
-    this.submissionInFlight = true;
-    try {
-      const response = await fetch(API_COMPLETE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          puzzleId: this.puzzleId,
-          anonId: this.anonId,
-          timeMs: this.completionTime || this.engine.timeMs,
-          hintsUsed: this.engine.hintsUsed || 0
-        })
-      });
-
-      if (!response.ok) throw new Error('Leaderboard submission failed');
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || 'Submission error');
-
-      this.hasSubmittedScore = true;
-      this.markSubmission();
-      if (this.elements.percentileMsg) {
-        this.elements.percentileMsg.textContent = `You ranked ${data.rank} of ${data.total} solvers today (you beat ${data.percentile}% of attempts).`;
-      }
-      if (data.rank <= 10 && this.elements.claimInitialsForm) {
-        this.elements.claimInitialsForm.classList.remove('hidden');
-        this.elements.claimFeedback.textContent = '';
-      }
-    } catch (error) {
-      console.error(error);
-      if (this.elements.percentileMsg) {
-        this.elements.percentileMsg.textContent = 'Leaderboard temporarily unavailable.';
-      }
-    } finally {
-      this.submissionInFlight = false;
-    }
-  }
-
-  async loadLeaderboard() {
-    if (!this.elements.leaderboardList) return;
-    try {
-      const response = await fetch(`${API_LEADERBOARD}?puzzleId=${this.puzzleId}`);
-      if (!response.ok) throw new Error('Failed to load leaderboard');
-      const data = await response.json();
-      if (!data.top10?.length) {
-        this.elements.leaderboardList.innerHTML = '<p class="text-xs text-stone-500 text-center py-6">No scores yet - be the first!</p>';
-        return;
-      }
-      this.elements.leaderboardList.innerHTML = data.top10.map((entry, idx) => `
-        <div class="flex items-center justify-between px-3 py-2.5 border-b border-white/10">
-          <div class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-300 text-[11px] font-semibold flex items-center justify-center">${entry.rank}</span>
-            <span class="mono text-xs tracking-[0.2em] text-stone-800">${entry.initials || '---'}</span>
-          </div>
-          <span class="mono text-xs text-stone-600">${formatTime(entry.timeMs)}</span>
-        </div>
-      `).join('');
-    } catch (error) {
-      console.error(error);
-      this.elements.leaderboardList.innerHTML = '<p class="text-xs text-stone-500 text-center py-6">Unable to load leaderboard.</p>';
-    }
-  }
-
-  async claimInitials() {
-    if (this.claimInFlight || !this.elements.initialsInput) return;
-    const value = this.elements.initialsInput.value.trim().toUpperCase();
-    if (!/^[A-Z]{1,3}$/.test(value)) {
-      this.elements.claimFeedback.textContent = 'Enter 1-3 uppercase letters.';
-      return;
-    }
-
-    this.claimInFlight = true;
-    try {
-      const response = await fetch(API_CLAIM, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          puzzleId: this.puzzleId,
-          anonId: this.anonId,
-          initials: value
-        })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Unable to claim initials');
-      this.elements.claimFeedback.textContent = 'Initials saved!';
-      this.elements.claimInitialsForm?.classList.add('hidden');
-    } catch (error) {
-      console.error(error);
-      this.elements.claimFeedback.textContent = error?.message || 'Claim failed';
-    } finally {
-      this.claimInFlight = false;
-    }
-  }
-
-  shareResult() {
-    const finalTime = this.completionTime || this.engine.timeMs;
-    const gridLabel = this.engine.getGridLabel();
-    const shareText = buildShareText({
-      gameName: GAME_NAME,
-      puzzleLabel: formatDateForShare(this.puzzleId),
-      gridLabel,
-      timeText: formatTime(finalTime),
-      shareUrl: SHARE_URL
-    });
-
-    shareWithFallback({
-      shareTitle: `${GAME_NAME} - Daily Grid`,
-      shareText,
-      shareUrl: SHARE_URL,
-      onCopy: () => showShareFeedback(this.elements.shareBtn, 'Copied!'),
-      onError: () => showShareFeedback(this.elements.shareBtn, 'Unable to share')
-    }).catch((error) => {
-      console.error('Share error:', error);
-      showShareFeedback(this.elements.shareBtn, 'Unable to share');
-    });
-  }
-
-  updateCrossGamePromo() {
-    const candidates = getUncompletedGames('shingoki', this.puzzleId);
-    if (!candidates.length) {
-      this.elements.externalGamePromo?.classList.add('hidden');
-      this.elements.nextGamePromo?.classList.add('hidden');
-      return;
-    }
-
-    const nextGame = candidates[0];
-    if (this.elements.nextGamePromo && this.elements.nextGameLink && this.elements.nextGameLogo && this.elements.nextGameText) {
-      this.elements.nextGameLink.href = nextGame.path;
-      this.elements.nextGameLink.className = `block w-full py-3 px-4 rounded-xl text-center transition-all ${nextGame.theme.bg} border ${nextGame.theme.border} hover:${nextGame.theme.bg.replace('/10', '/20')}`;
-      this.elements.nextGameLogo.src = nextGame.logo;
-      this.elements.nextGameLogo.alt = nextGame.name;
-      this.elements.nextGameText.textContent = `Play today’s ${nextGame.name}`;
-      this.elements.nextGameText.className = `font-semibold text-sm ${nextGame.theme.text}`;
-      this.elements.nextGamePromo.classList.remove('hidden');
-    }
-
-    if (!this.engine.isComplete) {
-      this.elements.externalGamePromo?.classList.add('hidden');
-      return;
-    }
-
-    if (this.elements.externalGamePromo && this.elements.externalGameLogo && this.elements.externalGameText) {
-      this.elements.externalGamePromo.href = nextGame.path;
-      this.elements.externalGameLogo.src = nextGame.logo;
-      this.elements.externalGameLogo.alt = nextGame.name;
-      this.elements.externalGameText.textContent = `Play today’s ${nextGame.name}`;
-      this.elements.externalGameText.className = `font-semibold text-sm ${nextGame.theme.text}`;
-      this.elements.externalGamePromo.classList.remove('hidden');
-    }
-  }
-
-  loadSubmissionFlag() {
-    try {
-      return localStorage.getItem(`${SUBMITTED_KEY_PREFIX}${this.puzzleId}`) === 'true';
-    } catch (error) {
-      console.warn('Unable to read submission flag', error);
-      return false;
-    }
-  }
-
-  markSubmission() {
-    try {
-      localStorage.setItem(`${SUBMITTED_KEY_PREFIX}${this.puzzleId}`, 'true');
-    } catch (error) {
-      console.warn('Unable to save submission flag', error);
-    }
+    return data;
+  } catch {
+    return null;
   }
 }
+
+function saveProgress() {
+  if (currentMode !== 'daily' || !engine) return;
+  const payload = {
+    edges: engine.getPlayerEdges(),
+    timeMs: engine.timeMs,
+    timerStarted: engine.timerStarted,
+    isPaused: engine.isPaused,
+    isComplete: engine.isComplete,
+    completionMs
+  };
+  try {
+    localStorage.setItem(getStateKey(), JSON.stringify(payload));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function applySavedState(saved) {
+  if (!engine || !saved) return;
+  engine.playerEdges = new Set(saved.edges || []);
+  engine.timeMs = saved.timeMs ?? 0;
+  engine.timerStarted = saved.timerStarted ?? false;
+  engine.isPaused = saved.isPaused ?? false;
+  engine.isComplete = saved.isComplete ?? false;
+  completionMs = saved.completionMs ?? null;
+  engine.syncCompletion();
+}
+
+function initState() {
+  const saved = loadState();
+  if (saved) {
+    applySavedState(saved);
+  } else if (engine) {
+    engine.timeMs = 0;
+    engine.timerStarted = false;
+    engine.isPaused = false;
+    engine.isComplete = false;
+    completionMs = null;
+  }
+  renderer?.render();
+}
+
+function resetPracticePuzzle() {
+  puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  puzzleId = getPuzzleIdForMode('practice');
+  resetPuzzle({ resetTimer: true });
+  setDateLabel();
+}
+
+function switchMode(mode) {
+  if (currentMode === mode) return;
+  saveProgress();
+  currentMode = mode;
+  if (mode === 'practice') {
+    puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  } else {
+    puzzleSeed = getPTDateYYYYMMDD();
+  }
+  puzzleId = getPuzzleIdForMode(mode);
+  initState();
+  updateProgress();
+  setDateLabel();
+  shell?.update();
+}
+
+function ensureTicker() {
+  if (tickInterval || !engine) return;
+  lastTimestamp = performance.now();
+  tickInterval = window.setInterval(() => {
+    const now = performance.now();
+    const delta = now - lastTimestamp;
+    lastTimestamp = now;
+    engine.updateTime(delta);
+    shell?.update();
+  }, 200);
+}
+
+function initShell() {
+  if (shell) return;
+
+  shell = createShellController({
+    gameId: 'shingoki',
+    getMode: () => currentMode,
+    getPuzzleId: () => puzzleId,
+    getGridLabel: () => engine?.getGridLabel() || '4x4 dots',
+    getElapsedMs: () => engine?.timeMs || 0,
+    formatTime,
+    autoStartOnProgress: true,
+    isComplete: () => engine?.isComplete || false,
+    isPaused: () => engine?.isPaused || false,
+    isStarted: () => engine?.timerStarted || false,
+    hasProgress: () => (engine?.getPlayerEdges().length || 0) > 0,
+    pause: () => pauseTimer(),
+    resume: () => resumeTimer(),
+    startGame: () => startTimer(),
+    resetGame: () => resetPuzzle({ resetTimer: false }),
+    startReplay: () => {},
+    exitReplay: () => {},
+    onResetUI: () => {},
+    onTryAgain: () => resetPuzzle({ resetTimer: true }),
+    onNextLevel: () => resetPracticePuzzle(),
+    onBackToDaily: () => switchMode('daily'),
+    onPracticeInfinite: () => switchMode('practice'),
+    onStartPractice: () => switchMode('practice'),
+    onStartDaily: () => switchMode('daily'),
+    getAnonId: () => getOrCreateAnonId(),
+    getCompletionPayload: () => ({
+      timeMs: Math.max(3000, Math.min(engine?.timeMs || 0, 3600000)),
+      hintsUsed: engine?.hintsUsed || 0
+    }),
+    getShareMeta: () => ({
+      gameName: 'Sentinel Loop',
+      shareUrl: 'https://dailygrid.app/games/shingoki/',
+      gridLabel: engine?.getGridLabel() || '4x4 dots'
+    }),
+    getShareFile: () => buildShareImage(),
+    getCompletionMs: () => completionMs,
+    setCompletionMs: (ms) => {
+      completionMs = ms;
+    },
+    isTimerRunning: () => (engine?.timerStarted && !engine?.isPaused && !engine?.isComplete) || false,
+    disableReplay: true,
+    pauseOnHide: true
+  });
+}
+
+async function buildShareImage() {
+  const finalTime = completionMs ?? engine?.timeMs ?? 0;
+  const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
+  return buildShareCard({
+    gameName: 'Sentinel Loop',
+    logoPath: '/games/shingoki/shingoki-logo.svg',
+    accent: '#7da2ff',
+    accentSoft: 'rgba(125, 162, 255, 0.12)',
+    backgroundStart: '#0c1018',
+    backgroundEnd: '#121a2a',
+    dateText: puzzleDate,
+    timeText: formatTime(finalTime || 0),
+    gridLabel: 'Grid 4x4',
+    footerText: 'dailygrid.app/games/shingoki'
+  });
+}
+
+function init() {
+  engine = new ShingokiEngine();
+  renderer = new ShingokiRenderer(els.canvas, engine);
+  input = new ShingokiInput(els.canvas, engine, renderer, {
+    onEdgeChange: () => {
+      renderer.render();
+      updateProgress();
+    },
+    onInteraction: () => {
+      handleInteraction();
+    }
+  });
+  renderer.render();
+
+  initState();
+  updateProgress();
+  setGridLabel();
+  setDateLabel();
+  initShell();
+  ensureTicker();
+  shell?.update();
+
+  window.addEventListener('resize', () => {
+    renderer?.resize();
+    renderer?.render();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  window.startPracticeMode = () => switchMode('practice');
+  window.startDailyMode = () => switchMode('daily');
+  window.addEventListener('beforeunload', saveProgress);
+});
