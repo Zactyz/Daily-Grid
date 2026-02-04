@@ -87,9 +87,6 @@ export class SnakeUI {
 
   update() {
     this.shell.update();
-    if (this.elements.timer) {
-      this.elements.timer.textContent = formatTime(this.engine.state.timeMs || 0);
-    }
     this.updateShowSolutionButton();
     this.updateExternalGamePromo();
 

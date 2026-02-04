@@ -185,6 +185,15 @@ export function createShellController(adapter, elementOverrides = null) {
     }
   }
 
+  function updateTimerDisplay() {
+    if (!elements.timer) return;
+    if (adapter.disableShellTimer) return;
+    const ms = adapter.getTimerDisplayMs
+      ? adapter.getTimerDisplayMs()
+      : (adapter.isComplete() ? (completionMs ?? adapter.getElapsedMs()) : adapter.getElapsedMs());
+    elements.timer.textContent = adapter.formatTime(ms || 0);
+  }
+
   function updateResetButton() {
     if (!elements.resetBtn) return;
     elements.resetBtn.innerHTML = adapter.isComplete() ? REPLAY_ICON : RESET_ICON;
@@ -540,6 +549,7 @@ export function createShellController(adapter, elementOverrides = null) {
 
     updateStartOverlay();
     updatePauseState();
+    updateTimerDisplay();
     updateResetButton();
     updateLeaderboardButton();
     updateExitReplayButton();

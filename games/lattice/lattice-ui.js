@@ -1177,6 +1177,7 @@ function wireUI() {
     getAnonId: () => getOrCreateAnonId(),
     getCompletionPayload: () => ({ timeMs: Math.floor(completionMs ?? getElapsedMs()), hintsUsed: 0 }),
     shouldShowCompletionModal: () => !solutionShown,
+    disableShellTimer: true,
     saveProgress: () => saveProgress(true)
   });
 
