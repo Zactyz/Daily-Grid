@@ -1,0 +1,152 @@
+:root {
+  --shell-glass: rgba(255, 255, 255, 0.02);
+  --shell-glass-strong: rgba(255, 255, 255, 0.04);
+  --shell-border: rgba(255, 255, 255, 0.08);
+  --shell-border-strong: rgba(255, 255, 255, 0.12);
+  --shell-text-muted: rgba(255, 255, 255, 0.6);
+}
+
+.shell-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 0.75rem 1rem;
+  backdrop-filter: blur(18px);
+}
+
+.shell-nav .inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shell-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.shell-badge {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--shell-border-strong);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+}
+
+.shell-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.shell-stat-card {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  padding: 0.85rem 1rem;
+  text-align: center;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--shell-border);
+}
+
+.shell-stat-card small {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--shell-text-muted);
+}
+
+.shell-stat-card .value {
+  font-size: 1.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 0.35rem;
+}
+
+.shell-glass {
+  background: var(--shell-glass);
+  border-radius: 24px;
+  border: 1px solid var(--shell-border);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+}
+
+.shell-glass-strong {
+  background: var(--shell-glass-strong);
+  border-radius: 24px;
+  border: 1px solid var(--shell-border-strong);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+}
+
+.shell-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.shell-overlay.hidden {
+  display: none;
+}
+
+.shell-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.shell-btn {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f0fff8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shell-btn.primary {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  color: #0b0f1a;
+}
+
+.shell-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 1rem;
+  backdrop-filter: blur(18px);
+}
+
+.shell-modal.show {
+  display: flex;
+}
+
+.shell-hidden {
+  display: none !important;
+}
