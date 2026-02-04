@@ -157,7 +157,7 @@
         }
 
         .grid-cell.filled {
-            box-shadow: 0 0 18px rgba(46, 255, 140, 0.35);
+            box-shadow: none;
         }
 
         .grid-cell.value-0 {
@@ -363,6 +363,18 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
             </svg>
         </button>
+
+        <!-- External cross-game promo (shown after completion) -->
+        <a id="external-game-promo" href="#" class="hidden w-full max-w-md mt-4 py-3 px-4 rounded-xl border transition-all flex items-center justify-center gap-3">
+            <img id="external-game-logo" src="" alt="" class="w-7 h-7 rounded-lg">
+            <div class="flex-1 text-left">
+                <div id="external-game-text" class="font-semibold text-sm"></div>
+                <div class="text-xs opacity-70">Continue your daily streak</div>
+            </div>
+            <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </a>
 
         <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-emerald-500/20 text-emerald-300 text-sm font-medium hover:bg-emerald-500/10 transition-colors flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
