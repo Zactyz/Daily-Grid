@@ -415,6 +415,8 @@ function saveProgress(force = false) {
     puzzleId: puzzle.puzzleId,
     timerStarted,
     startedAtEpochMs: timerStarted ? (Date.now() - getElapsedMs()) : null,
+    elapsedMs: getElapsedMs(),
+    isPaused,
     state,
     manualX,
     autoX: serializeAutoXSets(),
@@ -1021,6 +1023,8 @@ async function startDaily() {
   initState();
   undoStack = [];
   solutionShown = false;
+  isPaused = false;
+  pausedElapsedMs = null;
 
   // Hide practice-only controls
   els.showSolutionBtn?.classList.add('hidden');
@@ -1035,8 +1039,16 @@ async function startDaily() {
     hasSolved = !!saved.hasSolved;
     completionMs = saved.completionMs ?? null;
     timerStarted = !!saved.timerStarted;
-    if (timerStarted && saved.startedAtEpochMs) {
-      resumeElapsedMs = Math.max(0, Date.now() - saved.startedAtEpochMs);
+    if (timerStarted) {
+      if (typeof saved.elapsedMs === 'number') {
+        resumeElapsedMs = Math.max(0, saved.elapsedMs);
+        if (saved.isPaused) {
+          isPaused = true;
+          pausedElapsedMs = resumeElapsedMs;
+        }
+      } else if (saved.startedAtEpochMs) {
+        resumeElapsedMs = Math.max(0, Date.now() - saved.startedAtEpochMs);
+      }
     }
   } else {
     timerStarted = false;
@@ -1058,6 +1070,11 @@ async function startDaily() {
     timerStarted = false;
     setPrestart(false);
     els.timer.textContent = formatTime(completionMs || 0);
+  } else if (timerStarted && isPaused) {
+    stopTimer();
+    setPrestart(false);
+    els.timer.textContent = formatTime(resumeElapsedMs || 0);
+    showPauseOverlay(true);
   } else if (timerStarted) {
     setPrestart(false);
     startTimer({ resumeElapsedMs });
