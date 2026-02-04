@@ -58,6 +58,10 @@ function defaultElements() {
     nextGameLink: document.getElementById('next-game-link'),
     nextGameLogo: document.getElementById('next-game-logo'),
     nextGameText: document.getElementById('next-game-text'),
+    externalGamePromo: document.getElementById('external-game-promo'),
+    externalGameLink: document.getElementById('external-game-link'),
+    externalGameLogo: document.getElementById('external-game-logo'),
+    externalGameText: document.getElementById('external-game-text'),
     startOverlayText: document.getElementById('start-overlay-text'),
     practiceModeBtn: document.getElementById('practice-mode-btn'),
     backToDailyBtn: document.getElementById('back-to-daily-btn'),
@@ -217,6 +221,26 @@ export function createShellController(adapter, elementOverrides = null) {
       ? adapter.getTimerDisplayMs()
       : (adapter.isComplete() ? (completionMs ?? adapter.getElapsedMs()) : adapter.getElapsedMs());
     elements.timer.textContent = adapter.formatTime(ms || 0);
+  }
+
+  function updateExternalPromo() {
+    if (!elements.externalGamePromo) return;
+    const shouldShow = adapter.getMode() === 'daily' && adapter.isComplete() && !isInReplayMode;
+    if (!shouldShow) {
+      elements.externalGamePromo.classList.add('hidden');
+      return;
+    }
+
+    updateNextGamePromo({
+      gameId: adapter.gameId,
+      puzzleId: adapter.getPuzzleId(),
+      elements: {
+        nextGamePromo: elements.externalGamePromo,
+        nextGameLink: elements.externalGameLink || elements.externalGamePromo,
+        nextGameLogo: elements.externalGameLogo,
+        nextGameText: elements.externalGameText
+      }
+    });
   }
 
   function updateResetButton() {
@@ -659,6 +683,7 @@ export function createShellController(adapter, elementOverrides = null) {
     updateLeaderboardButton();
     updateExitReplayButton();
     updateModeUI();
+    updateExternalPromo();
 
     if (adapter.isComplete()) {
       if (isInReplayMode) {

@@ -15,6 +15,18 @@
 <button id="practice-mode-btn" class="w-full max-w-md mt-4 py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-medium hover:bg-white/5 hover:text-white transition-colors flex items-center justify-center gap-2 group">Practice Mode</button>
 <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-white/10 text-zinc-300 text-sm font-medium hover:bg-white/5 transition-colors flex items-center justify-center gap-2">Back to Daily</button>
 
+<!-- External cross-game promo (shown after completion, optional) -->
+<a id="external-game-promo" href="#" class="hidden w-full max-w-md mt-4 py-3 px-4 rounded-xl border transition-all flex items-center justify-center gap-3">
+  <img id="external-game-logo" src="" alt="" class="w-7 h-7 rounded-lg">
+  <div class="flex-1 text-left">
+    <div id="external-game-text" class="font-semibold text-sm"></div>
+    <div class="text-xs opacity-70">Continue your daily streak</div>
+  </div>
+  <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+  </svg>
+</a>
+
 <!-- Toast (optional but recommended) -->
 <div id="shell-toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-50 px-4 py-2 rounded-full text-xs font-semibold tracking-wide bg-black/70 border border-white/10 text-white">
   <span id="shell-toast-text"></span>
