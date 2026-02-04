@@ -92,6 +92,7 @@ let isPrestart = true;
 let completionMs = null;
 let isInReplayMode = loadReplayMode();
 let solutionShown = false;
+let pausedElapsedMs = null;
 
 // state[cat][row][col] => 0 blank, 1 X, 2 ✓
 let state = null;
@@ -129,6 +130,7 @@ function saveReplayMode(enabled) {
 function startTimer({ resumeElapsedMs = 0 } = {}) {
   timerStarted = true;
   isPaused = false;
+  pausedElapsedMs = null;
   startedAt = performance.now() - resumeElapsedMs;
   clearInterval(timerInt);
   timerInt = setInterval(() => {
@@ -144,6 +146,7 @@ function stopTimer() {
 
 function getElapsedMs() {
   if (startedAt == null) return 0;
+  if (isPaused && pausedElapsedMs != null) return pausedElapsedMs;
   return Math.max(0, performance.now() - startedAt);
 }
 
@@ -591,6 +594,7 @@ function pause() {
   if (isPaused) return;
   if (!timerStarted) return;
   isPaused = true;
+  pausedElapsedMs = getElapsedMs();
   stopTimer();
   showPauseOverlay(true);
   saveProgress(true);
@@ -599,9 +603,11 @@ function pause() {
 
 function resume() {
   if (!isPaused) return;
+  const resumeMs = pausedElapsedMs ?? getElapsedMs();
   isPaused = false;
+  pausedElapsedMs = null;
   showPauseOverlay(false);
-  startTimer({ resumeElapsedMs: getElapsedMs() });
+  startTimer({ resumeElapsedMs: resumeMs });
   shell?.update();
 }
 
@@ -1096,6 +1102,7 @@ function resetPracticePuzzle() {
   timerStarted = false;
   hasSolved = false;
   isPaused = false;
+  pausedElapsedMs = null;
   stopTimer();
   showPauseOverlay(false);
   render();

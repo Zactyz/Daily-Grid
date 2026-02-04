@@ -58,6 +58,7 @@ function defaultElements() {
     nextGameLink: document.getElementById('next-game-link'),
     nextGameLogo: document.getElementById('next-game-logo'),
     nextGameText: document.getElementById('next-game-text'),
+    startOverlayText: document.getElementById('start-overlay-text'),
     practiceModeBtn: document.getElementById('practice-mode-btn'),
     backToDailyBtn: document.getElementById('back-to-daily-btn'),
     dailyBadge: document.getElementById('daily-badge'),
@@ -158,6 +159,12 @@ export function createShellController(adapter, elementOverrides = null) {
     if (!elements.startOverlay) return;
     const hasProgress = adapter.hasProgress ? adapter.hasProgress() : false;
     const shouldShow = !adapter.isStarted() && !adapter.isComplete() && !hasProgress;
+
+    if (elements.startOverlayText) {
+      elements.startOverlayText.textContent = adapter.getMode() === 'practice'
+        ? 'Tap to begin practice'
+        : 'Tap to begin';
+    }
 
     if (shouldShow) {
       elements.startOverlay.classList.remove('hidden');
@@ -595,10 +602,14 @@ export function createShellController(adapter, elementOverrides = null) {
     });
 
     elements.practiceModeBtn?.addEventListener('click', () => {
+      resetShellState();
+      adapter.onResetUI?.();
       adapter.onStartPractice?.();
     });
 
     elements.backToDailyBtn?.addEventListener('click', () => {
+      resetShellState();
+      adapter.onResetUI?.();
       adapter.onStartDaily?.();
     });
 
