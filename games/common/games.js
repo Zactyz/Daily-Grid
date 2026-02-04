@@ -61,6 +61,16 @@ const GAME_META = [
     completedKeyPrefix: 'dailygrid_shikaku_completed_',
     theme: { bg: 'bg-amber-300/15', border: 'border-amber-300/30', text: 'text-amber-200' },
     shareUrl: 'https://dailygrid.app/games/shikaku/'
+  },
+  {
+    id: 'shingoki',
+    name: 'Shingoki',
+    path: '/games/shingoki/',
+    logo: '/games/shingoki/shingoki-logo.svg',
+    submittedKeyPrefix: 'dailygrid_shingoki_submitted_',
+    completedKeyPrefix: 'dailygrid_shingoki_completed_',
+    theme: { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400' },
+    shareUrl: 'https://dailygrid.app/games/shingoki/'
   }
 ];
 
