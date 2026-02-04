@@ -6,6 +6,7 @@ New games should be implemented as **game logic + adapter**, not custom shell co
 ## 1) Start from the shell contract
 - Read `games/common/shell-adapter.md` for required/optional adapter hooks.
 - Use `games/common/shell-template.html` to ensure all required IDs exist.
+- Include `games/common/shell.css` so shared elements look right.
 - Call `mountShell()` early in your page to validate IDs and inject the toast.
 
 ```js
@@ -30,6 +31,7 @@ const shell = createShellController({
   isComplete: () => isComplete,
   isPaused: () => isPaused,
   isStarted: () => timerStarted,
+  // IMPORTANT: hasProgress should ignore prefilled/clue cells
   hasProgress: () => hasProgress,
   pause, resume, startGame, resetGame,
   startReplay, exitReplay,
@@ -49,10 +51,26 @@ import { buildShareCard } from '../common/share-card.js';
 ## 4) Keep the loop single-instance
 Avoid re-spawning animation loops on mode switches. Reuse the loop and swap adapters/engine state.
 
-## 5) Consistency rules
+## 5) Progress + overlays
+- The shell shows the “Begin” overlay when `!isStarted && !isComplete && !hasProgress`.
+- Make sure `hasProgress` does **not** count clue/prefill cells, or the overlay won’t appear.
+
+## 6) Practice vs daily behavior
+- Daily puzzles should be deterministic (seed from date).
+- Practice puzzles should be random but follow the same rules/constraints.
+- Persist **daily** progress; practice usually does not persist.
+
+## 7) Cross‑game banners (after completion)
+- The completion modal already uses the shell’s “next game” promo.
+- For the **on‑page** banner after completion, include the optional markup from `shell-template.html`:
+  - `external-game-promo`, `external-game-logo`, `external-game-text`
+- The shell will show it only for completed daily puzzles.
+
+## 8) Consistency rules
 - Timer display is owned by the shell.
 - Mode badges and buttons are owned by the shell.
 - Completion modal copy is standardized in the shell.
+- Use the shell template IDs exactly as written.
 
-## 6) When in doubt
+## 9) When in doubt
 Follow the existing games: `games/snake`, `games/pathways`, `games/lattice`.
