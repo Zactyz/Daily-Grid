@@ -18,7 +18,9 @@ const els = {
   grid: document.getElementById('parcel-grid'),
   progress: document.getElementById('progress-text'),
   rectCount: document.getElementById('rect-count'),
-  puzzleDate: document.getElementById('puzzle-date')
+  puzzleDate: document.getElementById('puzzle-date'),
+  validationMessage: document.getElementById('validation-message'),
+  validationMessageText: document.getElementById('validation-message-text')
 };
 
 let gridSize = 5;
@@ -41,6 +43,9 @@ let isPaused = false;
 let isComplete = false;
 let completionMs = null;
 let tickInterval = null;
+let messageTimeout = null;
+
+const helperText = 'Drag to draw a rectangle. Tap a filled cell to clear it.';
 
 function getPuzzleIdForMode(mode) {
   if (mode === 'practice') return `practice-${puzzleSeed}`;
@@ -274,8 +279,23 @@ function cellAt(r, c) {
   return cells.find(cell => Number(cell.dataset.r) === r && Number(cell.dataset.c) === c);
 }
 
-function updateProgress(text) {
-  if (els.progress) els.progress.textContent = text;
+function showMessage(text, { temporary = false } = {}) {
+  if (!els.validationMessage || !els.validationMessageText) return;
+  els.validationMessageText.textContent = text;
+  els.validationMessage.classList.remove('hidden');
+  if (messageTimeout) {
+    window.clearTimeout(messageTimeout);
+    messageTimeout = null;
+  }
+  if (temporary) {
+    messageTimeout = window.setTimeout(() => {
+      showMessage(helperText);
+    }, 2200);
+  }
+}
+
+function updateProgress(text, { temporary = false } = {}) {
+  showMessage(text, { temporary });
 }
 
 function clearSelection() {
@@ -420,14 +440,26 @@ function handlePointerUp(event) {
   dragStart = null;
   clearSelection();
 
+  if (rect.r1 === rect.r2 && rect.c1 === rect.c2) {
+    const assigned = cellAssignments[rect.r1][rect.c1];
+    if (assigned) {
+      clearRectangleFor(assigned);
+      updateCounts();
+      updateProgress('Rectangle cleared.', { temporary: true });
+      saveProgress();
+      shell?.update();
+      return;
+    }
+  }
+
   const clues = clueInsideRect(rect);
   if (clues.length !== 1) {
-    updateProgress('Each rectangle must include exactly one clue.');
+    updateProgress('Each rectangle must include exactly one clue.', { temporary: true });
     return;
   }
   const clue = clues[0];
   if (rectArea(rect) !== clue.area) {
-    updateProgress(`That rectangle needs area ${clue.area}.`);
+    updateProgress(`That rectangle needs area ${clue.area}.`, { temporary: true });
     return;
   }
 
@@ -435,7 +467,7 @@ function handlePointerUp(event) {
     for (let c = rect.c1; c <= rect.c2; c += 1) {
       const assigned = cellAssignments[r][c];
       if (assigned && assigned !== clue.id) {
-        updateProgress('Rectangles cannot overlap.');
+        updateProgress('Rectangles cannot overlap.', { temporary: true });
         return;
       }
     }
@@ -443,7 +475,7 @@ function handlePointerUp(event) {
 
   assignRectangle(clue.id, rect);
   updateCounts();
-  updateProgress('Rectangle placed.');
+  updateProgress('Rectangle placed.', { temporary: true });
   tryComplete();
   saveProgress();
   shell?.update();
@@ -504,7 +536,7 @@ function resetPuzzle({ resetTimer }) {
   }
 
   updateCounts();
-  updateProgress('Drag to mark a rectangle.');
+  updateProgress(helperText);
   saveProgress();
   shell?.update();
 }
@@ -624,7 +656,7 @@ function switchMode(mode) {
   applyPuzzle(puzzleSeed);
   initState();
   updateCounts();
-  updateProgress('Drag to mark a rectangle.');
+  updateProgress(helperText);
   setDateLabel();
   shell?.update();
 }
@@ -701,7 +733,7 @@ function init() {
   applyPuzzle(puzzleSeed);
   initState();
   updateCounts();
-  updateProgress('Drag to mark a rectangle.');
+  updateProgress(helperText);
   setDateLabel();
   initShell();
   ensureTicker();
