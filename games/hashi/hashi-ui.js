@@ -32,6 +32,7 @@ let isComplete = false;
 let completionMs = null;
 let tickInterval = null;
 let pointerDownIsland = null;
+let visibilityEdges = [];
 
 function makeRng(seedString) {
   let seed = 1779033703 ^ seedString.length;
@@ -74,6 +75,10 @@ function canvasPointFor(island) {
     x: PADDING + island.c * cell,
     y: PADDING + island.r * cell
   };
+}
+
+function updateVisibilityEdges() {
+  visibilityEdges = buildVisibilityEdges(puzzle.islands);
 }
 
 function edgeId(a, b) {
@@ -331,6 +336,12 @@ function handlePointerUp(event) {
   if (isComplete) return;
   const endIsland = getIslandAtPoint(event.clientX, event.clientY);
   if (!endIsland) {
+    const edgeHit = getEdgeAtPoint(event.clientX, event.clientY);
+    if (edgeHit) {
+      if (!timerStarted) startTimer();
+      if (isPaused) resumeTimer();
+      cycleBridge(edgeHit.a, edgeHit.b);
+    }
     pointerDownIsland = null;
     return;
   }
@@ -368,6 +379,37 @@ function handlePointerUp(event) {
 
 function handlePointerLeave() {
   pointerDownIsland = null;
+}
+
+function getEdgeAtPoint(clientX, clientY) {
+  if (!els.canvas || !visibilityEdges.length) return null;
+  const rect = els.canvas.getBoundingClientRect();
+  const scaleX = els.canvas.width / rect.width;
+  const scaleY = els.canvas.height / rect.height;
+  const x = (clientX - rect.left) * scaleX;
+  const y = (clientY - rect.top) * scaleY;
+  const threshold = 14;
+
+  for (const edge of visibilityEdges) {
+    const a = islandMap.get(edge.a);
+    const b = islandMap.get(edge.b);
+    if (!a || !b) continue;
+    const p1 = canvasPointFor(a);
+    const p2 = canvasPointFor(b);
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) continue;
+    let t = ((x - p1.x) * dx + (y - p1.y) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const projX = p1.x + t * dx;
+    const projY = p1.y + t * dy;
+    const dist = Math.hypot(x - projX, y - projY);
+    if (dist <= threshold) {
+      return edge;
+    }
+  }
+  return null;
 }
 
 function drawGrid(ctx) {
@@ -673,6 +715,17 @@ function generatePuzzle(seedString) {
     const edges = buildVisibilityEdges(islands);
     if (edges.length < islands.length - 1) continue;
 
+    const degreeMap = new Map(islands.map(island => [island.id, 0]));
+    edges.forEach(edge => {
+      degreeMap.set(edge.a, degreeMap.get(edge.a) + 1);
+      degreeMap.set(edge.b, degreeMap.get(edge.b) + 1);
+    });
+    const degrees = Array.from(degreeMap.values());
+    const avgDegree = degrees.reduce((a, b) => a + b, 0) / degrees.length;
+    const maxDegree = Math.max(...degrees);
+    if (edges.length < islands.length + 1) continue;
+    if (avgDegree < 2.2 || maxDegree < 3) continue;
+
     const crossings = buildCrossingMap(edges, islands);
 
     const adjacency = new Map();
@@ -706,10 +759,23 @@ function generatePuzzle(seedString) {
     const edgeOrder = shuffleInPlace(edges.map((_, idx) => idx), rng);
     for (const idx of edgeOrder) {
       if (edgeCounts[idx] > 0) continue;
-      if (rng() < 0.45) {
+      if (rng() < 0.65) {
         const canAdd = crossings.get(idx).every(cross => edgeCounts[cross] === 0);
         if (!canAdd) continue;
-        edgeCounts[idx] = rng() < 0.25 ? 2 : 1;
+        edgeCounts[idx] = rng() < 0.45 ? 2 : 1;
+      }
+    }
+
+    const targetDouble = rngInt(rng, 1, 3);
+    let doubleCount = edgeCounts.filter(count => count === 2).length;
+    if (doubleCount < targetDouble) {
+      const candidates = edgeOrder.filter(idx => edgeCounts[idx] === 1);
+      for (const idx of candidates) {
+        if (doubleCount >= targetDouble) break;
+        const canAdd = crossings.get(idx).every(cross => edgeCounts[cross] === 0);
+        if (!canAdd) continue;
+        edgeCounts[idx] = 2;
+        doubleCount += 1;
       }
     }
 
@@ -827,6 +893,7 @@ function resetPracticePuzzle() {
   puzzleId = getPuzzleIdForMode('practice');
   puzzle = generatePuzzle(puzzleSeed);
   islandMap = new Map(puzzle.islands.map(i => [i.id, i]));
+  updateVisibilityEdges();
   bridges.clear();
   selected = null;
   baseElapsed = 0;
@@ -854,6 +921,7 @@ function switchMode(mode) {
   puzzleId = getPuzzleIdForMode(mode);
   puzzle = generatePuzzle(puzzleSeed);
   islandMap = new Map(puzzle.islands.map(i => [i.id, i]));
+  updateVisibilityEdges();
   bridges.clear();
   selected = null;
   initState();
@@ -935,6 +1003,7 @@ function init() {
   puzzleId = getPuzzleIdForMode(currentMode);
   puzzle = generatePuzzle(puzzleSeed);
   islandMap = new Map(puzzle.islands.map(i => [i.id, i]));
+  updateVisibilityEdges();
   if (els.islandCount) els.islandCount.textContent = String(puzzle.islands.length);
   initState();
   updateProgressText();
