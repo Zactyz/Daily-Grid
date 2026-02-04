@@ -127,6 +127,18 @@
 
     .accent-text { color: var(--brand-accent); }
     .accent-glow { text-shadow: 0 0 30px rgba(232, 180, 122, 0.4); }
+    .wood-title {
+      background-image:
+        repeating-linear-gradient(-15deg,
+          rgba(131, 86, 47, 0.95) 0 10px,
+          rgba(153, 104, 58, 0.95) 10px 20px,
+          rgba(111, 70, 38, 0.95) 20px 26px
+        );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: none;
+    }
 
     #hashi-canvas {
       width: 100%;
@@ -188,7 +200,7 @@
         <span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
         Practice Mode
       </div>
-      <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Bridgeworks</h1>
+      <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow wood-title">Bridgeworks</h1>
       <p class="text-zinc-500 text-sm">Build the bridges. Connect every island. One network.</p>
       <p id="puzzle-date" class="progress-text mt-2"></p>
     </header>

@@ -232,15 +232,7 @@ function isValidConnection(a, b) {
 
 function updateProgressText() {
   if (!els.progress) return;
-  if (isComplete) {
-    els.progress.textContent = 'All islands connected.';
-    return;
-  }
-  if (selected) {
-    els.progress.textContent = `Selected island ${selected}. Choose a partner.`;
-    return;
-  }
-  els.progress.textContent = 'Choose an island to start bridging.';
+  els.progress.textContent = '';
 }
 
 function getElapsedMs() {
@@ -457,7 +449,7 @@ function getEdgeAtPoint(clientX, clientY) {
 
 function drawGrid(ctx) {
   const cell = (CANVAS_SIZE - PADDING * 2) / (puzzle.gridSize - 1);
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = 'rgba(180, 220, 255, 0.12)';
   ctx.lineWidth = 1;
   for (let i = 0; i < puzzle.gridSize; i += 1) {
     const x = PADDING + i * cell;
@@ -499,7 +491,7 @@ function drawBridges(ctx) {
     const horizontal = a.r === b.r;
     const offset = count === 2 ? BRIDGE_GAP : 0;
 
-    ctx.strokeStyle = '#f5d0a7';
+    ctx.strokeStyle = '#8b5a2b';
     ctx.lineWidth = 8;
     ctx.lineCap = 'round';
 
@@ -526,23 +518,21 @@ function drawIslands(ctx) {
     const current = counts.get(island.id) || 0;
     const satisfied = current === island.required;
 
-    ctx.fillStyle = satisfied ? '#1a120e' : '#2a1b14';
-    ctx.strokeStyle = selected === island.id ? '#f5d0a7' : '#d8a06a';
+    ctx.fillStyle = satisfied ? '#1b4f35' : '#1f6a46';
+    ctx.strokeStyle = selected === island.id ? '#9be7c4' : '#6fc49a';
     ctx.lineWidth = selected === island.id ? 4 : 2;
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, ISLAND_RADIUS, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = satisfied ? '#f5d0a7' : '#f0e2d4';
+    ctx.fillStyle = satisfied ? '#e8f9ee' : '#d9f3e2';
     ctx.font = 'bold 22px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(island.required), pos.x, pos.y);
 
-    ctx.font = '14px "JetBrains Mono", monospace';
-    ctx.fillStyle = 'rgba(245, 208, 167, 0.8)';
-    ctx.fillText(`${current}`, pos.x, pos.y + 24);
+    // Hide live bridge count
   });
 }
 
@@ -551,7 +541,7 @@ function draw() {
   const ctx = els.canvas.getContext('2d');
   if (!ctx) return;
   ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-  ctx.fillStyle = '#1a0f0c';
+  ctx.fillStyle = '#0f2438';
   ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
   drawGrid(ctx);
   drawBridges(ctx);
