@@ -1,0 +1,17 @@
+{
+  "name": "Pipes",
+  "short_name": "Pipes",
+  "description": "Daily neon pipe puzzle from Daily Grid.",
+  "start_url": "/games/pipes/",
+  "scope": "/games/pipes/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/games/pipes/pipes-logo.svg",
+      "sizes": "120x120",
+      "type": "image/svg+xml"
+    }
+  ]
+}
