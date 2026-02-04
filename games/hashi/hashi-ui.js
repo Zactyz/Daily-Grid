@@ -105,7 +105,7 @@ function updateSolutionUI() {
 }
 
 function showSolution() {
-  if (currentMode !== 'practice' || solutionShown || !puzzle?.solutionEdges) return;
+  if (currentMode !== 'practice' || solutionShown || !puzzle?.solutionEdges?.length) return;
   bridges.clear();
   puzzle.solutionEdges.forEach((edge) => {
     if (!edge || edge.count <= 0) return;
@@ -846,15 +846,20 @@ function generatePuzzle(seedString) {
   const fallback = {
     gridSize: 5,
     islands: [
-      { id: 'A', r: 0, c: 1, required: 3 },
-      { id: 'B', r: 0, c: 3, required: 2 },
-      { id: 'C', r: 2, c: 0, required: 2 },
-      { id: 'D', r: 2, c: 2, required: 4 },
-      { id: 'E', r: 2, c: 4, required: 2 },
-      { id: 'F', r: 4, c: 1, required: 3 },
-      { id: 'G', r: 4, c: 3, required: 2 }
+      { id: 'A', r: 0, c: 1, required: 1 },
+      { id: 'B', r: 0, c: 3, required: 1 },
+      { id: 'C', r: 2, c: 1, required: 4 },
+      { id: 'D', r: 2, c: 3, required: 4 },
+      { id: 'E', r: 4, c: 1, required: 2 },
+      { id: 'F', r: 4, c: 3, required: 2 }
     ],
-    solutionEdges: []
+    solutionEdges: [
+      { a: 'A', b: 'C', count: 1 },
+      { a: 'C', b: 'E', count: 2 },
+      { a: 'B', b: 'D', count: 1 },
+      { a: 'D', b: 'F', count: 2 },
+      { a: 'C', b: 'D', count: 1 }
+    ]
   };
   return fallback;
 }
@@ -937,6 +942,7 @@ function resetPracticePuzzle() {
   updateVisibilityEdges();
   bridges.clear();
   selected = null;
+  solutionShown = false;
   baseElapsed = 0;
   startTimestamp = 0;
   timerStarted = false;
@@ -966,6 +972,7 @@ function switchMode(mode) {
   updateVisibilityEdges();
   bridges.clear();
   selected = null;
+  solutionShown = false;
   initState();
   updateProgressText();
   setDateLabel();
