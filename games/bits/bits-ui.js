@@ -19,7 +19,13 @@ const els = {
   progress: document.getElementById('progress-text'),
   gridRoot: document.getElementById('bits-grid'),
   gridSize: document.getElementById('grid-size'),
-  puzzleDate: document.getElementById('puzzle-date')
+  puzzleDate: document.getElementById('puzzle-date'),
+  showSolutionBtn: document.getElementById('show-solution-btn'),
+  solutionActions: document.getElementById('solution-actions'),
+  solutionRetryBtn: document.getElementById('solution-retry-btn'),
+  solutionNextBtn: document.getElementById('solution-next-btn'),
+  pauseBtn: document.getElementById('pause-btn'),
+  resetBtn: document.getElementById('reset-btn')
 };
 
 const cells = [];
@@ -34,6 +40,7 @@ let isComplete = false;
 let completionMs = null;
 let shell = null;
 let tickInterval = null;
+let solutionShown = false;
 
 function getPuzzleIdForMode(mode) {
   if (mode === 'practice') return `practice-${puzzleSeed}`;
@@ -790,6 +797,23 @@ function updateProgressText() {
   els.progress.textContent = `Cells filled: ${filled} / ${TOTAL_CELLS}`;
 }
 
+function updateShowSolutionButton() {
+  if (!els.showSolutionBtn) return;
+  if (currentMode === 'practice' && !solutionShown && !isComplete) {
+    els.showSolutionBtn.classList.remove('hidden');
+  } else {
+    els.showSolutionBtn.classList.add('hidden');
+  }
+}
+
+function resetSolutionUI() {
+  solutionShown = false;
+  els.solutionActions?.classList.add('hidden');
+  updateShowSolutionButton();
+  els.pauseBtn?.classList.remove('hidden');
+  els.resetBtn?.classList.remove('hidden');
+}
+
 function applySavedValues(savedValues) {
   if (!Array.isArray(savedValues)) return;
   cells.forEach((cell, idx) => {
@@ -877,6 +901,31 @@ function completePuzzle() {
   shell?.update();
 }
 
+function showSolution() {
+  if (!solutionGrid) {
+    shell?.showToast('Solution not available for this puzzle.');
+    return;
+  }
+  solutionShown = true;
+  cells.forEach(cell => {
+    if (cell.isClue) return;
+    cell.value = solutionGrid[cell.r][cell.c];
+    cell.invalid = false;
+    updateCellAppearance(cell);
+  });
+  updateProgressText();
+  isComplete = true;
+  isPaused = true;
+  timerStarted = true;
+  completionMs = getElapsedMs();
+  shell?.showToast('Solution revealed!');
+  els.showSolutionBtn?.classList.add('hidden');
+  els.solutionActions?.classList.remove('hidden');
+  els.pauseBtn?.classList.add('hidden');
+  els.resetBtn?.classList.add('hidden');
+  shell?.update();
+}
+
 function resetPuzzle({ resetTimer }) {
   cells.forEach(cell => {
     if (!cell.isClue) {
@@ -897,6 +946,7 @@ function resetPuzzle({ resetTimer }) {
 
   updateProgressText();
   validateBoard();
+  resetSolutionUI();
   saveProgress();
   shell?.update();
 }
@@ -949,7 +999,10 @@ function initShell() {
     startReplay: () => {},
     exitReplay: () => {},
     onResetUI: () => {},
-    onTryAgain: () => resetPuzzle({ resetTimer: true }),
+    onTryAgain: () => {
+      resetPuzzle({ resetTimer: true });
+      resetSolutionUI();
+    },
     onNextLevel: () => resetPracticePuzzle(),
     onBackToDaily: () => switchMode('daily'),
     onPracticeInfinite: () => switchMode('practice'),
@@ -971,6 +1024,8 @@ function initShell() {
       completionMs = ms;
     },
     isTimerRunning: () => timerStarted && !isPaused && !isComplete,
+    shouldShowCompletionModal: () => !solutionShown,
+    isSolutionShown: () => solutionShown,
     disableReplay: true,
     pauseOnHide: true
   });
@@ -1005,6 +1060,7 @@ function resetPracticePuzzle() {
   isPaused = false;
   isComplete = false;
   completionMs = null;
+  resetSolutionUI();
   updateProgressText();
   updateGridLabel();
   setDateLabel();
@@ -1028,12 +1084,14 @@ function switchMode(mode) {
   updateProgressText();
   updateGridLabel();
   setDateLabel();
+  resetSolutionUI();
   shell?.update();
 }
 
 function ensureTicker() {
   if (tickInterval) return;
   tickInterval = window.setInterval(() => {
+    updateShowSolutionButton();
     shell?.update();
   }, 200);
 }
@@ -1050,11 +1108,21 @@ function init() {
   setDateLabel();
   initShell();
   ensureTicker();
+  resetSolutionUI();
   shell?.update();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
+  els.showSolutionBtn?.addEventListener('click', () => showSolution());
+  els.solutionRetryBtn?.addEventListener('click', () => {
+    resetPuzzle({ resetTimer: true });
+    resetSolutionUI();
+  });
+  els.solutionNextBtn?.addEventListener('click', () => {
+    resetSolutionUI();
+    resetPracticePuzzle();
+  });
   window.startPracticeMode = () => switchMode('practice');
   window.startDailyMode = () => switchMode('daily');
   window.addEventListener('beforeunload', saveProgress);
