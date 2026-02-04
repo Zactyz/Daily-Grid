@@ -63,14 +63,24 @@ const GAME_META = [
     shareUrl: 'https://dailygrid.app/games/shikaku/'
   },
   {
-    id: 'pipes',
-    name: 'Flowline',
-    path: '/games/pipes/',
-    logo: '/games/pipes/pipes-logo.svg',
-    submittedKeyPrefix: 'dailygrid_pipes_submitted_',
-    completedKeyPrefix: 'dailygrid_pipes_completed_',
+    id: 'conduit',
+    name: 'Conduit',
+    path: '/games/conduit/',
+    logo: '/games/conduit/conduit-logo.svg',
+    submittedKeyPrefix: 'dailygrid_conduit_submitted_',
+    completedKeyPrefix: 'dailygrid_conduit_completed_',
     theme: { bg: 'bg-cyan-500/10', border: 'border-cyan-400/30', text: 'text-cyan-300' },
-    shareUrl: 'https://dailygrid.app/games/pipes/'
+    shareUrl: 'https://dailygrid.app/games/conduit/'
+  },
+  {
+    id: 'perimeter',
+    name: 'Perimeter',
+    path: '/games/perimeter/',
+    logo: '/games/perimeter/perimeter-logo.svg',
+    submittedKeyPrefix: 'dailygrid_perimeter_submitted_',
+    completedKeyPrefix: 'dailygrid_perimeter_completed_',
+    theme: { bg: 'bg-indigo-500/10', border: 'border-indigo-400/30', text: 'text-indigo-300' },
+    shareUrl: 'https://dailygrid.app/games/perimeter/'
   }
 ];
 
