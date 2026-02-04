@@ -135,6 +135,8 @@ export class SnakeUI {
       } else {
         this.showValidationMessage('Numbers must be visited in order!');
       }
+    } else if (!validation.gridFilled && validation.numbersCorrectOrder) {
+      this.showValidationMessage('All squares must be filled in.');
     }
   }
 
