@@ -1,0 +1,21 @@
+{
+  "name": "Shingoki by Daily Grid",
+  "short_name": "Shingoki",
+  "description": "Weave a single loop that satisfies every guard.",
+  "start_url": "/games/shingoki/",
+  "display": "standalone",
+  "background_color": "#F9F5EE",
+  "theme_color": "#1F3252",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/games/shingoki/shingoki-logo.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "puzzle"],
+  "lang": "en",
+  "dir": "ltr"
+}
