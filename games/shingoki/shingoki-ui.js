@@ -6,7 +6,7 @@ const API_COMPLETE = '/api/shingoki/complete';
 const API_LEADERBOARD = '/api/shingoki/leaderboard';
 const API_CLAIM = '/api/shingoki/claim-initials';
 const SHARE_URL = 'https://dailygrid.app/games/shingoki/';
-const GAME_NAME = 'Shingoki';
+const GAME_NAME = 'Sentinel Loop';
 const SUBMITTED_KEY_PREFIX = 'dailygrid_shingoki_submitted_';
 
 export class ShingokiUI {
