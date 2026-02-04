@@ -1,18 +1,18 @@
-import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from '../common/utils.js';
+import {
+  createSeededRandom,
+  getPTDateYYYYMMDD,
+  formatTime,
+  getOrCreateAnonId,
+  hashString
+} from '../common/utils.js';
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
 
-const GRID_SIZE = 5;
 const STATE_PREFIX = 'dailygrid_shikaku_state_';
-
-const CLUES = [
-  { id: 'A', r: 0, c: 1, area: 6 },
-  { id: 'B', r: 1, c: 4, area: 4 },
-  { id: 'C', r: 3, c: 0, area: 6 },
-  { id: 'D', r: 2, c: 3, area: 6 },
-  { id: 'E', r: 4, c: 3, area: 3 }
-];
+const SIZE_RANGE = { min: 5, max: 7 };
+const RECT_RANGE = { min: 6, max: 10 };
+const MIN_RECT_AREA = 2;
 
 const els = {
   grid: document.getElementById('parcel-grid'),
@@ -21,7 +21,10 @@ const els = {
   puzzleDate: document.getElementById('puzzle-date')
 };
 
-const cellAssignments = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
+let gridSize = 5;
+let clues = [];
+let clueIds = new Set();
+let cellAssignments = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
 const rectangles = new Map();
 let cells = [];
 let dragStart = null;
@@ -47,13 +50,208 @@ function getStateKey() {
   return `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 }
 
+function getPuzzleSignature() {
+  return `${gridSize}:${clues.map(clue => `${clue.r},${clue.c},${clue.area}`).join('|')}`;
+}
+
+function randInt(rng, min, max) {
+  return Math.floor(rng() * (max - min + 1)) + min;
+}
+
+function rectArea(rect) {
+  return (rect.r2 - rect.r1 + 1) * (rect.c2 - rect.c1 + 1);
+}
+
+function generatePartition(size, targetRects, rng) {
+  const full = { r1: 0, c1: 0, r2: size - 1, c2: size - 1 };
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const rects = [full];
+    let guard = 0;
+    while (rects.length < targetRects && guard < 400) {
+      guard += 1;
+      const splittable = rects.filter(rect => {
+        const width = rect.c2 - rect.c1 + 1;
+        const height = rect.r2 - rect.r1 + 1;
+        return (width > 1 || height > 1) && rectArea(rect) >= MIN_RECT_AREA * 2;
+      });
+      if (splittable.length === 0) break;
+      const target = splittable[randInt(rng, 0, splittable.length - 1)];
+      const width = target.c2 - target.c1 + 1;
+      const height = target.r2 - target.r1 + 1;
+      const preferVertical = width > height ? rng() < 0.65 : rng() < 0.35;
+      const orientations = preferVertical ? ['v', 'h'] : ['h', 'v'];
+      let split = null;
+      for (const orient of orientations) {
+        if (orient === 'v' && width > 1) {
+          const minSplit = target.c1 + 1;
+          const maxSplit = target.c2;
+          const choices = [];
+          for (let c = minSplit; c <= maxSplit; c += 1) {
+            const left = { r1: target.r1, c1: target.c1, r2: target.r2, c2: c - 1 };
+            const right = { r1: target.r1, c1: c, r2: target.r2, c2: target.c2 };
+            if (rectArea(left) >= MIN_RECT_AREA && rectArea(right) >= MIN_RECT_AREA) {
+              choices.push({ left, right });
+            }
+          }
+          if (choices.length) {
+            split = choices[randInt(rng, 0, choices.length - 1)];
+            break;
+          }
+        }
+        if (orient === 'h' && height > 1) {
+          const minSplit = target.r1 + 1;
+          const maxSplit = target.r2;
+          const choices = [];
+          for (let r = minSplit; r <= maxSplit; r += 1) {
+            const top = { r1: target.r1, c1: target.c1, r2: r - 1, c2: target.c2 };
+            const bottom = { r1: r, c1: target.c1, r2: target.r2, c2: target.c2 };
+            if (rectArea(top) >= MIN_RECT_AREA && rectArea(bottom) >= MIN_RECT_AREA) {
+              choices.push({ top, bottom });
+            }
+          }
+          if (choices.length) {
+            split = choices[randInt(rng, 0, choices.length - 1)];
+            break;
+          }
+        }
+      }
+      if (!split) continue;
+      const idx = rects.indexOf(target);
+      rects.splice(idx, 1);
+      rects.push(split.left ?? split.top);
+      rects.push(split.right ?? split.bottom);
+    }
+    if (rects.length !== targetRects) continue;
+    return rects;
+  }
+  return null;
+}
+
+function buildClues(rects, rng) {
+  const ids = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  return rects.map((rect, idx) => {
+    const r = randInt(rng, rect.r1, rect.r2);
+    const c = randInt(rng, rect.c1, rect.c2);
+    return {
+      id: ids[idx] ?? `R${idx + 1}`,
+      r,
+      c,
+      area: rectArea(rect)
+    };
+  });
+}
+
+function generateCandidates(clue, size) {
+  const candidates = [];
+  const area = clue.area;
+  for (let h = 1; h <= size; h += 1) {
+    if (area % h !== 0) continue;
+    const w = area / h;
+    if (w < 1 || w > size) continue;
+    const rStart = Math.max(0, clue.r - h + 1);
+    const rEnd = Math.min(clue.r, size - h);
+    const cStart = Math.max(0, clue.c - w + 1);
+    const cEnd = Math.min(clue.c, size - w);
+    for (let r1 = rStart; r1 <= rEnd; r1 += 1) {
+      const r2 = r1 + h - 1;
+      for (let c1 = cStart; c1 <= cEnd; c1 += 1) {
+        const c2 = c1 + w - 1;
+        candidates.push({ r1, c1, r2, c2 });
+      }
+    }
+  }
+  return candidates;
+}
+
+function countSolutions(cluesList, size, limit = 2) {
+  const totalArea = cluesList.reduce((sum, clue) => sum + clue.area, 0);
+  if (totalArea !== size * size) return 0;
+  const candidateSets = cluesList.map(clue => generateCandidates(clue, size));
+  const order = [...cluesList.keys()].sort((a, b) => candidateSets[a].length - candidateSets[b].length);
+  const used = Array.from({ length: size }, () => Array(size).fill(false));
+  let solutions = 0;
+
+  function canPlace(rect) {
+    for (let r = rect.r1; r <= rect.r2; r += 1) {
+      for (let c = rect.c1; c <= rect.c2; c += 1) {
+        if (used[r][c]) return false;
+      }
+    }
+    return true;
+  }
+
+  function setUsed(rect, value) {
+    for (let r = rect.r1; r <= rect.r2; r += 1) {
+      for (let c = rect.c1; c <= rect.c2; c += 1) {
+        used[r][c] = value;
+      }
+    }
+  }
+
+  function backtrack(idx) {
+    if (solutions >= limit) return;
+    if (idx >= order.length) {
+      solutions += 1;
+      return;
+    }
+    const clueIndex = order[idx];
+    const candidates = candidateSets[clueIndex];
+    for (const rect of candidates) {
+      if (!canPlace(rect)) continue;
+      setUsed(rect, true);
+      backtrack(idx + 1);
+      setUsed(rect, false);
+      if (solutions >= limit) return;
+    }
+  }
+
+  backtrack(0);
+  return solutions;
+}
+
+function generatePuzzle(seedStr) {
+  const baseSeed = hashString(seedStr);
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const rng = createSeededRandom(baseSeed + attempt * 9973);
+    const size = randInt(rng, SIZE_RANGE.min, SIZE_RANGE.max);
+    const maxRects = Math.min(RECT_RANGE.max, Math.floor((size * size) / MIN_RECT_AREA));
+    const minRects = Math.min(RECT_RANGE.min, maxRects);
+    const targetRects = randInt(rng, minRects, Math.max(minRects, maxRects));
+    const rects = generatePartition(size, targetRects, rng);
+    if (!rects) continue;
+    const cluesCandidate = buildClues(rects, rng);
+    if (countSolutions(cluesCandidate, size, 2) !== 1) continue;
+    return { size, clues: cluesCandidate };
+  }
+  const fallbackSize = SIZE_RANGE.min;
+  const fallbackRect = { r1: 0, c1: 0, r2: fallbackSize - 1, c2: fallbackSize - 1 };
+  return {
+    size: fallbackSize,
+    clues: buildClues(
+      generatePartition(fallbackSize, RECT_RANGE.min, createSeededRandom(baseSeed + 1)) ?? [fallbackRect],
+      createSeededRandom(baseSeed + 2)
+    )
+  };
+}
+
+function applyPuzzle(seedStr) {
+  const puzzle = generatePuzzle(seedStr);
+  gridSize = puzzle.size;
+  clues = puzzle.clues;
+  clueIds = new Set(clues.map(clue => clue.id));
+  cellAssignments = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+  rectangles.clear();
+  buildGrid();
+}
+
 function buildGrid() {
   if (!els.grid) return;
   els.grid.innerHTML = '';
+  els.grid.style.setProperty('--grid-size', String(gridSize));
   cells = [];
-  for (let r = 0; r < GRID_SIZE; r += 1) {
-    for (let c = 0; c < GRID_SIZE; c += 1) {
-      const clue = CLUES.find(cl => cl.r === r && cl.c === c);
+  for (let r = 0; r < gridSize; r += 1) {
+    for (let c = 0; c < gridSize; c += 1) {
+      const clue = clues.find(cl => cl.r === r && cl.c === c);
       const cell = document.createElement('div');
       cell.className = 'cell';
       cell.dataset.r = String(r);
@@ -102,11 +300,7 @@ function rectFromPoints(start, end) {
 }
 
 function clueInsideRect(rect) {
-  return CLUES.filter(cl => cl.r >= rect.r1 && cl.r <= rect.r2 && cl.c >= rect.c1 && cl.c <= rect.c2);
-}
-
-function rectArea(rect) {
-  return (rect.r2 - rect.r1 + 1) * (rect.c2 - rect.c1 + 1);
+  return clues.filter(cl => cl.r >= rect.r1 && cl.r <= rect.r2 && cl.c >= rect.c1 && cl.c <= rect.c2);
 }
 
 function clearRectangleFor(clueId) {
@@ -141,9 +335,9 @@ function updateCounts() {
 }
 
 function checkCompletion() {
-  if (rectangles.size !== CLUES.length) return false;
-  for (let r = 0; r < GRID_SIZE; r += 1) {
-    for (let c = 0; c < GRID_SIZE; c += 1) {
+  if (rectangles.size !== clues.length) return false;
+  for (let r = 0; r < gridSize; r += 1) {
+    for (let c = 0; c < gridSize; c += 1) {
       if (!cellAssignments[r][c]) return false;
     }
   }
@@ -267,8 +461,8 @@ function resumeTimer() {
 
 function resetPuzzle({ resetTimer }) {
   rectangles.clear();
-  for (let r = 0; r < GRID_SIZE; r += 1) {
-    for (let c = 0; c < GRID_SIZE; c += 1) {
+  for (let r = 0; r < gridSize; r += 1) {
+    for (let c = 0; c < gridSize; c += 1) {
       cellAssignments[r][c] = null;
     }
   }
@@ -298,6 +492,7 @@ function loadState() {
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (!data || !Array.isArray(data.rectangles)) return null;
+    if (data.signature && data.signature !== getPuzzleSignature()) return null;
     if (data.timerStarted && !data.isComplete && !data.isPaused) {
       data.isPaused = true;
     }
@@ -314,6 +509,7 @@ function saveProgress() {
     rect
   }));
   const payload = {
+    signature: getPuzzleSignature(),
     rectangles: rectanglesData,
     timeMs: getElapsedMs(),
     timerStarted,
@@ -330,8 +526,8 @@ function saveProgress() {
 
 function applySavedState(saved) {
   rectangles.clear();
-  for (let r = 0; r < GRID_SIZE; r += 1) {
-    for (let c = 0; c < GRID_SIZE; c += 1) {
+  for (let r = 0; r < gridSize; r += 1) {
+    for (let c = 0; c < gridSize; c += 1) {
       cellAssignments[r][c] = null;
     }
   }
@@ -339,7 +535,7 @@ function applySavedState(saved) {
 
   if (saved?.rectangles) {
     saved.rectangles.forEach(({ clueId, rect }) => {
-      if (!clueId || !rect) return;
+      if (!clueId || !rect || !clueIds.has(clueId)) return;
       assignRectangle(clueId, rect);
     });
   }
@@ -383,6 +579,8 @@ function ensureTicker() {
 function resetPracticePuzzle() {
   puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
   puzzleId = getPuzzleIdForMode('practice');
+  applyPuzzle(puzzleSeed);
+  initState();
   resetPuzzle({ resetTimer: true });
   setDateLabel();
 }
@@ -397,6 +595,7 @@ function switchMode(mode) {
     puzzleSeed = getPTDateYYYYMMDD();
   }
   puzzleId = getPuzzleIdForMode(mode);
+  applyPuzzle(puzzleSeed);
   initState();
   updateCounts();
   updateProgress('Drag to mark a rectangle.');
@@ -411,7 +610,7 @@ function initShell() {
     gameId: 'shikaku',
     getMode: () => currentMode,
     getPuzzleId: () => puzzleId,
-    getGridLabel: () => `${GRID_SIZE}x${GRID_SIZE} Rects`,
+    getGridLabel: () => `${gridSize}x${gridSize} Rects`,
     getElapsedMs: () => getElapsedMs(),
     formatTime,
     autoStartOnProgress: true,
@@ -440,7 +639,7 @@ function initShell() {
     getShareMeta: () => ({
       gameName: 'Parcel',
       shareUrl: 'https://dailygrid.app/games/shikaku/',
-      gridLabel: '5x5 Parcel'
+      gridLabel: `${gridSize}x${gridSize} Parcel`
     }),
     getShareFile: () => buildShareImage(),
     getCompletionMs: () => completionMs,
@@ -459,13 +658,13 @@ async function buildShareImage() {
   return buildShareCard({
     gameName: 'Parcel',
     logoPath: '/games/shikaku/shikaku-logo.svg',
-    accent: '#9AD0B5',
-    accentSoft: 'rgba(154, 208, 181, 0.12)',
-    backgroundStart: '#0E1410',
-    backgroundEnd: '#122018',
+    accent: '#c9a36b',
+    accentSoft: 'rgba(201, 163, 107, 0.2)',
+    backgroundStart: '#1b140e',
+    backgroundEnd: '#2a1b10',
     dateText: puzzleDate,
     timeText: formatTime(finalTime || 0),
-    gridLabel: 'Grid 5x5',
+    gridLabel: `Grid ${gridSize}x${gridSize}`,
     footerText: 'dailygrid.app/games/shikaku'
   });
 }
@@ -473,7 +672,7 @@ async function buildShareImage() {
 function init() {
   puzzleSeed = getPTDateYYYYMMDD();
   puzzleId = getPuzzleIdForMode(currentMode);
-  buildGrid();
+  applyPuzzle(puzzleSeed);
   initState();
   updateCounts();
   updateProgress('Drag to mark a rectangle.');

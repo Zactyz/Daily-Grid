@@ -8,15 +8,15 @@
   <link rel="manifest" href="/games/shikaku/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/games/shikaku/shikaku-logo.svg">
   <link rel="apple-touch-icon" href="/games/shikaku/shikaku-logo.svg">
-  <meta name="theme-color" content="#0E1410">
+  <meta name="theme-color" content="#1b140e">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/shell.css">
   <style>
     :root {
-      --brand-bg: #0E1410;
-      --brand-accent: #9AD0B5;
-      --brand-accent-dim: #7bb79c;
+      --brand-bg: #1b140e;
+      --brand-accent: #c9a36b;
+      --brand-accent-dim: #a77a45;
       --glass-bg: rgba(255, 255, 255, 0.02);
       --glass-border: rgba(255, 255, 255, 0.06);
     }
@@ -36,9 +36,9 @@
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(154, 208, 181, 0.08), transparent),
-        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(216, 243, 228, 0.05), transparent),
-        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(154, 208, 181, 0.03), transparent);
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201, 163, 107, 0.12), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(244, 226, 196, 0.08), transparent),
+        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(201, 163, 107, 0.05), transparent);
       pointer-events: none;
       z-index: -1;
     }
@@ -94,13 +94,13 @@
 
     .btn-primary {
       background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-dim));
-      color: #0f1a14;
-      box-shadow: 0 2px 12px rgba(154, 208, 181, 0.25);
+      color: #2a1b0f;
+      box-shadow: 0 2px 12px rgba(201, 163, 107, 0.35);
     }
 
     .btn-primary:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(154, 208, 181, 0.35);
+      box-shadow: 0 4px 20px rgba(201, 163, 107, 0.45);
     }
 
     .btn-secondary {
@@ -116,8 +116,8 @@
     }
 
     .timer-display {
-      background: linear-gradient(135deg, rgba(154, 208, 181, 0.12), rgba(154, 208, 181, 0.04));
-      border: 1px solid rgba(154, 208, 181, 0.25);
+      background: linear-gradient(135deg, rgba(201, 163, 107, 0.18), rgba(201, 163, 107, 0.06));
+      border: 1px solid rgba(201, 163, 107, 0.3);
     }
 
     .stat-card {
@@ -126,11 +126,11 @@
     }
 
     .accent-text { color: var(--brand-accent); }
-    .accent-glow { text-shadow: 0 0 30px rgba(154, 208, 181, 0.4); }
+    .accent-glow { text-shadow: 0 0 30px rgba(201, 163, 107, 0.5); }
 
     #parcel-grid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(var(--grid-size, 5), minmax(0, 1fr));
       gap: 6px;
     }
 
@@ -138,9 +138,9 @@
       position: relative;
       aspect-ratio: 1 / 1;
       border-radius: 10px;
-      background: rgba(18, 25, 20, 0.8);
+      background: rgba(24, 18, 12, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #d8f3e4;
+      color: #f2e7d6;
       font-weight: 600;
       font-size: 1rem;
       display: flex;
@@ -152,23 +152,39 @@
     }
 
     .cell.clue {
-      background: rgba(154, 208, 181, 0.15);
-      color: #d8f3e4;
+      background: rgba(201, 163, 107, 0.22);
+      color: #f4e8d4;
     }
 
     .cell.assigned {
-      border-color: rgba(154, 208, 181, 0.45);
-      background: rgba(154, 208, 181, 0.12);
+      border: 3px solid #eadac0;
+      background: #f7efe3;
+      color: #3c2a1b;
+      box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.25),
+        inset 0 0 0 1px rgba(214, 187, 146, 0.6);
     }
 
     .cell.selected {
-      border-color: rgba(216, 243, 228, 0.7);
-      background: rgba(216, 243, 228, 0.12);
+      border-color: rgba(244, 226, 196, 0.75);
+      background: rgba(244, 226, 196, 0.2);
+    }
+
+    .cell.assigned::after {
+      content: '';
+      position: absolute;
+      inset: 8%;
+      border-radius: 6px;
+      border: 1px dashed rgba(160, 120, 74, 0.55);
+      background-image:
+        linear-gradient(135deg, rgba(160, 120, 74, 0.12) 0, rgba(160, 120, 74, 0.12) 6px, transparent 6px, transparent 14px);
+      pointer-events: none;
+      opacity: 0.7;
     }
 
     .progress-text {
       text-align: center;
-      color: rgba(184, 247, 213, 0.85);
+      color: rgba(243, 226, 196, 0.85);
       letter-spacing: 0.08em;
       font-size: 0.8rem;
     }
@@ -209,12 +225,12 @@
 
   <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
     <header class="text-center mb-6 w-full">
-      <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300/90 text-xs font-medium mb-3 uppercase tracking-wider">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+      <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-200/10 border border-amber-300/20 text-amber-200/90 text-xs font-medium mb-3 uppercase tracking-wider">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-200 animate-pulse"></span>
         Daily Puzzle
       </div>
-      <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 text-emerald-300/90 text-xs font-medium mb-3 uppercase tracking-wider">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+      <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-200/10 border border-amber-300/20 text-amber-200/90 text-xs font-medium mb-3 uppercase tracking-wider">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-200"></span>
         Practice Mode
       </div>
       <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Parcel</h1>
@@ -234,7 +250,6 @@
     </div>
 
     <div id="game-container" class="glass-strong p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
-      <div id="progress-text" class="progress-text mb-3">Drag to mark a rectangle.</div>
       <div id="parcel-grid"></div>
 
       <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
