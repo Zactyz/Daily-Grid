@@ -576,6 +576,8 @@
         let engine, renderer, input, ui;
         let lastTime = Date.now();
         let currentMode = 'daily'; // 'daily' or 'practice'
+        let loopStarted = false;
+        let resizeBound = false;
         mountShell();
 
         // Generate puzzle client-side (deterministic - same puzzle for everyone on same day)
@@ -610,21 +612,37 @@
                 engine = new SnakeEngine(puzzle, storageKey);
                 renderer = new SnakeRenderer(canvas, engine);
                 ui = new SnakeUI(engine, reset, nextLevel, currentMode);
-                
-                input = new SnakeInput(canvas, engine, renderer, () => {
+
+                const onUpdate = () => {
                     renderer.render();
                     ui.update();
-                }, () => {
-                    // Validation check callback
+                };
+                const onValidation = () => {
                     ui.checkAndShowValidation();
-                });
+                };
+
+                if (input) {
+                    input.engine = engine;
+                    input.renderer = renderer;
+                    input.onUpdate = onUpdate;
+                    input.onValidationCheck = onValidation;
+                } else {
+                    input = new SnakeInput(canvas, engine, renderer, onUpdate, onValidation);
+                }
                 
-                gameLoop();
-                
-                window.addEventListener('resize', () => {
-                    renderer.resize();
-                    renderer.render();
-                });
+                if (!loopStarted) {
+                    loopStarted = true;
+                    gameLoop();
+                }
+
+                if (!resizeBound) {
+                    resizeBound = true;
+                    window.addEventListener('resize', () => {
+                        if (!renderer) return;
+                        renderer.resize();
+                        renderer.render();
+                    });
+                }
                 
                 renderer.render();
                 ui.update();
@@ -694,10 +712,12 @@
             const delta = now - lastTime;
             lastTime = now;
             
-            engine.updateTime(delta);
-            renderer.render();
-            ui.update();
-            input.updateTouchBehavior();
+            if (engine && renderer && ui && input) {
+                engine.updateTime(delta);
+                renderer.render();
+                ui.update();
+                input.updateTouchBehavior();
+            }
             
             requestAnimationFrame(gameLoop);
         }

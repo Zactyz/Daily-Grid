@@ -581,6 +581,8 @@
         let engine, renderer, input, ui;
         let lastTime = Date.now();
         let currentMode = 'daily';
+        let loopStarted = false;
+        let resizeBound = false;
         mountShell();
 
         function getPuzzle(mode) {
@@ -613,21 +615,38 @@
                 renderer = new PathwaysRenderer(canvas, engine);
                 ui = new PathwaysUI(engine, reset, nextLevel, currentMode);
                 ui.setRenderer(renderer);
-                
-                input = new PathwaysInput(canvas, engine, renderer, () => {
+
+                const onUpdate = () => {
                     renderer.render();
                     ui.update();
-                }, () => {
+                };
+                const onValidation = () => {
                     // Validation check callback - triggered when user finishes a drag
                     ui.checkAndShowValidation();
-                });
-                
-                gameLoop();
-                
-                window.addEventListener('resize', () => {
-                    renderer.resize();
-                    renderer.render();
-                });
+                };
+
+                if (input) {
+                    input.engine = engine;
+                    input.renderer = renderer;
+                    input.onUpdate = onUpdate;
+                    input.onValidationCheck = onValidation;
+                } else {
+                    input = new PathwaysInput(canvas, engine, renderer, onUpdate, onValidation);
+                }
+
+                if (!loopStarted) {
+                    loopStarted = true;
+                    gameLoop();
+                }
+
+                if (!resizeBound) {
+                    resizeBound = true;
+                    window.addEventListener('resize', () => {
+                        if (!renderer) return;
+                        renderer.resize();
+                        renderer.render();
+                    });
+                }
                 
                 renderer.render();
                 ui.update();
@@ -669,10 +688,12 @@
             const delta = now - lastTime;
             lastTime = now;
             
-            engine.updateTime(delta);
-            renderer.render();
-            ui.update();
-            input.updateTouchBehavior();
+            if (engine && renderer && ui && input) {
+                engine.updateTime(delta);
+                renderer.render();
+                ui.update();
+                input.updateTouchBehavior();
+            }
             
             requestAnimationFrame(gameLoop);
         }

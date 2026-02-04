@@ -133,9 +133,9 @@ export class PathwaysUI {
   }
 
   updateObstacleHint() {
-    if (!this.elements.obstacleHint || !this.engine.puzzle?.obstacles?.length) return;
+    if (!this.elements.obstacleHint || !this.engine.puzzle?.obstacle) return;
 
-    const obstacle = this.engine.puzzle.obstacles[0];
+    const obstacle = this.engine.puzzle.obstacle;
     const count = obstacle.cells?.length || 1;
     const plural = count > 1;
     let hintText = '';
