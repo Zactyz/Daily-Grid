@@ -350,11 +350,23 @@ function createOverlay(clueId, rect) {
   const existing = rectOverlays.get(clueId);
   if (existing) existing.remove();
   if (!els.grid) return;
+  const startCell = cellAt(rect.r1, rect.c1);
+  const endCell = cellAt(rect.r2, rect.c2);
+  if (!startCell || !endCell) return;
+  const gridRect = els.grid.getBoundingClientRect();
+  const startRect = startCell.getBoundingClientRect();
+  const endRect = endCell.getBoundingClientRect();
+  const left = startRect.left - gridRect.left;
+  const top = startRect.top - gridRect.top;
+  const right = endRect.right - gridRect.left;
+  const bottom = endRect.bottom - gridRect.top;
   const overlay = document.createElement('div');
   overlay.className = 'rect-outline';
   overlay.dataset.clueId = clueId;
-  overlay.style.gridRow = `${rect.r1 + 1} / ${rect.r2 + 2}`;
-  overlay.style.gridColumn = `${rect.c1 + 1} / ${rect.c2 + 2}`;
+  overlay.style.left = `${left}px`;
+  overlay.style.top = `${top}px`;
+  overlay.style.width = `${Math.max(0, right - left)}px`;
+  overlay.style.height = `${Math.max(0, bottom - top)}px`;
   els.grid.appendChild(overlay);
   rectOverlays.set(clueId, overlay);
 }
