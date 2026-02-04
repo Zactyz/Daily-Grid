@@ -8,7 +8,7 @@ export function toggleModal(el, show) {
   else el.classList.remove('show');
 }
 
-export async function loadLeaderboard({ container, api, puzzleId, emptyText = 'No scores yet - be the first!' }) {
+export async function loadLeaderboard({ container, api, puzzleId, emptyText = 'No scores yet - be the first!', formatTimeFn }) {
   if (!container) return;
   container.innerHTML = '<p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>';
   try {
@@ -19,10 +19,11 @@ export async function loadLeaderboard({ container, api, puzzleId, emptyText = 'N
       container.innerHTML = `<p class="text-zinc-500 text-center py-6 text-xs">${emptyText}</p>`;
       return;
     }
+    const fmt = formatTimeFn || formatTime;
     container.innerHTML = data.top10.map((entry, idx) => `
       <div class="leaderboard-row flex items-center justify-between px-3 py-2.5 ${idx < data.top10.length - 1 ? 'border-b border-white/5' : ''}">
         <span>${idx + 1}. ${entry.initials || '???'}</span>
-        <span>${formatTime(entry.timeMs)}</span>
+        <span>${fmt(entry.timeMs)}</span>
       </div>
     `).join('');
   } catch (error) {

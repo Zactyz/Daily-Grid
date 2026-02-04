@@ -2,8 +2,7 @@ import { LatticeEngine } from './lattice-engine.js';
 import { getPTDateYYYYMMDD, parseCsv, getOrCreateAnonId, formatTime } from './lattice-utils.js';
 
 import { getUncompletedGames as getCrossGamePromo } from '../common/games.js';
-
-import { buildShareText, shareWithFallback, showShareFeedback, formatDateForShare } from '../common/share.js';
+import { createShellController } from '../common/shell-controller.js';
 
 const els = {
   // header
@@ -76,6 +75,7 @@ const els = {
 let engine = null;
 let puzzle = null;
 let mode = 'daily'; // 'daily' | 'practice'
+let shell = null;
 
 function getUncompletedGames(puzzleId) {
   return getCrossGamePromo('lattice', puzzleId);
@@ -89,7 +89,7 @@ let hasSolved = false;
 let isPrestart = true;
 let completionMs = null;
 let isInReplayMode = loadReplayMode();
-let timerWasRunning = false;
+let solutionShown = false;
 
 // state[cat][row][col] => 0 blank, 1 X, 2 ✓
 let state = null;
@@ -606,6 +606,7 @@ function pause() {
   stopTimer();
   showPauseOverlay(true);
   saveProgress(true);
+  shell?.update();
 }
 
 function resume() {
@@ -613,6 +614,7 @@ function resume() {
   isPaused = false;
   showPauseOverlay(false);
   startTimer({ resumeElapsedMs: getElapsedMs() });
+  shell?.update();
 }
 
 function showNextGamePromo() {
@@ -660,6 +662,7 @@ function loadCompletedState() {
   state = saved.state || state;
   manualX = saved.manualX || manualX;
   autoX = deserializeAutoXSets(saved.autoX || serializeAutoXSets());
+  solutionShown = false;
   hasSolved = true;
   timerStarted = false;
   completionMs = saved.completionMs ?? completionMs ?? 0;
@@ -679,7 +682,7 @@ function loadCompletedState() {
 function startReplay() {
   if (mode !== 'daily') return;
   isInReplayMode = true;
-  saveReplayMode(true);
+  solutionShown = false;
   hasSolved = false;
   completionMs = null;
   initState();
@@ -814,33 +817,9 @@ async function handleSolved() {
     return;
   }
 
-  if (mode !== 'daily') {
-    if (els.modalTitle) els.modalTitle.textContent = 'Nice Job!';
-    if (els.modalSubtitle) els.modalSubtitle.textContent = 'Practice puzzle complete';
-    showSolvedModal({ timeMs, rankText: '', showInitials: false });
-    return;
-  }
-
-  if (els.modalTitle) els.modalTitle.textContent = 'Solved!';
-  if (els.modalSubtitle) els.modalSubtitle.textContent = "Great work on today's puzzle";
-
   completionMs = Math.floor(timeMs);
-  els.timer.textContent = formatTime(completionMs);
-
-  if (!hasSubmittedToday()) {
-    const data = await submitScore(timeMs);
-    markSubmitted();
-
-    const rankText = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
-    showSolvedModal({ timeMs, rankText, showInitials: data.rank <= 10 });
-  } else {
-    showSolvedModal({ timeMs, rankText: 'Score already submitted for today', showInitials: false });
-  }
-
-  showNextGamePromo();
-  await loadLeaderboardIntoModal();
-  updateLeaderboardButton();
-  updateExitReplayButton();
+  if (els.timer) els.timer.textContent = formatTime(completionMs || 0);
+  shell?.update();
   saveProgress(true);
 }
 
@@ -879,6 +858,7 @@ function showSolution() {
     }
   }
 
+  solutionShown = true;
   hasSolved = true;
   render();
   updateClueStyles();
@@ -1011,6 +991,7 @@ function render() {
 
   els.board.innerHTML = '';
   els.board.appendChild(container);
+  shell?.update();
 }
 
 async function loadDataset() {
@@ -1045,6 +1026,7 @@ async function startDaily() {
   puzzle = engine.generateDaily(puzzleId);
   initState();
   undoStack = [];
+  solutionShown = false;
 
   // Hide practice-only controls
   els.showSolutionBtn?.classList.add('hidden');
@@ -1092,6 +1074,7 @@ async function startDaily() {
   }
 
   updateExitReplayButton();
+  shell?.update();
 }
 
 async function startPractice() {
@@ -1099,6 +1082,7 @@ async function startPractice() {
   puzzle = engine.generatePractice();
   initState();
   undoStack = [];
+  solutionShown = false;
   timerStarted = false;
   hasSolved = false;
   isPaused = false;
@@ -1114,14 +1098,86 @@ async function startPractice() {
   // Practice-only controls
   els.showSolutionBtn?.classList.remove('hidden');
   els.solutionActions?.classList.add('hidden');
+  shell?.update();
+}
+
+function resetPracticePuzzle() {
+  initState();
+  undoStack = [];
+  solutionShown = false;
+  timerStarted = false;
+  hasSolved = false;
+  isPaused = false;
+  stopTimer();
+  showPauseOverlay(false);
+  render();
+  updateClueStyles();
+  els.timer.textContent = formatTime(0);
+  setPrestart(true);
+  els.showSolutionBtn?.classList.remove('hidden');
+  els.solutionActions?.classList.add('hidden');
+  updateUndoButton();
+  updateLeaderboardButton();
+  shell?.resetUI();
+  shell?.update();
 }
 
 function wireUI() {
-  els.startOverlay?.addEventListener('click', () => {
-    setPrestart(false);
-    startTimer({ resumeElapsedMs: 0 });
-    saveProgress(true);
-    updateUndoButton();
+  shell = createShellController({
+    gameId: 'lattice',
+    getMode: () => mode,
+    getPuzzleId: () => puzzle?.puzzleId || getPTDateYYYYMMDD(),
+    getGridLabel: () => (puzzle ? `${puzzle.size}x${puzzle.size}` : ''),
+    getElapsedMs: () => getElapsedMs(),
+    getCompletionMs: () => completionMs,
+    setCompletionMs: (ms) => { completionMs = ms; },
+    formatTime,
+    isComplete: () => hasSolved,
+    isPaused: () => isPaused,
+    isStarted: () => timerStarted,
+    hasProgress: () => !isPrestart,
+    pause,
+    resume,
+    startGame: () => {
+      setPrestart(false);
+      startTimer({ resumeElapsedMs: 0 });
+      saveProgress(true);
+      updateUndoButton();
+    },
+    resetGame: () => {
+      solutionShown = false;
+      initState();
+      undoStack = [];
+      render();
+      updateClueStyles();
+      hasSolved = false;
+      timerStarted = false;
+      isPaused = false;
+      stopTimer();
+      showPauseOverlay(false);
+      els.timer.textContent = formatTime(0);
+      setPrestart(true);
+      updateUndoButton();
+      updateLeaderboardButton();
+      saveProgress(true);
+    },
+    startReplay,
+    exitReplay: () => { loadCompletedState(); },
+    onResetUI: () => {
+      els.showSolutionBtn?.classList.remove('hidden');
+      els.solutionActions?.classList.add('hidden');
+      updateUndoButton();
+      updateLeaderboardButton();
+    },
+    onTryAgain: () => { if (mode === 'practice') resetPracticePuzzle(); },
+    onNextLevel: () => { if (mode === 'practice') startPractice(); },
+    onBackToDaily: () => startDaily(),
+    onPracticeInfinite: () => startPractice(),
+    onReplayStateChange: (enabled) => { isInReplayMode = enabled; updateExitReplayButton(); },
+    getAnonId: () => getOrCreateAnonId(),
+    getCompletionPayload: () => ({ timeMs: Math.floor(completionMs ?? getElapsedMs()), hintsUsed: 0 }),
+    shouldShowCompletionModal: () => !solutionShown,
+    saveProgress: () => saveProgress(true)
   });
 
   els.undoBtn?.addEventListener('click', () => {
@@ -1135,192 +1191,21 @@ function wireUI() {
     updateUndoButton();
   });
 
-  els.resetBtn?.addEventListener('click', () => {
-    if (mode === 'daily') {
-      timerWasRunning = timerStarted && !isPaused && !hasSolved;
-      if (timerWasRunning) pause();
-      showResetModal();
-    } else {
-      startPractice();
-    }
-  });
-
-  els.confirmResetBtn?.addEventListener('click', () => {
-    const wasComplete = hasSolved;
-    const wasReplay = isInReplayMode;
-    hideResetModal();
-
-    if (wasComplete) {
-      startReplay();
-    } else if (wasReplay) {
-      initState();
-      undoStack = [];
-      render();
-      updateClueStyles();
-      hasSolved = false;
-      startTimer({ resumeElapsedMs: getElapsedMs() });
-    } else {
-      initState();
-      undoStack = [];
-      render();
-      updateClueStyles();
-      hasSolved = false;
-      if (timerWasRunning) resume();
-      saveProgress(true);
-    }
-    updateUndoButton();
-    updateLeaderboardButton();
-    updateExitReplayButton();
-  });
-
-  els.cancelResetBtn?.addEventListener('click', () => {
-    hideResetModal();
-    if (timerWasRunning) resume();
-  });
-
-  els.pauseBtn?.addEventListener('click', () => {
-    if (isPaused) resume();
-    else pause();
-  });
-
-  els.pauseOverlay?.addEventListener('click', () => resume());
-
-  els.exitReplayBtn?.addEventListener('click', () => {
-    timerWasRunning = timerStarted && !isPaused;
-    if (timerWasRunning) pause();
-    showExitReplayModal();
-  });
-
-  els.confirmExitReplayBtn?.addEventListener('click', () => {
-    hideExitReplayModal();
-    isInReplayMode = false;
-    saveReplayMode(false);
-    loadCompletedState();
-  });
-
-  els.cancelExitReplayBtn?.addEventListener('click', () => {
-    hideExitReplayModal();
-    if (timerWasRunning) resume();
-  });
-
-  els.leaderboardBtn?.addEventListener('click', async () => {
-    // In practice mode, we don't show leaderboard (match Snake/Pathways)
-    if (mode !== 'daily') return;
-
-    // open modal even if unsolved
-    if (els.modalTitle) els.modalTitle.textContent = 'Leaderboard';
-    if (els.modalSubtitle) els.modalSubtitle.textContent = "Today's Top 10";
-    if (els.percentileMsg) els.percentileMsg.textContent = '';
-    els.claimInitialsForm?.classList.add('hidden');
-    showNextGamePromo();
-    showCompletionModal();
-    await loadLeaderboardIntoModal();
-  });
-
-  els.closeModalBtn?.addEventListener('click', hideCompletionModal);
   els.completionModal?.addEventListener('click', (e) => {
     if (e.target === els.completionModal) hideCompletionModal();
   });
 
-  els.claimInitialsForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const initials = els.initialsInput?.value?.toUpperCase().trim();
-    if (!initials || initials.length > 3) return;
-    try {
-      await claimInitials(initials);
-      els.claimInitialsForm?.classList.add('hidden');
-      await loadLeaderboardIntoModal();
-    } catch (err) {
-      alert(err.message || 'Failed to claim initials');
-    }
-  });
-
   els.practiceModeBtn?.addEventListener('click', () => startPractice());
-  els.practiceInfiniteBtn?.addEventListener('click', () => {
-    hideCompletionModal();
-    startPractice();
-  });
-
   els.backToDailyBtn?.addEventListener('click', () => startDaily());
-
-  // Practice complete actions (modal)
-  els.tryAgainBtn?.addEventListener('click', () => {
-    if (mode !== 'practice') return;
-    hideCompletionModal();
-    // Reset current practice puzzle
-    initState();
-    undoStack = [];
-    timerStarted = false;
-    hasSolved = false;
-    isPaused = false;
-    stopTimer();
-    showPauseOverlay(false);
-    render();
-    updateClueStyles();
-    els.timer.textContent = formatTime(0);
-    setPrestart(true);
-    els.showSolutionBtn?.classList.remove('hidden');
-    els.solutionActions?.classList.add('hidden');
-    updateUndoButton();
-    updateLeaderboardButton();
-  });
-  els.nextLevelBtn?.addEventListener('click', () => {
-    if (mode !== 'practice') return;
-    hideCompletionModal();
-    startPractice();
-  });
-  els.backToDailyCompleteBtn?.addEventListener('click', () => {
-    hideCompletionModal();
-    startDaily();
-  });
 
   // Practice: show solution + actions
   els.showSolutionBtn?.addEventListener('click', () => showSolution());
   els.solutionRetryBtn?.addEventListener('click', () => {
-    // Reset current practice puzzle (timer back to 0)
-    initState();
-    undoStack = [];
-    timerStarted = false;
-    hasSolved = false;
-    isPaused = false;
-    stopTimer();
-    showPauseOverlay(false);
-    render();
-    updateClueStyles();
-    els.timer.textContent = formatTime(0);
-    setPrestart(true);
-    els.showSolutionBtn?.classList.remove('hidden');
-    els.solutionActions?.classList.add('hidden');
-    updateUndoButton();
+    resetPracticePuzzle();
   });
   els.solutionNextBtn?.addEventListener('click', () => {
     // New practice puzzle
     startPractice();
-  });
-
-  els.shareBtn?.addEventListener('click', async () => {
-    const dateLabel = mode === 'daily' ? formatDateForShare(puzzle.puzzleId) : 'practice';
-    const timeMs = (hasSolved && completionMs != null) ? completionMs : getElapsedMs();
-    const shareText = buildShareText({
-      gameName: 'Lattice',
-      puzzleLabel: dateLabel,
-      gridLabel: `${puzzle.size}x${puzzle.size}`,
-      timeText: formatTime(timeMs),
-      shareUrl: 'https://dailygrid.app/games/lattice/'
-    });
-
-    try {
-      await shareWithFallback({
-        shareText,
-        shareTitle: 'Lattice - Daily Grid',
-        shareUrl: 'https://dailygrid.app/games/lattice/',
-        onCopy: () => showShareFeedback(els.shareBtn, 'Copied to clipboard!'),
-        onError: () => showShareFeedback(els.shareBtn, 'Unable to share')
-      });
-    } catch (shareError) {
-      console.error('share helper failure', shareError);
-      showShareFeedback(els.shareBtn, 'Unable to share');
-    }
   });
 
   document.addEventListener('visibilitychange', () => {

@@ -5,6 +5,7 @@ const GAME_META = [
     path: '/games/snake/',
     logo: '/games/snake/snake-logo.png',
     submittedKeyPrefix: 'dailygrid_submitted_',
+    replayKeyPrefix: 'dailygrid_replay_',
     theme: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400' },
     shareUrl: 'https://dailygrid.app/games/snake/'
   },
@@ -14,6 +15,7 @@ const GAME_META = [
     path: '/games/pathways/',
     logo: '/games/pathways/pathways-logo.png',
     submittedKeyPrefix: 'dailygrid_pathways_submitted_',
+    replayKeyPrefix: 'dailygrid_pathways_replay_',
     theme: { bg: 'bg-rose-500/10', border: 'border-rose-500/30', text: 'text-rose-400' },
     shareUrl: 'https://dailygrid.app/games/pathways/'
   },
@@ -23,6 +25,7 @@ const GAME_META = [
     path: '/games/lattice/',
     logo: '/games/lattice/lattice-logo.png?v=2',
     submittedKeyPrefix: 'dailygrid_lattice_submitted_',
+    replayKeyPrefix: 'dailygrid_lattice_replay_',
     theme: { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400' },
     shareUrl: 'https://dailygrid.app/games/lattice/'
   }

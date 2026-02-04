@@ -1,13 +1,7 @@
 import { formatTime, getOrCreateAnonId, getPTDateYYYYMMDD } from './pathways-utils.js';
 import { getUncompletedGames as getCrossGamePromo } from '../common/games.js';
-import {
-  buildShareText,
-  shareWithFallback,
-  formatDateForShare,
-  loadLogoForShare,
-  showShareFeedback
-} from '../common/share.js';
-
+import { createShellController } from '../common/shell-controller.js';
+import { loadLogoForShare, formatDateForShare } from '../common/share.js';
 
 export class PathwaysUI {
   constructor(engine, onReset, onNextLevel, mode = 'daily') {
@@ -15,486 +9,131 @@ export class PathwaysUI {
     this.onReset = onReset;
     this.onNextLevel = onNextLevel;
     this.mode = mode;
-    this.renderer = null; // Set via setRenderer()
-    
-    this.lastUIUpdate = 0;
-    this.uiThrottleMs = 100;
-    this.modalShown = false;
-    this.completionTime = null;
-    this.hasSubmittedScore = false;
-    this.timerWasRunning = false;
-    this.isInReplayMode = this.loadReplayMode();
-    
+    this.renderer = null;
+
+    this.validationTimeout = null;
+    this.solutionShown = false;
+
     this.elements = {
-      timer: document.getElementById('timer'),
       pauseBtn: document.getElementById('pause-btn'),
       resetBtn: document.getElementById('reset-btn'),
-      leaderboardBtn: document.getElementById('leaderboard-btn'),
-      pauseOverlay: document.getElementById('pause-overlay'),
-      startOverlay: document.getElementById('start-overlay'),
-      completionModal: document.getElementById('completion-modal'),
-      finalTime: document.getElementById('final-time'),
-      percentileMsg: document.getElementById('percentile-msg'),
-      claimInitialsForm: document.getElementById('claim-initials-form'),
-      initialsInput: document.getElementById('initials-input'),
-      leaderboardList: document.getElementById('leaderboard-list'),
-      leaderboardTitle: document.getElementById('leaderboard-title'),
-      closeModalBtn: document.getElementById('close-modal-btn'),
-      nextLevelBtn: document.getElementById('next-level-btn'),
-      practiceInfiniteBtn: document.getElementById('practice-infinite-btn'),
-      tryAgainBtn: document.getElementById('try-again-btn'),
-      backToDailyCompleteBtn: document.getElementById('back-to-daily-complete-btn'),
-      practiceCompleteActions: document.getElementById('practice-complete-actions'),
-      modalTitle: document.getElementById('modal-title'),
-      modalSubtitle: document.getElementById('modal-subtitle'),
-      resetModal: document.getElementById('reset-modal'),
-      confirmResetBtn: document.getElementById('confirm-reset-btn'),
-      cancelResetBtn: document.getElementById('cancel-reset-btn'),
-      exitReplayModal: document.getElementById('exit-replay-modal'),
-      confirmExitReplayBtn: document.getElementById('confirm-exit-replay-btn'),
-      cancelExitReplayBtn: document.getElementById('cancel-exit-replay-btn'),
-      exitReplayBtn: document.getElementById('exit-replay-btn'),
-      shareBtn: document.getElementById('share-btn'),
-      nextGamePromo: document.getElementById('next-game-promo'),
-      nextGameLink: document.getElementById('next-game-link'),
-      nextGameLogo: document.getElementById('next-game-logo'),
-      nextGameText: document.getElementById('next-game-text'),
-      externalGamePromo: document.getElementById('external-game-promo'),
-      externalGameLogo: document.getElementById('external-game-logo'),
-      externalGameText: document.getElementById('external-game-text'),
       obstacleHint: document.getElementById('obstacle-hint'),
       obstacleHintText: document.getElementById('obstacle-hint-text'),
       validationMessage: document.getElementById('validation-message'),
       validationMessageText: document.getElementById('validation-message-text'),
-      
-      // Show solution (practice mode)
       showSolutionBtn: document.getElementById('show-solution-btn'),
       solutionActions: document.getElementById('solution-actions'),
       solutionRetryBtn: document.getElementById('solution-retry-btn'),
-      solutionNextBtn: document.getElementById('solution-next-btn')
+      solutionNextBtn: document.getElementById('solution-next-btn'),
+      externalGamePromo: document.getElementById('external-game-promo'),
+      externalGameLogo: document.getElementById('external-game-logo'),
+      externalGameText: document.getElementById('external-game-text')
     };
-    
-    this.validationTimeout = null;
-    this.solutionShown = false;
-    
-    if (this.mode === 'daily') {
-      this.checkIfAlreadySubmitted();
-    }
-    
-    this.setupListeners();
-    this.setupVisibilityHandler();
-    
-    if (this.engine.state.isComplete) {
-      this.completionTime = this.engine.state.timeMs;
-      this.modalShown = true;
-    }
-    
-    if (this.mode === 'daily' && this.hasSubmittedScore && !this.engine.state.isComplete && !this.isInReplayMode) {
-      if (this.engine.loadCompletedState()) {
-        this.completionTime = this.engine.state.timeMs;
-        this.modalShown = true;
-      }
-    }
-    
-    this.updateStartOverlay();
-    this.updatePauseState();
-    this.updateResetButton();
-    this.updateExitReplayButton();
-    this.updateExternalGamePromo();
+
+    this.shell = createShellController({
+      gameId: 'pathways',
+      getMode: () => this.mode,
+      getPuzzleId: () => this.engine.puzzle.id,
+      getGridLabel: () => `${this.engine.puzzle.width}x${this.engine.puzzle.height}`,
+      getElapsedMs: () => this.engine.state.timeMs,
+      formatTime,
+      isComplete: () => this.engine.state.isComplete,
+      isPaused: () => this.engine.state.isPaused,
+      isStarted: () => this.engine.state.timerStarted,
+      hasProgress: () => Object.values(this.engine.state.paths).some(path => path && path.length > 0),
+      pause: () => this.engine.pause(),
+      resume: () => this.engine.resume(),
+      startGame: () => this.engine.startTimer(),
+      resetGame: () => {
+        this.engine.reset(false);
+        this.engine.saveProgress();
+      },
+      startReplay: () => {
+        this.engine.reset(false);
+        this.engine.saveProgress();
+      },
+      exitReplay: () => {
+        this.engine.loadCompletedState();
+      },
+      onResetUI: () => this.resetUI(),
+      onTryAgain: () => {
+        this.engine.reset(false);
+        this.engine.saveProgress();
+        this.resetUI();
+      },
+      onNextLevel: () => this.onNextLevel?.(),
+      onBackToDaily: () => window.startDailyMode?.(),
+      onPracticeInfinite: () => window.startPracticeMode?.(),
+      getAnonId: () => getOrCreateAnonId(),
+      getCompletionPayload: () => ({ timeMs: this.engine.state.timeMs, hintsUsed: 0 }),
+      getShareFile: () => this.buildShareImage(),
+      getDailyModalTitle: () => 'All pathways connected!'
+    });
+
+    this.setupCustomListeners();
     this.updateObstacleHint();
     this.updateShowSolutionButton();
-  }
-  
-  setRenderer(renderer) {
-    this.renderer = renderer;
-    // Update obstacle hint now that we have the renderer for color names
-    this.updateObstacleHint();
-  }
-  
-  checkIfAlreadySubmitted() {
-    try {
-      const puzzleId = getPTDateYYYYMMDD();
-      const submittedKey = `dailygrid_pathways_submitted_${puzzleId}`;
-      this.hasSubmittedScore = localStorage.getItem(submittedKey) === 'true';
-    } catch (e) {
-      this.hasSubmittedScore = false;
-    }
-  }
-  
-  markAsSubmitted() {
-    try {
-      const puzzleId = getPTDateYYYYMMDD();
-      const submittedKey = `dailygrid_pathways_submitted_${puzzleId}`;
-      localStorage.setItem(submittedKey, 'true');
-      this.hasSubmittedScore = true;
-    } catch (e) {
-      console.warn('Failed to save submission status');
-    }
-  }
-  
-  loadReplayMode() {
-    if (this.mode !== 'daily') return false;
-    try {
-      const puzzleId = getPTDateYYYYMMDD();
-      const replayKey = `dailygrid_pathways_replay_${puzzleId}`;
-      return localStorage.getItem(replayKey) === 'true';
-    } catch (e) {
-      return false;
-    }
-  }
-  
-  saveReplayMode(isReplaying) {
-    if (this.mode !== 'daily') return;
-    try {
-      const puzzleId = getPTDateYYYYMMDD();
-      const replayKey = `dailygrid_pathways_replay_${puzzleId}`;
-      if (isReplaying) {
-        localStorage.setItem(replayKey, 'true');
-      } else {
-        localStorage.removeItem(replayKey);
-      }
-    } catch (e) {
-      console.warn('Failed to save replay mode');
-    }
-  }
-  
-  // Helper to replace element (removes all old listeners by cloning)
-  replaceElement(el) {
-    if (!el) return null;
-    if (!el.parentNode) {
-      // Element not in DOM - can't replace, but shouldn't happen for our static HTML elements
-      console.warn('replaceElement: element has no parent', el.id);
-      return el;
-    }
-    const newEl = el.cloneNode(true);
-    el.parentNode.replaceChild(newEl, el);
-    return newEl;
-  }
-  
-  setupListeners() {
-    // Replace elements that may have accumulated listeners from previous UI instances
-    // This ensures clean listener state for buttons that stay visible across mode changes
-    this.elements.showSolutionBtn = this.replaceElement(this.elements.showSolutionBtn);
-    this.elements.solutionRetryBtn = this.replaceElement(this.elements.solutionRetryBtn);
-    this.elements.solutionNextBtn = this.replaceElement(this.elements.solutionNextBtn);
-    this.elements.practiceInfiniteBtn = this.replaceElement(this.elements.practiceInfiniteBtn);
-    this.elements.backToDailyCompleteBtn = this.replaceElement(this.elements.backToDailyCompleteBtn);
-    this.elements.nextLevelBtn = this.replaceElement(this.elements.nextLevelBtn);
-    this.elements.tryAgainBtn = this.replaceElement(this.elements.tryAgainBtn);
-    
-    this.elements.pauseBtn?.addEventListener('click', () => this.togglePause());
-    this.elements.resetBtn?.addEventListener('click', () => {
-      if (this.engine.state.isComplete) {
-        this.startReplay();
-      } else {
-        this.confirmReset();
-      }
-    });
-    
-    this.elements.exitReplayBtn?.addEventListener('click', () => {
-      this.confirmExitReplay();
-    });
-    
-    this.elements.leaderboardBtn?.addEventListener('click', () => {
-      if (this.engine.state.isComplete) {
-        this.showCompletionModal(true);
-      }
-    });
-    
-    this.elements.closeModalBtn?.addEventListener('click', () => this.hideCompletionModal());
-    
-    this.elements.nextLevelBtn?.addEventListener('click', () => {
-      this.hideCompletionModal();
-      if (this.onNextLevel) {
-        this.onNextLevel();
-      } else {
-        this.onReset();
-      }
-    });
-    
-    this.elements.tryAgainBtn?.addEventListener('click', () => {
-      this.hideCompletionModal();
-      this.engine.reset(false);
-      this.resetUI();
-      this.engine.saveProgress();
-      this.updateStartOverlay();
-    });
-    
-    this.elements.backToDailyCompleteBtn?.addEventListener('click', () => {
-      this.hideCompletionModal();
-      // Hide solution actions before switching modes
-      this.elements.solutionActions?.classList.add('hidden');
-      window.startDailyMode();
-    });
-    
-    // Show Solution Button (practice mode only)
-    this.elements.showSolutionBtn?.addEventListener('click', () => {
-      this.showSolution();
-    });
-    
-    // Solution revealed action buttons
-    this.elements.solutionRetryBtn?.addEventListener('click', () => {
-      this.engine.reset(false);
-      this.resetUI();
-      this.engine.saveProgress();
-      this.updateStartOverlay();
-    });
-    
-    this.elements.solutionNextBtn?.addEventListener('click', () => {
-      // Hide solution actions before switching to new puzzle
-      this.elements.solutionActions?.classList.add('hidden');
-      window.startPracticeMode();
-    });
-    
-    this.elements.practiceInfiniteBtn?.addEventListener('click', () => {
-      this.hideCompletionModal();
-      // Hide solution actions before switching modes
-      this.elements.solutionActions?.classList.add('hidden');
-      window.startPracticeMode();
-    });
-    
-    this.elements.confirmResetBtn?.addEventListener('click', () => {
-      const wasComplete = this.engine.state.isComplete;
-      const wasInReplay = this.isInReplayMode;
-      this.hideResetModal();
-      
-      if (wasComplete) {
-        this.startReplay();
-      } else if (wasInReplay) {
-        // Clear all paths
-        for (const pair of this.engine.puzzle.pairs) {
-          this.engine.state.paths[pair.color] = [];
-        }
-        this.engine.resume();
-        this.engine.saveProgress();
-        this.elements.startOverlay?.classList.add('hidden');
-        this.elements.pauseOverlay?.classList.add('hidden');
-        this.updatePauseState();
-      } else {
-        // Clear all paths
-        for (const pair of this.engine.puzzle.pairs) {
-          this.engine.state.paths[pair.color] = [];
-        }
-        this.engine.resume();
-        this.engine.saveProgress();
-        this.elements.startOverlay?.classList.add('hidden');
-        this.elements.pauseOverlay?.classList.add('hidden');
-        this.updatePauseState();
-      }
-      this.updateResetButton();
-    });
-    
-    this.elements.cancelResetBtn?.addEventListener('click', () => {
-      this.hideResetModal();
-      if (this.timerWasRunning) {
-        this.engine.resume();
-        this.updatePauseState();
-      }
-    });
-    
-    this.elements.confirmExitReplayBtn?.addEventListener('click', () => {
-      this.hideExitReplayModal();
-      this.isInReplayMode = false;
-      this.saveReplayMode(false);
-      if (this.engine.loadCompletedState()) {
-        this.completionTime = this.engine.state.timeMs;
-        this.modalShown = true;
-        this.updatePauseState();
-        this.updateStartOverlay();
-        this.updateResetButton();
-        this.updateExitReplayButton();
-        this.updateExternalGamePromo();
-      }
-    });
-    
-    this.elements.cancelExitReplayBtn?.addEventListener('click', () => {
-      this.hideExitReplayModal();
-      if (this.timerWasRunning) {
-        this.engine.resume();
-        this.updatePauseState();
-      }
-    });
-    
-    this.elements.pauseOverlay?.addEventListener('click', () => {
-      if (this.engine.state.isPaused && !this.engine.state.isComplete) {
-        this.togglePause();
-      }
-    });
-    
-    this.elements.startOverlay?.addEventListener('click', () => {
-      this.startGame();
-    });
-    
-    this.elements.claimInitialsForm?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.claimInitials();
-    });
-    
-    this.elements.shareBtn?.addEventListener('click', () => {
-      this.shareResult();
-    });
-  }
-  
-  setupVisibilityHandler() {
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden && !this.engine.state.isComplete) {
-        this.engine.pause();
-        this.updatePauseState();
-      }
-    });
-  }
-  
-  update() {
-    const now = Date.now();
-    if (now - this.lastUIUpdate < this.uiThrottleMs) {
-      return;
-    }
-    this.lastUIUpdate = now;
-    
-    if (this.engine.state.isComplete && this.completionTime === null) {
-      this.completionTime = this.engine.state.timeMs;
-    }
-    
-    if (this.elements.timer) {
-      const displayTime = this.completionTime !== null ? this.completionTime : this.engine.state.timeMs;
-      this.elements.timer.textContent = formatTime(displayTime);
-    }
-    
-    if (this.engine.state.isComplete && !this.modalShown) {
-      this.modalShown = true;
-      this.isInReplayMode = false;
-      this.saveReplayMode(false);
-      this.updateResetButton();
-      this.updateExitReplayButton();
-      this.updateExternalGamePromo();
-      this.showCompletionModal();
-    }
-
-    if (this.engine.state.isComplete && this.mode === 'daily') {
-      this.elements.leaderboardBtn?.classList.remove('hidden');
-      this.elements.pauseBtn?.classList.add('hidden');
-    } else if (!this.engine.state.isComplete) {
-      this.elements.leaderboardBtn?.classList.add('hidden');
-    }
-    
-    if (this.mode === 'practice') {
-      this.elements.leaderboardBtn?.classList.add('hidden');
-    }
-  }
-  
-  togglePause() {
-    if (this.engine.state.isComplete) return;
-    
-    if (this.engine.state.isPaused) {
-      this.engine.resume();
-    } else {
-      this.engine.pause();
-    }
-    
-    this.updatePauseState();
-  }
-  
-  updatePauseState() {
-    if (this.elements.pauseBtn) {
-      if (this.engine.state.isComplete) {
-        this.elements.pauseBtn.classList.add('hidden');
-      } else if (this.engine.state.isPaused) {
-        this.elements.pauseBtn.classList.remove('hidden');
-        this.elements.pauseBtn.innerHTML = `
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          Resume
-        `;
-        this.elements.pauseBtn.disabled = false;
-      } else {
-        this.elements.pauseBtn.classList.remove('hidden');
-        this.elements.pauseBtn.innerHTML = `
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
-          </svg>
-          Pause
-        `;
-        this.elements.pauseBtn.disabled = false;
-      }
-    }
-    
-    if (this.elements.pauseOverlay) {
-      if (this.engine.state.isPaused && !this.engine.state.isComplete) {
-        this.elements.pauseOverlay.classList.remove('hidden');
-      } else {
-        this.elements.pauseOverlay.classList.add('hidden');
-      }
-    }
-  }
-  
-  confirmReset() {
-    this.timerWasRunning = this.engine.state.timerStarted && !this.engine.state.isPaused && !this.engine.state.isComplete;
-    if (this.timerWasRunning) {
-      this.engine.pause();
-      this.updatePauseState();
-    }
-    this.elements.resetModal?.classList.remove('hidden');
-  }
-  
-  hideResetModal() {
-    this.elements.resetModal?.classList.add('hidden');
-  }
-  
-  startReplay() {
-    this.isInReplayMode = true;
-    this.saveReplayMode(true);
-    this.engine.reset(false);
-    this.resetUI();
-    this.engine.saveProgress();
-    this.updateStartOverlay();
-    this.updateExitReplayButton();
     this.updateExternalGamePromo();
   }
-  
-  confirmExitReplay() {
-    this.timerWasRunning = this.engine.state.timerStarted && !this.engine.state.isPaused;
-    if (this.timerWasRunning) {
-      this.engine.pause();
-      this.updatePauseState();
-    }
-    this.elements.exitReplayModal?.classList.remove('hidden');
+
+  setRenderer(renderer) {
+    this.renderer = renderer;
+    this.updateObstacleHint();
   }
-  
-  hideExitReplayModal() {
-    this.elements.exitReplayModal?.classList.add('hidden');
+
+  setupCustomListeners() {
+    this.elements.showSolutionBtn?.addEventListener('click', () => this.showSolution());
+    this.elements.solutionRetryBtn?.addEventListener('click', () => {
+      this.engine.reset(false);
+      this.engine.saveProgress();
+      this.resetUI();
+    });
+    this.elements.solutionNextBtn?.addEventListener('click', () => {
+      this.onNextLevel?.();
+    });
   }
-  
-  updateExitReplayButton() {
-    if (!this.elements.exitReplayBtn) return;
-    
-    const shouldShow = this.isInReplayMode && !this.engine.state.isComplete;
-    
-    if (shouldShow) {
-      this.elements.exitReplayBtn.classList.remove('hidden');
+
+  update() {
+    this.shell.update();
+    this.updateObstacleHint();
+    this.updateShowSolutionButton();
+    this.updateExternalGamePromo();
+
+    if (this.solutionShown) {
+      this.elements.showSolutionBtn?.classList.add('hidden');
+      this.elements.solutionActions?.classList.remove('hidden');
+      this.elements.pauseBtn?.classList.add('hidden');
+      this.elements.resetBtn?.classList.add('hidden');
     } else {
-      this.elements.exitReplayBtn.classList.add('hidden');
+      this.elements.pauseBtn?.classList.remove('hidden');
+      this.elements.resetBtn?.classList.remove('hidden');
     }
   }
-  
+
+  resetUI() {
+    this.solutionShown = false;
+    this.hideValidationMessage();
+    this.elements.solutionActions?.classList.add('hidden');
+    this.elements.showSolutionBtn?.classList.remove('hidden');
+    this.elements.pauseBtn?.classList.remove('hidden');
+    this.elements.resetBtn?.classList.remove('hidden');
+  }
+
   showValidationMessage(message) {
     if (!this.elements.validationMessage || !this.elements.validationMessageText) return;
-    
-    // Clear any existing timeout
+
     if (this.validationTimeout) {
       clearTimeout(this.validationTimeout);
     }
-    
+
     this.elements.validationMessageText.textContent = message;
     this.elements.validationMessage.classList.remove('hidden');
-    
-    // Auto-hide after 3 seconds
+
     this.validationTimeout = setTimeout(() => {
       this.hideValidationMessage();
     }, 3000);
   }
-  
+
   hideValidationMessage() {
     if (!this.elements.validationMessage) return;
     this.elements.validationMessage.classList.add('hidden');
@@ -503,24 +142,19 @@ export class PathwaysUI {
       this.validationTimeout = null;
     }
   }
-  
+
   updateObstacleHint() {
-    if (!this.elements.obstacleHint || !this.elements.obstacleHintText) return;
-    
-    const obstacle = this.engine.puzzle.obstacle;
-    if (!obstacle || !obstacle.cells || obstacle.cells.length === 0) {
-      this.elements.obstacleHint.classList.add('hidden');
-      return;
-    }
-    
+    if (!this.elements.obstacleHint || !this.engine.puzzle?.obstacles?.length) return;
+
+    const obstacle = this.engine.puzzle.obstacles[0];
+    const count = obstacle.cells?.length || 1;
+    const plural = count > 1;
     let hintText = '';
     let hintClass = '';
-    const count = obstacle.cells.length;
-    const plural = count > 1;
-    
+
     switch (obstacle.type) {
       case 'wall':
-        hintText = plural 
+        hintText = plural
           ? `${count} blocked cells cannot be crossed`
           : 'Blocked cell cannot be crossed';
         hintClass = 'bg-zinc-500/15 border-zinc-500/25 text-zinc-300';
@@ -544,105 +178,74 @@ export class PathwaysUI {
         this.elements.obstacleHint.classList.add('hidden');
         return;
     }
-    
+
     this.elements.obstacleHintText.textContent = hintText;
     this.elements.obstacleHint.className = `w-full max-w-xs mb-3 px-3 py-2 rounded-lg text-xs text-center ${hintClass}`;
     this.elements.obstacleHint.classList.remove('hidden');
   }
-  
+
   checkAndShowValidation() {
     const validation = this.engine.getValidationState();
-    
+
     if (validation.allPathsComplete && !validation.gridFilled) {
       this.showValidationMessage('All cells must be filled!');
     } else if (validation.checkpointMissed) {
       this.showValidationMessage('Path must go through the checkpoint!');
     }
   }
-  
+
   updateShowSolutionButton() {
     if (!this.elements.showSolutionBtn) return;
-    
-    // Only show in practice mode and when not already showing solution
+
     if (this.mode === 'practice' && !this.solutionShown && !this.engine.state.isComplete) {
       this.elements.showSolutionBtn.classList.remove('hidden');
     } else {
       this.elements.showSolutionBtn.classList.add('hidden');
     }
   }
-  
+
   showSolution() {
     if (!this.engine.puzzle.solution) {
       this.showValidationMessage('Solution not available for this puzzle');
       return;
     }
-    
+
     this.solutionShown = true;
-    
-    // Set the paths from the solution
+
     for (const pair of this.engine.puzzle.pairs) {
       const solutionPath = this.engine.puzzle.solution[pair.color];
       if (solutionPath) {
         this.engine.state.paths[pair.color] = [...solutionPath];
       }
     }
-    
-    // Mark as viewing solution but NOT complete (no modal, allows review)
+
     this.engine.state.isPaused = true;
-    
-    // Hide the show solution button, pause button, and reset button
+
     this.elements.showSolutionBtn?.classList.add('hidden');
-    this.elements.pauseBtn?.classList.add('hidden');
-    this.elements.resetBtn?.classList.add('hidden');
-    
-    // Show the solution action buttons
     this.elements.solutionActions?.classList.remove('hidden');
-    
-    // Show a message
+
     this.showValidationMessage('Solution revealed!');
   }
-  
+
   getUncompletedGames() {
     const puzzleId = getPTDateYYYYMMDD();
     return getCrossGamePromo('pathways', puzzleId);
   }
 
-  showNextGamePromo() {
-    if (!this.elements.nextGamePromo || this.mode !== 'daily') return;
-    
-    const uncompleted = this.getUncompletedGames();
-    if (uncompleted.length === 0) {
-      this.elements.nextGamePromo.classList.add('hidden');
-      return;
-    }
-    
-    const nextGame = uncompleted[0];
-    this.elements.nextGameLink.href = nextGame.path;
-    this.elements.nextGameLink.className = `block w-full py-3 px-4 rounded-xl text-center transition-all ${nextGame.theme.bg} border ${nextGame.theme.border} hover:${nextGame.theme.bg.replace('/10', '/20')}`;
-    this.elements.nextGameLogo.src = nextGame.logo;
-    this.elements.nextGameLogo.alt = nextGame.name;
-    this.elements.nextGameText.textContent = `Play today's ${nextGame.name}`;
-    this.elements.nextGameText.className = `font-semibold text-sm ${nextGame.theme.text}`;
-    
-    this.elements.nextGamePromo.classList.remove('hidden');
-  }
-  
   updateExternalGamePromo() {
     if (!this.elements.externalGamePromo || this.mode !== 'daily') return;
-    
-    // Hide if actively playing (including replay mode)
-    // Show only when puzzle is complete AND not in replay mode
-    if (!this.engine.state.isComplete || this.isInReplayMode) {
+
+    if (!this.engine.state.isComplete || this.shell.isInReplayMode()) {
       this.elements.externalGamePromo.classList.add('hidden');
       return;
     }
-    
+
     const uncompleted = this.getUncompletedGames();
     if (uncompleted.length === 0) {
       this.elements.externalGamePromo.classList.add('hidden');
       return;
     }
-    
+
     const nextGame = uncompleted[0];
     this.elements.externalGamePromo.href = nextGame.path;
     this.elements.externalGamePromo.className = `w-full max-w-md mt-4 py-3 px-4 rounded-xl border transition-all flex items-center justify-center gap-3 ${nextGame.theme.bg} ${nextGame.theme.border} hover:bg-opacity-20`;
@@ -650,187 +253,12 @@ export class PathwaysUI {
     this.elements.externalGameLogo.alt = nextGame.name;
     this.elements.externalGameText.textContent = `Play today's ${nextGame.name}`;
     this.elements.externalGameText.className = `font-semibold text-sm ${nextGame.theme.text}`;
-    
+
     this.elements.externalGamePromo.classList.remove('hidden');
   }
-  
-  async showCompletionModal(skipSubmission = false) {
-    if (!this.elements.completionModal) return;
-    
-    this.elements.closeModalBtn?.classList.add('hidden');
-    this.elements.practiceInfiniteBtn?.classList.add('hidden');
-    this.elements.practiceCompleteActions?.classList.add('hidden');
-    this.elements.practiceCompleteActions?.classList.remove('flex');
-    this.elements.nextLevelBtn?.classList.add('hidden');
-    this.elements.leaderboardList?.classList.add('hidden');
-    this.elements.leaderboardTitle?.classList.add('hidden');
-    this.elements.percentileMsg?.classList.add('hidden');
-    this.elements.claimInitialsForm?.classList.add('hidden');
-    this.elements.shareBtn?.classList.add('hidden');
-    
-    const finalTime = this.completionTime !== null ? this.completionTime : this.engine.state.timeMs;
-    
-    if (this.elements.finalTime) {
-      this.elements.finalTime.textContent = formatTime(finalTime);
-    }
-    
-    if (this.elements.pauseOverlay) {
-      this.elements.pauseOverlay.classList.add('hidden');
-    }
-    
-    if (this.mode === 'daily') {
-      if (this.elements.modalTitle) this.elements.modalTitle.textContent = 'All pathways connected!';
-      if (this.elements.modalSubtitle) this.elements.modalSubtitle.textContent = "Great work on today's puzzle";
-      
-      this.elements.leaderboardList?.classList.remove('hidden');
-      this.elements.leaderboardTitle?.classList.remove('hidden');
-      if (this.elements.leaderboardList) {
-        this.elements.leaderboardList.innerHTML = '<p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>';
-      }
-      
-      this.elements.shareBtn?.classList.remove('hidden');
-      this.elements.closeModalBtn?.classList.remove('hidden');
-      this.elements.practiceInfiniteBtn?.classList.remove('hidden');
-      
-      this.elements.completionModal.classList.remove('hidden');
-      
-      if (!skipSubmission) {
-        await this.submitScore(finalTime);
-      }
-      await this.loadLeaderboard();
-      
-      this.elements.percentileMsg?.classList.remove('hidden');
-      
-      this.showNextGamePromo();
-    } else {
-      if (this.elements.modalTitle) this.elements.modalTitle.textContent = 'Nice Job!';
-      if (this.elements.modalSubtitle) this.elements.modalSubtitle.textContent = 'Practice puzzle complete';
-      
-      this.elements.practiceCompleteActions?.classList.remove('hidden');
-      this.elements.practiceCompleteActions?.classList.add('flex');
-      this.elements.nextLevelBtn?.classList.remove('hidden');
-      
-      this.elements.completionModal.classList.remove('hidden');
-    }
-  }
-  
-  hideCompletionModal() {
-    if (!this.elements.completionModal) return;
-    this.elements.completionModal.classList.add('hidden');
-  }
-  
-  async submitScore(timeMs) {
-    if (this.hasSubmittedScore) {
-      if (this.elements.percentileMsg) {
-        this.elements.percentileMsg.textContent = 'Score already submitted for today';
-      }
-      return;
-    }
-    
-    try {
-      const anonId = getOrCreateAnonId();
-      const puzzleId = getPTDateYYYYMMDD();
-      
-      const response = await fetch('/api/pathways/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          puzzleId,
-          anonId,
-          timeMs: timeMs || this.engine.state.timeMs,
-          hintsUsed: 0
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to submit score');
-      
-      const data = await response.json();
-      
-      this.markAsSubmitted();
-      
-      if (this.elements.percentileMsg) {
-        const msg = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
-        this.elements.percentileMsg.textContent = msg;
-      }
-      
-      if (data.rank <= 10 && this.elements.claimInitialsForm) {
-        this.elements.claimInitialsForm.classList.remove('hidden');
-      }
-      
-    } catch (error) {
-      console.error('Failed to submit score:', error);
-      if (this.elements.percentileMsg) {
-        this.elements.percentileMsg.textContent = 'Leaderboard temporarily unavailable';
-      }
-    }
-  }
-  
-  async loadLeaderboard() {
-    try {
-      const puzzleId = getPTDateYYYYMMDD();
-      const response = await fetch(`/api/pathways/leaderboard?puzzleId=${puzzleId}`);
-      
-      if (!response.ok) throw new Error('Failed to load leaderboard');
-      
-      const data = await response.json();
-      
-      if (this.elements.leaderboardList && data.top10.length > 0) {
-        this.elements.leaderboardList.innerHTML = data.top10.map((entry, idx) => `
-          <div class="leaderboard-row flex items-center justify-between px-3 py-2.5 ${idx < data.top10.length - 1 ? 'border-b border-white/5' : ''}">
-            <div class="flex items-center gap-3">
-              <span class="w-6 h-6 rounded-md ${entry.rank <= 3 ? 'bg-rose-500/20 text-rose-400' : 'bg-zinc-700/50 text-zinc-500'} text-xs font-bold flex items-center justify-center">${entry.rank}</span>
-              <span class="font-mono text-sm tracking-wider ${entry.initials ? 'text-zinc-300' : 'text-zinc-600'}">${entry.initials || '---'}</span>
-            </div>
-            <span class="font-mono text-sm text-zinc-400">${formatTime(entry.timeMs)}</span>
-          </div>
-        `).join('');
-      } else if (this.elements.leaderboardList) {
-        this.elements.leaderboardList.innerHTML = '<p class="text-zinc-500 text-center py-6 text-xs">No scores yet - be the first!</p>';
-      }
-      
-    } catch (error) {
-      console.error('Failed to load leaderboard:', error);
-    }
-  }
-  
-  async claimInitials() {
-    const initials = this.elements.initialsInput?.value.toUpperCase().trim();
-    
-    if (!initials || initials.length > 3) {
-      alert('Please enter 1-3 letters');
-      return;
-    }
-    
-    try {
-      const anonId = getOrCreateAnonId();
-      const puzzleId = getPTDateYYYYMMDD();
-      
-      const response = await fetch('/api/pathways/claim-initials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          puzzleId,
-          anonId,
-          initials
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to claim initials');
-      }
-      
-      this.elements.claimInitialsForm?.classList.add('hidden');
-      await this.loadLeaderboard();
-      
-    } catch (error) {
-      console.error('Failed to claim initials:', error);
-      alert(error.message || 'Failed to save initials. Please try again.');
-    }
-  }
-  
-  async shareResult() {
-    const finalTime = this.completionTime !== null ? this.completionTime : this.engine.state.timeMs;
+
+  async buildShareImage() {
+    const finalTime = this.engine.state.timeMs;
     const puzzleDate = getPTDateYYYYMMDD();
     const gridSize = `${this.engine.puzzle.width}x${this.engine.puzzle.height}`;
 
@@ -857,7 +285,7 @@ export class PathwaysUI {
       }
     }
 
-    const glowGradient = ctx.createRadialGradient(width/2, 0, 0, width/2, 0, 180);
+    const glowGradient = ctx.createRadialGradient(width / 2, 0, 0, width / 2, 0, 180);
     glowGradient.addColorStop(0, 'rgba(240, 128, 128, 0.12)');
     glowGradient.addColorStop(1, 'transparent');
     ctx.fillStyle = glowGradient;
@@ -883,12 +311,12 @@ export class PathwaysUI {
       ctx.fillText('Pathways', startX + logoSize + gap, titleY);
       ctx.textAlign = 'center';
     } else {
-      ctx.fillText('Pathways', width/2, titleY);
+      ctx.fillText('Pathways', width / 2, titleY);
     }
 
     ctx.fillStyle = '#71717a';
     ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('Daily Grid Puzzle', width/2, titleY + 24);
+    ctx.fillText('Daily Grid Puzzle', width / 2, titleY + 24);
 
     const dateText = formatDateForShare(puzzleDate);
     ctx.fillStyle = 'rgba(240, 128, 128, 0.1)';
@@ -905,7 +333,7 @@ export class PathwaysUI {
 
     ctx.fillStyle = '#f08080';
     ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText(dateText, width/2, badgeY + 17);
+    ctx.fillText(dateText, width / 2, badgeY + 17);
 
     ctx.fillStyle = 'rgba(240, 128, 128, 0.06)';
     const timeBoxWidth = 180;
@@ -920,100 +348,18 @@ export class PathwaysUI {
 
     ctx.fillStyle = 'rgba(240, 128, 128, 0.5)';
     ctx.font = '10px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('MY TIME', width/2, timeBoxY + 22);
+    ctx.fillText('MY TIME', width / 2, timeBoxY + 22);
 
     ctx.fillStyle = '#f08080';
     ctx.font = 'bold 38px "JetBrains Mono", monospace, system-ui';
-    ctx.fillText(formatTime(finalTime), width/2, timeBoxY + 58);
+    ctx.fillText(formatTime(finalTime), width / 2, timeBoxY + 58);
 
     ctx.fillStyle = '#52525b';
     ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText(`${gridSize} Grid`, width/2, timeBoxY + timeBoxHeight + 18);
+    ctx.fillText(`${gridSize} Grid`, width / 2, timeBoxY + timeBoxHeight + 18);
 
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    const file = new File([blob], 'pathways-result.png', { type: 'image/png' });
-
-    const shareText = buildShareText({
-      gameName: 'Pathways',
-      puzzleLabel: dateText,
-      gridLabel: gridSize,
-      timeText: formatTime(finalTime),
-      shareUrl: 'https://dailygrid.app/games/pathways/'
-    });
-
-    try {
-      await shareWithFallback({
-        shareText,
-        shareTitle: 'Pathways - Daily Grid',
-        shareUrl: 'https://dailygrid.app/games/pathways/',
-        shareFile: file,
-        onCopy: () => showShareFeedback(this.elements.shareBtn, 'Copied to clipboard!'),
-        onError: () => showShareFeedback(this.elements.shareBtn, 'Unable to share')
-      });
-    } catch (shareError) {
-      console.error('share helper failure', shareError);
-      showShareFeedback(this.elements.shareBtn, 'Unable to share');
-    }
-  }
-  resetUI() {
-    this.completionTime = null;
-    this.modalShown = false;
-    this.solutionShown = false; // Reset so Show Solution button can reappear
-    if (this.elements.pauseBtn) {
-      this.elements.pauseBtn.disabled = false;
-      this.elements.pauseBtn.classList.remove('hidden');
-    }
-    // Show reset button again
-    this.elements.resetBtn?.classList.remove('hidden');
-    // Hide solution action buttons
-    this.elements.solutionActions?.classList.add('hidden');
-    this.updatePauseState();
-    this.updateStartOverlay();
-    this.updateResetButton();
-    this.updateExitReplayButton();
-    this.updateShowSolutionButton();
-  }
-  
-  updateStartOverlay() {
-    if (!this.elements.startOverlay) return;
-    
-    const hasProgress = Object.values(this.engine.state.paths).some(path => path && path.length > 0);
-    const shouldShow = !this.engine.state.timerStarted && 
-                       !this.engine.state.isComplete && 
-                       !hasProgress;
-    
-    if (shouldShow) {
-      this.elements.startOverlay.classList.remove('hidden');
-      this.elements.pauseOverlay?.classList.add('hidden');
-    } else {
-      this.elements.startOverlay.classList.add('hidden');
-    }
-  }
-  
-  updateResetButton() {
-    if (!this.elements.resetBtn) return;
-    
-    if (this.engine.state.isComplete) {
-      this.elements.resetBtn.innerHTML = `
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9"/>
-        </svg>
-        Replay
-      `;
-    } else {
-      this.elements.resetBtn.innerHTML = `
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        Reset
-      `;
-    }
-  }
-  
-  startGame() {
-    if (this.engine.state.timerStarted || this.engine.state.isComplete) return;
-    
-    this.engine.startTimer();
-    this.elements.startOverlay?.classList.add('hidden');
+    if (!blob) return null;
+    return new File([blob], 'pathways-result.png', { type: 'image/png' });
   }
 }
