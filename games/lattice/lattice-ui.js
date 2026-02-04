@@ -185,26 +185,12 @@ function ensureTimerStarted() {
 function setMode(nextMode) {
   mode = nextMode;
   if (mode === 'daily') {
-    els.practiceBadge?.classList.add('hidden');
-    els.dailyBadge?.classList.remove('hidden');
-    els.practiceModeBtn?.classList.remove('hidden');
-    els.backToDailyBtn?.classList.add('hidden');
-
-    // Practice-only controls
     els.showSolutionBtn?.classList.add('hidden');
     els.solutionActions?.classList.add('hidden');
   } else {
-    els.dailyBadge?.classList.add('hidden');
-    els.practiceBadge?.classList.remove('hidden');
-    els.practiceModeBtn?.classList.add('hidden');
-    els.backToDailyBtn?.classList.remove('hidden');
-
-    // Practice-only controls
     els.showSolutionBtn?.classList.remove('hidden');
     els.solutionActions?.classList.add('hidden');
   }
-
-  updateLeaderboardButton();
 }
 
 function initState() {
@@ -1173,6 +1159,8 @@ function wireUI() {
     onNextLevel: () => { if (mode === 'practice') startPractice(); },
     onBackToDaily: () => startDaily(),
     onPracticeInfinite: () => startPractice(),
+    onStartPractice: () => startPractice(),
+    onStartDaily: () => startDaily(),
     onReplayStateChange: (enabled) => { isInReplayMode = enabled; updateExitReplayButton(); },
     getAnonId: () => getOrCreateAnonId(),
     getCompletionPayload: () => ({ timeMs: Math.floor(completionMs ?? getElapsedMs()), hintsUsed: 0 }),
@@ -1196,8 +1184,7 @@ function wireUI() {
     if (e.target === els.completionModal) hideCompletionModal();
   });
 
-  els.practiceModeBtn?.addEventListener('click', () => startPractice());
-  els.backToDailyBtn?.addEventListener('click', () => startDaily());
+  // Mode buttons handled by shared shell controller.
 
   // Practice: show solution + actions
   els.showSolutionBtn?.addEventListener('click', () => showSolution());

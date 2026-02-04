@@ -565,6 +565,10 @@
         <a href="/terms/" class="hover:text-zinc-400 transition-colors">Terms</a>
     </footer>
 
+    <div id="shell-toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-50 px-4 py-2 rounded-full text-xs font-semibold tracking-wide bg-black/70 border border-white/10 text-white">
+        <span id="shell-toast-text"></span>
+    </div>
+
     <script type="module">
         import { PathwaysEngine } from './pathways-engine.js';
         import { PathwaysRenderer } from './pathways-renderer.js';
@@ -591,18 +595,6 @@
             currentMode = mode;
             const storageKey = mode === 'daily' ? STORAGE_KEYS.PATHWAYS_PROGRESS : 'dailygrid_pathways_practice';
             
-            if (mode === 'daily') {
-                document.getElementById('practice-mode-btn').classList.remove('hidden');
-                document.getElementById('back-to-daily-btn').classList.add('hidden');
-                document.getElementById('daily-badge').classList.remove('hidden');
-                document.getElementById('practice-badge').classList.add('hidden');
-            } else {
-                document.getElementById('practice-mode-btn').classList.add('hidden');
-                document.getElementById('back-to-daily-btn').classList.remove('hidden');
-                document.getElementById('daily-badge').classList.add('hidden');
-                document.getElementById('practice-badge').classList.remove('hidden');
-            }
-
             try {
                 const puzzle = getPuzzle(mode);
                 const canvas = document.getElementById('game-canvas');
@@ -668,8 +660,7 @@
         window.startPracticeMode = () => init('practice');
         window.startDailyMode = () => init('daily');
 
-        document.getElementById('practice-mode-btn').addEventListener('click', window.startPracticeMode);
-        document.getElementById('back-to-daily-btn').addEventListener('click', window.startDailyMode);
+        // Mode buttons handled by shared shell controller.
         
         function gameLoop() {
             const now = Date.now();

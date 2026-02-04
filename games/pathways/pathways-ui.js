@@ -1,7 +1,8 @@
 import { formatTime, getOrCreateAnonId, getPTDateYYYYMMDD } from './pathways-utils.js';
 import { getUncompletedGames as getCrossGamePromo } from '../common/games.js';
 import { createShellController } from '../common/shell-controller.js';
-import { loadLogoForShare, formatDateForShare } from '../common/share.js';
+import { formatDateForShare } from '../common/share.js';
+import { buildShareCard } from '../common/share-card.js';
 
 export class PathwaysUI {
   constructor(engine, onReset, onNextLevel, mode = 'daily') {
@@ -11,7 +12,6 @@ export class PathwaysUI {
     this.mode = mode;
     this.renderer = null;
 
-    this.validationTimeout = null;
     this.solutionShown = false;
 
     this.elements = {
@@ -65,6 +65,8 @@ export class PathwaysUI {
       onNextLevel: () => this.onNextLevel?.(),
       onBackToDaily: () => window.startDailyMode?.(),
       onPracticeInfinite: () => window.startPracticeMode?.(),
+      onStartPractice: () => window.startPracticeMode?.(),
+      onStartDaily: () => window.startDailyMode?.(),
       getAnonId: () => getOrCreateAnonId(),
       getCompletionPayload: () => ({ timeMs: this.engine.state.timeMs, hintsUsed: 0 }),
       getShareFile: () => this.buildShareImage(),
@@ -121,27 +123,11 @@ export class PathwaysUI {
   }
 
   showValidationMessage(message) {
-    if (!this.elements.validationMessage || !this.elements.validationMessageText) return;
-
-    if (this.validationTimeout) {
-      clearTimeout(this.validationTimeout);
-    }
-
-    this.elements.validationMessageText.textContent = message;
-    this.elements.validationMessage.classList.remove('hidden');
-
-    this.validationTimeout = setTimeout(() => {
-      this.hideValidationMessage();
-    }, 3000);
+    this.shell.showToast(message);
   }
 
   hideValidationMessage() {
-    if (!this.elements.validationMessage) return;
-    this.elements.validationMessage.classList.add('hidden');
-    if (this.validationTimeout) {
-      clearTimeout(this.validationTimeout);
-      this.validationTimeout = null;
-    }
+    this.shell.hideToast();
   }
 
   updateObstacleHint() {
@@ -262,105 +248,14 @@ export class PathwaysUI {
     const finalTime = this.engine.state.timeMs;
     const puzzleDate = getPTDateYYYYMMDD();
     const gridSize = `${this.engine.puzzle.width}x${this.engine.puzzle.height}`;
-
-    const scale = 2;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    const width = 400;
-    const height = 340;
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-    ctx.scale(scale, scale);
-
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#0a0a0f');
-    gradient.addColorStop(1, '#12121a');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-
-    ctx.fillStyle = 'rgba(240, 128, 128, 0.02)';
-    for (let i = 0; i < width; i += 20) {
-      for (let j = 0; j < height; j += 20) {
-        ctx.fillRect(i, j, 1, 1);
-      }
-    }
-
-    const glowGradient = ctx.createRadialGradient(width / 2, 0, 0, width / 2, 0, 180);
-    glowGradient.addColorStop(0, 'rgba(240, 128, 128, 0.12)');
-    glowGradient.addColorStop(1, 'transparent');
-    ctx.fillStyle = glowGradient;
-    ctx.fillRect(0, 0, width, height);
-
-    const logoImage = await loadLogoForShare('/games/pathways/pathways-logo.png');
-
-    const titleY = 50;
-    ctx.fillStyle = '#f08080';
-    ctx.font = 'bold 32px "Space Grotesk", system-ui, sans-serif';
-    ctx.textAlign = 'center';
-
-    if (logoImage) {
-      const textWidth = ctx.measureText('Pathways').width;
-      const logoSize = 34;
-      const gap = 8;
-      const totalWidth = logoSize + gap + textWidth;
-      const startX = (width - totalWidth) / 2;
-
-      ctx.drawImage(logoImage, startX, titleY - 26, logoSize, logoSize);
-
-      ctx.textAlign = 'left';
-      ctx.fillText('Pathways', startX + logoSize + gap, titleY);
-      ctx.textAlign = 'center';
-    } else {
-      ctx.fillText('Pathways', width / 2, titleY);
-    }
-
-    ctx.fillStyle = '#71717a';
-    ctx.font = '14px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('Daily Grid Puzzle', width / 2, titleY + 24);
-
-    const dateText = formatDateForShare(puzzleDate);
-    ctx.fillStyle = 'rgba(240, 128, 128, 0.1)';
-    const badgeWidth = 160;
-    const badgeHeight = 26;
-    const badgeX = (width - badgeWidth) / 2;
-    const badgeY = titleY + 38;
-    ctx.beginPath();
-    ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 13);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(240, 128, 128, 0.25)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.fillStyle = '#f08080';
-    ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText(dateText, width / 2, badgeY + 17);
-
-    ctx.fillStyle = 'rgba(240, 128, 128, 0.06)';
-    const timeBoxWidth = 180;
-    const timeBoxHeight = 85;
-    const timeBoxX = (width - timeBoxWidth) / 2;
-    const timeBoxY = badgeY + 38;
-    ctx.beginPath();
-    ctx.roundRect(timeBoxX, timeBoxY, timeBoxWidth, timeBoxHeight, 14);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(240, 128, 128, 0.15)';
-    ctx.stroke();
-
-    ctx.fillStyle = 'rgba(240, 128, 128, 0.5)';
-    ctx.font = '10px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText('MY TIME', width / 2, timeBoxY + 22);
-
-    ctx.fillStyle = '#f08080';
-    ctx.font = 'bold 38px "JetBrains Mono", monospace, system-ui';
-    ctx.fillText(formatTime(finalTime), width / 2, timeBoxY + 58);
-
-    ctx.fillStyle = '#52525b';
-    ctx.font = '12px "Space Grotesk", system-ui, sans-serif';
-    ctx.fillText(`${gridSize} Grid`, width / 2, timeBoxY + timeBoxHeight + 18);
-
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    if (!blob) return null;
-    return new File([blob], 'pathways-result.png', { type: 'image/png' });
+    return buildShareCard({
+      gameName: 'Pathways',
+      logoPath: '/games/pathways/pathways-logo.png',
+      accent: '#f08080',
+      accentSoft: 'rgba(240, 128, 128, 0.12)',
+      dateText: formatDateForShare(puzzleDate),
+      timeText: formatTime(finalTime),
+      gridLabel: `${gridSize} Grid`
+    });
   }
 }

@@ -64,7 +64,13 @@ function defaultElements() {
     nextGamePromo: document.getElementById('next-game-promo'),
     nextGameLink: document.getElementById('next-game-link'),
     nextGameLogo: document.getElementById('next-game-logo'),
-    nextGameText: document.getElementById('next-game-text')
+    nextGameText: document.getElementById('next-game-text'),
+    practiceModeBtn: document.getElementById('practice-mode-btn'),
+    backToDailyBtn: document.getElementById('back-to-daily-btn'),
+    dailyBadge: document.getElementById('daily-badge'),
+    practiceBadge: document.getElementById('practice-badge'),
+    toast: document.getElementById('shell-toast'),
+    toastText: document.getElementById('shell-toast-text')
   };
 }
 
@@ -79,6 +85,7 @@ export function createShellController(adapter, elementOverrides = null) {
   let timerWasRunning = false;
   let lastPuzzleId = null;
   let lastMode = null;
+  let toastTimeout = null;
 
   function puzzleKeyPrefix(prefix) {
     return `${prefix}${adapter.getPuzzleId()}`;
@@ -165,6 +172,21 @@ export function createShellController(adapter, elementOverrides = null) {
 
     if (!adapter.isStarted() && !adapter.isComplete() && hasProgress && adapter.autoStartOnProgress) {
       adapter.startGame();
+    }
+  }
+
+  function updateModeUI() {
+    if (!elements.dailyBadge && !elements.practiceBadge) return;
+    if (adapter.getMode() === 'daily') {
+      elements.dailyBadge?.classList.remove('hidden');
+      elements.practiceBadge?.classList.add('hidden');
+      elements.practiceModeBtn?.classList.remove('hidden');
+      elements.backToDailyBtn?.classList.add('hidden');
+    } else {
+      elements.dailyBadge?.classList.add('hidden');
+      elements.practiceBadge?.classList.remove('hidden');
+      elements.practiceModeBtn?.classList.add('hidden');
+      elements.backToDailyBtn?.classList.remove('hidden');
     }
   }
 
@@ -446,6 +468,33 @@ export function createShellController(adapter, elementOverrides = null) {
   }
 
   function init() {
+    const replace = (el) => {
+      if (!el || !el.parentNode) return el;
+      const clone = el.cloneNode(true);
+      el.parentNode.replaceChild(clone, el);
+      return clone;
+    };
+
+    elements.pauseBtn = replace(elements.pauseBtn);
+    elements.resetBtn = replace(elements.resetBtn);
+    elements.leaderboardBtn = replace(elements.leaderboardBtn);
+    elements.pauseOverlay = replace(elements.pauseOverlay);
+    elements.startOverlay = replace(elements.startOverlay);
+    elements.confirmResetBtn = replace(elements.confirmResetBtn);
+    elements.cancelResetBtn = replace(elements.cancelResetBtn);
+    elements.exitReplayBtn = replace(elements.exitReplayBtn);
+    elements.confirmExitReplayBtn = replace(elements.confirmExitReplayBtn);
+    elements.cancelExitReplayBtn = replace(elements.cancelExitReplayBtn);
+    elements.closeModalBtn = replace(elements.closeModalBtn);
+    elements.shareBtn = replace(elements.shareBtn);
+    elements.claimInitialsForm = replace(elements.claimInitialsForm);
+    elements.tryAgainBtn = replace(elements.tryAgainBtn);
+    elements.nextLevelBtn = replace(elements.nextLevelBtn);
+    elements.backToDailyCompleteBtn = replace(elements.backToDailyCompleteBtn);
+    elements.practiceInfiniteBtn = replace(elements.practiceInfiniteBtn);
+    elements.practiceModeBtn = replace(elements.practiceModeBtn);
+    elements.backToDailyBtn = replace(elements.backToDailyBtn);
+
     elements.pauseBtn?.addEventListener('click', () => {
       if (adapter.isComplete()) return;
       if (adapter.isPaused()) adapter.resume();
@@ -541,6 +590,32 @@ export function createShellController(adapter, elementOverrides = null) {
       resetShellState();
       adapter.onPracticeInfinite?.();
     });
+
+    elements.practiceModeBtn?.addEventListener('click', () => {
+      adapter.onStartPractice?.();
+    });
+
+    elements.backToDailyBtn?.addEventListener('click', () => {
+      adapter.onStartDaily?.();
+    });
+  }
+
+  function showToast(message, { durationMs = 2500 } = {}) {
+    if (!elements.toast || !elements.toastText) return;
+    elements.toastText.textContent = message;
+    elements.toast.classList.remove('hidden');
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      elements.toast.classList.add('hidden');
+    }, durationMs);
+  }
+
+  function hideToast() {
+    elements.toast?.classList.add('hidden');
+    if (toastTimeout) {
+      clearTimeout(toastTimeout);
+      toastTimeout = null;
+    }
   }
 
   function update() {
@@ -553,6 +628,7 @@ export function createShellController(adapter, elementOverrides = null) {
     updateResetButton();
     updateLeaderboardButton();
     updateExitReplayButton();
+    updateModeUI();
 
     if (adapter.isComplete()) {
       if (isInReplayMode) {
@@ -575,6 +651,8 @@ export function createShellController(adapter, elementOverrides = null) {
     showCompletionModal,
     hideCompletionModal,
     isInReplayMode: () => isInReplayMode,
-    setModalShown: (val) => { modalShown = val; }
+    setModalShown: (val) => { modalShown = val; },
+    showToast,
+    hideToast
   };
 }
