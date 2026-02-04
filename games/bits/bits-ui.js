@@ -1,4 +1,5 @@
 import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from '../common/utils.js';
+import { getUncompletedGames } from '../common/games.js';
 import { buildShareText, shareWithFallback, showShareFeedback, formatDateForShare } from '../common/share.js';
 
 const GRID_SIZE = 6;
@@ -43,6 +44,10 @@ const descriptor = {
 const els = {
   timer: document.getElementById('timer'),
   progress: document.getElementById('progress-text'),
+  nextGamePromo: document.getElementById('next-game-promo'),
+  nextGameLogo: document.getElementById('next-game-logo'),
+  nextGameText: document.getElementById('next-game-text'),
+  nextGameLink: document.getElementById('next-game-link'),
   gridRoot: document.getElementById('bits-grid'),
   startOverlay: document.getElementById('start-overlay'),
   pauseOverlay: document.getElementById('pause-overlay'),
@@ -244,6 +249,7 @@ function completePuzzle() {
   els.pauseBtn.textContent = 'Pause';
   hidePauseOverlay();
   showCompletionModal();
+  updateNextGamePromo();
   submitScore(completionMs);
   loadLeaderboard(els.completionLeaderboard);
 }
@@ -334,6 +340,30 @@ function showCompletionModal() {
 
 function hideCompletionModal() {
   els.completionModal?.classList.remove('active');
+}
+
+function getPuzzleId() {
+  return descriptor.puzzleId;
+}
+
+function hideNextGamePromo() {
+  els.nextGamePromo?.classList.add('hidden');
+}
+
+function updateNextGamePromo() {
+  if (!els.nextGamePromo) return;
+  const puzzleId = getPuzzleId();
+  const uncompleted = getUncompletedGames('bits', puzzleId);
+  if (uncompleted.length === 0) {
+    hideNextGamePromo();
+    return;
+  }
+  const next = uncompleted[0];
+  els.nextGameLogo.src = next.logo;
+  els.nextGameLogo.alt = next.name;
+  els.nextGameLink.href = next.path;
+  els.nextGameText.textContent = 'Play today's ' + next.name;
+  els.nextGamePromo.classList.remove('hidden');
 }
 
 function openLeaderboardModal() {
@@ -435,6 +465,7 @@ function resetGame() {
   closeLeaderboardModal();
   updateTimerDisplay();
   updateProgressText();
+  updateNextGamePromo();
 }
 
 function setDateLabel() {
@@ -468,6 +499,7 @@ function initBits() {
   createGrid();
   updateProgressText();
   setDateLabel();
+  updateNextGamePromo();
   attachListeners();
 }
 
