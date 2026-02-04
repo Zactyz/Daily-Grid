@@ -1,96 +1,558 @@
 import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from '../common/utils.js';
-import { getUncompletedGames } from '../common/games.js';
-import { buildShareText, shareWithFallback, showShareFeedback, formatDateForShare } from '../common/share.js';
+import { createShellController } from '../common/shell-controller.js';
+import { formatDateForShare } from '../common/share.js';
+import { buildShareCard } from '../common/share-card.js';
 
 const GRID_SIZE = 6;
 const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+const STATE_PREFIX = 'dailygrid_bits_state_';
+const MIN_CLUES = 4;
+const MAX_CLUES = 8;
+const MIN_ADJ = 4;
+const MAX_ADJ = 8;
 
-const solutionRows = [
-  '010101',
-  '101010',
-  '011001',
-  '100110',
-  '001011',
-  '110100'
-];
-
-const solutionGrid = solutionRows.map(row => row.split('').map(Number));
-
-const clueCells = [
-  { r: 0, c: 1, bit: 1 },
-  { r: 1, c: 0, bit: 1 },
-  { r: 1, c: 5, bit: 0 },
-  { r: 2, c: 4, bit: 0 },
-  { r: 3, c: 3, bit: 1 },
-  { r: 4, c: 2, bit: 1 },
-  { r: 5, c: 0, bit: 1 },
-  { r: 5, c: 5, bit: 0 }
-];
-
-const adjacencyHints = [
-  { r: 0, c: 0, dir: 'right', type: 'different' },
-  { r: 0, c: 1, dir: 'down', type: 'different' },
-  { r: 0, c: 2, dir: 'right', type: 'different' },
-  { r: 0, c: 3, dir: 'right', type: 'different' },
-  { r: 1, c: 0, dir: 'down', type: 'different' },
-  { r: 1, c: 2, dir: 'down', type: 'equal' },
-  { r: 2, c: 1, dir: 'right', type: 'equal' },
-  { r: 2, c: 3, dir: 'right', type: 'equal' },
-  { r: 2, c: 4, dir: 'down', type: 'different' },
-  { r: 3, c: 1, dir: 'right', type: 'equal' },
-  { r: 3, c: 2, dir: 'down', type: 'different' },
-  { r: 4, c: 0, dir: 'right', type: 'equal' },
-  { r: 4, c: 3, dir: 'down', type: 'different' },
-  { r: 5, c: 1, dir: 'right', type: 'different' }
-];
-
-const descriptor = {
-  puzzleId: getPTDateYYYYMMDD(),
-  solution: solutionRows,
-  clues: clueCells,
-  adjacencies: adjacencyHints
-};
+let descriptor = null;
+let solutionGrid = null;
 
 const els = {
   timer: document.getElementById('timer'),
   progress: document.getElementById('progress-text'),
-  nextGamePromo: document.getElementById('next-game-promo'),
-  nextGameLogo: document.getElementById('next-game-logo'),
-  nextGameText: document.getElementById('next-game-text'),
-  nextGameLink: document.getElementById('next-game-link'),
   gridRoot: document.getElementById('bits-grid'),
-  startOverlay: document.getElementById('start-overlay'),
-  pauseOverlay: document.getElementById('pause-overlay'),
-  pauseBtn: document.getElementById('pause-btn'),
-  resetBtn: document.getElementById('reset-btn'),
-  leaderboardBtn: document.getElementById('leaderboard-btn'),
-  completionModal: document.getElementById('completion-modal'),
-  completionTime: document.getElementById('completion-time'),
-  percentileMsg: document.getElementById('percentile-msg'),
-  completionLeaderboard: document.getElementById('completion-leaderboard-list'),
-  shareBtn: document.getElementById('share-btn'),
-  closeCompletion: document.getElementById('close-modal-btn'),
-  claimForm: document.getElementById('claim-initials-form'),
-  initialsInput: document.getElementById('initials-input'),
-  claimBtn: document.getElementById('claim-initials-btn'),
-  claimMessage: document.getElementById('claim-message'),
-  leaderboardModal: document.getElementById('leaderboard-modal'),
-  leaderboardModalList: document.getElementById('leaderboard-modal-list'),
-  closeLeaderboard: document.getElementById('close-leaderboard-btn'),
+  gridSize: document.getElementById('grid-size'),
   puzzleDate: document.getElementById('puzzle-date')
 };
 
 const cells = [];
-let timerInterval = null;
-let timerRunning = false;
-let timerPaused = false;
-let startTimestamp = 0;
+let currentMode = 'daily';
+let puzzleId = getPTDateYYYYMMDD();
+let puzzleSeed = puzzleId;
 let baseElapsed = 0;
-let isPrestart = true;
+let startTimestamp = 0;
+let timerStarted = false;
+let isPaused = false;
 let isComplete = false;
 let completionMs = null;
-let hasSubmittedScore = false;
-let lastRank = null;
+let shell = null;
+let tickInterval = null;
+
+function getPuzzleIdForMode(mode) {
+  if (mode === 'practice') return `practice-${puzzleSeed}`;
+  return getPTDateYYYYMMDD();
+}
+
+function getStateKey() {
+  return `${STATE_PREFIX}${currentMode}_${puzzleId}`;
+}
+
+function makeRng(seedString) {
+  let seed = 1779033703 ^ seedString.length;
+  for (let i = 0; i < seedString.length; i += 1) {
+    seed = Math.imul(seed ^ seedString.charCodeAt(i), 3432918353);
+    seed = (seed << 13) | (seed >>> 19);
+  }
+  return function rng() {
+    seed = Math.imul(seed ^ (seed >>> 16), 2246822507);
+    seed = Math.imul(seed ^ (seed >>> 13), 3266489909);
+    seed ^= seed >>> 16;
+    return (seed >>> 0) / 4294967296;
+  };
+}
+
+function rngInt(rng, min, max) {
+  return Math.floor(rng() * (max - min + 1)) + min;
+}
+
+function shuffleInPlace(arr, rng) {
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function generateFullGrid(rng) {
+  const grid = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(-1));
+
+  function rowCounts(row) {
+    let zeros = 0;
+    let ones = 0;
+    for (let c = 0; c < GRID_SIZE; c += 1) {
+      if (row[c] === 0) zeros += 1;
+      if (row[c] === 1) ones += 1;
+    }
+    return { zeros, ones };
+  }
+
+  function colCounts(c) {
+    let zeros = 0;
+    let ones = 0;
+    for (let r = 0; r < GRID_SIZE; r += 1) {
+      if (grid[r][c] === 0) zeros += 1;
+      if (grid[r][c] === 1) ones += 1;
+    }
+    return { zeros, ones };
+  }
+
+  function rowComplete(r) {
+    return grid[r].every(v => v !== -1);
+  }
+
+  function colComplete(c) {
+    for (let r = 0; r < GRID_SIZE; r += 1) {
+      if (grid[r][c] === -1) return false;
+    }
+    return true;
+  }
+
+  function rowUnique(r) {
+    if (!rowComplete(r)) return true;
+    for (let i = 0; i < GRID_SIZE; i += 1) {
+      if (i === r) continue;
+      if (!rowComplete(i)) continue;
+      let same = true;
+      for (let c = 0; c < GRID_SIZE; c += 1) {
+        if (grid[i][c] !== grid[r][c]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return false;
+    }
+    return true;
+  }
+
+  function colUnique(c) {
+    if (!colComplete(c)) return true;
+    for (let j = 0; j < GRID_SIZE; j += 1) {
+      if (j === c) continue;
+      if (!colComplete(j)) continue;
+      let same = true;
+      for (let r = 0; r < GRID_SIZE; r += 1) {
+        if (grid[r][j] !== grid[r][c]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return false;
+    }
+    return true;
+  }
+
+  function hasThreeInRow(row) {
+    for (let c = 0; c < GRID_SIZE - 2; c += 1) {
+      const a = row[c];
+      const b = row[c + 1];
+      const d = row[c + 2];
+      if (a === -1 || b === -1 || d === -1) continue;
+      if (a === b && b === d) return true;
+    }
+    return false;
+  }
+
+  function hasThreeInCol(c) {
+    for (let r = 0; r < GRID_SIZE - 2; r += 1) {
+      const a = grid[r][c];
+      const b = grid[r + 1][c];
+      const d = grid[r + 2][c];
+      if (a === -1 || b === -1 || d === -1) continue;
+      if (a === b && b === d) return true;
+    }
+    return false;
+  }
+
+  function isValidPlacement(r, c, val) {
+    const prev = grid[r][c];
+    grid[r][c] = val;
+
+    const row = grid[r];
+    const { zeros: rowZeros, ones: rowOnes } = rowCounts(row);
+    const rowRemaining = GRID_SIZE - rowZeros - rowOnes;
+    if (rowZeros > 3 || rowOnes > 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+    if (rowZeros + rowRemaining < 3 || rowOnes + rowRemaining < 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    const { zeros: colZeros, ones: colOnes } = colCounts(c);
+    const colRemaining = GRID_SIZE - colZeros - colOnes;
+    if (colZeros > 3 || colOnes > 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+    if (colZeros + colRemaining < 3 || colOnes + colRemaining < 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    if (hasThreeInRow(row) || hasThreeInCol(c)) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    if (!rowUnique(r) || !colUnique(c)) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    if (rowComplete(r) && rowZeros !== 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+    if (colComplete(c) && colZeros !== 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    grid[r][c] = prev;
+    return true;
+  }
+
+  function backtrack(idx = 0) {
+    if (idx === GRID_SIZE * GRID_SIZE) return true;
+    const r = Math.floor(idx / GRID_SIZE);
+    const c = idx % GRID_SIZE;
+    if (grid[r][c] !== -1) return backtrack(idx + 1);
+
+    const values = rng() < 0.5 ? [0, 1] : [1, 0];
+    for (const val of values) {
+      if (!isValidPlacement(r, c, val)) continue;
+      grid[r][c] = val;
+      if (backtrack(idx + 1)) return true;
+      grid[r][c] = -1;
+    }
+    return false;
+  }
+
+  if (!backtrack()) return null;
+  return grid;
+}
+
+function buildAdjacencyMap(adjacencies) {
+  const map = new Map();
+  function add(a, b, type) {
+    const key = `${a.r},${a.c}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push({ r: b.r, c: b.c, type });
+  }
+
+  adjacencies.forEach(({ r, c, dir, type }) => {
+    if (dir === 'right') {
+      add({ r, c }, { r, c: c + 1 }, type);
+      add({ r, c: c + 1 }, { r, c }, type);
+    } else if (dir === 'down') {
+      add({ r, c }, { r: r + 1, c }, type);
+      add({ r: r + 1, c }, { r, c }, type);
+    }
+  });
+  return map;
+}
+
+function countSolutions({ clues, adjacencies }, limit = 2) {
+  const grid = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(-1));
+  const adjacencyMap = buildAdjacencyMap(adjacencies);
+
+  for (const clue of clues) {
+    grid[clue.r][clue.c] = clue.bit;
+  }
+
+  function rowCounts(row) {
+    let zeros = 0;
+    let ones = 0;
+    for (let c = 0; c < GRID_SIZE; c += 1) {
+      if (row[c] === 0) zeros += 1;
+      if (row[c] === 1) ones += 1;
+    }
+    return { zeros, ones };
+  }
+
+  function colCounts(c) {
+    let zeros = 0;
+    let ones = 0;
+    for (let r = 0; r < GRID_SIZE; r += 1) {
+      if (grid[r][c] === 0) zeros += 1;
+      if (grid[r][c] === 1) ones += 1;
+    }
+    return { zeros, ones };
+  }
+
+  function rowComplete(r) {
+    return grid[r].every(v => v !== -1);
+  }
+
+  function colComplete(c) {
+    for (let r = 0; r < GRID_SIZE; r += 1) {
+      if (grid[r][c] === -1) return false;
+    }
+    return true;
+  }
+
+  function rowUnique(r) {
+    if (!rowComplete(r)) return true;
+    for (let i = 0; i < GRID_SIZE; i += 1) {
+      if (i === r) continue;
+      if (!rowComplete(i)) continue;
+      let same = true;
+      for (let c = 0; c < GRID_SIZE; c += 1) {
+        if (grid[i][c] !== grid[r][c]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return false;
+    }
+    return true;
+  }
+
+  function colUnique(c) {
+    if (!colComplete(c)) return true;
+    for (let j = 0; j < GRID_SIZE; j += 1) {
+      if (j === c) continue;
+      if (!colComplete(j)) continue;
+      let same = true;
+      for (let r = 0; r < GRID_SIZE; r += 1) {
+        if (grid[r][j] !== grid[r][c]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return false;
+    }
+    return true;
+  }
+
+  function hasThreeInRow(row) {
+    for (let c = 0; c < GRID_SIZE - 2; c += 1) {
+      const a = row[c];
+      const b = row[c + 1];
+      const d = row[c + 2];
+      if (a === -1 || b === -1 || d === -1) continue;
+      if (a === b && b === d) return true;
+    }
+    return false;
+  }
+
+  function hasThreeInCol(c) {
+    for (let r = 0; r < GRID_SIZE - 2; r += 1) {
+      const a = grid[r][c];
+      const b = grid[r + 1][c];
+      const d = grid[r + 2][c];
+      if (a === -1 || b === -1 || d === -1) continue;
+      if (a === b && b === d) return true;
+    }
+    return false;
+  }
+
+  function adjacencyOk(r, c, val) {
+    const key = `${r},${c}`;
+    const hints = adjacencyMap.get(key);
+    if (!hints) return true;
+    for (const hint of hints) {
+      const neighbor = grid[hint.r][hint.c];
+      if (neighbor === -1) continue;
+      if (hint.type === 'equal' && neighbor !== val) return false;
+      if (hint.type === 'different' && neighbor === val) return false;
+    }
+    return true;
+  }
+
+  function isValidPlacement(r, c, val) {
+    if (!adjacencyOk(r, c, val)) return false;
+    const prev = grid[r][c];
+    grid[r][c] = val;
+
+    const row = grid[r];
+    const { zeros: rowZeros, ones: rowOnes } = rowCounts(row);
+    const rowRemaining = GRID_SIZE - rowZeros - rowOnes;
+    if (rowZeros > 3 || rowOnes > 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+    if (rowZeros + rowRemaining < 3 || rowOnes + rowRemaining < 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    const { zeros: colZeros, ones: colOnes } = colCounts(c);
+    const colRemaining = GRID_SIZE - colZeros - colOnes;
+    if (colZeros > 3 || colOnes > 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+    if (colZeros + colRemaining < 3 || colOnes + colRemaining < 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    if (hasThreeInRow(row) || hasThreeInCol(c)) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    if (!rowUnique(r) || !colUnique(c)) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    if (rowComplete(r) && rowZeros !== 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+    if (colComplete(c) && colZeros !== 3) {
+      grid[r][c] = prev;
+      return false;
+    }
+
+    grid[r][c] = prev;
+    return true;
+  }
+
+  function findNextCell() {
+    let best = null;
+    let bestOptions = null;
+
+    for (let r = 0; r < GRID_SIZE; r += 1) {
+      for (let c = 0; c < GRID_SIZE; c += 1) {
+        if (grid[r][c] !== -1) continue;
+        const options = [];
+        if (isValidPlacement(r, c, 0)) options.push(0);
+        if (isValidPlacement(r, c, 1)) options.push(1);
+        if (options.length === 0) return { r, c, options };
+        if (!best || options.length < bestOptions.length) {
+          best = { r, c };
+          bestOptions = options;
+          if (options.length === 1) return { r, c, options };
+        }
+      }
+    }
+
+    if (!best) return null;
+    return { r: best.r, c: best.c, options: bestOptions };
+  }
+
+  function solve() {
+    if (limit <= 0) return;
+    const next = findNextCell();
+    if (!next) {
+      limit -= 1;
+      return;
+    }
+    if (next.options.length === 0) return;
+
+    for (const val of next.options) {
+      if (!isValidPlacement(next.r, next.c, val)) continue;
+      grid[next.r][next.c] = val;
+      solve();
+      if (limit <= 0) return;
+      grid[next.r][next.c] = -1;
+    }
+  }
+
+  // Validate initial clues against constraints
+  for (let r = 0; r < GRID_SIZE; r += 1) {
+    for (let c = 0; c < GRID_SIZE; c += 1) {
+      const val = grid[r][c];
+      if (val === -1) continue;
+      if (!isValidPlacement(r, c, val)) return 0;
+    }
+  }
+
+  solve();
+  return 2 - limit;
+}
+
+function generateDescriptor(seedString) {
+  const rng = makeRng(seedString);
+  const maxAttempts = 40;
+  const maxSelections = 40;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const solution = generateFullGrid(rng);
+    if (!solution) continue;
+
+    for (let pickAttempt = 0; pickAttempt < maxSelections; pickAttempt += 1) {
+      const clueCount = rngInt(rng, MIN_CLUES, MAX_CLUES);
+      const adjCount = rngInt(rng, MIN_ADJ, MAX_ADJ);
+
+      const allIndices = Array.from({ length: TOTAL_CELLS }, (_, i) => i);
+      shuffleInPlace(allIndices, rng);
+      const clueIndices = new Set(allIndices.slice(0, clueCount));
+      const clues = Array.from(clueIndices).map(idx => {
+        const r = Math.floor(idx / GRID_SIZE);
+        const c = idx % GRID_SIZE;
+        return { r, c, bit: solution[r][c] };
+      });
+
+      const adjacencyPairs = [];
+      for (let r = 0; r < GRID_SIZE; r += 1) {
+        for (let c = 0; c < GRID_SIZE; c += 1) {
+          if (c < GRID_SIZE - 1) adjacencyPairs.push({ r, c, dir: 'right' });
+          if (r < GRID_SIZE - 1) adjacencyPairs.push({ r, c, dir: 'down' });
+        }
+      }
+      shuffleInPlace(adjacencyPairs, rng);
+      const adjacencies = adjacencyPairs.slice(0, adjCount).map((pair) => {
+        const { r, c, dir } = pair;
+        const a = solution[r][c];
+        const b = dir === 'right' ? solution[r][c + 1] : solution[r + 1][c];
+        return { r, c, dir, type: a === b ? 'equal' : 'different' };
+      });
+
+      const solutions = countSolutions({ clues, adjacencies }, 2);
+      if (solutions === 1) {
+        const solutionRows = solution.map(row => row.join(''));
+        return { solution: solutionRows, clues, adjacencies };
+      }
+    }
+  }
+
+  const fallback = generateFullGrid(makeRng(seedString + '-fallback'));
+  const fallbackRows = fallback ? fallback.map(row => row.join('')) : Array(GRID_SIZE).fill('0'.repeat(GRID_SIZE));
+  return { solution: fallbackRows, clues: [], adjacencies: [] };
+}
+
+function setDescriptor(nextDescriptor) {
+  descriptor = nextDescriptor;
+  solutionGrid = descriptor.solution.map(row => row.split('').map(Number));
+}
+
+function loadState() {
+  if (currentMode !== 'daily') return null;
+  try {
+    const raw = localStorage.getItem(getStateKey());
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.values)) return null;
+
+    if (data.timerStarted && !data.isComplete && !data.isPaused) {
+      data.isPaused = true;
+    }
+
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function saveProgress() {
+  if (currentMode !== 'daily') return;
+  const values = cells.map(cell => cell.value);
+  const payload = {
+    values,
+    timeMs: getElapsedMs(),
+    timerStarted,
+    isPaused,
+    isComplete,
+    completionMs
+  };
+  try {
+    localStorage.setItem(getStateKey(), JSON.stringify(payload));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 function buildCells() {
   cells.length = 0;
@@ -153,11 +615,7 @@ function createGrid() {
 function updateCellAppearance(cell) {
   if (!cell.element) return;
   const { element } = cell;
-  if (cell.value === null) {
-    element.textContent = '';
-  } else {
-    element.textContent = cell.value.toString();
-  }
+  element.textContent = cell.value === null ? '' : cell.value.toString();
   element.classList.toggle('filled', cell.value !== null);
   element.classList.toggle('clue', cell.isClue);
   element.disabled = cell.isClue;
@@ -185,92 +643,67 @@ function updateProgressText() {
   els.progress.textContent = `Cells filled: ${filled} / ${TOTAL_CELLS}`;
 }
 
+function applySavedValues(savedValues) {
+  if (!Array.isArray(savedValues)) return;
+  cells.forEach((cell, idx) => {
+    if (cell.isClue) return;
+    const value = savedValues[idx];
+    cell.value = value === 0 || value === 1 ? value : null;
+  });
+  cells.forEach(updateCellAppearance);
+}
+
 function handleCellClick(event) {
   const index = Number(event.currentTarget.dataset.index);
   const cell = cells[index];
   if (!cell || cell.isClue || isComplete) return;
-  if (isPrestart) {
-    dismissStartOverlay();
-    startTimer();
-  } else if (!timerRunning) {
-    startTimer();
-  }
-  if (timerPaused) {
-    resumeTimer();
-  }
+
+  if (!timerStarted) startTimer();
+  if (isPaused) resumeTimer();
 
   const nextValue = cell.value === null ? 0 : cell.value === 0 ? 1 : null;
   cell.value = nextValue;
   updateCellAppearance(cell);
   updateProgressText();
+  saveProgress();
 
   if (cells.every(c => c.value !== null)) {
     validateSolution();
   }
-}
 
-function dismissStartOverlay() {
-  isPrestart = false;
-  els.startOverlay?.classList.add('hidden');
+  shell?.update();
 }
 
 function startTimer() {
-  if (timerRunning) return;
-  timerRunning = true;
-  timerPaused = false;
+  if (timerStarted && !isPaused) return;
+  timerStarted = true;
+  isPaused = false;
   startTimestamp = performance.now();
-  timerInterval = window.setInterval(() => {
-    updateTimerDisplay();
-  }, 200);
+  saveProgress();
 }
 
 function pauseTimer() {
-  if (!timerRunning || timerPaused) return;
-  timerPaused = true;
-  baseElapsed += performance.now() - startTimestamp;
-  clearInterval(timerInterval);
-  timerInterval = null;
-  updateTimerDisplay();
-  els.pauseBtn.textContent = 'Resume';
-  showPauseOverlay();
+  if (!timerStarted || isPaused) return;
+  baseElapsed = getElapsedMs();
+  isPaused = true;
+  saveProgress();
 }
 
 function resumeTimer() {
-  if (!timerRunning || !timerPaused) return;
-  timerPaused = false;
-  startTimestamp = performance.now();
-  timerInterval = window.setInterval(() => {
-    updateTimerDisplay();
-  }, 200);
-  els.pauseBtn.textContent = 'Pause';
-  hidePauseOverlay();
-}
-
-function freezeTimer() {
-  if (timerInterval) {
-    clearInterval(timerInterval);
+  if (!timerStarted) {
+    timerStarted = true;
+    baseElapsed = baseElapsed || 0;
   }
-  timerInterval = null;
-  timerRunning = false;
-  timerPaused = false;
-}
-
-function stopTimer() {
-  freezeTimer();
-  baseElapsed = 0;
-  updateTimerDisplay();
-  els.pauseBtn.textContent = 'Pause';
+  if (!isPaused) return;
+  isPaused = false;
+  startTimestamp = performance.now();
+  saveProgress();
 }
 
 function getElapsedMs() {
-  if (!timerRunning) return baseElapsed;
-  if (timerPaused) return baseElapsed;
+  if (!timerStarted) return baseElapsed;
+  if (isPaused) return baseElapsed;
   return baseElapsed + (performance.now() - startTimestamp);
-}
-
-function updateTimerDisplay() {
-  if (!els.timer) return;
-  els.timer.textContent = formatTime(getElapsedMs());
 }
 
 function validateSolution() {
@@ -286,209 +719,17 @@ function validateSolution() {
 }
 
 function completePuzzle() {
-  isComplete = true;
+  if (isComplete) return;
   completionMs = getElapsedMs();
   baseElapsed = completionMs;
-  freezeTimer();
-  updateTimerDisplay();
-  els.pauseBtn.textContent = 'Pause';
-  hidePauseOverlay();
-  showCompletionModal();
-  updateNextGamePromo();
-  submitScore(completionMs);
-  loadLeaderboard(els.completionLeaderboard);
+  isComplete = true;
+  isPaused = true;
+  timerStarted = true;
+  saveProgress();
+  shell?.update();
 }
 
-async function submitScore(timeMs) {
-  if (hasSubmittedScore) return;
-  const payload = {
-    puzzleId: descriptor.puzzleId,
-    anonId: getOrCreateAnonId(),
-    timeMs: Math.max(3000, Math.min(timeMs, 3600000)),
-    hintsUsed: 0
-  };
-  try {
-    const response = await fetch('/api/bits/complete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-      throw new Error('Failed to submit score');
-    }
-    const data = await response.json();
-    hasSubmittedScore = true;
-    const percentileValue = typeof data.percentile === 'number'
-      ? Math.max(0, Math.min(100, data.percentile))
-      : null;
-    if (els.percentileMsg) {
-      els.percentileMsg.textContent = percentileValue !== null
-        ? `You ranked ${data.rank} / ${data.total} (top ${percentileValue}%)`
-        : `You ranked ${data.rank} / ${data.total}`;
-    }
-    if (data.rank <= 10) {
-      els.claimForm?.classList.remove('hidden');
-    }
-  } catch (error) {
-    console.error('Bits score submission failed', error);
-    if (els.percentileMsg) {
-      els.percentileMsg.textContent = 'Leaderboard temporarily unavailable';
-    }
-  }
-}
-
-async function loadLeaderboard(container) {
-  if (!container) return;
-  container.innerHTML = '<p class="progress-text">Loading leaderboard…</p>';
-  try {
-    const response = await fetch(`/api/bits/leaderboard?puzzleId=${descriptor.puzzleId}`);
-    if (!response.ok) {
-      throw new Error('Leaderboard request failed');
-    }
-    const data = await response.json();
-    renderLeaderboard(container, data.top10 || []);
-    if (container === els.leaderboardModalList && data.top10?.length === 0) {
-      container.innerHTML = '<p class="progress-text">No scores yet — be the first.</p>';
-    }
-  } catch (error) {
-    console.error('Leaderboard error', error);
-    container.innerHTML = '<p class="progress-text">Unable to load leaderboard.</p>';
-  }
-}
-
-function renderLeaderboard(container, entries) {
-  if (!container) return;
-  if (!entries || entries.length === 0) {
-    container.innerHTML = '<p class="progress-text">No entries yet.</p>';
-    return;
-  }
-  container.innerHTML = entries.map(entry => `
-    <div class="leaderboard-row">
-      <div style="display:flex;align-items:center;gap:0.5rem;">
-        <span class="rank-circle">${entry.rank}</span>
-        <span class="initials">${entry.initials || '---'}</span>
-      </div>
-      <span>${formatTime(entry.timeMs)}</span>
-    </div>
-  `).join('');
-}
-
-function showCompletionModal() {
-  if (!els.completionModal) return;
-  if (els.completionTime) {
-    els.completionTime.textContent = `Time: ${formatTime(completionMs || 0)}`;
-  }
-  els.completionModal.classList.add('active');
-}
-
-function hideCompletionModal() {
-  els.completionModal?.classList.remove('active');
-}
-
-function getPuzzleId() {
-  return descriptor.puzzleId;
-}
-
-function hideNextGamePromo() {
-  els.nextGamePromo?.classList.add('hidden');
-}
-
-function updateNextGamePromo() {
-  if (!els.nextGamePromo) return;
-  const puzzleId = getPuzzleId();
-  const uncompleted = getUncompletedGames('bits', puzzleId);
-  if (uncompleted.length === 0) {
-    hideNextGamePromo();
-    return;
-  }
-  const next = uncompleted[0];
-  els.nextGameLogo.src = next.logo;
-  els.nextGameLogo.alt = next.name;
-  els.nextGameLink.href = next.path;
-  els.nextGameText.textContent = 'Play today's ' + next.name;
-  els.nextGamePromo.classList.remove('hidden');
-}
-
-function openLeaderboardModal() {
-  if (!els.leaderboardModal) return;
-  els.leaderboardModal.classList.add('active');
-  loadLeaderboard(els.leaderboardModalList);
-}
-
-function closeLeaderboardModal() {
-  els.leaderboardModal?.classList.remove('active');
-}
-
-function handleShare() {
-  const shareText = buildShareText({
-    gameName: 'Bits',
-    puzzleLabel: formatDateForShare(descriptor.puzzleId),
-    gridLabel: '6×6 Binary',
-    timeText: formatTime(completionMs ?? getElapsedMs()),
-    shareUrl: 'https://dailygrid.app/games/bits/'
-  });
-
-  shareWithFallback({
-    shareText,
-    shareTitle: 'Bits — Daily Grid',
-    shareUrl: 'https://dailygrid.app/games/bits/',
-    onCopy: () => showShareFeedback(els.shareBtn, 'Copied!'),
-    onError: () => showShareFeedback(els.shareBtn, 'Share failed')
-  }).catch((error) => {
-    console.error('Share helper failed', error);
-    showShareFeedback(els.shareBtn, 'Share failed');
-  });
-}
-
-function claimInitials() {
-  const initials = els.initialsInput?.value.toUpperCase().trim();
-  if (!initials || initials.length > 3 || !/^[A-Z]{1,3}$/.test(initials)) {
-    els.claimMessage.textContent = 'Enter 1–3 uppercase letters.';
-    return;
-  }
-  els.claimMessage.textContent = '';
-  fetch('/api/bits/claim-initials', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      puzzleId: descriptor.puzzleId,
-      anonId: getOrCreateAnonId(),
-      initials
-    })
-  }).then(async (response) => {
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      throw new Error(data?.error || 'Unable to claim initials');
-    }
-    els.claimMessage.textContent = 'Initials saved!';
-    els.claimForm?.classList.add('hidden');
-    loadLeaderboard(els.completionLeaderboard);
-  }).catch((error) => {
-    console.error('Claim initials failed', error);
-    els.claimMessage.textContent = error.message || 'Claim failed';
-  });
-}
-
-function showPauseOverlay() {
-  els.pauseOverlay?.classList.remove('hidden');
-}
-
-function hidePauseOverlay() {
-  els.pauseOverlay?.classList.add('hidden');
-}
-
-function togglePause() {
-  if (!timerRunning) return;
-  if (timerPaused) {
-    resumeTimer();
-  } else {
-    pauseTimer();
-  }
-}
-
-function resetGame() {
+function resetPuzzle({ resetTimer }) {
   cells.forEach(cell => {
     if (!cell.isClue) {
       cell.value = null;
@@ -497,55 +738,173 @@ function resetGame() {
   });
   isComplete = false;
   completionMs = null;
-  lastRank = null;
-  hasSubmittedScore = false;
-  els.claimForm?.classList.add('hidden');
-  els.claimMessage.textContent = '';
-  stopTimer();
-  baseElapsed = 0;
-  isPrestart = true;
-  els.startOverlay?.classList.remove('hidden');
-  hidePauseOverlay();
-  hideCompletionModal();
-  closeLeaderboardModal();
-  updateTimerDisplay();
+
+  if (resetTimer) {
+    baseElapsed = 0;
+    startTimestamp = 0;
+    timerStarted = false;
+    isPaused = false;
+  }
+
   updateProgressText();
-  updateNextGamePromo();
+  saveProgress();
+  shell?.update();
 }
 
 function setDateLabel() {
-  if (els.puzzleDate) {
-    els.puzzleDate.textContent = descriptor.puzzleId;
+  if (!els.puzzleDate) return;
+  if (currentMode === 'practice') {
+    els.puzzleDate.textContent = 'Practice';
+    return;
+  }
+  els.puzzleDate.textContent = puzzleId;
+}
+
+function updateGridLabel() {
+  if (els.gridSize) {
+    els.gridSize.textContent = '6 × 6';
   }
 }
 
-function attachListeners() {
-  els.pauseBtn?.addEventListener('click', togglePause);
-  els.resetBtn?.addEventListener('click', resetGame);
-  els.leaderboardBtn?.addEventListener('click', openLeaderboardModal);
-  els.closeCompletion?.addEventListener('click', hideCompletionModal);
-  els.closeLeaderboard?.addEventListener('click', closeLeaderboardModal);
-  els.pauseOverlay?.addEventListener('click', () => {
-    if (timerPaused) {
-      resumeTimer();
-    }
-  });
-  els.startOverlay?.addEventListener('click', () => {
-    if (isPrestart) {
-      dismissStartOverlay();
-    }
-  });
-  els.shareBtn?.addEventListener('click', handleShare);
-  els.claimBtn?.addEventListener('click', claimInitials);
+function initState() {
+  const saved = loadState();
+  baseElapsed = saved?.timeMs ?? 0;
+  timerStarted = saved?.timerStarted ?? false;
+  isPaused = saved?.isPaused ?? false;
+  isComplete = saved?.isComplete ?? false;
+  completionMs = saved?.completionMs ?? null;
+  applySavedValues(saved?.values || []);
 }
 
-function initBits() {
+function initShell() {
+  if (shell) return;
+
+  shell = createShellController({
+    gameId: 'bits',
+    getMode: () => currentMode,
+    getPuzzleId: () => puzzleId,
+    getGridLabel: () => '6x6 Binary',
+    getElapsedMs: () => getElapsedMs(),
+    formatTime,
+    autoStartOnProgress: true,
+    isComplete: () => isComplete,
+    isPaused: () => isPaused,
+    isStarted: () => timerStarted,
+    hasProgress: () => cells.some(cell => cell.value !== null),
+    pause: () => pauseTimer(),
+    resume: () => resumeTimer(),
+    startGame: () => startTimer(),
+    resetGame: () => resetPuzzle({ resetTimer: false }),
+    startReplay: () => {},
+    exitReplay: () => {},
+    onResetUI: () => {},
+    onTryAgain: () => resetPuzzle({ resetTimer: true }),
+    onNextLevel: () => resetPracticePuzzle(),
+    onBackToDaily: () => switchMode('daily'),
+    onPracticeInfinite: () => switchMode('practice'),
+    onStartPractice: () => switchMode('practice'),
+    onStartDaily: () => switchMode('daily'),
+    getAnonId: () => getOrCreateAnonId(),
+    getCompletionPayload: () => ({
+      timeMs: Math.max(3000, Math.min(getElapsedMs(), 3600000)),
+      hintsUsed: 0
+    }),
+    getShareMeta: () => ({
+      gameName: 'Bits',
+      shareUrl: 'https://dailygrid.app/games/bits/',
+      gridLabel: '6x6 Binary'
+    }),
+    getShareFile: () => buildShareImage(),
+    getCompletionMs: () => completionMs,
+    setCompletionMs: (ms) => {
+      completionMs = ms;
+    },
+    isTimerRunning: () => timerStarted && !isPaused && !isComplete,
+    disableReplay: true,
+    pauseOnHide: true
+  });
+}
+
+async function buildShareImage() {
+  const finalTime = completionMs ?? getElapsedMs();
+  const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
+  return buildShareCard({
+    gameName: 'Bits',
+    logoPath: '/games/bits/bits-logo.svg',
+    accent: '#5bff94',
+    accentSoft: 'rgba(91, 255, 148, 0.12)',
+    backgroundStart: '#010b05',
+    backgroundEnd: '#02140d',
+    dateText: puzzleDate,
+    timeText: formatTime(finalTime || 0),
+    gridLabel: 'Grid 6x6',
+    footerText: 'dailygrid.app/games/bits'
+  });
+}
+
+function resetPracticePuzzle() {
+  puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  setDescriptor(generateDescriptor(puzzleSeed));
+  puzzleId = getPuzzleIdForMode('practice');
   buildCells();
   createGrid();
+  baseElapsed = 0;
+  startTimestamp = 0;
+  timerStarted = false;
+  isPaused = false;
+  isComplete = false;
+  completionMs = null;
   updateProgressText();
+  updateGridLabel();
   setDateLabel();
-  updateNextGamePromo();
-  attachListeners();
+  shell?.update();
 }
 
-document.addEventListener('DOMContentLoaded', initBits);
+function switchMode(mode) {
+  if (currentMode === mode) return;
+  saveProgress();
+  currentMode = mode;
+  if (mode === 'practice') {
+    puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  } else {
+    puzzleSeed = getPTDateYYYYMMDD();
+  }
+  setDescriptor(generateDescriptor(puzzleSeed));
+  puzzleId = getPuzzleIdForMode(mode);
+  buildCells();
+  createGrid();
+  initState();
+  updateProgressText();
+  updateGridLabel();
+  setDateLabel();
+  shell?.update();
+}
+
+function ensureTicker() {
+  if (tickInterval) return;
+  tickInterval = window.setInterval(() => {
+    shell?.update();
+  }, 200);
+}
+
+function init() {
+  puzzleSeed = getPTDateYYYYMMDD();
+  setDescriptor(generateDescriptor(puzzleSeed));
+  puzzleId = getPuzzleIdForMode(currentMode);
+  buildCells();
+  createGrid();
+  initState();
+  updateProgressText();
+  updateGridLabel();
+  setDateLabel();
+  initShell();
+  ensureTicker();
+  shell?.update();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  window.startPracticeMode = () => switchMode('practice');
+  window.startDailyMode = () => switchMode('daily');
+  window.addEventListener('beforeunload', saveProgress);
+});
