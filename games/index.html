@@ -315,6 +315,22 @@
             </svg>
           </span>
         </a>
+        <a href="/games/pipes/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="pipes">
+          <div class="relative">
+            <img src="/games/pipes/pipes-logo.svg" alt="Pipes" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Pipes</p>
+            <p class="text-xs text-slate-400">Rotate pipes into a single flow.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
       </div>
     </section>
 
@@ -419,6 +435,16 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </span>
         </a>
+
+        <a href="/games/pipes/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/pipes/pipes-logo.svg" alt="Pipes" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Pipes</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Rotate pipes so one continuous stream flows through every cell.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
       </div>
 
       <div class="mt-16 max-w-3xl mx-auto glass p-8 rounded-3xl">
@@ -475,7 +501,8 @@
       lattice: 'dailygrid_lattice_completed_',
       bits: 'dailygrid_bits_completed_',
       hashi: 'dailygrid_hashi_completed_',
-      shikaku: 'dailygrid_shikaku_completed_'
+      shikaku: 'dailygrid_shikaku_completed_',
+      pipes: 'dailygrid_pipes_completed_'
     };
     const submittedPrefixes = {
       snake: 'dailygrid_submitted_',
@@ -483,7 +510,8 @@
       lattice: 'dailygrid_lattice_submitted_',
       bits: 'dailygrid_bits_submitted_',
       hashi: 'dailygrid_hashi_submitted_',
-      shikaku: 'dailygrid_shikaku_submitted_'
+      shikaku: 'dailygrid_shikaku_submitted_',
+      pipes: 'dailygrid_pipes_submitted_'
     };
 
     const gameMeta = {
@@ -492,7 +520,8 @@
       lattice: { name: 'Lattice', path: '/games/lattice/', logo: '/games/lattice/lattice-logo.png?v=2' },
       bits: { name: 'Bits', path: '/games/bits/', logo: '/games/bits/bitsnew-logo.jpg' },
       hashi: { name: 'Bridgeworks', path: '/games/hashi/', logo: '/games/hashi/hashi-logo.jpg' },
-      shikaku: { name: 'Parcel', path: '/games/shikaku/', logo: '/games/shikaku/shikaku-logo.jpg' }
+      shikaku: { name: 'Parcel', path: '/games/shikaku/', logo: '/games/shikaku/shikaku-logo.jpg' },
+      pipes: { name: 'Pipes', path: '/games/pipes/', logo: '/games/pipes/pipes-logo.svg' }
     };
 
     function getPTDateYYYYMMDD(now = new Date()) {
