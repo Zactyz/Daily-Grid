@@ -1,17 +1,16 @@
-import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from './hashi-utils.js';
-import { getUncompletedGames } from '../common/games.js';
-import { buildShareText, shareWithFallback, showShareFeedback, formatDateForShare } from '../common/share.js';
+import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from '../common/utils.js';
+import { createShellController } from '../common/shell-controller.js';
+import { formatDateForShare } from '../common/share.js';
+import { buildShareCard } from '../common/share-card.js';
 
 const GRID_SIZE = 7;
 const CANVAS_SIZE = 700;
 const PADDING = 70;
 const ISLAND_RADIUS = 22;
 const BRIDGE_GAP = 8;
-
-const puzzleId = getPTDateYYYYMMDD();
+const STATE_PREFIX = 'dailygrid_hashi_state_';
 
 const PUZZLE = {
-  puzzleId,
   islands: [
     { id: 'A', r: 0, c: 1, required: 3 },
     { id: 'B', r: 0, c: 5, required: 2 },
@@ -27,49 +26,34 @@ const PUZZLE = {
 
 const els = {
   canvas: document.getElementById('hashi-canvas'),
-  timer: document.getElementById('timer'),
   progress: document.getElementById('progress-text'),
-  startOverlay: document.getElementById('start-overlay'),
-  pauseOverlay: document.getElementById('pause-overlay'),
-  startBtn: document.getElementById('start-btn'),
-  resumeBtn: document.getElementById('resume-btn'),
-  pauseBtn: document.getElementById('pause-btn'),
-  resetBtn: document.getElementById('reset-btn'),
-  leaderboardBtn: document.getElementById('leaderboard-btn'),
-  completionModal: document.getElementById('completion-modal'),
-  completionTime: document.getElementById('completion-time'),
-  percentileMsg: document.getElementById('percentile-msg'),
-  completionLeaderboard: document.getElementById('completion-leaderboard-list'),
-  shareBtn: document.getElementById('share-btn'),
-  closeCompletion: document.getElementById('close-modal-btn'),
-  claimForm: document.getElementById('claim-initials-form'),
-  initialsInput: document.getElementById('initials-input'),
-  claimBtn: document.getElementById('claim-initials-btn'),
-  claimMessage: document.getElementById('claim-message'),
-  leaderboardModal: document.getElementById('leaderboard-modal'),
-  leaderboardModalList: document.getElementById('leaderboard-modal-list'),
-  closeLeaderboard: document.getElementById('close-leaderboard-btn'),
   puzzleDate: document.getElementById('puzzle-date'),
-  islandCount: document.getElementById('island-count'),
-  nextGamePromo: document.getElementById('next-game-promo'),
-  nextGameLogo: document.getElementById('next-game-logo'),
-  nextGameText: document.getElementById('next-game-text'),
-  nextGameLink: document.getElementById('next-game-link')
+  islandCount: document.getElementById('island-count')
 };
 
 const islandMap = new Map(PUZZLE.islands.map(i => [i.id, i]));
 const bridges = new Map();
 let selected = null;
-let timerInterval = null;
-let timerRunning = false;
-let timerPaused = false;
-let startTimestamp = 0;
+let shell = null;
+let currentMode = 'daily';
+let puzzleId = getPTDateYYYYMMDD();
+let puzzleSeed = puzzleId;
 let baseElapsed = 0;
-let isPrestart = true;
+let startTimestamp = 0;
+let timerStarted = false;
+let isPaused = false;
 let isComplete = false;
 let completionMs = null;
-let hasSubmittedScore = false;
-let lastRank = null;
+let tickInterval = null;
+
+function getPuzzleIdForMode(mode) {
+  if (mode === 'practice') return `practice-${puzzleSeed}`;
+  return getPTDateYYYYMMDD();
+}
+
+function getStateKey() {
+  return `${STATE_PREFIX}${currentMode}_${puzzleId}`;
+}
 
 function canvasPointFor(island) {
   const cell = (CANVAS_SIZE - PADDING * 2) / (GRID_SIZE - 1);
@@ -200,45 +184,55 @@ function updateProgressText() {
   els.progress.textContent = 'Choose an island to start bridging.';
 }
 
-function updateTimerDisplay(ms) {
-  if (!els.timer) return;
-  els.timer.textContent = formatTime(ms);
+function getElapsedMs() {
+  if (!timerStarted) return baseElapsed;
+  if (isPaused) return baseElapsed;
+  return baseElapsed + (performance.now() - startTimestamp);
 }
 
 function startTimer() {
-  if (timerRunning) return;
-  timerRunning = true;
-  timerPaused = false;
-  startTimestamp = Date.now();
-  timerInterval = window.setInterval(() => {
-    if (!timerRunning || timerPaused || isComplete) return;
-    const elapsed = baseElapsed + (Date.now() - startTimestamp);
-    updateTimerDisplay(elapsed);
-  }, 100);
+  if (timerStarted && !isPaused) return;
+  timerStarted = true;
+  isPaused = false;
+  startTimestamp = performance.now();
+  saveProgress();
 }
 
 function pauseTimer() {
-  if (!timerRunning || timerPaused) return;
-  baseElapsed += Date.now() - startTimestamp;
-  timerPaused = true;
+  if (!timerStarted || isPaused) return;
+  baseElapsed = getElapsedMs();
+  isPaused = true;
+  saveProgress();
 }
 
 function resumeTimer() {
-  if (!timerRunning || !timerPaused) return;
-  timerPaused = false;
-  startTimestamp = Date.now();
+  if (!timerStarted) {
+    timerStarted = true;
+    baseElapsed = baseElapsed || 0;
+  }
+  if (!isPaused) return;
+  isPaused = false;
+  startTimestamp = performance.now();
+  saveProgress();
 }
 
-function resetTimer() {
-  timerRunning = false;
-  timerPaused = false;
-  startTimestamp = 0;
-  baseElapsed = 0;
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
+function resetPuzzle({ resetTimer }) {
+  bridges.clear();
+  selected = null;
+  isComplete = false;
+  completionMs = null;
+
+  if (resetTimer) {
+    baseElapsed = 0;
+    startTimestamp = 0;
+    timerStarted = false;
+    isPaused = false;
   }
-  updateTimerDisplay(0);
+
+  updateProgressText();
+  draw();
+  saveProgress();
+  shell?.update();
 }
 
 function getIslandProgress() {
@@ -275,20 +269,19 @@ function checkCompletion() {
   const allMatch = PUZZLE.islands.every((island) => counts.get(island.id) === island.required);
   if (allMatch && isAllConnected()) {
     isComplete = true;
-    completionMs = baseElapsed + (timerRunning ? Date.now() - startTimestamp : 0);
-    completePuzzle();
+    completionMs = getElapsedMs();
+    baseElapsed = completionMs;
+    isPaused = true;
+    timerStarted = true;
+    saveProgress();
+    shell?.update();
   }
 }
 
 function handleCanvasClick(event) {
   if (!els.canvas || isComplete) return;
-  if (isPrestart) {
-    dismissStartOverlay();
-    startTimer();
-  } else if (!timerRunning) {
-    startTimer();
-  }
-  if (timerPaused) resumeTimer();
+  if (!timerStarted) startTimer();
+  if (isPaused) resumeTimer();
 
   const rect = els.canvas.getBoundingClientRect();
   const scaleX = els.canvas.width / rect.width;
@@ -331,6 +324,8 @@ function handleCanvasClick(event) {
   updateProgressText();
   draw();
   checkCompletion();
+  saveProgress();
+  shell?.update();
 }
 
 function drawGrid(ctx) {
@@ -350,6 +345,19 @@ function drawGrid(ctx) {
     ctx.lineTo(CANVAS_SIZE - PADDING, y);
     ctx.stroke();
   }
+}
+
+function drawBridgeLine(ctx, x1, y1, x2, y2) {
+  const pad = ISLAND_RADIUS - 6;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const sx = x1 + Math.cos(angle) * pad;
+  const sy = y1 + Math.sin(angle) * pad;
+  const ex = x2 - Math.cos(angle) * pad;
+  const ey = y2 - Math.sin(angle) * pad;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
 }
 
 function drawBridges(ctx) {
@@ -382,19 +390,6 @@ function drawBridges(ctx) {
       }
     }
   }
-}
-
-function drawBridgeLine(ctx, x1, y1, x2, y2) {
-  const pad = ISLAND_RADIUS - 6;
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-  const sx = x1 + Math.cos(angle) * pad;
-  const sy = y1 + Math.sin(angle) * pad;
-  const ex = x2 - Math.cos(angle) * pad;
-  const ey = y2 - Math.sin(angle) * pad;
-  ctx.beginPath();
-  ctx.moveTo(sx, sy);
-  ctx.lineTo(ex, ey);
-  ctx.stroke();
 }
 
 function drawIslands(ctx) {
@@ -436,179 +431,195 @@ function draw() {
   drawIslands(ctx);
 }
 
-function dismissStartOverlay() {
-  isPrestart = false;
-  els.startOverlay?.classList.add('hidden');
-}
-
-function showPauseOverlay() {
-  els.pauseOverlay?.classList.remove('hidden');
-}
-
-function hidePauseOverlay() {
-  els.pauseOverlay?.classList.add('hidden');
-}
-
-async function loadLeaderboard(container) {
-  if (!container) return;
-  container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">Loading leaderboard…</p>';
+function loadState() {
+  if (currentMode !== 'daily') return null;
   try {
-    const response = await fetch(`/api/hashi/leaderboard?puzzleId=${puzzleId}`);
-    if (!response.ok) throw new Error('Leaderboard failed');
-    const data = await response.json();
-    if (!data.top10 || data.top10.length === 0) {
-      container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">No scores yet — be the first!</p>';
-      return;
+    const raw = localStorage.getItem(getStateKey());
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.bridges)) return null;
+    if (data.timerStarted && !data.isComplete && !data.isPaused) {
+      data.isPaused = true;
     }
-    container.innerHTML = data.top10.map((entry, idx) => `
-      <div class="flex items-center justify-between py-1">
-        <span>${idx + 1}. ${entry.initials || '???'}</span>
-        <span>${formatTime(entry.timeMs)}</span>
-      </div>
-    `).join('');
-  } catch (error) {
-    container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">Unable to load leaderboard.</p>';
+    return data;
+  } catch {
+    return null;
   }
 }
 
-async function completePuzzle() {
-  if (hasSubmittedScore) return;
-  const anonId = getOrCreateAnonId();
-  const timeMs = completionMs || 0;
-  hasSubmittedScore = true;
-
-  els.completionTime && (els.completionTime.textContent = formatTime(timeMs));
-  els.completionModal?.classList.add('show');
-  els.leaderboardBtn?.classList.remove('hidden');
-
+function saveProgress() {
+  if (currentMode !== 'daily') return;
+  const bridgesData = Array.from(bridges.entries()).map(([key, count]) => ({ key, count }));
+  const payload = {
+    bridges: bridgesData,
+    timeMs: getElapsedMs(),
+    timerStarted,
+    isPaused,
+    isComplete,
+    completionMs
+  };
   try {
-    const response = await fetch('/api/hashi/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ puzzleId, anonId, timeMs, hintsUsed: 0 })
+    localStorage.setItem(getStateKey(), JSON.stringify(payload));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function applySavedState(saved) {
+  bridges.clear();
+  if (saved?.bridges) {
+    saved.bridges.forEach(({ key, count }) => {
+      if (!key || typeof count !== 'number') return;
+      bridges.set(key, count);
     });
-    const data = await response.json();
-    if (data.success) {
-      lastRank = data.rank;
-      els.percentileMsg && (els.percentileMsg.textContent = `Rank #${data.rank} • Top ${data.percentile}%`);
-      if (data.rank <= 10) {
-        els.claimForm?.classList.remove('hidden');
-      }
-    }
-  } catch (error) {
-    console.warn('Score submit failed', error);
   }
-
-  try {
-    localStorage.setItem(`dailygrid_hashi_submitted_${puzzleId}`, 'true');
-  } catch (error) {
-    console.warn('Failed to store completion flag', error);
-  }
-
-  await loadLeaderboard(els.completionLeaderboard);
-  updateNextGamePromo();
 }
 
-function updateNextGamePromo() {
-  if (!els.nextGamePromo) return;
-  const next = getUncompletedGames('hashi', puzzleId)[0];
-  if (!next) {
-    els.nextGamePromo.classList.add('hidden');
+function initState() {
+  const saved = loadState();
+  applySavedState(saved);
+  baseElapsed = saved?.timeMs ?? 0;
+  timerStarted = saved?.timerStarted ?? false;
+  isPaused = saved?.isPaused ?? false;
+  isComplete = saved?.isComplete ?? false;
+  completionMs = saved?.completionMs ?? null;
+}
+
+function setDateLabel() {
+  if (!els.puzzleDate) return;
+  if (currentMode === 'practice') {
+    els.puzzleDate.textContent = 'Practice';
     return;
   }
-  els.nextGameLogo && (els.nextGameLogo.src = next.logo);
-  els.nextGameLogo && (els.nextGameLogo.alt = next.name);
-  els.nextGameText && (els.nextGameText.textContent = next.name);
-  if (els.nextGameLink) {
-    els.nextGameLink.href = next.path;
-  }
-  els.nextGamePromo.classList.remove('hidden');
+  els.puzzleDate.textContent = puzzleId;
 }
 
-function handleShare() {
-  const shareText = buildShareText({
+function ensureTicker() {
+  if (tickInterval) return;
+  tickInterval = window.setInterval(() => {
+    shell?.update();
+  }, 200);
+}
+
+function resetPracticePuzzle() {
+  puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  puzzleId = getPuzzleIdForMode('practice');
+  bridges.clear();
+  selected = null;
+  baseElapsed = 0;
+  startTimestamp = 0;
+  timerStarted = false;
+  isPaused = false;
+  isComplete = false;
+  completionMs = null;
+  updateProgressText();
+  setDateLabel();
+  draw();
+  shell?.update();
+}
+
+function switchMode(mode) {
+  if (currentMode === mode) return;
+  saveProgress();
+  currentMode = mode;
+  if (mode === 'practice') {
+    puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  } else {
+    puzzleSeed = getPTDateYYYYMMDD();
+  }
+  puzzleId = getPuzzleIdForMode(mode);
+  bridges.clear();
+  selected = null;
+  initState();
+  updateProgressText();
+  setDateLabel();
+  draw();
+  shell?.update();
+}
+
+function initShell() {
+  if (shell) return;
+
+  shell = createShellController({
+    gameId: 'hashi',
+    getMode: () => currentMode,
+    getPuzzleId: () => puzzleId,
+    getGridLabel: () => '7x7 Bridges',
+    getElapsedMs: () => getElapsedMs(),
+    formatTime,
+    autoStartOnProgress: true,
+    isComplete: () => isComplete,
+    isPaused: () => isPaused,
+    isStarted: () => timerStarted,
+    hasProgress: () => bridges.size > 0,
+    pause: () => pauseTimer(),
+    resume: () => resumeTimer(),
+    startGame: () => startTimer(),
+    resetGame: () => resetPuzzle({ resetTimer: false }),
+    startReplay: () => {},
+    exitReplay: () => {},
+    onResetUI: () => {},
+    onTryAgain: () => resetPuzzle({ resetTimer: true }),
+    onNextLevel: () => resetPracticePuzzle(),
+    onBackToDaily: () => switchMode('daily'),
+    onPracticeInfinite: () => switchMode('practice'),
+    onStartPractice: () => switchMode('practice'),
+    onStartDaily: () => switchMode('daily'),
+    getAnonId: () => getOrCreateAnonId(),
+    getCompletionPayload: () => ({
+      timeMs: Math.max(3000, Math.min(getElapsedMs(), 3600000)),
+      hintsUsed: 0
+    }),
+    getShareMeta: () => ({
+      gameName: 'Bridgeworks',
+      shareUrl: 'https://dailygrid.app/games/hashi/',
+      gridLabel: '7x7 Bridges'
+    }),
+    getShareFile: () => buildShareImage(),
+    getCompletionMs: () => completionMs,
+    setCompletionMs: (ms) => {
+      completionMs = ms;
+    },
+    isTimerRunning: () => timerStarted && !isPaused && !isComplete,
+    disableReplay: true,
+    pauseOnHide: true
+  });
+}
+
+async function buildShareImage() {
+  const finalTime = completionMs ?? getElapsedMs();
+  const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
+  return buildShareCard({
     gameName: 'Bridgeworks',
-    puzzleLabel: formatDateForShare(puzzleId),
-    gridLabel: 'Bridgeworks',
-    timeText: formatTime(completionMs || 0),
-    shareUrl: window.location.href
+    logoPath: '/games/hashi/hashi-logo.svg',
+    accent: '#E8B47A',
+    accentSoft: 'rgba(232, 180, 122, 0.12)',
+    backgroundStart: '#120A08',
+    backgroundEnd: '#1a100b',
+    dateText: puzzleDate,
+    timeText: formatTime(finalTime || 0),
+    gridLabel: 'Grid 7x7',
+    footerText: 'dailygrid.app/games/hashi'
   });
-  shareWithFallback({
-    shareText,
-    shareTitle: 'Bridgeworks by Daily Grid',
-    shareUrl: window.location.href,
-    onCopy: () => showShareFeedback(els.shareBtn, 'Copied'),
-    onError: () => showShareFeedback(els.shareBtn, 'Failed')
-  });
-}
-
-async function submitInitials(event) {
-  event.preventDefault();
-  const initials = els.initialsInput?.value.trim().toUpperCase();
-  if (!initials || initials.length > 3) {
-    els.claimMessage && (els.claimMessage.textContent = 'Enter 1–3 letters.');
-    return;
-  }
-  try {
-    const response = await fetch('/api/hashi/claim-initials', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ puzzleId, anonId: getOrCreateAnonId(), initials })
-    });
-    const data = await response.json();
-    if (!response.ok || !data.success) throw new Error('Claim failed');
-    els.claimMessage && (els.claimMessage.textContent = 'Claim saved!');
-    els.claimForm?.classList.add('hidden');
-  } catch (error) {
-    els.claimMessage && (els.claimMessage.textContent = 'Unable to save.');
-  }
-}
-
-function bindEvents() {
-  els.canvas?.addEventListener('click', handleCanvasClick);
-  els.startBtn?.addEventListener('click', () => {
-    dismissStartOverlay();
-    startTimer();
-  });
-  els.resumeBtn?.addEventListener('click', () => {
-    hidePauseOverlay();
-    resumeTimer();
-  });
-  els.pauseBtn?.addEventListener('click', () => {
-    pauseTimer();
-    showPauseOverlay();
-  });
-  els.resetBtn?.addEventListener('click', () => {
-    bridges.clear();
-    selected = null;
-    isComplete = false;
-    completionMs = null;
-    hasSubmittedScore = false;
-    lastRank = null;
-    isPrestart = true;
-    els.startOverlay?.classList.remove('hidden');
-    hidePauseOverlay();
-    resetTimer();
-    updateProgressText();
-    draw();
-  });
-  els.shareBtn?.addEventListener('click', handleShare);
-  els.closeCompletion?.addEventListener('click', () => els.completionModal?.classList.remove('show'));
-  els.leaderboardBtn?.addEventListener('click', () => {
-    els.leaderboardModal?.classList.add('show');
-    loadLeaderboard(els.leaderboardModalList);
-  });
-  els.closeLeaderboard?.addEventListener('click', () => els.leaderboardModal?.classList.remove('show'));
-  els.claimForm?.addEventListener('submit', submitInitials);
 }
 
 function init() {
-  if (els.puzzleDate) els.puzzleDate.textContent = puzzleId;
   if (els.islandCount) els.islandCount.textContent = String(PUZZLE.islands.length);
-  updateTimerDisplay(0);
+  puzzleSeed = getPTDateYYYYMMDD();
+  puzzleId = getPuzzleIdForMode(currentMode);
+  initState();
   updateProgressText();
+  setDateLabel();
   draw();
-  bindEvents();
+  initShell();
+  ensureTicker();
+  shell?.update();
 }
 
-init();
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  els.canvas?.addEventListener('click', handleCanvasClick);
+  window.startPracticeMode = () => switchMode('practice');
+  window.startDailyMode = () => switchMode('daily');
+  window.addEventListener('beforeunload', saveProgress);
+});
