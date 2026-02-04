@@ -1,347 +1,369 @@
-import { getPTDateYYYYMMDD, formatTime, formatDateForShare, getOrCreateAnonId } from '../common/utils.js';
-import { buildShareText, shareWithFallback, showShareFeedback } from '../common/share.js';
-import { getGameMeta, getUncompletedGames } from '../common/games.js';
+import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from '../common/utils.js';
+import { createShellController } from '../common/shell-controller.js';
+import { formatDateForShare } from '../common/share.js';
+import { buildShareCard } from '../common/share-card.js';
 import { PipesEngine } from './pipes-engine.js';
 import { PipesRenderer } from './pipes-renderer.js';
 import { PipesInput } from './pipes-input.js';
-import { fetchDescriptor, GRID_SIZE } from './pipes-utils.js';
+import { fetchDescriptor, GRID_SIZE, rotateMaskSteps } from './pipes-utils.js';
 
-const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+const STATE_PREFIX = 'dailygrid_pipes_state_';
 
-const els = {};
+const els = {
+  canvas: document.getElementById('pipes-canvas'),
+  progress: document.getElementById('progress-text'),
+  puzzleDate: document.getElementById('puzzle-date'),
+  gridSize: document.getElementById('grid-size')
+};
+
 let descriptor;
 let engine;
 let renderer;
 let input;
+let shell = null;
+let currentMode = 'daily';
 let puzzleId = '';
-let timerInterval = null;
-let timerRunning = false;
-let timerPaused = false;
-let startTimestamp = 0;
+let puzzleSeed = '';
 let baseElapsed = 0;
-let isPrestart = true;
+let startTimestamp = 0;
+let timerStarted = false;
+let isPaused = false;
 let isComplete = false;
-let completionMs = 0;
-let hasSubmittedScore = false;
+let completionMs = null;
+let tickInterval = null;
+let moveCount = 0;
 
-function mapElements() {
-  els.canvas = document.getElementById('pipes-canvas');
-  els.timer = document.getElementById('timer');
-  els.progress = document.getElementById('progress-text');
-  els.startOverlay = document.getElementById('start-overlay');
-  els.pauseOverlay = document.getElementById('pause-overlay');
-  els.pauseBtn = document.getElementById('pause-btn');
-  els.resetBtn = document.getElementById('reset-btn');
-  els.leaderboardBtn = document.getElementById('leaderboard-btn');
-  els.completionModal = document.getElementById('completion-modal');
-  els.completionTime = document.getElementById('completion-time');
-  els.percentileMsg = document.getElementById('percentile-msg');
-  els.completionLeaderboard = document.getElementById('completion-leaderboard-list');
-  els.shareBtn = document.getElementById('share-btn');
-  els.closeModalBtn = document.getElementById('close-modal-btn');
-  els.claimForm = document.getElementById('claim-initials-form');
-  els.claimMessage = document.getElementById('claim-message');
-  els.initialsInput = document.getElementById('initials-input');
-  els.nextGamePromo = document.getElementById('next-game-promo');
-  els.nextGameLogo = document.getElementById('next-game-logo');
-  els.nextGameText = document.getElementById('next-game-text');
-  els.nextGameLink = document.getElementById('next-game-link');
-  els.puzzleDate = document.getElementById('puzzle-date');
-  els.leaderboardModal = document.getElementById('leaderboard-modal');
-  els.leaderboardModalList = document.getElementById('leaderboard-modal-list');
-  els.closeLeaderboard = document.getElementById('close-leaderboard-btn');
+function getPuzzleIdForMode(mode) {
+  if (mode === 'practice') return `practice-${puzzleSeed}`;
+  return getPTDateYYYYMMDD();
 }
 
-async function start() {
-  mapElements();
-  descriptor = await fetchDescriptor();
-  puzzleId = descriptor.puzzleId || getPTDateYYYYMMDD();
-  els.puzzleDate.textContent = formatDateForShare(puzzleId);
-  engine = new PipesEngine(descriptor);
-  renderer = new PipesRenderer(els.canvas, engine);
-  renderer.render();
-  input = new PipesInput(els.canvas, engine, renderer, onBoardInteraction);
-  bindEvents();
-  updateProgress();
-  updateTimerDisplay();
-}
-
-function bindEvents() {
-  window.addEventListener('resize', () => {
-    renderer.resize();
-    renderer.render();
-  });
-  els.pauseBtn?.addEventListener('click', togglePause);
-  els.resetBtn?.addEventListener('click', resetPuzzle);
-  els.leaderboardBtn?.addEventListener('click', () => {
-    els.leaderboardModal?.classList.remove('hidden');
-    loadLeaderboard(els.leaderboardModalList);
-  });
-  els.closeLeaderboard?.addEventListener('click', () => {
-    els.leaderboardModal?.classList.add('hidden');
-  });
-  els.shareBtn?.addEventListener('click', handleShare);
-  els.closeModalBtn?.addEventListener('click', hideCompletionModal);
-  els.claimForm?.addEventListener('submit', submitInitials);
-}
-
-function onBoardInteraction() {
-  if (isComplete) return;
-  if (isPrestart) {
-    dismissStartOverlay();
-    startTimer();
-  } else if (!timerRunning) {
-    startTimer();
-  }
-  renderer.render();
-  updateProgress();
-  if (engine.isSolved()) {
-    completePuzzle();
-  }
-}
-
-function dismissStartOverlay() {
-  isPrestart = false;
-  els.startOverlay?.classList.add('hidden');
-}
-
-function startTimer() {
-  if (timerRunning) return;
-  timerRunning = true;
-  timerPaused = false;
-  startTimestamp = performance.now();
-  timerInterval = window.setInterval(updateTimerDisplay, 250);
-}
-
-function togglePause() {
-  if (isComplete) return;
-  if (!timerRunning) return;
-  if (timerPaused) {
-    resumeTimer();
-  } else {
-    pauseTimer();
-  }
-}
-
-function pauseTimer() {
-  if (!timerRunning || timerPaused) return;
-  timerPaused = true;
-  baseElapsed += performance.now() - startTimestamp;
-  clearInterval(timerInterval);
-  timerInterval = null;
-  els.pauseOverlay?.classList.remove('hidden');
-  els.pauseBtn.textContent = 'Resume';
-}
-
-function resumeTimer() {
-  if (!timerRunning || !timerPaused) return;
-  timerPaused = false;
-  startTimestamp = performance.now();
-  timerInterval = window.setInterval(updateTimerDisplay, 250);
-  els.pauseOverlay?.classList.add('hidden');
-  els.pauseBtn.textContent = 'Pause';
-}
-
-function stopTimer() {
-  timerRunning = false;
-  timerPaused = false;
-  clearInterval(timerInterval);
-  timerInterval = null;
-  baseElapsed = 0;
-  startTimestamp = performance.now();
-  els.pauseOverlay?.classList.add('hidden');
-  els.pauseBtn.textContent = 'Pause';
-  updateTimerDisplay();
+function getStateKey() {
+  return `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 }
 
 function getElapsedMs() {
-  if (!timerRunning) return baseElapsed;
-  if (timerPaused) return baseElapsed;
+  if (!timerStarted) return baseElapsed;
+  if (isPaused) return baseElapsed;
   return baseElapsed + (performance.now() - startTimestamp);
 }
 
-function updateTimerDisplay() {
-  if (!els.timer) return;
-  els.timer.textContent = formatTime(getElapsedMs());
+function startTimer() {
+  if (timerStarted && !isPaused) return;
+  timerStarted = true;
+  isPaused = false;
+  startTimestamp = performance.now();
+  saveProgress();
 }
 
-function resetPuzzle() {
-  stopTimer();
-  isPrestart = true;
-  isComplete = false;
-  hasSubmittedScore = false;
-  completionMs = 0;
-  engine = new PipesEngine(descriptor);
-  renderer.setEngine(engine);
-  renderer.render();
-  input.setEngine(engine);
-  els.completionModal?.classList.add('hidden');
-  els.nextGamePromo?.classList.add('hidden');
-  els.claimForm?.classList.add('hidden');
-  els.claimMessage && (els.claimMessage.textContent = '');
-  els.startOverlay?.classList.remove('hidden');
-  els.leaderboardBtn?.classList.add('hidden');
+function pauseTimer() {
+  if (!timerStarted || isPaused) return;
+  baseElapsed = getElapsedMs();
+  isPaused = true;
+  saveProgress();
+}
+
+function resumeTimer() {
+  if (!timerStarted) {
+    timerStarted = true;
+    baseElapsed = baseElapsed || 0;
+  }
+  if (!isPaused) return;
+  isPaused = false;
+  startTimestamp = performance.now();
+  saveProgress();
+}
+
+function updateProgress() {
+  if (!engine || !els.progress) return;
+  const matched = engine.getCompletionCount();
+  const total = GRID_SIZE * GRID_SIZE;
+  const percent = Math.floor((matched / total) * 100);
+  els.progress.textContent = `Aligned segments: ${matched} / ${total} • ${percent}%`;
+}
+
+function setDateLabel() {
+  if (!els.puzzleDate) return;
+  if (currentMode === 'practice') {
+    els.puzzleDate.textContent = 'Practice';
+    return;
+  }
+  els.puzzleDate.textContent = puzzleId;
+}
+
+function setGridLabel() {
+  if (!els.gridSize) return;
+  els.gridSize.textContent = `${GRID_SIZE}x${GRID_SIZE}`;
+}
+
+function handleBoardInteraction() {
+  if (!engine || isComplete) return;
+  if (!timerStarted) startTimer();
+  if (isPaused) resumeTimer();
+
+  moveCount += 1;
+  renderer?.render();
   updateProgress();
+
+  if (engine.isSolved()) {
+    completePuzzle();
+  }
+
+  saveProgress();
+  shell?.update();
+}
+
+function resetPuzzle({ resetTimer }) {
+  if (!descriptor) return;
+  engine = new PipesEngine(descriptor);
+  renderer?.setEngine(engine);
+  renderer?.render();
+  input?.setEngine(engine);
+
+  moveCount = 0;
+  isComplete = false;
+  completionMs = null;
+
+  if (resetTimer) {
+    baseElapsed = 0;
+    startTimestamp = 0;
+    timerStarted = false;
+    isPaused = false;
+  }
+
+  updateProgress();
+  saveProgress();
+  shell?.update();
 }
 
 function completePuzzle() {
   if (isComplete) return;
   isComplete = true;
-  completionMs = Math.max(3000, getElapsedMs());
-  stopTimer();
-  els.completionTime && (els.completionTime.textContent = `Time: ${formatTime(completionMs)}`);
-  els.completionModal?.classList.remove('hidden');
-  els.percentileMsg?.textContent = 'Submitting score...';
-  els.leaderboardBtn?.classList.remove('hidden');
-  updateNextGamePromo();
-  submitScore(completionMs);
-  loadLeaderboard(els.completionLeaderboard);
+  completionMs = getElapsedMs();
+  baseElapsed = completionMs;
+  isPaused = true;
+  timerStarted = true;
+  saveProgress();
+  shell?.update();
 }
 
-async function submitScore(timeMs) {
-  if (hasSubmittedScore) return;
+function loadState() {
+  if (currentMode !== 'daily') return null;
+  try {
+    const raw = localStorage.getItem(getStateKey());
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.rotations)) return null;
+    if (data.timerStarted && !data.isComplete && !data.isPaused) {
+      data.isPaused = true;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function saveProgress() {
+  if (currentMode !== 'daily' || !engine) return;
+  const rotations = engine.getCells().map(cell => cell.rotation);
   const payload = {
-    puzzleId,
-    anonId: getOrCreateAnonId(),
-    timeMs: Math.max(3000, Math.min(timeMs, 3600000)),
-    hintsUsed: 0
+    rotations,
+    moveCount,
+    timeMs: getElapsedMs(),
+    timerStarted,
+    isPaused,
+    isComplete,
+    completionMs
   };
   try {
-    const response = await fetch('/api/pipes/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!response.ok) throw new Error('Score submission failed');
-    const data = await response.json();
-    hasSubmittedScore = true;
-    updatePercentile(data);
-    if (data.rank <= 10) {
-      els.claimForm?.classList.remove('hidden');
-    }
-  } catch (error) {
-    console.error('Flowline score submission failed', error);
-    if (els.percentileMsg) {
-      els.percentileMsg.textContent = 'Leaderboard temporarily unavailable';
-    }
+    localStorage.setItem(getStateKey(), JSON.stringify(payload));
+  } catch {
+    // ignore storage errors
   }
 }
 
-function updatePercentile(data) {
-  if (!els.percentileMsg) return;
-  const percentileValue = typeof data.percentile === 'number'
-    ? Math.max(0, Math.min(100, data.percentile))
-    : null;
-  els.percentileMsg.textContent = percentileValue !== null
-    ? `You ranked ${data.rank} / ${data.total} (top ${percentileValue}%)`
-    : `You ranked ${data.rank} / ${data.total}`;
-}
-
-async function loadLeaderboard(container) {
-  if (!container) return;
-  container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">Loading leaderboard…</p>';
-  try {
-    const response = await fetch(`/api/pipes/leaderboard?puzzleId=${puzzleId}`);
-    if (!response.ok) throw new Error('Leaderboard request failed');
-    const data = await response.json();
-    renderLeaderboard(container, data.top10 || []);
-    if ((data.top10?.length || 0) === 0) {
-      container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">No entries yet — be the first.</p>';
-    }
-  } catch (error) {
-    console.error('Leaderboard error', error);
-    container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">Unable to load leaderboard.</p>';
-  }
-}
-
-function renderLeaderboard(container, entries) {
-  if (!entries || entries.length === 0) {
-    container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">No entries yet.</p>';
-    return;
-  }
-  container.innerHTML = entries.map((entry) => `
-    <div class="flex items-center justify-between px-3 py-2 text-xs border-b border-white/5">
-      <span class="text-sm font-semibold tracking-wide">${entry.rank}. ${entry.initials || '---'}</span>
-      <span>${formatTime(entry.timeMs)}</span>
-    </div>
-  `).join('');
-}
-
-function updateProgress() {
-  const matched = engine.getCompletionCount();
-  const percent = Math.floor((matched / TOTAL_CELLS) * 100);
-  if (els.progress) {
-    els.progress.textContent = `Aligned segments: ${matched} / ${TOTAL_CELLS} • ${percent}%`;
-  }
-}
-
-function updateNextGamePromo() {
-  const next = getUncompletedGames('pipes', puzzleId)[0];
-  if (!next) {
-    els.nextGamePromo?.classList.add('hidden');
-    return;
-  }
-  els.nextGamePromo?.classList.remove('hidden');
-  els.nextGameLogo && (els.nextGameLogo.src = next.logo);
-  els.nextGameLogo && (els.nextGameLogo.alt = `${next.name} logo`);
-  els.nextGameText && (els.nextGameText.textContent = `Play ${next.name}`);
-  if (els.nextGameLink) {
-    els.nextGameLink.href = next.path;
-    els.nextGameLink.title = `Continue with ${next.name}`;
-  }
-}
-
-function handleShare() {
-  const shareText = buildShareText({
-    gameName: 'Flowline',
-    puzzleLabel: formatDateForShare(puzzleId),
-    gridLabel: '7×7 neon flow',
-    timeText: formatTime(completionMs),
-    shareUrl: window.location.href
+function applySavedState(saved) {
+  if (!engine || !saved?.rotations) return;
+  const cells = engine.getCells();
+  cells.forEach((cell, idx) => {
+    if (cell.isPrefill) return;
+    const rot = saved.rotations[idx];
+    if (typeof rot !== 'number') return;
+    cell.rotation = rot % 4;
+    cell.playerMask = rotateMaskSteps(cell.solutionMask, cell.rotation);
   });
-  shareWithFallback({
-    shareText,
-    shareTitle: 'Flowline by Daily Grid',
-    shareUrl: window.location.href,
-    onCopy() {
-      showShareFeedback(els.shareBtn, 'Copied');
+  engine._evaluateStatuses?.();
+  moveCount = saved.moveCount ?? (saved.rotations ? 1 : 0);
+}
+
+function initState() {
+  const saved = loadState();
+  if (saved) {
+    applySavedState(saved);
+    baseElapsed = saved.timeMs ?? 0;
+    timerStarted = saved.timerStarted ?? false;
+    isPaused = saved.isPaused ?? false;
+    isComplete = saved.isComplete ?? false;
+    completionMs = saved.completionMs ?? null;
+  } else {
+    baseElapsed = 0;
+    timerStarted = false;
+    isPaused = false;
+    isComplete = false;
+    completionMs = null;
+    moveCount = 0;
+  }
+  renderer?.render();
+}
+
+async function loadDescriptor() {
+  descriptor = await fetchDescriptor(puzzleId);
+  engine = new PipesEngine(descriptor);
+  if (!renderer) {
+    renderer = new PipesRenderer(els.canvas, engine);
+  } else {
+    renderer.setEngine(engine);
+  }
+  renderer.render();
+
+  if (!input) {
+    input = new PipesInput(els.canvas, engine, renderer, handleBoardInteraction);
+  } else {
+    input.setEngine(engine);
+    input.setRenderer?.(renderer);
+  }
+}
+
+function resetPracticePuzzle() {
+  puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  puzzleId = getPuzzleIdForMode('practice');
+  moveCount = 0;
+  baseElapsed = 0;
+  startTimestamp = 0;
+  timerStarted = false;
+  isPaused = false;
+  isComplete = false;
+  completionMs = null;
+  loadDescriptor().then(() => {
+    updateProgress();
+    setDateLabel();
+    shell?.update();
+  });
+}
+
+function switchMode(mode) {
+  if (currentMode === mode) return;
+  saveProgress();
+  currentMode = mode;
+  if (mode === 'practice') {
+    puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  } else {
+    puzzleSeed = getPTDateYYYYMMDD();
+  }
+  puzzleId = getPuzzleIdForMode(mode);
+  moveCount = 0;
+  loadDescriptor().then(() => {
+    initState();
+    updateProgress();
+    setDateLabel();
+    shell?.update();
+  });
+}
+
+function ensureTicker() {
+  if (tickInterval) return;
+  tickInterval = window.setInterval(() => {
+    shell?.update();
+  }, 200);
+}
+
+function initShell() {
+  if (shell) return;
+
+  shell = createShellController({
+    gameId: 'pipes',
+    getMode: () => currentMode,
+    getPuzzleId: () => puzzleId,
+    getGridLabel: () => `${GRID_SIZE}x${GRID_SIZE} Flow`,
+    getElapsedMs: () => getElapsedMs(),
+    formatTime,
+    autoStartOnProgress: true,
+    isComplete: () => isComplete,
+    isPaused: () => isPaused,
+    isStarted: () => timerStarted,
+    hasProgress: () => moveCount > 0,
+    pause: () => pauseTimer(),
+    resume: () => resumeTimer(),
+    startGame: () => startTimer(),
+    resetGame: () => resetPuzzle({ resetTimer: false }),
+    startReplay: () => {},
+    exitReplay: () => {},
+    onResetUI: () => {},
+    onTryAgain: () => resetPuzzle({ resetTimer: true }),
+    onNextLevel: () => resetPracticePuzzle(),
+    onBackToDaily: () => switchMode('daily'),
+    onPracticeInfinite: () => switchMode('practice'),
+    onStartPractice: () => switchMode('practice'),
+    onStartDaily: () => switchMode('daily'),
+    getAnonId: () => getOrCreateAnonId(),
+    getCompletionPayload: () => ({
+      timeMs: Math.max(3000, Math.min(getElapsedMs(), 3600000)),
+      hintsUsed: 0
+    }),
+    getShareMeta: () => ({
+      gameName: 'Flowline',
+      shareUrl: 'https://dailygrid.app/games/pipes/',
+      gridLabel: '7x7 Flow'
+    }),
+    getShareFile: () => buildShareImage(),
+    getCompletionMs: () => completionMs,
+    setCompletionMs: (ms) => {
+      completionMs = ms;
     },
-    onError() {
-      showShareFeedback(els.shareBtn, 'Failed');
-    }
+    isTimerRunning: () => timerStarted && !isPaused && !isComplete,
+    disableReplay: true,
+    pauseOnHide: true
   });
 }
 
-async function submitInitials(event) {
-  event.preventDefault();
-  const initials = (els.initialsInput?.value || '').trim().toUpperCase();
-  if (!/^[A-Z]{1,3}$/.test(initials)) {
-    els.claimMessage && (els.claimMessage.textContent = 'Enter 1–3 letters.');
-    return;
-  }
-  const payload = {
-    puzzleId,
-    anonId: getOrCreateAnonId(),
-    initials
-  };
-  try {
-    const response = await fetch('/api/pipes/claim-initials', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!response.ok) throw new Error('Claim failed');
-    els.claimMessage && (els.claimMessage.textContent = 'Claim saved!');
-  } catch (error) {
-    console.error('Claim error', error);
-    els.claimMessage && (els.claimMessage.textContent = 'Unable to save.');
-  }
+async function buildShareImage() {
+  const finalTime = completionMs ?? getElapsedMs();
+  const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
+  return buildShareCard({
+    gameName: 'Flowline',
+    logoPath: '/games/pipes/pipes-logo.svg',
+    accent: '#4ce0e8',
+    accentSoft: 'rgba(76, 224, 232, 0.12)',
+    backgroundStart: '#070c12',
+    backgroundEnd: '#0b1424',
+    dateText: puzzleDate,
+    timeText: formatTime(finalTime || 0),
+    gridLabel: 'Grid 7x7',
+    footerText: 'dailygrid.app/games/pipes'
+  });
 }
 
-function hideCompletionModal() {
-  els.completionModal?.classList.add('hidden');
+async function init() {
+  puzzleSeed = getPTDateYYYYMMDD();
+  puzzleId = getPuzzleIdForMode(currentMode);
+  await loadDescriptor();
+  initState();
+  updateProgress();
+  setGridLabel();
+  setDateLabel();
+  initShell();
+  ensureTicker();
+  shell?.update();
+
+  window.addEventListener('resize', () => {
+    renderer?.resize();
+    renderer?.render();
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  start();
+  init();
+  window.startPracticeMode = () => switchMode('practice');
+  window.startDailyMode = () => switchMode('daily');
+  window.addEventListener('beforeunload', saveProgress);
 });
