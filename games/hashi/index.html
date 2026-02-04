@@ -8,15 +8,17 @@
   <link rel="manifest" href="/games/hashi/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/games/hashi/hashi-logo.svg">
   <link rel="apple-touch-icon" href="/games/hashi/hashi-logo.svg">
-  <meta name="theme-color" content="#120A08">
+  <meta name="theme-color" content="#0b1b2a">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/shell.css">
   <style>
     :root {
-      --brand-bg: #120A08;
+      --brand-bg: #0b1b2a;
       --brand-accent: #E8B47A;
       --brand-accent-dim: #C99863;
+      --water-accent: #6aa7d9;
+      --water-accent-dim: #3d7fb4;
       --glass-bg: rgba(255, 255, 255, 0.02);
       --glass-border: rgba(255, 255, 255, 0.06);
     }
@@ -36,9 +38,9 @@
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(232, 180, 122, 0.08), transparent),
-        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(245, 208, 167, 0.05), transparent),
-        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(232, 180, 122, 0.03), transparent);
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(106, 167, 217, 0.18), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(120, 190, 230, 0.1), transparent),
+        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(90, 140, 190, 0.08), transparent);
       pointer-events: none;
       z-index: -1;
     }
@@ -93,14 +95,14 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-dim));
-      color: #1a100b;
-      box-shadow: 0 2px 12px rgba(232, 180, 122, 0.25);
+      background: linear-gradient(135deg, var(--water-accent), var(--water-accent-dim));
+      color: #0b1724;
+      box-shadow: 0 2px 12px rgba(106, 167, 217, 0.3);
     }
 
     .btn-primary:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(232, 180, 122, 0.35);
+      box-shadow: 0 4px 20px rgba(106, 167, 217, 0.45);
     }
 
     .btn-secondary {
@@ -116,8 +118,8 @@
     }
 
     .timer-display {
-      background: linear-gradient(135deg, rgba(232, 180, 122, 0.12), rgba(245, 208, 167, 0.04));
-      border: 1px solid rgba(232, 180, 122, 0.25);
+      background: linear-gradient(135deg, rgba(106, 167, 217, 0.2), rgba(80, 130, 190, 0.08));
+      border: 1px solid rgba(106, 167, 217, 0.35);
     }
 
     .stat-card {
@@ -202,7 +204,6 @@
       </div>
       <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow wood-title">Bridgeworks</h1>
       <p class="text-zinc-500 text-sm">Build the bridges. Connect every island. One network.</p>
-      <p id="puzzle-date" class="progress-text mt-2"></p>
     </header>
 
     <div class="flex gap-3 mb-3 w-full max-w-xs">
@@ -221,8 +222,8 @@
       <canvas id="hashi-canvas" width="700" height="700"></canvas>
 
       <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
-        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-600/20 flex items-center justify-center mb-4">
-          <svg class="w-10 h-10 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-400/35 to-sky-600/20 flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-sky-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
