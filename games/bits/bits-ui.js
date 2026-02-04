@@ -80,6 +80,7 @@ let isPrestart = true;
 let isComplete = false;
 let completionMs = null;
 let hasSubmittedScore = false;
+let lastRank = null;
 
 function buildCells() {
   cells.length = 0;
