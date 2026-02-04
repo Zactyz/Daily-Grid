@@ -133,7 +133,11 @@ export class PathwaysUI {
   }
 
   updateObstacleHint() {
-    if (!this.elements.obstacleHint || !this.engine.puzzle?.obstacle) return;
+    if (!this.elements.obstacleHint) return;
+    if (!this.engine.puzzle?.obstacle) {
+      this.elements.obstacleHint.classList.add('hidden');
+      return;
+    }
 
     const obstacle = this.engine.puzzle.obstacle;
     const count = obstacle.cells?.length || 1;
