@@ -96,6 +96,9 @@ export class PathwaysUI {
 
   update() {
     this.shell.update();
+    if (this.elements.timer) {
+      this.elements.timer.textContent = formatTime(this.engine.state.timeMs || 0);
+    }
     this.updateObstacleHint();
     this.updateShowSolutionButton();
     this.updateExternalGamePromo();
