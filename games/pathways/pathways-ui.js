@@ -44,7 +44,15 @@ export class PathwaysUI {
       resume: () => this.engine.resume(),
       startGame: () => this.engine.startTimer(),
       resetGame: () => {
-        this.engine.reset(false);
+        const newPaths = {};
+        for (const color of Object.keys(this.engine.state.paths)) {
+          newPaths[color] = [];
+        }
+        this.engine.state.paths = newPaths;
+        this.engine.state.hintsUsed = 0;
+        this.engine.state.isComplete = false;
+        this.engine.state.isPaused = false;
+        this.engine.state.timerStarted = true;
         this.engine.saveProgress();
       },
       startReplay: () => {

@@ -1146,12 +1146,11 @@ function wireUI() {
       render();
       updateClueStyles();
       hasSolved = false;
-      timerStarted = false;
-      isPaused = false;
-      stopTimer();
-      showPauseOverlay(false);
-      els.timer.textContent = formatTime(0);
-      setPrestart(true);
+      if (!timerStarted) {
+        setPrestart(true);
+      } else {
+        setPrestart(false);
+      }
       updateUndoButton();
       updateLeaderboardButton();
       saveProgress(true);

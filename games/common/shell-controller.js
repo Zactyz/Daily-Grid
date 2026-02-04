@@ -535,6 +535,7 @@ export function createShellController(adapter, elementOverrides = null) {
     elements.confirmResetBtn?.addEventListener('click', () => {
       hideResetModal();
       adapter.resetGame();
+      if (timerWasRunning) adapter.resume();
       resetShellState();
       adapter.onResetUI?.();
       adapter.saveProgress?.();

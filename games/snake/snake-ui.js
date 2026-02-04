@@ -41,7 +41,11 @@ export class SnakeUI {
       resume: () => this.engine.resume(),
       startGame: () => this.engine.startTimer(),
       resetGame: () => {
-        this.engine.reset(false);
+        this.engine.state.path = [];
+        this.engine.state.hintsUsed = 0;
+        this.engine.state.isComplete = false;
+        this.engine.state.isPaused = false;
+        this.engine.state.timerStarted = true;
         this.engine.saveProgress();
       },
       startReplay: () => {
