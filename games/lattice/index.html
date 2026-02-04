@@ -352,6 +352,11 @@
                 </svg>
                 Reset
             </button>
+            <button id="exit-replay-btn" class="hidden btn btn-secondary flex items-center justify-center w-10 h-10 p-0" title="Exit Replay">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
 
         <!-- How to Play (match style) -->
@@ -419,6 +424,30 @@
         </div>
 
     </main>
+
+    <!-- Reset Confirmation Modal -->
+    <div id="reset-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="glass-strong p-6 rounded-2xl max-w-xs w-full animate-in text-center">
+            <h3 class="text-xl font-bold text-white mb-2">Reset Level?</h3>
+            <p class="text-zinc-400 text-sm mb-6">This will clear the board. Your time will keep running.</p>
+            <div class="flex gap-3">
+                <button id="cancel-reset-btn" class="btn btn-secondary flex-1">Cancel</button>
+                <button id="confirm-reset-btn" class="btn btn-primary flex-1">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exit Replay Modal -->
+    <div id="exit-replay-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="glass-strong p-6 rounded-2xl max-w-xs w-full animate-in text-center">
+            <h3 class="text-xl font-bold text-white mb-2">Exit Replay?</h3>
+            <p class="text-zinc-400 text-sm mb-6">Return to your completed puzzle.</p>
+            <div class="flex gap-3">
+                <button id="cancel-exit-replay-btn" class="btn btn-secondary flex-1">Cancel</button>
+                <button id="confirm-exit-replay-btn" class="btn btn-primary flex-1">Exit</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Completion Modal (copy structure from Snake, with silver accent) -->
     <div id="completion-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">

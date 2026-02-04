@@ -3,7 +3,7 @@ import { getPTDateYYYYMMDD, parseCsv, getOrCreateAnonId, formatTime } from './la
 
 import { getUncompletedGames as getCrossGamePromo } from '../common/games.js';
 
-import { buildShareText, shareWithFallback } from '../common/share.js';
+import { buildShareText, shareWithFallback, showShareFeedback, formatDateForShare } from '../common/share.js';
 
 const els = {
   // header
@@ -24,6 +24,7 @@ const els = {
   leaderboardBtn: document.getElementById('leaderboard-btn'),
   pauseBtn: document.getElementById('pause-btn'),
   resetBtn: document.getElementById('reset-btn'),
+  exitReplayBtn: document.getElementById('exit-replay-btn'),
   practiceModeBtn: document.getElementById('practice-mode-btn'),
   backToDailyBtn: document.getElementById('back-to-daily-btn'),
 
@@ -41,6 +42,12 @@ const els = {
   closeModalBtn: document.getElementById('close-modal-btn'),
   shareBtn: document.getElementById('share-btn'),
   practiceInfiniteBtn: document.getElementById('practice-infinite-btn'),
+  resetModal: document.getElementById('reset-modal'),
+  confirmResetBtn: document.getElementById('confirm-reset-btn'),
+  cancelResetBtn: document.getElementById('cancel-reset-btn'),
+  exitReplayModal: document.getElementById('exit-replay-modal'),
+  confirmExitReplayBtn: document.getElementById('confirm-exit-replay-btn'),
+  cancelExitReplayBtn: document.getElementById('cancel-exit-replay-btn'),
 
   // practice complete actions (modal)
   practiceCompleteActions: document.getElementById('practice-complete-actions'),
@@ -80,6 +87,9 @@ let timerStarted = false;
 let isPaused = false;
 let hasSolved = false;
 let isPrestart = true;
+let completionMs = null;
+let isInReplayMode = loadReplayMode();
+let timerWasRunning = false;
 
 // state[cat][row][col] => 0 blank, 1 X, 2 ✓
 let state = null;
@@ -92,6 +102,27 @@ const UNDO_LIMIT = 200;
 const STORAGE_PREFIX = 'dailygrid_lattice_progress_';
 let saveThrottleMs = 2500;
 let lastSaveAt = 0;
+
+function replayKeyForPuzzleId(puzzleId) {
+  return `dailygrid_lattice_replay_${puzzleId}`;
+}
+
+function loadReplayMode() {
+  const puzzleId = getPTDateYYYYMMDD();
+  try {
+    return localStorage.getItem(replayKeyForPuzzleId(puzzleId)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function saveReplayMode(enabled) {
+  if (!puzzle) return;
+  try {
+    if (enabled) localStorage.setItem(replayKeyForPuzzleId(puzzle.puzzleId), 'true');
+    else localStorage.removeItem(replayKeyForPuzzleId(puzzle.puzzleId));
+  } catch {}
+}
 
 function startTimer({ resumeElapsedMs = 0 } = {}) {
   timerStarted = true;
@@ -187,6 +218,7 @@ function initState() {
     manualX[cat.category] = Array.from({ length: size }, () => Array.from({ length: size }, () => false));
     autoX[cat.category] = Array.from({ length: size }, () => Array.from({ length: size }, () => new Set()));
   }
+  updateExitReplayButton();
 }
 
 function labelCategory(cat) {
@@ -365,7 +397,7 @@ function updateLeaderboardButton() {
   // Match Snake/Pathways: leaderboard button only appears once completed (daily mode only)
   if (!els.leaderboardBtn) return;
 
-  if (mode === 'daily' && hasSolved) {
+  if (mode === 'daily' && hasSolved && !isInReplayMode) {
     els.leaderboardBtn.classList.remove('hidden');
     els.pauseBtn?.classList.add('hidden');
   } else {
@@ -382,6 +414,7 @@ function storageKeyForPuzzleId(puzzleId) {
 function saveProgress(force = false) {
   if (!puzzle) return;
   if (mode !== 'daily') return;
+  if (isInReplayMode) return;
 
   const now = Date.now();
   if (!force && now - lastSaveAt < saveThrottleMs) return;
@@ -394,7 +427,8 @@ function saveProgress(force = false) {
     state,
     manualX,
     autoX: serializeAutoXSets(),
-    hasSolved
+    hasSolved,
+    completionMs
   };
 
   try {
@@ -534,6 +568,31 @@ function hideCompletionModal() {
   els.completionModal?.classList.add('hidden');
 }
 
+function showResetModal() {
+  els.resetModal?.classList.remove('hidden');
+}
+
+function hideResetModal() {
+  els.resetModal?.classList.add('hidden');
+}
+
+function showExitReplayModal() {
+  els.exitReplayModal?.classList.remove('hidden');
+}
+
+function hideExitReplayModal() {
+  els.exitReplayModal?.classList.add('hidden');
+}
+
+function updateExitReplayButton() {
+  if (!els.exitReplayBtn) return;
+  if (mode === 'daily' && isInReplayMode && !hasSolved) {
+    els.exitReplayBtn.classList.remove('hidden');
+  } else {
+    els.exitReplayBtn.classList.add('hidden');
+  }
+}
+
 function showPauseOverlay(show) {
   if (!els.pauseOverlay) return;
   if (show) els.pauseOverlay.classList.remove('hidden');
@@ -561,7 +620,7 @@ function showNextGamePromo() {
 
   // Consistent with Snake/Pathways: only show cross-game promo for today's daily puzzle.
   // (Practice mode completion shouldn't nag about streak completion.)
-  if (mode !== 'daily') {
+  if (mode !== 'daily' || isInReplayMode) {
     els.nextGamePromo.classList.add('hidden');
     return;
   }
@@ -591,6 +650,47 @@ function markSubmitted() {
   try {
     localStorage.setItem(`dailygrid_lattice_submitted_${puzzle.puzzleId}`, 'true');
   } catch {}
+}
+
+function loadCompletedState() {
+  if (!puzzle) return false;
+  const saved = loadProgressForPuzzleId(puzzle.puzzleId);
+  if (!saved || !saved.hasSolved) return false;
+
+  state = saved.state || state;
+  manualX = saved.manualX || manualX;
+  autoX = deserializeAutoXSets(saved.autoX || serializeAutoXSets());
+  hasSolved = true;
+  timerStarted = false;
+  completionMs = saved.completionMs ?? completionMs ?? 0;
+
+  render();
+  updateClueStyles();
+  updateUndoButton();
+  updateLeaderboardButton();
+  updateExitReplayButton();
+  showPauseOverlay(false);
+  setPrestart(false);
+  stopTimer();
+  els.timer.textContent = formatTime(completionMs || 0);
+  return true;
+}
+
+function startReplay() {
+  if (mode !== 'daily') return;
+  isInReplayMode = true;
+  saveReplayMode(true);
+  hasSolved = false;
+  completionMs = null;
+  initState();
+  undoStack = [];
+  render();
+  updateClueStyles();
+  updateUndoButton();
+  updateLeaderboardButton();
+  updateExitReplayButton();
+  setPrestart(false);
+  startTimer({ resumeElapsedMs: 0 });
 }
 
 function hasSubmittedToday() {
@@ -707,6 +807,13 @@ async function handleSolved() {
   stopTimer();
   timerStarted = false;
 
+  if (isInReplayMode) {
+    isInReplayMode = false;
+    saveReplayMode(false);
+    loadCompletedState();
+    return;
+  }
+
   if (mode !== 'daily') {
     if (els.modalTitle) els.modalTitle.textContent = 'Nice Job!';
     if (els.modalSubtitle) els.modalSubtitle.textContent = 'Practice puzzle complete';
@@ -716,6 +823,9 @@ async function handleSolved() {
 
   if (els.modalTitle) els.modalTitle.textContent = 'Solved!';
   if (els.modalSubtitle) els.modalSubtitle.textContent = "Great work on today's puzzle";
+
+  completionMs = Math.floor(timeMs);
+  els.timer.textContent = formatTime(completionMs);
 
   if (!hasSubmittedToday()) {
     const data = await submitScore(timeMs);
@@ -730,6 +840,7 @@ async function handleSolved() {
   showNextGamePromo();
   await loadLeaderboardIntoModal();
   updateLeaderboardButton();
+  updateExitReplayButton();
   saveProgress(true);
 }
 
@@ -946,6 +1057,7 @@ async function startDaily() {
     manualX = saved.manualX || manualX;
     autoX = deserializeAutoXSets(saved.autoX || serializeAutoXSets());
     hasSolved = !!saved.hasSolved;
+    completionMs = saved.completionMs ?? null;
     timerStarted = !!saved.timerStarted;
     if (timerStarted && saved.startedAtEpochMs) {
       resumeElapsedMs = Math.max(0, Date.now() - saved.startedAtEpochMs);
@@ -959,7 +1071,18 @@ async function startDaily() {
   updateUndoButton();
   updateLeaderboardButton();
 
-  if (timerStarted) {
+  if (isInReplayMode) {
+    hasSolved = false;
+    timerStarted = false;
+    completionMs = null;
+  }
+
+  if (hasSolved && !isInReplayMode) {
+    stopTimer();
+    timerStarted = false;
+    setPrestart(false);
+    els.timer.textContent = formatTime(completionMs || 0);
+  } else if (timerStarted) {
     setPrestart(false);
     startTimer({ resumeElapsedMs });
   } else {
@@ -967,6 +1090,8 @@ async function startDaily() {
     els.timer.textContent = formatTime(0);
     setPrestart(true);
   }
+
+  updateExitReplayButton();
 }
 
 async function startPractice() {
@@ -1012,17 +1137,45 @@ function wireUI() {
 
   els.resetBtn?.addEventListener('click', () => {
     if (mode === 'daily') {
-      // reset board, keep timer running (match other games)
+      timerWasRunning = timerStarted && !isPaused && !hasSolved;
+      if (timerWasRunning) pause();
+      showResetModal();
+    } else {
+      startPractice();
+    }
+  });
+
+  els.confirmResetBtn?.addEventListener('click', () => {
+    const wasComplete = hasSolved;
+    const wasReplay = isInReplayMode;
+    hideResetModal();
+
+    if (wasComplete) {
+      startReplay();
+    } else if (wasReplay) {
       initState();
       undoStack = [];
       render();
       updateClueStyles();
       hasSolved = false;
-      saveProgress(true);
-      updateUndoButton();
+      startTimer({ resumeElapsedMs: getElapsedMs() });
     } else {
-      startPractice();
+      initState();
+      undoStack = [];
+      render();
+      updateClueStyles();
+      hasSolved = false;
+      if (timerWasRunning) resume();
+      saveProgress(true);
     }
+    updateUndoButton();
+    updateLeaderboardButton();
+    updateExitReplayButton();
+  });
+
+  els.cancelResetBtn?.addEventListener('click', () => {
+    hideResetModal();
+    if (timerWasRunning) resume();
   });
 
   els.pauseBtn?.addEventListener('click', () => {
@@ -1031,6 +1184,24 @@ function wireUI() {
   });
 
   els.pauseOverlay?.addEventListener('click', () => resume());
+
+  els.exitReplayBtn?.addEventListener('click', () => {
+    timerWasRunning = timerStarted && !isPaused;
+    if (timerWasRunning) pause();
+    showExitReplayModal();
+  });
+
+  els.confirmExitReplayBtn?.addEventListener('click', () => {
+    hideExitReplayModal();
+    isInReplayMode = false;
+    saveReplayMode(false);
+    loadCompletedState();
+  });
+
+  els.cancelExitReplayBtn?.addEventListener('click', () => {
+    hideExitReplayModal();
+    if (timerWasRunning) resume();
+  });
 
   els.leaderboardBtn?.addEventListener('click', async () => {
     // In practice mode, we don't show leaderboard (match Snake/Pathways)
@@ -1128,26 +1299,27 @@ function wireUI() {
   });
 
   els.shareBtn?.addEventListener('click', async () => {
-    const dateLabel = mode === 'daily' ? puzzle.puzzleId : 'practice';
+    const dateLabel = mode === 'daily' ? formatDateForShare(puzzle.puzzleId) : 'practice';
+    const timeMs = (hasSolved && completionMs != null) ? completionMs : getElapsedMs();
     const shareText = buildShareText({
       gameName: 'Lattice',
       puzzleLabel: dateLabel,
       gridLabel: `${puzzle.size}x${puzzle.size}`,
-      timeText: formatTime(getElapsedMs()),
-      shareUrl: 'https://daily-grid.pages.dev/games/lattice/'
+      timeText: formatTime(timeMs),
+      shareUrl: 'https://dailygrid.app/games/lattice/'
     });
 
     try {
       await shareWithFallback({
         shareText,
         shareTitle: 'Lattice - Daily Grid',
-        shareUrl: 'https://daily-grid.pages.dev/games/lattice/',
-        onCopy: () => alert('Copied share text'),
-        onError: () => alert('Unable to share')
+        shareUrl: 'https://dailygrid.app/games/lattice/',
+        onCopy: () => showShareFeedback(els.shareBtn, 'Copied to clipboard!'),
+        onError: () => showShareFeedback(els.shareBtn, 'Unable to share')
       });
     } catch (shareError) {
       console.error('share helper failure', shareError);
-      alert('Unable to share');
+      showShareFeedback(els.shareBtn, 'Unable to share');
     }
   });
 
