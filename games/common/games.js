@@ -28,6 +28,15 @@ const GAME_META = [
     replayKeyPrefix: 'dailygrid_lattice_replay_',
     theme: { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400' },
     shareUrl: 'https://dailygrid.app/games/lattice/'
+  },
+  {
+    id: 'shikaku',
+    name: 'Parcel',
+    path: '/games/shikaku/',
+    logo: '/games/shikaku/shikaku-logo.svg',
+    submittedKeyPrefix: 'dailygrid_shikaku_submitted_',
+    theme: { bg: 'bg-emerald-500/10', border: 'border-emerald-400/30', text: 'text-emerald-300' },
+    shareUrl: 'https://dailygrid.app/games/shikaku/'
   }
 ];
 

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parcel by Daily Grid</title>
+  <meta name="description" content="Parcel — the daily rectangle packing puzzle from Daily Grid." />
+  <link rel="manifest" href="/games/shikaku/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/games/shikaku/shikaku-logo.svg">
+  <link rel="apple-touch-icon" href="/games/shikaku/shikaku-logo.svg">
+  <meta name="theme-color" content="#0E1410">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0E1410;
+      --glow: #9AD0B5;
+      --accent: #D8F3E4;
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-muted: rgba(216, 243, 228, 0.7);
+    }
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: #f6fff9;
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(154, 208, 181, 0.08), transparent 50%),
+        radial-gradient(circle at 80% 0%, rgba(216, 243, 228, 0.06), transparent 55%),
+        var(--bg);
+      pointer-events: none;
+      z-index: -1;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(14, 20, 16, 0.92);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.75rem 1rem;
+      backdrop-filter: blur(18px);
+    }
+    nav .inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    nav a {
+      color: #f6fff9;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .page-header {
+      text-align: center;
+      margin-bottom: 1.25rem;
+    }
+    .page-header h1 {
+      font-size: clamp(2.5rem, 4vw, 3.5rem);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+    .page-header p {
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .badge {
+      display: inline-flex;
+      gap: 0.35rem;
+      align-items: center;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(154, 208, 181, 0.4);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--glow);
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .stat-card {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 20px;
+      padding: 0.85rem 1rem;
+      text-align: center;
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .stat-card small {
+      display: block;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 0.35rem;
+      color: var(--glow);
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 24px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+    }
+    .glass-strong {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 24px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+    }
+    #game-container {
+      position: relative;
+      border-radius: 24px;
+      padding: 1.25rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.55);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+      margin-bottom: 1rem;
+    }
+    #progress-text {
+      text-align: center;
+      color: #b8f7d5;
+      letter-spacing: 0.12em;
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+    #parcel-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .cell {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      background: rgba(18, 25, 20, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #d8f3e4;
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border 0.15s ease, background 0.15s ease;
+      user-select: none;
+    }
+    .cell.clue {
+      background: rgba(154, 208, 181, 0.15);
+      color: #d8f3e4;
+    }
+    .cell.assigned {
+      border-color: rgba(154, 208, 181, 0.45);
+      background: rgba(154, 208, 181, 0.12);
+    }
+    .cell.selected {
+      border-color: rgba(216, 243, 228, 0.7);
+      background: rgba(216, 243, 228, 0.12);
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(12, 18, 14, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 20px;
+      gap: 0.4rem;
+      text-align: center;
+    }
+    .overlay.hidden { display: none; }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+    .btn {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.75rem 1.25rem;
+      background: rgba(255, 255, 255, 0.04);
+      color: #f0fff8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(154, 208, 181, 0.2), rgba(216, 243, 228, 0.2));
+      color: #102018;
+      border-color: rgba(154, 208, 181, 0.6);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 15;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 1rem;
+      backdrop-filter: blur(18px);
+    }
+    .modal-backdrop.show { display: flex; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="inner">
+      <a href="/games/">Daily Grid</a>
+      <a href="/games/">More Games</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <div class="badge">Parcel</div>
+      <h1>Parcel</h1>
+      <p>Pack the grid into perfect rectangles.</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <small>Timer</small>
+        <div class="value" id="timer">0:00</div>
+      </div>
+      <div class="stat-card">
+        <small>Puzzle</small>
+        <div class="value" id="puzzle-date">--</div>
+      </div>
+      <div class="stat-card">
+        <small>Rectangles</small>
+        <div class="value" id="rect-count">0</div>
+      </div>
+    </div>
+
+    <div id="game-container" class="glass">
+      <div id="progress-text">Drag to mark a rectangle.</div>
+      <div id="parcel-grid"></div>
+      <div id="start-overlay" class="overlay">
+        <h2 class="text-2xl font-semibold">Ready to parcel?</h2>
+        <p class="text-sm text-white/70">Drag across cells to claim a rectangle with a clue number.</p>
+        <button id="start-btn" class="btn primary">Start</button>
+      </div>
+      <div id="pause-overlay" class="overlay hidden">
+        <h2 class="text-2xl font-semibold">Paused</h2>
+        <button id="resume-btn" class="btn primary">Resume</button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="pause-btn" class="btn">Pause</button>
+      <button id="reset-btn" class="btn">Reset</button>
+      <button id="leaderboard-btn" class="btn hidden">Leaderboard</button>
+    </div>
+
+    <div id="next-game-promo" class="glass-strong p-4 flex items-center gap-4 hidden">
+      <img id="next-game-logo" src="" alt="" class="w-12 h-12 rounded-xl">
+      <div class="flex-1">
+        <div class="text-sm text-white/70">Up next</div>
+        <div id="next-game-text" class="font-semibold"></div>
+      </div>
+      <a id="next-game-link" class="btn" href="#">Play</a>
+    </div>
+  </main>
+
+  <div id="completion-modal" class="modal-backdrop">
+    <div class="glass-strong w-full max-w-lg p-6">
+      <h2 class="text-2xl font-semibold mb-2">Parcel Complete</h2>
+      <p class="text-sm text-white/70 mb-4">Your time: <span id="completion-time" class="font-semibold"></span></p>
+      <p id="percentile-msg" class="text-sm text-white/70 mb-4"></p>
+      <div id="completion-leaderboard-list" class="text-sm text-white/70 mb-4"></div>
+      <form id="claim-initials-form" class="flex gap-2 items-center mb-3 hidden">
+        <input id="initials-input" maxlength="3" placeholder="AAA" class="flex-1 px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-white uppercase">
+        <button id="claim-initials-btn" class="btn">Claim</button>
+      </form>
+      <p id="claim-message" class="text-xs text-white/60 mb-3"></p>
+      <div class="flex gap-2 justify-end">
+        <button id="share-btn" class="btn">Share</button>
+        <button id="close-modal-btn" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaderboard-modal" class="modal-backdrop">
+    <div class="glass-strong w-full max-w-lg p-6">
+      <h2 class="text-2xl font-semibold mb-2">Parcel Leaderboard</h2>
+      <div id="leaderboard-modal-list" class="text-sm text-white/70 mb-4"></div>
+      <div class="flex justify-end">
+        <button id="close-leaderboard-btn" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/games/shikaku/shikaku-ui.js"></script>
+</body>
+</html>
