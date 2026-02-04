@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/games/bits/bits-logo.svg">
+  <link rel="manifest" href="/games/bits/manifest.json">
+  <meta name="theme-color" content="#00100b">
+  <title>Bits by Daily Grid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #010a06;
+      --glow: #7efc5b;
+      --glow-strong: #2dff8c;
+      --panel: rgba(255, 255, 255, 0.03);
+      --panel-border: rgba(255, 255, 255, 0.08);
+    }
+    * {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(26, 255, 181, 0.06), transparent 35%),
+                  radial-gradient(circle at 80% 0%, rgba(126, 252, 91, 0.05), transparent 45%),
+                  var(--bg);
+      color: #e9fefe;
+      min-height: 100vh;
+    }
+    body::after {
+      content: '1 0 1 0 0 1 1 0';
+      position: fixed;
+      inset: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12rem;
+      color: rgba(126, 252, 91, 0.02);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 1.2rem;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      backdrop-filter: blur(12px);
+      background: rgba(1, 10, 6, 0.85);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    nav .inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+    }
+    nav a {
+      color: #9af1dc;
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    nav a:hover {
+      color: var(--glow);
+    }
+    header {
+      text-align: center;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+    header h1 {
+      font-size: clamp(2.5rem, 4vw, 3.5rem);
+      margin-bottom: 0.25rem;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      color: #9bdabb;
+      margin: 0;
+      font-size: 1rem;
+    }
+    .badge {
+      display: inline-flex;
+      gap: 0.35rem;
+      align-items: center;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(126, 252, 91, 0.4);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--glow);
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.35);
+    }
+    .stat-card small {
+      display: block;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: rgba(233, 254, 254, 0.6);
+    }
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 0.35rem;
+      color: var(--glow);
+    }
+    .grid-wrapper {
+      position: relative;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 24px;
+      padding: 1.25rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65);
+      margin-bottom: 1rem;
+    }
+    #bits-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+    .grid-cell {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      border: 1px solid rgba(126, 252, 91, 0.3);
+      background: rgba(2, 20, 13, 0.9);
+      color: rgba(126, 252, 91, 0.9);
+      font-size: 1.8rem;
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+    .grid-cell::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: border 0.2s ease;
+    }
+    .grid-cell:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 18px rgba(0, 255, 178, 0.2);
+    }
+    .grid-cell.filled {
+      box-shadow: 0 0 18px rgba(46, 255, 140, 0.6);
+    }
+    .grid-cell.clue {
+      pointer-events: none;
+      background: rgba(126, 252, 91, 0.12);
+      border-color: rgba(126, 252, 91, 0.6);
+      color: #b6ffce;
+    }
+    .grid-cell.clue::after {
+      border-color: rgba(126, 252, 91, 0.4);
+    }
+    #start-overlay,
+    #pause-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      flex-direction: column;
+      backdrop-filter: blur(16px);
+      color: #d4ffd1;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+    #start-overlay.hidden,
+    #pause-overlay.hidden {
+      display: none;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .btn {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.75rem 1.25rem;
+      background: rgba(255, 255, 255, 0.04);
+      color: #f0fff8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(126, 252, 91, 0.15), rgba(24, 255, 153, 0.1));
+      color: white;
+      border-color: rgba(126, 252, 91, 0.6);
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 1rem;
+      backdrop-filter: blur(12px);
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+    .modal-card {
+      width: 100%;
+      max-width: 440px;
+      background: #030b07;
+      border-radius: 24px;
+      padding: 1.5rem;
+      border: 1px solid rgba(126, 252, 91, 0.2);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+    }
+    .modal-card h2 {
+      margin-top: 0;
+      margin-bottom: 0.25rem;
+      color: white;
+    }
+    .modal-card p {
+      margin-top: 0;
+      color: #9ddab4;
+      font-size: 0.9rem;
+    }
+    .leaderboard-list {
+      margin-top: 1rem;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .leaderboard-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.65rem 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .leaderboard-row:last-child {
+      border-bottom: none;
+    }
+    .leaderboard-row .rank-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(126, 252, 91, 0.3);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--glow);
+      font-size: 0.8rem;
+    }
+    .leaderboard-row .initials {
+      color: #d1fff3;
+      margin-left: 0.5rem;
+    }
+    .modal-footer {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    form.claim-form {
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.45rem;
+      align-items: center;
+    }
+    form.claim-form input {
+      width: 80px;
+      border-radius: 12px;
+      padding: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.02);
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+    }
+    .details-card {
+      background: rgba(0, 0, 0, 0.55);
+      border-radius: 20px;
+      border: 1px solid rgba(126, 252, 91, 0.1);
+      padding: 1rem 1.25rem;
+      font-size: 0.95rem;
+      color: #9ddab4;
+      line-height: 1.5;
+    }
+    .details-card ul {
+      padding-left: 1.25rem;
+      margin: 0.5rem 0 0 0;
+    }
+    .details-card li {
+      margin-bottom: 0.35rem;
+    }
+    .progress-text {
+      text-align: center;
+      color: #b8ffd8;
+      letter-spacing: 0.12em;
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+    @media (max-width: 640px) {
+      .controls {
+        flex-direction: column;
+      }
+      nav .inner {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="inner">
+      <a href="/" aria-label="Go back to Daily Grid home">
+        <img src="/games/bits/bits-logo.svg" alt="Bits icon" width="36" height="36">
+        <span>Daily Grid</span>
+      </a>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <a href="/games/" aria-label="Browse other games">Games</a>
+        <a href="/support/" aria-label="Contact support">Support</a>
+      </div>
+    </div>
+  </nav>
+  <main>
+    <header>
+      <div class="badge">
+        <span>Daily Puzzle</span>
+      </div>
+      <h1>Bits</h1>
+      <p>Balance the grid. Keep rows and columns binary with no three-in-a-row.</p>
+      <p id="puzzle-date" class="progress-text" style="margin-top:0.4rem; font-size:0.85rem; letter-spacing:0.25em;"></p>
+    </header>
+    <div class="stats-row">
+      <div class="stat-card">
+        <small>Timer</small>
+        <div class="value" id="timer">0:00</div>
+      </div>
+      <div class="stat-card">
+        <small>Grid</small>
+        <div class="value">6 × 6</div>
+      </div>
+      <div class="stat-card">
+        <small>Goal</small>
+        <div class="value" id="goal-text">3 zeros / 3 ones</div>
+      </div>
+    </div>
+    <div class="progress-text" id="progress-text">Cells filled: 0 / 36</div>
+    <div class="grid-wrapper">
+      <div id="bits-grid"></div>
+      <div id="start-overlay" class="" role="status" aria-live="polite">
+        Tap any cell to start
+      </div>
+      <div id="pause-overlay" class="hidden" role="status" aria-live="polite">
+        <strong>Paused</strong>
+        <span>Tap resume to continue</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="leaderboard-btn" class="btn">Leaderboard</button>
+      <button id="pause-btn" class="btn">Pause</button>
+      <button id="reset-btn" class="btn">Reset</button>
+    </div>
+    <div class="details-card">
+      <h3>How to Play</h3>
+      <p>Every row and column must contain exactly three zeroes and three ones. No three identical bits may touch horizontally or vertically. The server gives you a handful of clues to guide the rest.</p>
+      <ul>
+        <li>Tap a cell to cycle between 0, 1, and blank.</li>
+        <li>Clues are locked and glow softly.</li>
+        <li>Fill the entire grid correctly to reveal the leaderboard.</li>
+      </ul>
+    </div>
+  </main>
+  <div id="completion-modal" class="modal-backdrop" aria-modal="true" role="dialog">
+    <div class="modal-card">
+      <h2>Nice work!</h2>
+      <p id="completion-subtitle">Balanced bits, perfect harmony.</p>
+      <p class="progress-text" id="completion-time">Time: 0:00</p>
+      <p id="percentile-msg">Sharing the leaderboard...</p>
+      <div class="leaderboard-list" id="completion-leaderboard-list">
+        <p class="progress-text">Loading top scores…</p>
+      </div>
+      <form id="claim-initials-form" class="claim-form hidden">
+        <label for="initials-input" class="sr-only">Initials</label>
+        <input id="initials-input" type="text" maxlength="3" placeholder="ABC" aria-label="Claim initials">
+        <button type="button" class="btn primary" id="claim-initials-btn">Save</button>
+      </form>
+      <p class="progress-text" id="claim-message"></p>
+      <div class="modal-footer">
+        <button class="btn" id="share-btn">Share</button>
+        <button class="btn" id="close-modal-btn">Close</button>
+      </div>
+    </div>
+  </div>
+  <div id="leaderboard-modal" class="modal-backdrop" aria-modal="true" role="dialog">
+    <div class="modal-card">
+      <h2 id="leaderboard-modal-title">Today's Top 10</h2>
+      <p>Fastest balanced grids</p>
+      <div class="leaderboard-list" id="leaderboard-modal-list">
+        <p class="progress-text">Fetching leaderboard…</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="close-leaderboard-btn">Close</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="bits-ui.js"></script>
+</body>
+</html>

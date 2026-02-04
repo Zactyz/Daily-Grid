@@ -28,6 +28,15 @@ const GAME_META = [
     replayKeyPrefix: 'dailygrid_lattice_replay_',
     theme: { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400' },
     shareUrl: 'https://dailygrid.app/games/lattice/'
+  },
+  {
+    id: 'bits',
+    name: 'Bits',
+    path: '/games/bits/',
+    logo: '/games/bits/bits-logo.svg',
+    submittedKeyPrefix: 'dailygrid_bits_submitted_',
+    theme: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400' },
+    shareUrl: 'https://dailygrid.app/games/bits/'
   }
 ];
 
