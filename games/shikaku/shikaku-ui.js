@@ -475,6 +475,8 @@ function tryComplete() {
     timerStarted = true;
     saveProgress();
     shell?.update();
+  } else if (rectangles.size === clues.length) {
+    updateProgress('All squares must be filled in.', { temporary: true });
   }
 }
 

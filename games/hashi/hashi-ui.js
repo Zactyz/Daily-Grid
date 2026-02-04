@@ -517,6 +517,7 @@ function drawIslands(ctx) {
     const pos = canvasPointFor(island);
     const current = counts.get(island.id) || 0;
     const satisfied = current === island.required;
+    const overfilled = current > island.required;
 
     ctx.fillStyle = satisfied ? '#1b4f35' : '#1f6a46';
     ctx.strokeStyle = selected === island.id ? '#9be7c4' : '#6fc49a';
@@ -525,6 +526,20 @@ function drawIslands(ctx) {
     ctx.arc(pos.x, pos.y, ISLAND_RADIUS, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    if (overfilled) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(245, 109, 109, 0.7)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, ISLAND_RADIUS + 2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(245, 109, 109, 0.18)';
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, ISLAND_RADIUS, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
 
     ctx.fillStyle = satisfied ? '#e8f9ee' : '#d9f3e2';
     ctx.font = 'bold 22px "Space Grotesk", sans-serif';

@@ -578,6 +578,7 @@ function buildCells() {
         c,
         value,
         isClue,
+        invalid: false,
         element: null,
         hints: { right: null, down: null }
       });
@@ -1062,6 +1063,7 @@ function resetPracticePuzzle() {
   completionMs = null;
   resetSolutionUI();
   updateProgressText();
+  validateBoard();
   updateGridLabel();
   setDateLabel();
   shell?.update();
@@ -1082,6 +1084,7 @@ function switchMode(mode) {
   createGrid();
   initState();
   updateProgressText();
+  validateBoard();
   updateGridLabel();
   setDateLabel();
   resetSolutionUI();
@@ -1104,6 +1107,7 @@ function init() {
   createGrid();
   initState();
   updateProgressText();
+  validateBoard();
   updateGridLabel();
   setDateLabel();
   initShell();
