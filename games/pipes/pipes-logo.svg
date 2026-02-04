@@ -1,13 +1,13 @@
-<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipes logo">
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Flowline logo">
   <defs>
-    <linearGradient id="pipesGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399" />
+    <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ce0e8" />
       <stop offset="60%" stop-color="#22c55e" />
-      <stop offset="100%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#f59e0b" />
     </linearGradient>
   </defs>
-  <rect width="120" height="120" rx="28" ry="28" fill="#020617" />
-  <text x="50%" y="50%" fill="url(#pipesGradient)" font-family="Space Grotesk, sans-serif" font-weight="700" font-size="36" text-anchor="middle" dominant-baseline="central">
-    Pipes
-  </text>
+  <rect width="120" height="120" rx="28" ry="28" fill="#070c12" />
+  <path d="M28 36h36a16 16 0 0 1 0 32H56a12 12 0 0 0 0 24h36" stroke="url(#flowGradient)" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <circle cx="28" cy="36" r="6" fill="#4ce0e8"/>
+  <circle cx="92" cy="92" r="6" fill="#f59e0b"/>
 </svg>

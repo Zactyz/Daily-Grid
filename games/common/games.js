@@ -64,12 +64,12 @@ const GAME_META = [
   },
   {
     id: 'pipes',
-    name: 'Pipes',
+    name: 'Flowline',
     path: '/games/pipes/',
     logo: '/games/pipes/pipes-logo.svg',
     submittedKeyPrefix: 'dailygrid_pipes_submitted_',
     completedKeyPrefix: 'dailygrid_pipes_completed_',
-    theme: { bg: 'bg-emerald-500/10', border: 'border-amber-400/30', text: 'text-amber-300' },
+    theme: { bg: 'bg-cyan-500/10', border: 'border-cyan-400/30', text: 'text-cyan-300' },
     shareUrl: 'https://dailygrid.app/games/pipes/'
   }
 ];
