@@ -571,10 +571,12 @@
         import { SnakeUI } from './snake-ui.js';
         import { getPTDateYYYYMMDD, STORAGE_KEYS } from './snake-utils.js';
         import { generatePuzzleForDate } from './snake-puzzle-generator.js';
+        import { mountShell } from '../common/shell-mount.js';
 
         let engine, renderer, input, ui;
         let lastTime = Date.now();
         let currentMode = 'daily'; // 'daily' or 'practice'
+        mountShell();
 
         // Generate puzzle client-side (deterministic - same puzzle for everyone on same day)
         function getPuzzle(mode) {

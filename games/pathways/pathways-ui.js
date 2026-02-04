@@ -19,8 +19,6 @@ export class PathwaysUI {
       resetBtn: document.getElementById('reset-btn'),
       obstacleHint: document.getElementById('obstacle-hint'),
       obstacleHintText: document.getElementById('obstacle-hint-text'),
-      validationMessage: document.getElementById('validation-message'),
-      validationMessageText: document.getElementById('validation-message-text'),
       showSolutionBtn: document.getElementById('show-solution-btn'),
       solutionActions: document.getElementById('solution-actions'),
       solutionRetryBtn: document.getElementById('solution-retry-btn'),

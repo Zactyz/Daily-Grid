@@ -275,7 +275,7 @@ export function createShellController(adapter, elementOverrides = null) {
     const gameName = shareMeta.gameName || meta?.name || adapter.gameId;
     const shareUrl = shareMeta.shareUrl || meta?.shareUrl || '';
     const gridLabel = shareMeta.gridLabel || adapter.getGridLabel();
-    const puzzleLabel = formatDateForShare(adapter.getPuzzleId());
+    const puzzleLabel = shareMeta.puzzleLabel || formatDateForShare(adapter.getPuzzleId());
 
     const shareText = buildShareText({
       gameName,

@@ -3,6 +3,8 @@ import { getPTDateYYYYMMDD, parseCsv, getOrCreateAnonId, formatTime } from './la
 
 import { getUncompletedGames as getCrossGamePromo } from '../common/games.js';
 import { createShellController } from '../common/shell-controller.js';
+import { formatDateForShare } from '../common/share.js';
+import { buildShareCard } from '../common/share-card.js';
 
 const els = {
   // header
@@ -1166,6 +1168,16 @@ function wireUI() {
     getCompletionPayload: () => ({ timeMs: Math.floor(completionMs ?? getElapsedMs()), hintsUsed: 0 }),
     shouldShowCompletionModal: () => !solutionShown,
     disableShellTimer: true,
+    getShareFile: () => buildShareCard({
+      gameName: 'Lattice',
+      logoPath: '/games/lattice/lattice-logo.png?v=2',
+      accent: '#7dd3fc',
+      accentSoft: 'rgba(125, 211, 252, 0.12)',
+      dateText: formatDateForShare(puzzle?.puzzleId || getPTDateYYYYMMDD()),
+      timeText: formatTime(completionMs ?? getElapsedMs()),
+      gridLabel: `${puzzle?.size || ''}x${puzzle?.size || ''}`,
+      footerText: 'dailygrid.app/games/lattice'
+    }),
     saveProgress: () => saveProgress(true)
   });
 

@@ -576,10 +576,12 @@
         import { PathwaysUI } from './pathways-ui.js';
         import { getPTDateYYYYMMDD, STORAGE_KEYS } from './pathways-utils.js';
         import { generatePuzzleForDate } from './pathways-puzzle-generator.js';
+        import { mountShell } from '../common/shell-mount.js';
 
         let engine, renderer, input, ui;
         let lastTime = Date.now();
         let currentMode = 'daily';
+        mountShell();
 
         function getPuzzle(mode) {
             let puzzleId;

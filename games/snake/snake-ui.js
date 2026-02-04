@@ -16,8 +16,6 @@ export class SnakeUI {
     this.elements = {
       pauseBtn: document.getElementById('pause-btn'),
       resetBtn: document.getElementById('reset-btn'),
-      validationMessage: document.getElementById('validation-message'),
-      validationMessageText: document.getElementById('validation-message-text'),
       showSolutionBtn: document.getElementById('show-solution-btn'),
       solutionActions: document.getElementById('solution-actions'),
       solutionRetryBtn: document.getElementById('solution-retry-btn'),
