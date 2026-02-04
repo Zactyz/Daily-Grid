@@ -133,8 +133,7 @@ export function createShellController(adapter, elementOverrides = null) {
     lastMode = mode;
 
     modalShown = false;
-    completionMs = null;
-    adapter.setCompletionMs?.(null);
+    completionMs = adapter.getCompletionMs?.() ?? null;
 
     hasSubmittedScore = mode === 'daily' ? loadSubmittedState() : false;
     isInReplayMode = mode === 'daily' ? loadReplayMode() : false;
@@ -162,6 +161,10 @@ export function createShellController(adapter, elementOverrides = null) {
       elements.pauseOverlay?.classList.add('hidden');
     } else {
       elements.startOverlay.classList.add('hidden');
+    }
+
+    if (!adapter.isStarted() && !adapter.isComplete() && hasProgress && adapter.autoStartOnProgress) {
+      adapter.startGame();
     }
   }
 

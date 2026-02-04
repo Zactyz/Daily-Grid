@@ -37,6 +37,7 @@ export class PathwaysUI {
       getGridLabel: () => `${this.engine.puzzle.width}x${this.engine.puzzle.height}`,
       getElapsedMs: () => this.engine.state.timeMs,
       formatTime,
+      autoStartOnProgress: true,
       isComplete: () => this.engine.state.isComplete,
       isPaused: () => this.engine.state.isPaused,
       isStarted: () => this.engine.state.timerStarted,
