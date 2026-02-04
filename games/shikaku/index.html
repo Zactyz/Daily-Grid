@@ -132,10 +132,12 @@
       display: grid;
       grid-template-columns: repeat(var(--grid-size, 5), minmax(0, 1fr));
       gap: 6px;
+      position: relative;
     }
 
     .cell {
       position: relative;
+      z-index: 1;
       aspect-ratio: 1 / 1;
       border-radius: 10px;
       background: rgba(24, 18, 12, 0.85);
@@ -157,12 +159,11 @@
     }
 
     .cell.assigned {
-      border: 3px solid #eadac0;
+      border-color: rgba(214, 187, 146, 0.35);
       background: #f7efe3;
+      background-image:
+        repeating-linear-gradient(135deg, rgba(160, 120, 74, 0.08) 0 10px, transparent 10px 20px);
       color: #3c2a1b;
-      box-shadow:
-        0 6px 16px rgba(0, 0, 0, 0.25),
-        inset 0 0 0 1px rgba(214, 187, 146, 0.6);
     }
 
     .cell.selected {
@@ -170,16 +171,15 @@
       background: rgba(244, 226, 196, 0.2);
     }
 
-    .cell.assigned::after {
-      content: '';
-      position: absolute;
-      inset: 8%;
-      border-radius: 6px;
-      border: 1px dashed rgba(160, 120, 74, 0.55);
-      background-image:
-        linear-gradient(135deg, rgba(160, 120, 74, 0.12) 0, rgba(160, 120, 74, 0.12) 6px, transparent 6px, transparent 14px);
+    .rect-outline {
       pointer-events: none;
-      opacity: 0.7;
+      z-index: 3;
+      border: 3px solid #eadac0;
+      border-radius: 14px;
+      box-shadow:
+        0 10px 20px rgba(0, 0, 0, 0.2),
+        inset 0 0 0 1px rgba(214, 187, 146, 0.7);
+      background: transparent;
     }
 
     .progress-text {

@@ -26,6 +26,7 @@ let clues = [];
 let clueIds = new Set();
 let cellAssignments = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
 const rectangles = new Map();
+const rectOverlays = new Map();
 let cells = [];
 let dragStart = null;
 let currentSelection = null;
@@ -241,6 +242,8 @@ function applyPuzzle(seedStr) {
   clueIds = new Set(clues.map(clue => clue.id));
   cellAssignments = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
   rectangles.clear();
+  rectOverlays.forEach(overlay => overlay.remove());
+  rectOverlays.clear();
   buildGrid();
 }
 
@@ -306,6 +309,11 @@ function clueInsideRect(rect) {
 function clearRectangleFor(clueId) {
   const existing = rectangles.get(clueId);
   if (!existing) return;
+  const overlay = rectOverlays.get(clueId);
+  if (overlay) {
+    overlay.remove();
+    rectOverlays.delete(clueId);
+  }
   for (let r = existing.r1; r <= existing.r2; r += 1) {
     for (let c = existing.c1; c <= existing.c2; c += 1) {
       if (cellAssignments[r][c] === clueId) {
@@ -318,6 +326,19 @@ function clearRectangleFor(clueId) {
   rectangles.delete(clueId);
 }
 
+function createOverlay(clueId, rect) {
+  const existing = rectOverlays.get(clueId);
+  if (existing) existing.remove();
+  if (!els.grid) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'rect-outline';
+  overlay.dataset.clueId = clueId;
+  overlay.style.gridRow = `${rect.r1 + 1} / ${rect.r2 + 2}`;
+  overlay.style.gridColumn = `${rect.c1 + 1} / ${rect.c2 + 2}`;
+  els.grid.appendChild(overlay);
+  rectOverlays.set(clueId, overlay);
+}
+
 function assignRectangle(clueId, rect) {
   clearRectangleFor(clueId);
   for (let r = rect.r1; r <= rect.r2; r += 1) {
@@ -328,6 +349,7 @@ function assignRectangle(clueId, rect) {
     }
   }
   rectangles.set(clueId, rect);
+  createOverlay(clueId, rect);
 }
 
 function updateCounts() {
@@ -460,6 +482,8 @@ function resumeTimer() {
 }
 
 function resetPuzzle({ resetTimer }) {
+  rectOverlays.forEach(overlay => overlay.remove());
+  rectOverlays.clear();
   rectangles.clear();
   for (let r = 0; r < gridSize; r += 1) {
     for (let c = 0; c < gridSize; c += 1) {
@@ -525,6 +549,8 @@ function saveProgress() {
 }
 
 function applySavedState(saved) {
+  rectOverlays.forEach(overlay => overlay.remove());
+  rectOverlays.clear();
   rectangles.clear();
   for (let r = 0; r < gridSize; r += 1) {
     for (let c = 0; c < gridSize; c += 1) {
