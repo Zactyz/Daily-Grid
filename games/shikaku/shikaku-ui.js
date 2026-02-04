@@ -1,9 +1,10 @@
-import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from './shikaku-utils.js';
-import { getUncompletedGames } from '../common/games.js';
-import { buildShareText, shareWithFallback, showShareFeedback, formatDateForShare } from '../common/share.js';
+import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from '../common/utils.js';
+import { createShellController } from '../common/shell-controller.js';
+import { formatDateForShare } from '../common/share.js';
+import { buildShareCard } from '../common/share-card.js';
 
 const GRID_SIZE = 5;
-const puzzleId = getPTDateYYYYMMDD();
+const STATE_PREFIX = 'dailygrid_shikaku_state_';
 
 const CLUES = [
   { id: 'A', r: 0, c: 1, area: 6 },
@@ -15,34 +16,9 @@ const CLUES = [
 
 const els = {
   grid: document.getElementById('parcel-grid'),
-  timer: document.getElementById('timer'),
   progress: document.getElementById('progress-text'),
   rectCount: document.getElementById('rect-count'),
-  puzzleDate: document.getElementById('puzzle-date'),
-  startOverlay: document.getElementById('start-overlay'),
-  pauseOverlay: document.getElementById('pause-overlay'),
-  startBtn: document.getElementById('start-btn'),
-  resumeBtn: document.getElementById('resume-btn'),
-  pauseBtn: document.getElementById('pause-btn'),
-  resetBtn: document.getElementById('reset-btn'),
-  leaderboardBtn: document.getElementById('leaderboard-btn'),
-  completionModal: document.getElementById('completion-modal'),
-  completionTime: document.getElementById('completion-time'),
-  percentileMsg: document.getElementById('percentile-msg'),
-  completionLeaderboard: document.getElementById('completion-leaderboard-list'),
-  shareBtn: document.getElementById('share-btn'),
-  closeCompletion: document.getElementById('close-modal-btn'),
-  claimForm: document.getElementById('claim-initials-form'),
-  initialsInput: document.getElementById('initials-input'),
-  claimBtn: document.getElementById('claim-initials-btn'),
-  claimMessage: document.getElementById('claim-message'),
-  leaderboardModal: document.getElementById('leaderboard-modal'),
-  leaderboardModalList: document.getElementById('leaderboard-modal-list'),
-  closeLeaderboard: document.getElementById('close-leaderboard-btn'),
-  nextGamePromo: document.getElementById('next-game-promo'),
-  nextGameLogo: document.getElementById('next-game-logo'),
-  nextGameText: document.getElementById('next-game-text'),
-  nextGameLink: document.getElementById('next-game-link')
+  puzzleDate: document.getElementById('puzzle-date')
 };
 
 const cellAssignments = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
@@ -50,15 +26,26 @@ const rectangles = new Map();
 let cells = [];
 let dragStart = null;
 let currentSelection = null;
-let timerInterval = null;
-let timerRunning = false;
-let timerPaused = false;
-let startTimestamp = 0;
+let shell = null;
+let currentMode = 'daily';
+let puzzleId = getPTDateYYYYMMDD();
+let puzzleSeed = puzzleId;
 let baseElapsed = 0;
-let isPrestart = true;
+let startTimestamp = 0;
+let timerStarted = false;
+let isPaused = false;
 let isComplete = false;
 let completionMs = null;
-let hasSubmittedScore = false;
+let tickInterval = null;
+
+function getPuzzleIdForMode(mode) {
+  if (mode === 'practice') return `practice-${puzzleSeed}`;
+  return getPTDateYYYYMMDD();
+}
+
+function getStateKey() {
+  return `${STATE_PREFIX}${currentMode}_${puzzleId}`;
+}
 
 function buildGrid() {
   if (!els.grid) return;
@@ -86,48 +73,7 @@ function cellAt(r, c) {
   return cells.find(cell => Number(cell.dataset.r) === r && Number(cell.dataset.c) === c);
 }
 
-function updateTimerDisplay(ms) {
-  if (!els.timer) return;
-  els.timer.textContent = formatTime(ms);
-}
-
-function startTimer() {
-  if (timerRunning) return;
-  timerRunning = true;
-  timerPaused = false;
-  startTimestamp = Date.now();
-  timerInterval = window.setInterval(() => {
-    if (!timerRunning || timerPaused || isComplete) return;
-    const elapsed = baseElapsed + (Date.now() - startTimestamp);
-    updateTimerDisplay(elapsed);
-  }, 100);
-}
-
-function pauseTimer() {
-  if (!timerRunning || timerPaused) return;
-  baseElapsed += Date.now() - startTimestamp;
-  timerPaused = true;
-}
-
-function resumeTimer() {
-  if (!timerRunning || !timerPaused) return;
-  timerPaused = false;
-  startTimestamp = Date.now();
-}
-
-function resetTimer() {
-  timerRunning = false;
-  timerPaused = false;
-  startTimestamp = 0;
-  baseElapsed = 0;
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-  updateTimerDisplay(0);
-}
-
-function setProgress(text) {
+function updateProgress(text) {
   if (els.progress) els.progress.textContent = text;
 }
 
@@ -208,8 +154,12 @@ function tryComplete() {
   if (isComplete) return;
   if (checkCompletion()) {
     isComplete = true;
-    completionMs = baseElapsed + (timerRunning ? Date.now() - startTimestamp : 0);
-    completePuzzle();
+    completionMs = getElapsedMs();
+    baseElapsed = completionMs;
+    isPaused = true;
+    timerStarted = true;
+    saveProgress();
+    shell?.update();
   }
 }
 
@@ -217,14 +167,8 @@ function handlePointerDown(event) {
   if (isComplete) return;
   const target = event.target.closest('.cell');
   if (!target) return;
-  if (isPrestart) {
-    isPrestart = false;
-    els.startOverlay?.classList.add('hidden');
-    startTimer();
-  } else if (!timerRunning) {
-    startTimer();
-  }
-  if (timerPaused) resumeTimer();
+  if (!timerStarted) startTimer();
+  if (isPaused) resumeTimer();
 
   dragStart = {
     r: Number(target.dataset.r),
@@ -262,12 +206,12 @@ function handlePointerUp(event) {
 
   const clues = clueInsideRect(rect);
   if (clues.length !== 1) {
-    setProgress('Each rectangle must include exactly one clue.');
+    updateProgress('Each rectangle must include exactly one clue.');
     return;
   }
   const clue = clues[0];
   if (rectArea(rect) !== clue.area) {
-    setProgress(`That rectangle needs area ${clue.area}.`);
+    updateProgress(`That rectangle needs area ${clue.area}.`);
     return;
   }
 
@@ -275,7 +219,7 @@ function handlePointerUp(event) {
     for (let c = rect.c1; c <= rect.c2; c += 1) {
       const assigned = cellAssignments[r][c];
       if (assigned && assigned !== clue.id) {
-        setProgress('Rectangles cannot overlap.');
+        updateProgress('Rectangles cannot overlap.');
         return;
       }
     }
@@ -283,177 +227,268 @@ function handlePointerUp(event) {
 
   assignRectangle(clue.id, rect);
   updateCounts();
-  setProgress('Rectangle placed.');
+  updateProgress('Rectangle placed.');
   tryComplete();
+  saveProgress();
+  shell?.update();
 }
 
-async function loadLeaderboard(container) {
-  if (!container) return;
-  container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">Loading leaderboard…</p>';
-  try {
-    const response = await fetch(`/api/shikaku/leaderboard?puzzleId=${puzzleId}`);
-    if (!response.ok) throw new Error('Leaderboard failed');
-    const data = await response.json();
-    if (!data.top10 || data.top10.length === 0) {
-      container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">No scores yet — be the first!</p>';
-      return;
+function getElapsedMs() {
+  if (!timerStarted) return baseElapsed;
+  if (isPaused) return baseElapsed;
+  return baseElapsed + (performance.now() - startTimestamp);
+}
+
+function startTimer() {
+  if (timerStarted && !isPaused) return;
+  timerStarted = true;
+  isPaused = false;
+  startTimestamp = performance.now();
+  saveProgress();
+}
+
+function pauseTimer() {
+  if (!timerStarted || isPaused) return;
+  baseElapsed = getElapsedMs();
+  isPaused = true;
+  saveProgress();
+}
+
+function resumeTimer() {
+  if (!timerStarted) {
+    timerStarted = true;
+    baseElapsed = baseElapsed || 0;
+  }
+  if (!isPaused) return;
+  isPaused = false;
+  startTimestamp = performance.now();
+  saveProgress();
+}
+
+function resetPuzzle({ resetTimer }) {
+  rectangles.clear();
+  for (let r = 0; r < GRID_SIZE; r += 1) {
+    for (let c = 0; c < GRID_SIZE; c += 1) {
+      cellAssignments[r][c] = null;
     }
-    container.innerHTML = data.top10.map((entry, idx) => `
-      <div class="flex items-center justify-between py-1">
-        <span>${idx + 1}. ${entry.initials || '???'}</span>
-        <span>${formatTime(entry.timeMs)}</span>
-      </div>
-    `).join('');
-  } catch (error) {
-    container.innerHTML = '<p class="text-center text-xs text-zinc-400 py-4">Unable to load leaderboard.</p>';
+  }
+  cells.forEach(cell => cell.classList.remove('assigned'));
+  clearSelection();
+  dragStart = null;
+  isComplete = false;
+  completionMs = null;
+
+  if (resetTimer) {
+    baseElapsed = 0;
+    startTimestamp = 0;
+    timerStarted = false;
+    isPaused = false;
+  }
+
+  updateCounts();
+  updateProgress('Drag to mark a rectangle.');
+  saveProgress();
+  shell?.update();
+}
+
+function loadState() {
+  if (currentMode !== 'daily') return null;
+  try {
+    const raw = localStorage.getItem(getStateKey());
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.rectangles)) return null;
+    if (data.timerStarted && !data.isComplete && !data.isPaused) {
+      data.isPaused = true;
+    }
+    return data;
+  } catch {
+    return null;
   }
 }
 
-async function completePuzzle() {
-  if (hasSubmittedScore) return;
-  const anonId = getOrCreateAnonId();
-  const timeMs = completionMs || 0;
-  hasSubmittedScore = true;
-
-  els.completionTime && (els.completionTime.textContent = formatTime(timeMs));
-  els.completionModal?.classList.add('show');
-  els.leaderboardBtn?.classList.remove('hidden');
-
+function saveProgress() {
+  if (currentMode !== 'daily') return;
+  const rectanglesData = Array.from(rectangles.entries()).map(([clueId, rect]) => ({
+    clueId,
+    rect
+  }));
+  const payload = {
+    rectangles: rectanglesData,
+    timeMs: getElapsedMs(),
+    timerStarted,
+    isPaused,
+    isComplete,
+    completionMs
+  };
   try {
-    const response = await fetch('/api/shikaku/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ puzzleId, anonId, timeMs, hintsUsed: 0 })
+    localStorage.setItem(getStateKey(), JSON.stringify(payload));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function applySavedState(saved) {
+  rectangles.clear();
+  for (let r = 0; r < GRID_SIZE; r += 1) {
+    for (let c = 0; c < GRID_SIZE; c += 1) {
+      cellAssignments[r][c] = null;
+    }
+  }
+  cells.forEach(cell => cell.classList.remove('assigned'));
+
+  if (saved?.rectangles) {
+    saved.rectangles.forEach(({ clueId, rect }) => {
+      if (!clueId || !rect) return;
+      assignRectangle(clueId, rect);
     });
-    const data = await response.json();
-    if (data.success) {
-      els.percentileMsg && (els.percentileMsg.textContent = `Rank #${data.rank} • Top ${data.percentile}%`);
-      if (data.rank <= 10) {
-        els.claimForm?.classList.remove('hidden');
-      }
-    }
-  } catch (error) {
-    console.warn('Score submit failed', error);
   }
-
-  try {
-    localStorage.setItem(`dailygrid_shikaku_submitted_${puzzleId}`, 'true');
-  } catch (error) {
-    console.warn('Failed to store completion flag', error);
-  }
-
-  await loadLeaderboard(els.completionLeaderboard);
-  updateNextGamePromo();
+  updateCounts();
 }
 
-function updateNextGamePromo() {
-  if (!els.nextGamePromo) return;
-  const next = getUncompletedGames('shikaku', puzzleId)[0];
-  if (!next) {
-    els.nextGamePromo.classList.add('hidden');
-    return;
-  }
-  els.nextGameLogo && (els.nextGameLogo.src = next.logo);
-  els.nextGameLogo && (els.nextGameLogo.alt = next.name);
-  els.nextGameText && (els.nextGameText.textContent = next.name);
-  if (els.nextGameLink) {
-    els.nextGameLink.href = next.path;
-  }
-  els.nextGamePromo.classList.remove('hidden');
-}
-
-function handleShare() {
-  const shareText = buildShareText({
-    gameName: 'Parcel',
-    puzzleLabel: formatDateForShare(puzzleId),
-    gridLabel: 'Parcel',
-    timeText: formatTime(completionMs || 0),
-    shareUrl: window.location.href
-  });
-  shareWithFallback({
-    shareText,
-    shareTitle: 'Parcel by Daily Grid',
-    shareUrl: window.location.href,
-    onCopy: () => showShareFeedback(els.shareBtn, 'Copied'),
-    onError: () => showShareFeedback(els.shareBtn, 'Failed')
-  });
-}
-
-async function submitInitials(event) {
-  event.preventDefault();
-  const initials = els.initialsInput?.value.trim().toUpperCase();
-  if (!initials || initials.length > 3) {
-    els.claimMessage && (els.claimMessage.textContent = 'Enter 1–3 letters.');
-    return;
-  }
-  try {
-    const response = await fetch('/api/shikaku/claim-initials', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ puzzleId, anonId: getOrCreateAnonId(), initials })
-    });
-    const data = await response.json();
-    if (!response.ok || !data.success) throw new Error('Claim failed');
-    els.claimMessage && (els.claimMessage.textContent = 'Claim saved!');
-    els.claimForm?.classList.add('hidden');
-  } catch (error) {
-    els.claimMessage && (els.claimMessage.textContent = 'Unable to save.');
-  }
-}
-
-function bindEvents() {
-  els.grid?.addEventListener('pointerdown', handlePointerDown);
-  els.grid?.addEventListener('pointermove', handlePointerMove);
-  window.addEventListener('pointerup', handlePointerUp);
-
-  els.startBtn?.addEventListener('click', () => {
-    isPrestart = false;
-    els.startOverlay?.classList.add('hidden');
-    startTimer();
-  });
-  els.resumeBtn?.addEventListener('click', () => {
-    els.pauseOverlay?.classList.add('hidden');
-    resumeTimer();
-  });
-  els.pauseBtn?.addEventListener('click', () => {
-    pauseTimer();
-    els.pauseOverlay?.classList.remove('hidden');
-  });
-  els.resetBtn?.addEventListener('click', () => {
-    rectangles.clear();
-    for (let r = 0; r < GRID_SIZE; r += 1) {
-      for (let c = 0; c < GRID_SIZE; c += 1) {
-        cellAssignments[r][c] = null;
-      }
-    }
-    cells.forEach(cell => cell.classList.remove('assigned'));
+function initState() {
+  const saved = loadState();
+  if (saved) {
+    applySavedState(saved);
+    baseElapsed = saved.timeMs ?? 0;
+    timerStarted = saved.timerStarted ?? false;
+    isPaused = saved.isPaused ?? false;
+    isComplete = saved.isComplete ?? false;
+    completionMs = saved.completionMs ?? null;
+  } else {
+    baseElapsed = 0;
+    timerStarted = false;
+    isPaused = false;
     isComplete = false;
     completionMs = null;
-    hasSubmittedScore = false;
-    isPrestart = true;
-    els.startOverlay?.classList.remove('hidden');
-    els.pauseOverlay?.classList.add('hidden');
-    resetTimer();
-    updateCounts();
-    setProgress('Drag to mark a rectangle.');
+  }
+}
+
+function setDateLabel() {
+  if (!els.puzzleDate) return;
+  if (currentMode === 'practice') {
+    els.puzzleDate.textContent = 'Practice';
+    return;
+  }
+  els.puzzleDate.textContent = puzzleId;
+}
+
+function ensureTicker() {
+  if (tickInterval) return;
+  tickInterval = window.setInterval(() => {
+    shell?.update();
+  }, 200);
+}
+
+function resetPracticePuzzle() {
+  puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  puzzleId = getPuzzleIdForMode('practice');
+  resetPuzzle({ resetTimer: true });
+  setDateLabel();
+}
+
+function switchMode(mode) {
+  if (currentMode === mode) return;
+  saveProgress();
+  currentMode = mode;
+  if (mode === 'practice') {
+    puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  } else {
+    puzzleSeed = getPTDateYYYYMMDD();
+  }
+  puzzleId = getPuzzleIdForMode(mode);
+  initState();
+  updateCounts();
+  updateProgress('Drag to mark a rectangle.');
+  setDateLabel();
+  shell?.update();
+}
+
+function initShell() {
+  if (shell) return;
+
+  shell = createShellController({
+    gameId: 'shikaku',
+    getMode: () => currentMode,
+    getPuzzleId: () => puzzleId,
+    getGridLabel: () => `${GRID_SIZE}x${GRID_SIZE} Rects`,
+    getElapsedMs: () => getElapsedMs(),
+    formatTime,
+    autoStartOnProgress: true,
+    isComplete: () => isComplete,
+    isPaused: () => isPaused,
+    isStarted: () => timerStarted,
+    hasProgress: () => rectangles.size > 0,
+    pause: () => pauseTimer(),
+    resume: () => resumeTimer(),
+    startGame: () => startTimer(),
+    resetGame: () => resetPuzzle({ resetTimer: false }),
+    startReplay: () => {},
+    exitReplay: () => {},
+    onResetUI: () => {},
+    onTryAgain: () => resetPuzzle({ resetTimer: true }),
+    onNextLevel: () => resetPracticePuzzle(),
+    onBackToDaily: () => switchMode('daily'),
+    onPracticeInfinite: () => switchMode('practice'),
+    onStartPractice: () => switchMode('practice'),
+    onStartDaily: () => switchMode('daily'),
+    getAnonId: () => getOrCreateAnonId(),
+    getCompletionPayload: () => ({
+      timeMs: Math.max(3000, Math.min(getElapsedMs(), 3600000)),
+      hintsUsed: 0
+    }),
+    getShareMeta: () => ({
+      gameName: 'Parcel',
+      shareUrl: 'https://dailygrid.app/games/shikaku/',
+      gridLabel: '5x5 Parcel'
+    }),
+    getShareFile: () => buildShareImage(),
+    getCompletionMs: () => completionMs,
+    setCompletionMs: (ms) => {
+      completionMs = ms;
+    },
+    isTimerRunning: () => timerStarted && !isPaused && !isComplete,
+    disableReplay: true,
+    pauseOnHide: true
   });
-  els.shareBtn?.addEventListener('click', handleShare);
-  els.closeCompletion?.addEventListener('click', () => els.completionModal?.classList.remove('show'));
-  els.leaderboardBtn?.addEventListener('click', () => {
-    els.leaderboardModal?.classList.add('show');
-    loadLeaderboard(els.leaderboardModalList);
+}
+
+async function buildShareImage() {
+  const finalTime = completionMs ?? getElapsedMs();
+  const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
+  return buildShareCard({
+    gameName: 'Parcel',
+    logoPath: '/games/shikaku/shikaku-logo.svg',
+    accent: '#9AD0B5',
+    accentSoft: 'rgba(154, 208, 181, 0.12)',
+    backgroundStart: '#0E1410',
+    backgroundEnd: '#122018',
+    dateText: puzzleDate,
+    timeText: formatTime(finalTime || 0),
+    gridLabel: 'Grid 5x5',
+    footerText: 'dailygrid.app/games/shikaku'
   });
-  els.closeLeaderboard?.addEventListener('click', () => els.leaderboardModal?.classList.remove('show'));
-  els.claimForm?.addEventListener('submit', submitInitials);
 }
 
 function init() {
-  if (els.puzzleDate) els.puzzleDate.textContent = puzzleId;
+  puzzleSeed = getPTDateYYYYMMDD();
+  puzzleId = getPuzzleIdForMode(currentMode);
   buildGrid();
-  updateTimerDisplay(0);
+  initState();
   updateCounts();
-  setProgress('Drag to mark a rectangle.');
-  bindEvents();
+  updateProgress('Drag to mark a rectangle.');
+  setDateLabel();
+  initShell();
+  ensureTicker();
+  shell?.update();
 }
 
-init();
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  els.grid?.addEventListener('pointerdown', handlePointerDown);
+  els.grid?.addEventListener('pointermove', handlePointerMove);
+  window.addEventListener('pointerup', handlePointerUp);
+  window.startPracticeMode = () => switchMode('practice');
+  window.startDailyMode = () => switchMode('daily');
+  window.addEventListener('beforeunload', saveProgress);
+});
