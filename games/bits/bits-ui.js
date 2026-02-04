@@ -612,12 +612,159 @@ function createGrid() {
   });
 }
 
+function clearInvalids() {
+  cells.forEach((cell) => {
+    cell.invalid = false;
+  });
+}
+
+function markInvalid(r, c) {
+  const cell = cells[r * GRID_SIZE + c];
+  if (cell) cell.invalid = true;
+}
+
+function validateBoard() {
+  clearInvalids();
+
+  const grid = Array.from({ length: GRID_SIZE }, (_, r) =>
+    Array.from({ length: GRID_SIZE }, (_, c) => {
+      const cell = cells[r * GRID_SIZE + c];
+      return cell?.value ?? null;
+    })
+  );
+
+  if (descriptor?.adjacencies) {
+    descriptor.adjacencies.forEach(({ r, c, dir, type }) => {
+      const a = grid[r]?.[c];
+      const b = dir === 'right' ? grid[r]?.[c + 1] : grid[r + 1]?.[c];
+      if (a === null || b === null) return;
+      const violates = type === 'equal' ? a !== b : a === b;
+      if (violates) {
+        markInvalid(r, c);
+        if (dir === 'right') markInvalid(r, c + 1);
+        else markInvalid(r + 1, c);
+      }
+    });
+  }
+
+  for (let r = 0; r < GRID_SIZE; r += 1) {
+    let zeros = 0;
+    let ones = 0;
+    for (let c = 0; c < GRID_SIZE; c += 1) {
+      if (grid[r][c] === 0) zeros += 1;
+      if (grid[r][c] === 1) ones += 1;
+    }
+    if (zeros > 3) {
+      for (let c = 0; c < GRID_SIZE; c += 1) {
+        if (grid[r][c] === 0) markInvalid(r, c);
+      }
+    }
+    if (ones > 3) {
+      for (let c = 0; c < GRID_SIZE; c += 1) {
+        if (grid[r][c] === 1) markInvalid(r, c);
+      }
+    }
+
+    for (let c = 0; c < GRID_SIZE - 2; c += 1) {
+      const a = grid[r][c];
+      const b = grid[r][c + 1];
+      const d = grid[r][c + 2];
+      if (a !== null && a === b && b === d) {
+        markInvalid(r, c);
+        markInvalid(r, c + 1);
+        markInvalid(r, c + 2);
+      }
+    }
+  }
+
+  for (let c = 0; c < GRID_SIZE; c += 1) {
+    let zeros = 0;
+    let ones = 0;
+    for (let r = 0; r < GRID_SIZE; r += 1) {
+      if (grid[r][c] === 0) zeros += 1;
+      if (grid[r][c] === 1) ones += 1;
+    }
+    if (zeros > 3) {
+      for (let r = 0; r < GRID_SIZE; r += 1) {
+        if (grid[r][c] === 0) markInvalid(r, c);
+      }
+    }
+    if (ones > 3) {
+      for (let r = 0; r < GRID_SIZE; r += 1) {
+        if (grid[r][c] === 1) markInvalid(r, c);
+      }
+    }
+
+    for (let r = 0; r < GRID_SIZE - 2; r += 1) {
+      const a = grid[r][c];
+      const b = grid[r + 1][c];
+      const d = grid[r + 2][c];
+      if (a !== null && a === b && b === d) {
+        markInvalid(r, c);
+        markInvalid(r + 1, c);
+        markInvalid(r + 2, c);
+      }
+    }
+  }
+
+  for (let r = 0; r < GRID_SIZE; r += 1) {
+    const row = grid[r];
+    if (row.some(v => v === null)) continue;
+    for (let r2 = r + 1; r2 < GRID_SIZE; r2 += 1) {
+      const row2 = grid[r2];
+      if (row2.some(v => v === null)) continue;
+      let same = true;
+      for (let c = 0; c < GRID_SIZE; c += 1) {
+        if (row[c] !== row2[c]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) {
+        for (let c = 0; c < GRID_SIZE; c += 1) {
+          markInvalid(r, c);
+          markInvalid(r2, c);
+        }
+      }
+    }
+  }
+
+  for (let c = 0; c < GRID_SIZE; c += 1) {
+    const col = [];
+    for (let r = 0; r < GRID_SIZE; r += 1) col.push(grid[r][c]);
+    if (col.some(v => v === null)) continue;
+    for (let c2 = c + 1; c2 < GRID_SIZE; c2 += 1) {
+      const col2 = [];
+      for (let r = 0; r < GRID_SIZE; r += 1) col2.push(grid[r][c2]);
+      if (col2.some(v => v === null)) continue;
+      let same = true;
+      for (let r = 0; r < GRID_SIZE; r += 1) {
+        if (col[r] !== col2[r]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) {
+        for (let r = 0; r < GRID_SIZE; r += 1) {
+          markInvalid(r, c);
+          markInvalid(r, c2);
+        }
+      }
+    }
+  }
+
+  cells.forEach(updateCellAppearance);
+}
+
 function updateCellAppearance(cell) {
   if (!cell.element) return;
   const { element } = cell;
   element.textContent = cell.value === null ? '' : cell.value.toString();
   element.classList.toggle('filled', cell.value !== null);
   element.classList.toggle('clue', cell.isClue);
+  element.classList.toggle('value-0', cell.value === 0);
+  element.classList.toggle('value-1', cell.value === 1);
+  element.classList.toggle('invalid', cell.invalid);
   element.disabled = cell.isClue;
   const label = `Row ${cell.r + 1}, column ${cell.c + 1}${cell.isClue ? ' (clue)' : ''}${cell.value !== null ? `, ${cell.value}` : ''}`;
   element.setAttribute('aria-label', label);
@@ -650,7 +797,7 @@ function applySavedValues(savedValues) {
     const value = savedValues[idx];
     cell.value = value === 0 || value === 1 ? value : null;
   });
-  cells.forEach(updateCellAppearance);
+  validateBoard();
 }
 
 function handleCellClick(event) {
@@ -665,6 +812,7 @@ function handleCellClick(event) {
   cell.value = nextValue;
   updateCellAppearance(cell);
   updateProgressText();
+  validateBoard();
   saveProgress();
 
   if (cells.every(c => c.value !== null)) {
@@ -735,6 +883,7 @@ function resetPuzzle({ resetTimer }) {
       cell.value = null;
       updateCellAppearance(cell);
     }
+    cell.invalid = false;
   });
   isComplete = false;
   completionMs = null;
@@ -747,6 +896,7 @@ function resetPuzzle({ resetTimer }) {
   }
 
   updateProgressText();
+  validateBoard();
   saveProgress();
   shell?.update();
 }
@@ -774,6 +924,7 @@ function initState() {
   isComplete = saved?.isComplete ?? false;
   completionMs = saved?.completionMs ?? null;
   applySavedValues(saved?.values || []);
+  validateBoard();
 }
 
 function initShell() {
@@ -790,7 +941,7 @@ function initShell() {
     isComplete: () => isComplete,
     isPaused: () => isPaused,
     isStarted: () => timerStarted,
-    hasProgress: () => cells.some(cell => cell.value !== null),
+    hasProgress: () => cells.some(cell => !cell.isClue && cell.value !== null),
     pause: () => pauseTimer(),
     resume: () => resumeTimer(),
     startGame: () => startTimer(),

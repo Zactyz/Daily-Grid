@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bits">
-    <meta name="description" content="Bits — the Daily Grid Binairo-inspired puzzle with extra adjacency hints.">
+    <meta name="description" content="Bits — a neon logic grid where 0s and 1s click into place.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/games/common/shell.css">
@@ -160,6 +160,16 @@
             box-shadow: 0 0 18px rgba(46, 255, 140, 0.35);
         }
 
+        .grid-cell.value-0 {
+            color: #8fe4ff;
+            background: rgba(6, 40, 52, 0.75);
+        }
+
+        .grid-cell.value-1 {
+            color: #c6ff8a;
+            background: rgba(16, 48, 18, 0.75);
+        }
+
         .grid-cell.clue {
             pointer-events: none;
             background: rgba(91, 255, 148, 0.12);
@@ -175,8 +185,10 @@
 
         .adj-hint {
             position: absolute;
-            font-size: 0.65rem;
+            font-size: 0.9rem;
             font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
             pointer-events: none;
         }
 
@@ -200,6 +212,12 @@
             color: rgba(233, 254, 254, 0.7);
             letter-spacing: 0.12em;
             font-size: 0.8rem;
+        }
+
+        .grid-cell.invalid {
+            border-color: rgba(255, 92, 92, 0.9);
+            box-shadow: 0 0 14px rgba(255, 92, 92, 0.55);
+            background: rgba(72, 8, 8, 0.65);
         }
 
         /* modal */
@@ -249,7 +267,7 @@
                 Practice Mode
             </div>
             <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Bits</h1>
-            <p class="text-zinc-500 text-sm">Neon binary logic with Binairo+ adjacency clues.</p>
+            <p class="text-zinc-500 text-sm">Neon logic pulses where zeros and ones lock into place.</p>
             <p id="puzzle-date" class="progress-text mt-2"></p>
         </header>
 
@@ -265,7 +283,6 @@
         </div>
 
         <div id="game-container" class="glass-strong p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
-            <div id="progress-text" class="progress-text mb-3">Cells filled: 0 / 36</div>
             <div id="bits-grid"></div>
 
             <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
