@@ -61,6 +61,16 @@ const GAME_META = [
     completedKeyPrefix: 'dailygrid_shikaku_completed_',
     theme: { bg: 'bg-amber-300/15', border: 'border-amber-300/30', text: 'text-amber-200' },
     shareUrl: 'https://dailygrid.app/games/shikaku/'
+  },
+  {
+    id: 'pipes',
+    name: 'Pipes',
+    path: '/games/pipes/',
+    logo: '/games/pipes/pipes-logo.svg',
+    submittedKeyPrefix: 'dailygrid_pipes_submitted_',
+    completedKeyPrefix: 'dailygrid_pipes_completed_',
+    theme: { bg: 'bg-emerald-500/10', border: 'border-amber-400/30', text: 'text-amber-300' },
+    shareUrl: 'https://dailygrid.app/games/pipes/'
   }
 ];
 
