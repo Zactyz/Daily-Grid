@@ -220,7 +220,7 @@ async function submitScore(timeMs) {
       els.claimForm?.classList.remove('hidden');
     }
   } catch (error) {
-    console.error('Pipes score submission failed', error);
+    console.error('Flowline score submission failed', error);
     if (els.percentileMsg) {
       els.percentileMsg.textContent = 'Leaderboard temporarily unavailable';
     }
@@ -293,7 +293,7 @@ function updateNextGamePromo() {
 
 function handleShare() {
   const shareText = buildShareText({
-    gameName: 'Pipes',
+    gameName: 'Flowline',
     puzzleLabel: formatDateForShare(puzzleId),
     gridLabel: '7×7 neon flow',
     timeText: formatTime(completionMs),
@@ -301,7 +301,7 @@ function handleShare() {
   });
   shareWithFallback({
     shareText,
-    shareTitle: 'Pipes by Daily Grid',
+    shareTitle: 'Flowline by Daily Grid',
     shareUrl: window.location.href,
     onCopy() {
       showShareFeedback(els.shareBtn, 'Copied');
