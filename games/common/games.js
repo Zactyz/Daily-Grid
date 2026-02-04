@@ -28,6 +28,15 @@ const GAME_META = [
     replayKeyPrefix: 'dailygrid_lattice_replay_',
     theme: { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400' },
     shareUrl: 'https://dailygrid.app/games/lattice/'
+  },
+  {
+    id: 'hashi',
+    name: 'Bridgeworks',
+    path: '/games/hashi/',
+    logo: '/games/hashi/hashi-logo.svg',
+    submittedKeyPrefix: 'dailygrid_hashi_submitted_',
+    theme: { bg: 'bg-orange-500/10', border: 'border-orange-400/30', text: 'text-orange-300' },
+    shareUrl: 'https://dailygrid.app/games/hashi/'
   }
 ];
 
