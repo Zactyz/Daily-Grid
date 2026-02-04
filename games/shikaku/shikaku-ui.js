@@ -20,7 +20,13 @@ const els = {
   rectCount: document.getElementById('rect-count'),
   puzzleDate: document.getElementById('puzzle-date'),
   validationMessage: document.getElementById('validation-message'),
-  validationMessageText: document.getElementById('validation-message-text')
+  validationMessageText: document.getElementById('validation-message-text'),
+  showSolutionBtn: document.getElementById('show-solution-btn'),
+  solutionActions: document.getElementById('solution-actions'),
+  solutionRetryBtn: document.getElementById('solution-retry-btn'),
+  solutionNextBtn: document.getElementById('solution-next-btn'),
+  pauseBtn: document.getElementById('pause-btn'),
+  resetBtn: document.getElementById('reset-btn')
 };
 
 let gridSize = 5;
@@ -44,6 +50,7 @@ let isComplete = false;
 let completionMs = null;
 let tickInterval = null;
 let messageTimeout = null;
+let solutionShown = false;
 
 const helperText = 'Drag to draw a rectangle. Tap a filled cell to clear it.';
 
@@ -215,6 +222,49 @@ function countSolutions(cluesList, size, limit = 2) {
   return solutions;
 }
 
+function solvePuzzle(cluesList, size) {
+  const totalArea = cluesList.reduce((sum, clue) => sum + clue.area, 0);
+  if (totalArea !== size * size) return null;
+  const candidateSets = cluesList.map(clue => generateCandidates(clue, size));
+  const order = [...cluesList.keys()].sort((a, b) => candidateSets[a].length - candidateSets[b].length);
+  const used = Array.from({ length: size }, () => Array(size).fill(false));
+  const solution = new Map();
+
+  function canPlace(rect) {
+    for (let r = rect.r1; r <= rect.r2; r += 1) {
+      for (let c = rect.c1; c <= rect.c2; c += 1) {
+        if (used[r][c]) return false;
+      }
+    }
+    return true;
+  }
+
+  function setUsed(rect, value) {
+    for (let r = rect.r1; r <= rect.r2; r += 1) {
+      for (let c = rect.c1; c <= rect.c2; c += 1) {
+        used[r][c] = value;
+      }
+    }
+  }
+
+  function backtrack(idx) {
+    if (idx >= order.length) return true;
+    const clueIndex = order[idx];
+    const clue = cluesList[clueIndex];
+    for (const rect of candidateSets[clueIndex]) {
+      if (!canPlace(rect)) continue;
+      setUsed(rect, true);
+      solution.set(clue.id, rect);
+      if (backtrack(idx + 1)) return true;
+      solution.delete(clue.id);
+      setUsed(rect, false);
+    }
+    return false;
+  }
+
+  return backtrack(0) ? solution : null;
+}
+
 function generatePuzzle(seedStr) {
   const baseSeed = hashString(seedStr);
   for (let attempt = 0; attempt < 80; attempt += 1) {
@@ -296,6 +346,23 @@ function showMessage(text, { temporary = false } = {}) {
 
 function updateProgress(text, { temporary = false } = {}) {
   showMessage(text, { temporary });
+}
+
+function resetSolutionUI() {
+  solutionShown = false;
+  els.solutionActions?.classList.add('hidden');
+  updateShowSolutionButton();
+  els.pauseBtn?.classList.remove('hidden');
+  els.resetBtn?.classList.remove('hidden');
+}
+
+function updateShowSolutionButton() {
+  if (!els.showSolutionBtn) return;
+  if (currentMode === 'practice' && !solutionShown && !isComplete) {
+    els.showSolutionBtn.classList.remove('hidden');
+  } else {
+    els.showSolutionBtn.classList.add('hidden');
+  }
 }
 
 function clearSelection() {
@@ -409,6 +476,36 @@ function tryComplete() {
     saveProgress();
     shell?.update();
   }
+}
+
+function showSolution() {
+  const solution = solvePuzzle(clues, gridSize);
+  if (!solution) {
+    updateProgress('Solution not available for this puzzle.', { temporary: true });
+    return;
+  }
+  solutionShown = true;
+  rectangles.clear();
+  rectOverlays.forEach(overlay => overlay.remove());
+  rectOverlays.clear();
+  for (let r = 0; r < gridSize; r += 1) {
+    for (let c = 0; c < gridSize; c += 1) {
+      cellAssignments[r][c] = null;
+    }
+  }
+  cells.forEach(cell => cell.classList.remove('assigned'));
+  solution.forEach((rect, clueId) => assignRectangle(clueId, rect));
+  updateCounts();
+  isComplete = true;
+  isPaused = true;
+  timerStarted = true;
+  completionMs = getElapsedMs();
+  updateProgress('Solution revealed!', { temporary: true });
+  els.showSolutionBtn?.classList.add('hidden');
+  els.solutionActions?.classList.remove('hidden');
+  els.pauseBtn?.classList.add('hidden');
+  els.resetBtn?.classList.add('hidden');
+  shell?.update();
 }
 
 function handlePointerDown(event) {
@@ -546,9 +643,13 @@ function resetPuzzle({ resetTimer }) {
     timerStarted = false;
     isPaused = false;
   }
+  if (solutionShown) {
+    solutionShown = false;
+  }
 
   updateCounts();
   updateProgress(helperText);
+  updateShowSolutionButton();
   saveProgress();
   shell?.update();
 }
@@ -642,6 +743,7 @@ function setDateLabel() {
 function ensureTicker() {
   if (tickInterval) return;
   tickInterval = window.setInterval(() => {
+    updateShowSolutionButton();
     shell?.update();
   }, 200);
 }
@@ -653,6 +755,7 @@ function resetPracticePuzzle() {
   initState();
   resetPuzzle({ resetTimer: true });
   setDateLabel();
+  resetSolutionUI();
 }
 
 function switchMode(mode) {
@@ -670,6 +773,7 @@ function switchMode(mode) {
   updateCounts();
   updateProgress(helperText);
   setDateLabel();
+  resetSolutionUI();
   shell?.update();
 }
 
@@ -695,7 +799,10 @@ function initShell() {
     startReplay: () => {},
     exitReplay: () => {},
     onResetUI: () => {},
-    onTryAgain: () => resetPuzzle({ resetTimer: true }),
+    onTryAgain: () => {
+      resetPuzzle({ resetTimer: true });
+      resetSolutionUI();
+    },
     onNextLevel: () => resetPracticePuzzle(),
     onBackToDaily: () => switchMode('daily'),
     onPracticeInfinite: () => switchMode('practice'),
@@ -717,6 +824,8 @@ function initShell() {
       completionMs = ms;
     },
     isTimerRunning: () => timerStarted && !isPaused && !isComplete,
+    shouldShowCompletionModal: () => !solutionShown,
+    isSolutionShown: () => solutionShown,
     disableReplay: true,
     pauseOnHide: true
   });
@@ -749,6 +858,7 @@ function init() {
   setDateLabel();
   initShell();
   ensureTicker();
+  resetSolutionUI();
   shell?.update();
 }
 
@@ -757,6 +867,15 @@ document.addEventListener('DOMContentLoaded', () => {
   els.grid?.addEventListener('pointerdown', handlePointerDown);
   els.grid?.addEventListener('pointermove', handlePointerMove);
   window.addEventListener('pointerup', handlePointerUp);
+  els.showSolutionBtn?.addEventListener('click', () => showSolution());
+  els.solutionRetryBtn?.addEventListener('click', () => {
+    resetPuzzle({ resetTimer: true });
+    resetSolutionUI();
+  });
+  els.solutionNextBtn?.addEventListener('click', () => {
+    resetSolutionUI();
+    resetPracticePuzzle();
+  });
   window.startPracticeMode = () => switchMode('practice');
   window.startDailyMode = () => switchMode('daily');
   window.addEventListener('beforeunload', saveProgress);
