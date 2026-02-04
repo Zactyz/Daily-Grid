@@ -64,12 +64,12 @@ const GAME_META = [
   },
   {
     id: 'shingoki',
-    name: 'Shingoki',
+    name: 'Sentinel Loop',
     path: '/games/shingoki/',
     logo: '/games/shingoki/shingoki-logo.svg',
     submittedKeyPrefix: 'dailygrid_shingoki_submitted_',
     completedKeyPrefix: 'dailygrid_shingoki_completed_',
-    theme: { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400' },
+    theme: { bg: 'bg-indigo-500/10', border: 'border-indigo-400/30', text: 'text-indigo-300' },
     shareUrl: 'https://dailygrid.app/games/shingoki/'
   }
 ];

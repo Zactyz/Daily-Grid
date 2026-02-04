@@ -1,11 +1,11 @@
 {
-  "name": "Shingoki by Daily Grid",
-  "short_name": "Shingoki",
+  "name": "Sentinel Loop by Daily Grid",
+  "short_name": "Sentinel",
   "description": "Weave a single loop that satisfies every guard.",
   "start_url": "/games/shingoki/",
   "display": "standalone",
-  "background_color": "#F9F5EE",
-  "theme_color": "#1F3252",
+  "background_color": "#0c1018",
+  "theme_color": "#0c1018",
   "orientation": "portrait",
   "icons": [
     {

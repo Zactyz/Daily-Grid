@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/games/shingoki/shingoki-logo.svg">
   <link rel="manifest" href="/games/shingoki/manifest.json">
-  <meta name="theme-color" content="#020b1e">
-  <title>Shingoki — Daily Grid</title>
+  <meta name="theme-color" content="#0c1018">
+  <title>Sentinel Loop — Daily Grid</title>
   <link rel="apple-touch-icon" href="/games/shingoki/shingoki-logo.svg">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #010718;
-      --highlight: #4f8fff;
-      --accent: #fff5f3;
+      --bg: #0c1018;
+      --highlight: #7da2ff;
+      --accent: #fff2df;
       --panel-border: rgba(255, 255, 255, 0.08);
       --glass-border: rgba(255, 255, 255, 0.1);
       --text-muted: rgba(255, 255, 255, 0.7);
@@ -25,8 +25,8 @@
     body {
       margin: 0;
       font-family: 'Space Grotesk', sans-serif;
-      background: radial-gradient(circle at 20% 30%, rgba(79, 143, 255, 0.12), transparent 40%),
-        radial-gradient(circle at 80% 0%, rgba(79, 143, 255, 0.08), transparent 45%),
+      background: radial-gradient(circle at 20% 30%, rgba(125, 162, 255, 0.12), transparent 40%),
+        radial-gradient(circle at 80% 0%, rgba(125, 162, 255, 0.08), transparent 45%),
         var(--bg);
       color: #f8fafc;
       min-height: 100vh;
@@ -35,7 +35,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(1, 7, 24, 0.95);
+      background: rgba(12, 16, 24, 0.95);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding: 0.75rem 1rem;
       backdrop-filter: blur(16px);
@@ -79,11 +79,11 @@
       align-items: center;
       padding: 0.35rem 0.9rem;
       border-radius: 999px;
-      border: 1px solid rgba(79, 143, 255, 0.4);
+      border: 1px solid rgba(125, 162, 255, 0.4);
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.2em;
-      color: #4f8fff;
+      color: #7da2ff;
       margin-bottom: 0.5rem;
       font-weight: 600;
     }
@@ -309,7 +309,7 @@
   <nav>
     <div class="inner">
       <a href="/" class="flex items-center gap-3">
-        <img src="/games/shingoki/shingoki-logo.svg" alt="Shingoki" width="36" height="36" style="border-radius:12px;">
+        <img src="/games/shingoki/shingoki-logo.svg" alt="Sentinel Loop" width="36" height="36" style="border-radius:12px;">
         <span>Daily Grid</span>
       </a>
       <div style="display:flex;align-items:center;gap:1rem;">
@@ -321,8 +321,8 @@
   </nav>
   <main>
     <header class="page-header">
-      <div class="badge">Daily Puzzle</div>
-      <h1>Shingoki</h1>
+      <div class="badge">Sentinel Loop</div>
+      <h1>Sentinel Loop</h1>
       <p>Trace the single loop, honor the guard numbers, and keep every corridor logical.</p>
       <p id="puzzle-date" class="progress-text" style="margin-top:0.5rem; letter-spacing:0.2em;"></p>
     </header>
