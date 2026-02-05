@@ -124,19 +124,18 @@
       content: '';
       position: absolute;
       left: 50%;
-      bottom: -8px;
-      width: 14px;
-      height: 14px;
+      bottom: -10px;
+      width: 20px;
+      height: 12px;
       background: rgba(255, 255, 255, 0.92);
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      border-left: none;
-      border-top: none;
-      transform: translateX(-50%) rotate(45deg);
-      box-shadow: 6px 6px 12px rgba(15, 23, 42, 0.08);
+      transform: translateX(-50%);
+      clip-path: polygon(50% 100%, 0 0, 100% 0);
+      box-shadow: 0 8px 14px rgba(15, 23, 42, 0.08);
     }
 
     .ios-banner-bottom {
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+      z-index: 70;
     }
 
     @media (max-width: 899px) {
@@ -162,13 +161,13 @@
 
     <div id="ios-install-banner" class="hidden ios-banner with-pointer rounded-[1.9rem] px-5 py-4 mb-6">
       <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-[1.15rem] bg-slate-100 border border-slate-200 flex items-center justify-center">
+        <div class="w-14 h-16 rounded-[1.15rem] bg-slate-100 border border-slate-200 flex items-center justify-center">
           <img src="/games/assets/apple-share.png" alt="Share icon" class="w-8 h-8 object-contain">
         </div>
         <div class="text-[15px] text-slate-800 leading-snug">
           Add to Home Screen: tap
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700 shadow-sm">
-            <img src="/games/assets/apple-share.png" alt="Share icon" class="w-5 h-5 object-contain">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700 shadow-sm">
+            <img src="/games/assets/apple-share.png" alt="Share icon" class="w-4 h-4 object-contain">
             Share
           </span>
           then “Add to Home Screen”.
@@ -412,13 +411,13 @@
   </div>
 
   <div id="ios-install-banner-bottom" class="hidden fixed left-1/2 -translate-x-1/2 ios-banner with-pointer rounded-[1.9rem] px-5 py-4 flex items-center gap-4 max-w-md w-[94%] ios-banner-bottom">
-    <div class="w-14 h-14 rounded-[1.15rem] bg-slate-100 border border-slate-200 flex items-center justify-center">
+    <div class="w-14 h-16 rounded-[1.15rem] bg-slate-100 border border-slate-200 flex items-center justify-center">
       <img src="/games/assets/apple-share.png" alt="Share icon" class="w-8 h-8 object-contain">
     </div>
     <div class="flex-1 text-[15px] text-slate-800 leading-snug">
       Add to Home Screen: tap
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700 shadow-sm">
-        <img src="/games/assets/apple-share.png" alt="Share icon" class="w-5 h-5 object-contain">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700 shadow-sm">
+        <img src="/games/assets/apple-share.png" alt="Share icon" class="w-4 h-4 object-contain">
         Share
       </span>
       then “Add to Home Screen”.
