@@ -138,6 +138,19 @@
       z-index: 70;
     }
 
+    #ios-install-banner-bottom {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: env(safe-area-inset-bottom, 0px);
+      z-index: 70;
+      display: none;
+    }
+
+    #ios-install-banner-bottom.show {
+      display: flex;
+    }
+
     @media (max-width: 899px) {
       .desktop-only { display: none !important; }
     }
@@ -404,7 +417,7 @@
     </footer>
   </div>
 
-  <div id="ios-install-banner-bottom" class="hidden fixed left-1/2 -translate-x-1/2 ios-banner with-pointer rounded-[1.9rem] px-5 py-4 flex items-center gap-4 max-w-md w-[94%] ios-banner-bottom">
+  <div id="ios-install-banner-bottom" class="ios-banner with-pointer rounded-[1.9rem] px-5 py-4 flex items-center gap-4 max-w-md w-[94%] ios-banner-bottom">
     <div class="w-14 h-16 rounded-[1.15rem] bg-slate-100 border border-slate-200 flex items-center justify-center">
       <img src="/games/assets/apple-share.png" alt="Share icon" class="w-8 h-8 object-contain">
     </div>
@@ -529,11 +542,11 @@
     const iosBannerBottom = document.getElementById('ios-install-banner-bottom');
     const iosBannerClose = document.getElementById('ios-banner-close');
     if (isIos && !isStandalone) {
-      iosBannerBottom?.classList.remove('hidden');
+      iosBannerBottom?.classList.add('show');
     }
 
     iosBannerClose?.addEventListener('click', () => {
-      iosBannerBottom?.classList.add('hidden');
+      iosBannerBottom?.classList.remove('show');
     });
 
     updateCards();
