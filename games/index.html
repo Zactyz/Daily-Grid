@@ -108,8 +108,11 @@
     }
 
     .ios-banner {
-      border: 1px solid rgba(212, 166, 80, 0.3);
-      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(203, 213, 225, 0.9);
+      background: rgba(248, 250, 252, 0.96);
+      color: #0f172a;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
+      backdrop-filter: blur(16px);
     }
 
     @media (max-width: 899px) {
@@ -133,16 +136,24 @@
       </div>
     </div>
 
-    <div id="ios-install-banner" class="hidden ios-banner rounded-2xl p-3 mb-6">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-          <svg class="w-4 h-4 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0-12l-4 4m4-4l4 4"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14a2 2 0 002-2v-5H3v5a2 2 0 002 2z"/>
+    <div id="ios-install-banner" class="hidden ios-banner rounded-[1.5rem] px-4 py-4 mb-6">
+      <div class="flex items-center gap-4">
+        <div class="w-11 h-11 rounded-2xl bg-slate-900/5 border border-slate-200 flex items-center justify-center">
+          <svg class="w-5 h-5 text-slate-800" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v10m0-10l-4 4m4-4l4 4"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14a2 2 0 002-2v-6H3v6a2 2 0 002 2z"/>
           </svg>
         </div>
-        <div class="text-xs text-slate-300">
-          Add to Home Screen: tap Share, then “Add to Home Screen”.
+        <div class="text-sm text-slate-800 leading-snug">
+          Add to Home Screen: tap
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v10m0-10l-4 4m4-4l4 4"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14a2 2 0 002-2v-6H3v6a2 2 0 002 2z"/>
+            </svg>
+            Share
+          </span>
+          then “Add to Home Screen”.
         </div>
       </div>
     </div>
@@ -390,17 +401,25 @@
     </footer>
   </div>
 
-  <div id="ios-install-banner-bottom" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 ios-banner rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm w-[92%]">
-    <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-      <svg class="w-4 h-4 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0-12l-4 4m4-4l4 4"/>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14a2 2 0 002-2v-5H3v5a2 2 0 002 2z"/>
+  <div id="ios-install-banner-bottom" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 ios-banner rounded-[1.5rem] px-5 py-4 flex items-center gap-4 max-w-md w-[94%]">
+    <div class="w-11 h-11 rounded-2xl bg-slate-900/5 border border-slate-200 flex items-center justify-center">
+      <svg class="w-5 h-5 text-slate-800" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v10m0-10l-4 4m4-4l4 4"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14a2 2 0 002-2v-6H3v6a2 2 0 002 2z"/>
       </svg>
     </div>
-    <div class="flex-1 text-xs text-slate-300">
-      Add to Home Screen: tap Share, then “Add to Home Screen”.
+    <div class="flex-1 text-sm text-slate-800 leading-snug">
+      Add to Home Screen: tap
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v10m0-10l-4 4m4-4l4 4"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14a2 2 0 002-2v-6H3v6a2 2 0 002 2z"/>
+        </svg>
+        Share
+      </span>
+      then “Add to Home Screen”.
     </div>
-    <button id="ios-banner-close" class="text-slate-400 text-sm">✕</button>
+    <button id="ios-banner-close" class="text-slate-500 text-base">✕</button>
   </div>
 
   <script>
