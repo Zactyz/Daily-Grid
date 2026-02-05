@@ -128,7 +128,7 @@
 </head>
 <body class="min-h-screen flex flex-col">
   <!-- Mobile App Style -->
-  <main class="mobile-only px-4 pt-6 pb-10">
+  <main class="mobile-only px-4 pt-6 pb-6">
     <div class="flex items-center gap-3 mb-6 app-header">
       <img src="/Images/web%20icon.png" alt="Daily Grid Games" class="w-10 h-10 rounded-xl">
       <div>
@@ -477,7 +477,7 @@
     }
 
     function updateCards() {
-            const dailyList = document.getElementById('daily-list');
+      const dailyList = document.getElementById('daily-list');
       const completedList = document.getElementById('completed-list');
       const completedSection = document.getElementById('completed-section');
       const cards = Array.from(document.querySelectorAll('#daily-list a.app-card[data-game-id], #completed-list a.app-card[data-game-id]'));
@@ -503,8 +503,7 @@
           if (playText) playText.textContent = 'Play';
           if (dailyList && card.parentElement !== dailyList) dailyList.appendChild(card);
         }
-
-              });
+      });
 
       if (completedSection) {
         if (completedList && completedList.children.length > 0) completedSection.classList.remove('hidden');
@@ -520,8 +519,6 @@
         }
       }
     }
-      });
-    });
 
     const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
