@@ -512,6 +512,10 @@ function showSolution() {
 
 function handlePointerDown(event) {
   if (isComplete) return;
+  event.preventDefault();
+  if (event.currentTarget && event.currentTarget.setPointerCapture) {
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
   const target = event.target.closest('.cell');
   if (!target) return;
   if (!timerStarted) startTimer();
@@ -527,6 +531,7 @@ function handlePointerDown(event) {
 
 function handlePointerMove(event) {
   if (!dragStart) return;
+  event.preventDefault();
   const target = event.target.closest('.cell');
   if (!target) return;
   const rect = rectFromPoints(dragStart, {
@@ -539,6 +544,7 @@ function handlePointerMove(event) {
 
 function handlePointerUp(event) {
   if (!dragStart) return;
+  event.preventDefault();
   const target = event.target.closest('.cell');
   if (!target) {
     dragStart = null;
@@ -866,8 +872,8 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
-  els.grid?.addEventListener('pointerdown', handlePointerDown);
-  els.grid?.addEventListener('pointermove', handlePointerMove);
+  els.grid?.addEventListener('pointerdown', handlePointerDown, { passive: false });
+  els.grid?.addEventListener('pointermove', handlePointerMove, { passive: false });
   window.addEventListener('pointerup', handlePointerUp);
   els.showSolutionBtn?.addEventListener('click', () => showSolution());
   els.solutionRetryBtn?.addEventListener('click', () => {

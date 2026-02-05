@@ -29,6 +29,19 @@
   padding: 1.5rem 1rem 3rem;
 }
 
+.game-touch {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.game-touch * {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .shell-badge {
   display: inline-flex;
   gap: 0.35rem;
