@@ -526,6 +526,7 @@ export function createShellController(adapter, elementOverrides = null) {
     elements.closeModalBtn = replace(elements.closeModalBtn);
     elements.shareBtn = replace(elements.shareBtn);
     elements.claimInitialsForm = replace(elements.claimInitialsForm);
+    elements.initialsInput = elements.claimInitialsForm?.querySelector('#initials-input') || elements.initialsInput;
     elements.tryAgainBtn = replace(elements.tryAgainBtn);
     elements.nextLevelBtn = replace(elements.nextLevelBtn);
     elements.backToDailyCompleteBtn = replace(elements.backToDailyCompleteBtn);
