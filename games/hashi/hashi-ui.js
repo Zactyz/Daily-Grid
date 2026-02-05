@@ -550,9 +550,9 @@ function drawIslands(ctx) {
     if (overfilled) {
       ctx.fillStyle = '#5a2f2f';
     } else {
-      ctx.fillStyle = satisfied ? '#1b4f35' : '#1f6a46';
+      ctx.fillStyle = satisfied ? '#37403c' : '#1f6a46';
     }
-    ctx.strokeStyle = selected === island.id ? '#9be7c4' : '#6fc49a';
+    ctx.strokeStyle = selected === island.id ? '#9be7c4' : (satisfied ? '#6f8278' : '#6fc49a');
     ctx.lineWidth = selected === island.id ? 4 : 2;
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, ISLAND_RADIUS, 0, Math.PI * 2);

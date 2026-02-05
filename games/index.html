@@ -157,7 +157,7 @@
 
     <section class="mb-6">
       <div class="app-section-title mb-3">Daily Puzzles</div>
-      <div class="grid gap-3">
+      <div id="daily-list" class="grid gap-3">
         <a href="/games/snake/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="snake">
           <div class="relative">
             <img src="/games/snake/snake-logo.png" alt="Snake" class="w-12 h-12 rounded-xl">
@@ -255,6 +255,11 @@
           </span>
         </a>
       </div>
+    </section>
+
+    <section id="completed-section" class="mb-6 hidden">
+      <div class="app-section-title mb-3">Completed</div>
+      <div id="completed-list" class="grid gap-3"></div>
     </section>
   </main>
 
@@ -474,6 +479,7 @@
       const recent = getRecent().filter(id => !isCompletedToday(id));
       if (recent.length === 0) {
         recentSection.classList.add('hidden');
+        if (recentList) recentList.innerHTML = '';
         return new Set();
       }
       recentSection.classList.remove('hidden');
@@ -505,6 +511,9 @@
     function updateCards() {
       const recentSet = renderRecent();
       const cards = Array.from(document.querySelectorAll('a.app-card[data-game-id]'));
+      const dailyList = document.getElementById('daily-list');
+      const completedList = document.getElementById('completed-list');
+      const completedSection = document.getElementById('completed-section');
       let completedCount = 0;
       cards.forEach((card) => {
         const id = card.dataset.gameId;
@@ -512,14 +521,20 @@
         if (completed) completedCount += 1;
         const playText = card.querySelector('.play-text');
         const check = card.querySelector('.complete-mark');
+        const meta = gameMeta[id];
+        if (meta) {
+          card.href = completed ? `${meta.path}?leaderboard=1` : meta.path;
+        }
         if (completed) {
           card.classList.add('complete');
           if (check) check.classList.remove('hidden');
           if (playText) playText.textContent = 'View Leaderboard';
+          if (completedList && card.parentElement !== completedList) completedList.appendChild(card);
         } else {
           card.classList.remove('complete');
           if (check) check.classList.add('hidden');
           if (playText) playText.textContent = 'Play';
+          if (dailyList && card.parentElement !== dailyList) dailyList.appendChild(card);
         }
 
         if (recentSet.has(id) && !completed) {
@@ -528,6 +543,11 @@
           card.classList.remove('hidden');
         }
       });
+
+      if (completedSection) {
+        if (completedList && completedList.children.length > 0) completedSection.classList.remove('hidden');
+        else completedSection.classList.add('hidden');
+      }
 
       const mobileHeader = document.querySelector('.app-header h1');
       if (mobileHeader && completedCount === Object.keys(submittedPrefixes).length) {

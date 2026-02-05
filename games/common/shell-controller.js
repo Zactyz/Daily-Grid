@@ -109,6 +109,8 @@ export function createShellController(adapter, elementOverrides = null) {
   let lastPuzzleId = null;
   let lastMode = null;
   let toastTimeout = null;
+  const wantsLeaderboard = new URLSearchParams(window.location.search).get('leaderboard') === '1';
+  let leaderboardDeepLink = wantsLeaderboard;
 
   function puzzleKeyPrefix(prefix) {
     return `${prefix}${adapter.getPuzzleId()}`;
@@ -709,6 +711,12 @@ export function createShellController(adapter, elementOverrides = null) {
     updateExitReplayButton();
     updateModeUI();
     updateExternalPromo();
+
+    if (leaderboardDeepLink && adapter.getMode() === 'daily' && adapter.isComplete() && !isInReplayMode) {
+      leaderboardDeepLink = false;
+      modalShown = true;
+      showCompletionModal({ force: true });
+    }
 
     if (adapter.isComplete()) {
       if (isInReplayMode) {
