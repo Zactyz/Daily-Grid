@@ -505,7 +505,7 @@
         const meta = gameMeta[id];
         if (!meta) return '';
         return `
-          <a href="${meta.path}" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="${id}">
+          <a href="${meta.path}" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="${id}" data-source="recent">
             <div class="relative">
               <img src="${meta.logo}" alt="${meta.name}" class="w-12 h-12 rounded-xl">
             </div>
@@ -527,10 +527,10 @@
 
     function updateCards() {
       const recentSet = renderRecent();
-      const cards = Array.from(document.querySelectorAll('a.app-card[data-game-id]'));
       const dailyList = document.getElementById('daily-list');
       const completedList = document.getElementById('completed-list');
       const completedSection = document.getElementById('completed-section');
+      const cards = Array.from(document.querySelectorAll('#daily-list a.app-card[data-game-id], #completed-list a.app-card[data-game-id]'));
       let completedCount = 0;
       cards.forEach((card) => {
         const id = card.dataset.gameId;
@@ -554,7 +554,7 @@
           if (dailyList && card.parentElement !== dailyList) dailyList.appendChild(card);
         }
 
-        if (recentSet.has(id) && !completed) {
+        if (recentSet.has(id) && !completed && dailyList && card.parentElement === dailyList) {
           card.classList.add('hidden');
         } else {
           card.classList.remove('hidden');
