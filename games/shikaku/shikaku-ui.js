@@ -38,6 +38,7 @@ const rectOverlays = new Map();
 let cells = [];
 let dragStart = null;
 let currentSelection = null;
+let usingTouch = false;
 let shell = null;
 let currentMode = 'daily';
 let puzzleId = getPTDateYYYYMMDD();
@@ -510,49 +511,47 @@ function showSolution() {
   shell?.update();
 }
 
-function handlePointerDown(event) {
+function getCellFromPoint(clientX, clientY, target) {
+  return target?.closest('.cell') ?? document.elementFromPoint(clientX, clientY)?.closest('.cell');
+}
+
+function beginDrag(clientX, clientY, target) {
   if (isComplete) return;
-  event.preventDefault();
-  if (event.currentTarget && event.currentTarget.setPointerCapture) {
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-  const target = event.target.closest('.cell') ?? document.elementFromPoint(event.clientX, event.clientY)?.closest('.cell');
-  if (!target) return;
+  const cell = getCellFromPoint(clientX, clientY, target);
+  if (!cell) return;
   if (!timerStarted) startTimer();
   if (isPaused) resumeTimer();
 
   dragStart = {
-    r: Number(target.dataset.r),
-    c: Number(target.dataset.c)
+    r: Number(cell.dataset.r),
+    c: Number(cell.dataset.c)
   };
   currentSelection = rectFromPoints(dragStart, dragStart);
   applySelection(currentSelection);
 }
 
-function handlePointerMove(event) {
+function moveDrag(clientX, clientY, target) {
   if (!dragStart) return;
-  event.preventDefault();
-  const target = event.target.closest('.cell') ?? document.elementFromPoint(event.clientX, event.clientY)?.closest('.cell');
-  if (!target) return;
+  const cell = getCellFromPoint(clientX, clientY, target);
+  if (!cell) return;
   const rect = rectFromPoints(dragStart, {
-    r: Number(target.dataset.r),
-    c: Number(target.dataset.c)
+    r: Number(cell.dataset.r),
+    c: Number(cell.dataset.c)
   });
   currentSelection = rect;
   applySelection(currentSelection);
 }
 
-function handlePointerUp(event) {
+function endDrag(clientX, clientY, target) {
   if (!dragStart) return;
-  event.preventDefault();
-  const target = event.target.closest('.cell') ?? document.elementFromPoint(event.clientX, event.clientY)?.closest('.cell');
-  if (!target) {
+  const cell = getCellFromPoint(clientX, clientY, target);
+  if (!cell) {
     dragStart = null;
     clearSelection();
     return;
   }
 
-  const end = { r: Number(target.dataset.r), c: Number(target.dataset.c) };
+  const end = { r: Number(cell.dataset.r), c: Number(cell.dataset.c) };
   const rect = rectFromPoints(dragStart, end);
   dragStart = null;
   clearSelection();
@@ -596,6 +595,57 @@ function handlePointerUp(event) {
   tryComplete();
   saveProgress();
   shell?.update();
+}
+
+function handlePointerDown(event) {
+  if (event.pointerType === 'touch') return;
+  event.preventDefault();
+  if (event.currentTarget && event.currentTarget.setPointerCapture) {
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  beginDrag(event.clientX, event.clientY, event.target);
+}
+
+function handlePointerMove(event) {
+  if (event.pointerType === 'touch') return;
+  if (!dragStart) return;
+  event.preventDefault();
+  moveDrag(event.clientX, event.clientY, event.target);
+}
+
+function handlePointerUp(event) {
+  if (event.pointerType === 'touch') return;
+  if (!dragStart) return;
+  event.preventDefault();
+  endDrag(event.clientX, event.clientY, event.target);
+}
+
+function handleTouchStart(event) {
+  if (!event.touches || event.touches.length === 0) return;
+  usingTouch = true;
+  event.preventDefault();
+  const touch = event.touches[0];
+  beginDrag(touch.clientX, touch.clientY, event.target);
+}
+
+function handleTouchMove(event) {
+  if (!usingTouch || !event.touches || event.touches.length === 0) return;
+  event.preventDefault();
+  const touch = event.touches[0];
+  moveDrag(touch.clientX, touch.clientY, event.target);
+}
+
+function handleTouchEnd(event) {
+  if (!usingTouch) return;
+  event.preventDefault();
+  const touch = event.changedTouches?.[0];
+  if (touch) {
+    endDrag(touch.clientX, touch.clientY, event.target);
+  } else {
+    dragStart = null;
+    clearSelection();
+  }
+  usingTouch = false;
 }
 
 function getElapsedMs() {
@@ -875,6 +925,9 @@ document.addEventListener('DOMContentLoaded', () => {
   els.grid?.addEventListener('pointerdown', handlePointerDown, { passive: false });
   els.grid?.addEventListener('pointermove', handlePointerMove, { passive: false });
   window.addEventListener('pointerup', handlePointerUp);
+  els.grid?.addEventListener('touchstart', handleTouchStart, { passive: false });
+  els.grid?.addEventListener('touchmove', handleTouchMove, { passive: false });
+  window.addEventListener('touchend', handleTouchEnd, { passive: false });
   els.showSolutionBtn?.addEventListener('click', () => showSolution());
   els.solutionRetryBtn?.addEventListener('click', () => {
     resetPuzzle({ resetTimer: true });

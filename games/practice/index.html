@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <title>Practice Puzzles — Daily Grid Games</title>
+  <meta name="description" content="Practice puzzles for Daily Grid Games." />
+  <meta name="theme-color" content="#0b1120">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Daily Grid Games">
+  <link rel="manifest" href="/games/manifest.json">
+  <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: #0a0f1f;
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(60, 90, 160, 0.35), transparent),
+        radial-gradient(ellipse 70% 40% at 0% 100%, rgba(35, 60, 120, 0.25), transparent),
+        radial-gradient(ellipse 50% 30% at 100% 0%, rgba(120, 85, 20, 0.18), transparent);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .gold-gradient {
+      background: linear-gradient(135deg, #f9e6a0 0%, #d9a83c 50%, #f3c867 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .app-card {
+      border: 1px solid rgba(212, 166, 80, 0.2);
+      background: rgba(255, 255, 255, 0.02);
+      transition: all 0.2s ease;
+    }
+
+    .app-card:hover {
+      border-color: rgba(212, 166, 80, 0.45);
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-2px);
+    }
+
+    .app-section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      color: rgba(212, 166, 80, 0.75);
+    }
+
+    .back-pill {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(8, 10, 12, 0.7);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-2xl mx-auto px-5 pt-8 pb-16">
+    <div class="flex items-center justify-between mb-6">
+      <a href="/games/" class="back-pill inline-flex items-center justify-center" aria-label="Back to games">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+      </a>
+      <div class="text-right">
+        <p class="text-xs uppercase tracking-[0.3em] text-amber-200/70">Practice Hub</p>
+        <p class="text-sm text-slate-400">Pick a puzzle to train</p>
+      </div>
+    </div>
+
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold mb-2"><span class="gold-gradient">Practice Puzzles</span></h1>
+      <p class="text-slate-400 text-sm">Unlimited practice levels for every game. These won’t affect daily leaderboards.</p>
+    </header>
+
+    <div class="app-section-title mb-3">Choose A Game</div>
+    <div class="grid gap-3">
+      <a href="/games/snake/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
+        <img src="/games/snake/snake-logo.png" alt="Snake" class="w-12 h-12 rounded-xl">
+        <div class="flex-1">
+          <p class="font-semibold">Snake</p>
+          <p class="text-xs text-slate-400">Practice the number path.</p>
+        </div>
+        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
+      </a>
+      <a href="/games/pathways/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
+        <img src="/games/pathways/pathways-logo.png" alt="Pathways" class="w-12 h-12 rounded-xl">
+        <div class="flex-1">
+          <p class="font-semibold">Pathways</p>
+          <p class="text-xs text-slate-400">Practice color routes.</p>
+        </div>
+        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
+      </a>
+      <a href="/games/lattice/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
+        <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-12 h-12 rounded-xl">
+        <div class="flex-1">
+          <p class="font-semibold">Lattice</p>
+          <p class="text-xs text-slate-400">Practice logic grids.</p>
+        </div>
+        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
+      </a>
+      <a href="/games/bits/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
+        <img src="/games/bits/bitsnew-logo.jpg" alt="Bits" class="w-12 h-12 rounded-xl">
+        <div class="flex-1">
+          <p class="font-semibold">Bits</p>
+          <p class="text-xs text-slate-400">Practice binary logic.</p>
+        </div>
+        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
+      </a>
+      <a href="/games/hashi/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
+        <img src="/games/hashi/hashi-logo.jpg" alt="Bridgeworks" class="w-12 h-12 rounded-xl">
+        <div class="flex-1">
+          <p class="font-semibold">Bridgeworks</p>
+          <p class="text-xs text-slate-400">Practice island links.</p>
+        </div>
+        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
+      </a>
+      <a href="/games/shikaku/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
+        <img src="/games/shikaku/shikaku-logo.jpg" alt="Parcel" class="w-12 h-12 rounded-xl">
+        <div class="flex-1">
+          <p class="font-semibold">Parcel</p>
+          <p class="text-xs text-slate-400">Practice rectangle packing.</p>
+        </div>
+        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
+      </a>
+    </div>
+  </main>
+</body>
+</html>

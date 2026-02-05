@@ -240,21 +240,26 @@
 
         .mobile-app-bar {
             display: none;
-            position: sticky;
-            top: 0;
-            z-index: 60;
-            padding: 0.75rem 1rem;
-            background: rgba(3, 7, 18, 0.85);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(16px);
+            position: fixed;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 80;
+            pointer-events: none;
         }
 
         .mobile-app-bar a {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            background: rgba(8, 10, 12, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #f8f4ef;
-            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
         }
 
         @media (max-width: 899px) {
@@ -265,11 +270,10 @@
 </head>
 <body class="min-h-screen flex flex-col overflow-y-auto">
     <div class="mobile-app-bar">
-        <a href="/games/">
+        <a href="/games/" aria-label="Back to games">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
-            Back
         </a>
     </div>
 
@@ -305,18 +309,6 @@
             <p class="text-zinc-500 text-sm">Logic-grid deduction. Find the one true matching.</p>
         </header>
 
-        <!-- Stats Row -->
-        <div class="flex gap-3 mb-3 w-full max-w-xs">
-            <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
-                <div class="text-[10px] uppercase tracking-wider text-white/50 mb-0.5">Time</div>
-                <div id="timer" class="text-xl font-bold mono accent-text">0:00</div>
-            </div>
-            <div class="flex-1 stat-card px-4 py-2.5 rounded-xl text-center">
-                <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Grid</div>
-                <div id="grid-size" class="text-xl font-bold mono text-zinc-300">3x3</div>
-            </div>
-        </div>
-
         <!-- Clues (collapsible; collapsed by default) -->
         <details id="clues-panel" class="glass-strong rounded-xl w-full max-w-md mb-4">
             <summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">
@@ -328,7 +320,7 @@
         </details>
 
         <!-- Game Container (board tables) -->
-        <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
+        <div id="game-container" class="glass-strong p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
             <button id="undo-btn" class="absolute top-3 right-3 z-10 btn btn-secondary w-10 h-10 p-0 flex items-center justify-center" title="Undo" aria-label="Undo">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l-4-4 4-4" />
@@ -521,7 +513,7 @@
             </form>
 
             <div id="next-game-promo" class="hidden mb-5">
-                <a id="next-game-link" href="#" class="block w-full py-3 px-4 rounded-xl text-center transition-all border border-white/10 hover:bg-white/5">
+                <a id="next-game-link" href="#" class="block w-full py-3 px-4 rounded-xl text-center transition-all border">
                     <div class="flex items-center justify-center gap-3">
                         <img id="next-game-logo" src="" alt="" class="w-8 h-8 rounded-lg" />
                         <div class="text-left flex-1">
@@ -597,5 +589,11 @@
         mountShell();
     </script>
     <script type="module" src="./lattice-ui.js"></script>
+    <script type="module">
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('practice') === '1' || params.get('mode') === 'practice') {
+            window.startPracticeMode?.();
+        }
+    </script>
 </body>
 </html>

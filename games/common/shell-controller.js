@@ -23,6 +23,29 @@ const RESUME_ICON = `
   Resume
 `;
 
+let touchGuardInitialized = false;
+
+function initTouchGuards() {
+  if (touchGuardInitialized || typeof window === 'undefined') return;
+  touchGuardInitialized = true;
+  let lastTouchEnd = 0;
+
+  document.addEventListener('touchend', (event) => {
+    const target = event.target;
+    const isEditable = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+    if (isEditable) return;
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  document.addEventListener('gesturestart', (event) => {
+    event.preventDefault();
+  }, { passive: false });
+}
+
 function defaultElements() {
   return {
     timer: document.getElementById('timer'),
@@ -73,6 +96,7 @@ function defaultElements() {
 }
 
 export function createShellController(adapter, elementOverrides = null) {
+  initTouchGuards();
   const meta = getGameMeta(adapter.gameId);
   const elements = { ...defaultElements(), ...(elementOverrides || {}) };
 

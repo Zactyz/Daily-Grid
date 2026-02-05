@@ -1,7 +1,9 @@
-const CACHE_VERSION = 'dg-games-v1';
+const CACHE_VERSION = 'dg-games-v2';
 const CORE_ASSETS = [
   '/games/',
   '/games/index.html',
+  '/games/practice/',
+  '/games/practice/index.html',
   '/games/manifest.json',
   '/games/bits/bitsnew-logo.jpg',
   '/games/hashi/hashi-logo.jpg',
@@ -9,7 +11,9 @@ const CORE_ASSETS = [
   '/games/lattice/lattice-logo.png?v=2',
   '/games/pathways/pathways-logo.png',
   '/games/snake/snake-logo.png',
-  '/Images/web%20icon.png'
+  '/games/assets/dg-games-192.png',
+  '/games/assets/dg-games-512.png',
+  '/games/assets/dg-games-180.png'
 ];
 
 self.addEventListener('install', (event) => {

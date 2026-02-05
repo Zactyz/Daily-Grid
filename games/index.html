@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#020617">
+  <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Daily Grid Games">
   <link rel="manifest" href="/games/manifest.json">
+  <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
   <link rel="icon" type="image/png" href="/Images/web%20icon.png">
   <title>Daily Grid Games</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -73,6 +74,31 @@
       background: rgba(255, 255, 255, 0.05);
     }
 
+    .app-card.complete {
+      opacity: 0.7;
+      filter: grayscale(0.2);
+      border-color: rgba(148, 163, 184, 0.2);
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .complete-mark {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.95);
+      color: #052e16;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(15, 23, 42, 0.9);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.45);
+    }
+
     .app-section-title {
       font-family: 'Space Grotesk', sans-serif;
       letter-spacing: 0.18em;
@@ -121,7 +147,7 @@
       </div>
     </div>
 
-    <section class="mb-6">
+    <section id="recent-section" class="mb-6 hidden">
       <div class="flex items-center justify-between mb-3">
         <span class="app-section-title">Recently Played</span>
         <span id="recent-empty" class="text-xs text-slate-500">Play a puzzle to pin it here.</span>
@@ -133,58 +159,100 @@
       <div class="app-section-title mb-3">Daily Puzzles</div>
       <div class="grid gap-3">
         <a href="/games/snake/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="snake">
-          <img src="/games/snake/snake-logo.png" alt="Snake" class="w-12 h-12 rounded-xl">
+          <div class="relative">
+            <img src="/games/snake/snake-logo.png" alt="Snake" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
           <div class="flex-1">
             <p class="font-semibold">Snake</p>
             <p class="text-xs text-slate-400">Connect numbers in sequence.</p>
           </div>
-          <span class="text-amber-400 text-sm font-semibold">Play</span>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
         </a>
         <a href="/games/pathways/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="pathways">
-          <img src="/games/pathways/pathways-logo.png" alt="Pathways" class="w-12 h-12 rounded-xl">
+          <div class="relative">
+            <img src="/games/pathways/pathways-logo.png" alt="Pathways" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
           <div class="flex-1">
             <p class="font-semibold">Pathways</p>
             <p class="text-xs text-slate-400">Pair colors with clean paths.</p>
           </div>
-          <span class="text-amber-400 text-sm font-semibold">Play</span>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
         </a>
         <a href="/games/lattice/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="lattice">
-          <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-12 h-12 rounded-xl">
+          <div class="relative">
+            <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
           <div class="flex-1">
             <p class="font-semibold">Lattice</p>
             <p class="text-xs text-slate-400">Logic deductions with clues.</p>
           </div>
-          <span class="text-amber-400 text-sm font-semibold">Play</span>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
         </a>
-      </div>
-    </section>
-
-    <section>
-      <div class="app-section-title mb-3">New Games</div>
-      <div class="grid gap-3">
         <a href="/games/bits/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="bits">
-          <img src="/games/bits/bitsnew-logo.jpg" alt="Bits" class="w-12 h-12 rounded-xl">
+          <div class="relative">
+            <img src="/games/bits/bitsnew-logo.jpg" alt="Bits" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
           <div class="flex-1">
             <p class="font-semibold">Bits</p>
             <p class="text-xs text-slate-400">Balance the binary grid.</p>
           </div>
-          <span class="text-amber-400 text-sm font-semibold">Play</span>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
         </a>
         <a href="/games/hashi/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="hashi">
-          <img src="/games/hashi/hashi-logo.jpg" alt="Bridgeworks" class="w-12 h-12 rounded-xl">
+          <div class="relative">
+            <img src="/games/hashi/hashi-logo.jpg" alt="Bridgeworks" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
           <div class="flex-1">
             <p class="font-semibold">Bridgeworks</p>
             <p class="text-xs text-slate-400">Link islands into one network.</p>
           </div>
-          <span class="text-amber-400 text-sm font-semibold">Play</span>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
         </a>
         <a href="/games/shikaku/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="shikaku">
-          <img src="/games/shikaku/shikaku-logo.jpg" alt="Parcel" class="w-12 h-12 rounded-xl">
+          <div class="relative">
+            <img src="/games/shikaku/shikaku-logo.jpg" alt="Parcel" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
           <div class="flex-1">
             <p class="font-semibold">Parcel</p>
             <p class="text-xs text-slate-400">Pack the grid with rectangles.</p>
           </div>
-          <span class="text-amber-400 text-sm font-semibold">Play</span>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
         </a>
       </div>
     </section>
@@ -332,6 +400,16 @@
 
   <script>
     const RECENT_KEY = 'dg_recent_games';
+    const PLAY_COUNT_KEY = 'dg_games_play_count';
+
+    const submittedPrefixes = {
+      snake: 'dailygrid_submitted_',
+      pathways: 'dailygrid_pathways_submitted_',
+      lattice: 'dailygrid_lattice_submitted_',
+      bits: 'dailygrid_bits_submitted_',
+      hashi: 'dailygrid_hashi_submitted_',
+      shikaku: 'dailygrid_shikaku_submitted_'
+    };
 
     const gameMeta = {
       snake: { name: 'Snake', path: '/games/snake/', logo: '/games/snake/snake-logo.png' },
@@ -341,6 +419,31 @@
       hashi: { name: 'Bridgeworks', path: '/games/hashi/', logo: '/games/hashi/hashi-logo.jpg' },
       shikaku: { name: 'Parcel', path: '/games/shikaku/', logo: '/games/shikaku/shikaku-logo.jpg' }
     };
+
+    function getPTDateYYYYMMDD(now = new Date()) {
+      const dtf = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Los_Angeles',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const parts = dtf.formatToParts(now);
+      const y = parts.find(p => p.type === 'year')?.value;
+      const m = parts.find(p => p.type === 'month')?.value;
+      const d = parts.find(p => p.type === 'day')?.value;
+      return `${y}-${m}-${d}`;
+    }
+
+    function isCompletedToday(id) {
+      const prefix = submittedPrefixes[id];
+      if (!prefix) return false;
+      const puzzleId = getPTDateYYYYMMDD();
+      try {
+        return localStorage.getItem(`${prefix}${puzzleId}`) === 'true';
+      } catch {
+        return false;
+      }
+    }
 
     function getRecent() {
       try {
@@ -359,33 +462,81 @@
       const recent = getRecent().filter(item => item !== id);
       recent.unshift(id);
       setRecent(recent);
+      const count = Number(localStorage.getItem(PLAY_COUNT_KEY) || '0') + 1;
+      localStorage.setItem(PLAY_COUNT_KEY, String(count));
     }
 
     function renderRecent() {
       const recentList = document.getElementById('recent-list');
       const recentEmpty = document.getElementById('recent-empty');
-      if (!recentList) return;
-      const recent = getRecent();
+      const recentSection = document.getElementById('recent-section');
+      if (!recentList || !recentSection) return new Set();
+      const recent = getRecent().filter(id => !isCompletedToday(id));
       if (recent.length === 0) {
-        if (recentEmpty) recentEmpty.classList.remove('hidden');
-        recentList.innerHTML = '';
-        return;
+        recentSection.classList.add('hidden');
+        return new Set();
       }
+      recentSection.classList.remove('hidden');
       if (recentEmpty) recentEmpty.classList.add('hidden');
       recentList.innerHTML = recent.slice(0, 2).map((id) => {
         const meta = gameMeta[id];
         if (!meta) return '';
         return `
           <a href="${meta.path}" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="${id}">
-            <img src="${meta.logo}" alt="${meta.name}" class="w-12 h-12 rounded-xl">
+            <div class="relative">
+              <img src="${meta.logo}" alt="${meta.name}" class="w-12 h-12 rounded-xl">
+            </div>
             <div class="flex-1">
               <p class="font-semibold">${meta.name}</p>
               <p class="text-xs text-slate-400">Jump back in</p>
             </div>
-            <span class="text-amber-400 text-sm font-semibold">Play</span>
+            <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
           </a>
         `;
       }).join('');
+      return new Set(recent);
+    }
+
+    function updateCards() {
+      const recentSet = renderRecent();
+      const cards = Array.from(document.querySelectorAll('a.app-card[data-game-id]'));
+      let completedCount = 0;
+      cards.forEach((card) => {
+        const id = card.dataset.gameId;
+        const completed = isCompletedToday(id);
+        if (completed) completedCount += 1;
+        const playText = card.querySelector('.play-text');
+        const check = card.querySelector('.complete-mark');
+        if (completed) {
+          card.classList.add('complete');
+          if (check) check.classList.remove('hidden');
+          if (playText) playText.textContent = 'View Leaderboard';
+        } else {
+          card.classList.remove('complete');
+          if (check) check.classList.add('hidden');
+          if (playText) playText.textContent = 'Play';
+        }
+
+        if (recentSet.has(id) && !completed) {
+          card.classList.add('hidden');
+        } else {
+          card.classList.remove('hidden');
+        }
+      });
+
+      const mobileHeader = document.querySelector('.app-header h1');
+      if (mobileHeader && completedCount === Object.keys(submittedPrefixes).length) {
+        mobileHeader.textContent = 'All games complete';
+        const subtitle = mobileHeader.parentElement?.querySelector('p');
+        if (subtitle) {
+          subtitle.innerHTML = 'Great job! All games complete for today. Come back tomorrow or <a href="/games/practice/" class="text-amber-300 underline underline-offset-4">practice</a> to be at the top of the leaderboard.';
+        }
+      }
     }
 
     document.querySelectorAll('[data-game-id]').forEach((card) => {
@@ -409,7 +560,7 @@
       iosBannerBottom?.classList.add('hidden');
     });
 
-    renderRecent();
+    updateCards();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

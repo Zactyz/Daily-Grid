@@ -211,21 +211,26 @@
 
     .mobile-app-bar {
       display: none;
-      position: sticky;
-      top: 0;
-      z-index: 60;
-      padding: 0.75rem 1rem;
-      background: rgba(3, 7, 18, 0.85);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(16px);
+      position: fixed;
+      top: 0.75rem;
+      left: 0.75rem;
+      z-index: 80;
+      pointer-events: none;
     }
 
     .mobile-app-bar a {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: rgba(11, 10, 8, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       color: #f8f4ef;
-      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+      pointer-events: auto;
     }
 
     @media (max-width: 899px) {
@@ -236,11 +241,10 @@
 </head>
 <body>
   <div class="mobile-app-bar">
-    <a href="/games/">
+    <a href="/games/" aria-label="Back to games">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
       </svg>
-      Back
     </a>
   </div>
   <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6">
@@ -270,17 +274,6 @@
       <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Parcel</h1>
       <p class="text-zinc-500 text-sm">Pack the grid into perfect rectangles.</p>
     </header>
-
-    <div class="flex gap-3 mb-3 w-full max-w-xs">
-      <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
-        <div class="text-[10px] uppercase tracking-wider text-amber-200/70 mb-0.5">Time</div>
-        <div id="timer" class="text-xl font-bold mono accent-text">0:00</div>
-      </div>
-      <div class="flex-1 stat-card px-4 py-2.5 rounded-xl text-center">
-        <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Rectangles</div>
-        <div id="rect-count" class="text-xl font-bold mono text-zinc-300">0</div>
-      </div>
-    </div>
 
     <div id="validation-message" class="hidden w-full max-w-xs mx-auto mb-3 px-3 py-2 rounded-lg bg-amber-300/15 border border-amber-300/25 text-amber-200 text-xs text-center animate-pulse">
       <span id="validation-message-text"></span>
@@ -439,14 +432,18 @@
         <button type="submit" class="btn btn-secondary">Claim</button>
       </form>
 
-      <div id="next-game-promo" class="hidden glass-strong p-3 rounded-xl mb-4">
-        <a id="next-game-link" href="#" class="flex items-center gap-3">
-          <img id="next-game-logo" src="" alt="" class="w-10 h-10 rounded-xl">
-          <div class="flex-1">
-            <p id="next-game-text" class="font-semibold text-sm text-amber-200"></p>
-            <p class="text-xs text-amber-100/70">Continue your streak</p>
+      <div id="next-game-promo" class="hidden mb-5">
+        <a id="next-game-link" href="#" class="block w-full py-3 px-4 rounded-xl text-center transition-all border">
+          <div class="flex items-center justify-center gap-3">
+            <img id="next-game-logo" src="" alt="" class="w-8 h-8 rounded-lg">
+            <div class="text-left flex-1">
+              <div id="next-game-text" class="font-semibold text-sm"></div>
+              <div class="text-xs opacity-70">Continue your daily streak</div>
+            </div>
+            <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
           </div>
-          <span class="text-amber-200 text-sm font-semibold uppercase tracking-wide">Play</span>
         </a>
       </div>
 
@@ -474,5 +471,11 @@
     mountShell();
   </script>
   <script type="module" src="/games/shikaku/shikaku-ui.js"></script>
+  <script type="module">
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('practice') === '1' || params.get('mode') === 'practice') {
+      window.startPracticeMode?.();
+    }
+  </script>
 </body>
 </html>

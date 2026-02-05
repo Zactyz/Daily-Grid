@@ -236,21 +236,26 @@
 
         .mobile-app-bar {
             display: none;
-            position: sticky;
-            top: 0;
-            z-index: 60;
-            padding: 0.75rem 1rem;
-            background: rgba(3, 7, 18, 0.85);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(16px);
+            position: fixed;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 80;
+            pointer-events: none;
         }
 
         .mobile-app-bar a {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            background: rgba(8, 10, 12, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #f8f4ef;
-            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
         }
 
         @media (max-width: 899px) {
@@ -261,11 +266,10 @@
 </head>
 <body class="min-h-screen flex flex-col overflow-y-auto">
     <div class="mobile-app-bar">
-        <a href="/games/">
+        <a href="/games/" aria-label="Back to games">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
-            Back
         </a>
     </div>
     <!-- Navigation -->
@@ -298,18 +302,6 @@
             <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Pathways</h1>
             <p class="text-zinc-500 text-sm">Connect the colors. Complete the grid.</p>
         </header>
-
-        <!-- Stats Row -->
-        <div class="flex gap-3 mb-3 w-full max-w-xs">
-            <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
-                <div class="text-[10px] uppercase tracking-wider text-rose-400/60 mb-0.5">Time</div>
-                <div id="timer" class="text-xl font-bold mono accent-text">0:00</div>
-            </div>
-            <div class="flex-1 stat-card px-4 py-2.5 rounded-xl text-center">
-                <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Grid</div>
-                <div id="grid-size" class="text-xl font-bold mono text-zinc-300">5x5</div>
-            </div>
-        </div>
 
         <!-- Obstacle Hint (shown when puzzle has special obstacle) -->
         <div id="obstacle-hint" class="hidden w-full max-w-xs mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs text-center">
@@ -712,6 +704,11 @@
 
         window.startPracticeMode = () => init('practice');
         window.startDailyMode = () => init('daily');
+
+        const practiceParams = new URLSearchParams(window.location.search);
+        if (practiceParams.get('practice') === '1' || practiceParams.get('mode') === 'practice') {
+            window.startPracticeMode();
+        }
 
         // Mode buttons handled by shared shell controller.
         

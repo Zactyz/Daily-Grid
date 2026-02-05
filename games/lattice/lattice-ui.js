@@ -1232,6 +1232,9 @@ function wireUI() {
     startPractice();
   });
 
+  window.startPracticeMode = () => startPractice();
+  window.startDailyMode = () => startDaily();
+
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') saveProgress(true);
   });
