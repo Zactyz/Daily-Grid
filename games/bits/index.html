@@ -250,9 +250,41 @@
             transition: transform 0.2s ease;
         }
         details[open] summary.details-plus::after { transform: rotate(45deg); }
+
+        .mobile-app-bar {
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 60;
+            padding: 0.75rem 1rem;
+            background: rgba(3, 8, 5, 0.85);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+        }
+
+        .mobile-app-bar a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #e5fff2;
+            font-weight: 600;
+        }
+
+        @media (max-width: 899px) {
+            nav { display: none !important; }
+            .mobile-app-bar { display: flex; }
+        }
     </style>
 </head>
 <body>
+    <div class="mobile-app-bar">
+        <a href="/games/">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back
+        </a>
+    </div>
     <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6">
         <div class="max-w-5xl mx-auto flex justify-between items-center">
             <a href="/games/bits/" class="flex items-center gap-2.5 transition-all hover:opacity-80">
