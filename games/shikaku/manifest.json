@@ -7,9 +7,9 @@
   "theme_color": "#0E1410",
   "icons": [
     {
-      "src": "/games/shikaku/shikaku-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/games/shikaku/shikaku-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
     }
   ]
 }

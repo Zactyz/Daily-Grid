@@ -1037,7 +1037,7 @@ async function buildShareImage() {
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
     gameName: 'Bits',
-    logoPath: '/games/bits/bits-logo.svg',
+    logoPath: '/games/bits/bits-logo.jpg',
     accent: '#5bff94',
     accentSoft: 'rgba(91, 255, 148, 0.12)',
     backgroundStart: '#010b05',

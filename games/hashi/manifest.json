@@ -7,9 +7,9 @@
   "theme_color": "#120A08",
   "icons": [
     {
-      "src": "/games/hashi/hashi-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/games/hashi/hashi-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
     }
   ]
 }

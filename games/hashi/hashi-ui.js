@@ -1033,7 +1033,7 @@ async function buildShareImage() {
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
     gameName: 'Bridgeworks',
-    logoPath: '/games/hashi/hashi-logo.svg',
+    logoPath: '/games/hashi/hashi-logo.jpg',
     accent: '#E8B47A',
     accentSoft: 'rgba(232, 180, 122, 0.12)',
     backgroundStart: '#120A08',

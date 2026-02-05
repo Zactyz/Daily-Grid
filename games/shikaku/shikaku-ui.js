@@ -844,7 +844,7 @@ async function buildShareImage() {
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
     gameName: 'Parcel',
-    logoPath: '/games/shikaku/shikaku-logo.svg',
+    logoPath: '/games/shikaku/shikaku-logo.jpg',
     accent: '#c9a36b',
     accentSoft: 'rgba(201, 163, 107, 0.2)',
     backgroundStart: '#1b140e',
