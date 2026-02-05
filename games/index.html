@@ -72,11 +72,28 @@
       border: 1px solid rgba(148, 163, 184, 0.25);
       backdrop-filter: blur(12px);
     }
+
+    .chip {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .chip.active {
+      border-color: rgba(125, 211, 252, 0.6);
+      color: #e0f2fe;
+      background: rgba(56, 189, 248, 0.16);
+    }
+
+    .bottom-nav {
+      backdrop-filter: blur(14px);
+      background: rgba(10, 15, 26, 0.8);
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
+    }
   </style>
 </head>
 <body>
-  <main class="max-w-6xl mx-auto px-5 py-10">
-    <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-10">
+  <main class="max-w-6xl mx-auto px-5 pt-10 pb-24">
+    <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
       <div class="flex items-center gap-4">
         <div class="w-14 h-14 rounded-2xl bg-slate-900/70 border border-slate-700/40 flex items-center justify-center">
           <img src="/Images/web%20icon.png" alt="Daily Grid Games" class="w-9 h-9">
@@ -109,8 +126,27 @@
       </div>
     </section>
 
-    <section class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      <a href="/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4">
+    <section class="mb-8">
+      <div class="flex flex-wrap gap-2">
+        <button class="chip active px-3 py-1.5 rounded-full text-xs uppercase tracking-widest" data-filter="all">All</button>
+        <button class="chip px-3 py-1.5 rounded-full text-xs uppercase tracking-widest" data-filter="core">Core</button>
+        <button class="chip px-3 py-1.5 rounded-full text-xs uppercase tracking-widest" data-filter="daily">Daily</button>
+        <button class="chip px-3 py-1.5 rounded-full text-xs uppercase tracking-widest" data-filter="new">New</button>
+      </div>
+    </section>
+
+    <section class="mb-10">
+      <div class="glass rounded-3xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Recently played</h3>
+          <span id="recent-empty" class="text-xs text-slate-500">Play a puzzle to pin it here.</span>
+        </div>
+        <div id="recent-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+
+    <section id="games-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <a href="/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4" data-game-id="dailygrid" data-category="core">
         <div class="flex items-center justify-between">
           <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-12 h-12 rounded-2xl">
           <span class="text-xs uppercase tracking-[0.2em] text-slate-400">Core</span>
@@ -122,7 +158,7 @@
         <span class="text-sky-200 text-sm font-semibold">Play today →</span>
       </a>
 
-      <a href="/games/snake/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4">
+      <a href="/games/snake/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4" data-game-id="snake" data-category="daily">
         <div class="flex items-center justify-between">
           <img src="/games/snake/snake-logo.png" alt="Snake" class="w-12 h-12 rounded-2xl">
           <span class="text-xs uppercase tracking-[0.2em] text-slate-400">Daily</span>
@@ -134,7 +170,7 @@
         <span class="text-sky-200 text-sm font-semibold">Play today →</span>
       </a>
 
-      <a href="/games/pathways/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4">
+      <a href="/games/pathways/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4" data-game-id="pathways" data-category="daily">
         <div class="flex items-center justify-between">
           <img src="/games/pathways/pathways-logo.png" alt="Pathways" class="w-12 h-12 rounded-2xl">
           <span class="text-xs uppercase tracking-[0.2em] text-slate-400">Daily</span>
@@ -146,7 +182,7 @@
         <span class="text-sky-200 text-sm font-semibold">Play today →</span>
       </a>
 
-      <a href="/games/lattice/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4">
+      <a href="/games/lattice/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4" data-game-id="lattice" data-category="daily">
         <div class="flex items-center justify-between">
           <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-12 h-12 rounded-2xl">
           <span class="text-xs uppercase tracking-[0.2em] text-slate-400">Daily</span>
@@ -158,7 +194,7 @@
         <span class="text-sky-200 text-sm font-semibold">Play today →</span>
       </a>
 
-      <a href="/games/bits/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4">
+      <a href="/games/bits/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4" data-game-id="bits" data-category="new">
         <div class="flex items-center justify-between">
           <img src="/games/bits/bitsnew-logo.jpg" alt="Bits" class="w-12 h-12 rounded-2xl">
           <span class="text-xs uppercase tracking-[0.2em] text-slate-400">New</span>
@@ -170,7 +206,7 @@
         <span class="text-sky-200 text-sm font-semibold">Play today →</span>
       </a>
 
-      <a href="/games/hashi/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4">
+      <a href="/games/hashi/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4" data-game-id="hashi" data-category="new">
         <div class="flex items-center justify-between">
           <img src="/games/hashi/hashi-logo.jpg" alt="Bridgeworks" class="w-12 h-12 rounded-2xl">
           <span class="text-xs uppercase tracking-[0.2em] text-slate-400">New</span>
@@ -182,7 +218,7 @@
         <span class="text-sky-200 text-sm font-semibold">Play today →</span>
       </a>
 
-      <a href="/games/shikaku/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4">
+      <a href="/games/shikaku/" class="game-card glass rounded-3xl p-6 flex flex-col gap-4" data-game-id="shikaku" data-category="new">
         <div class="flex items-center justify-between">
           <img src="/games/shikaku/shikaku-logo.jpg" alt="Parcel" class="w-12 h-12 rounded-2xl">
           <span class="text-xs uppercase tracking-[0.2em] text-slate-400">New</span>
@@ -195,7 +231,7 @@
       </a>
     </section>
 
-    <section class="mt-12 grid md:grid-cols-2 gap-5">
+    <section id="reminders" class="mt-12 grid md:grid-cols-2 gap-5">
       <div class="glass rounded-3xl p-6">
         <h3 class="text-lg font-semibold">Reminders</h3>
         <p class="text-sm text-slate-400 mt-2">Get a nightly nudge and a midnight drop alert. We’ll only ask after you’ve played a couple puzzles.</p>
@@ -208,7 +244,7 @@
     </section>
   </main>
 
-  <div id="install-banner" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 install-banner rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm w-[90%]">
+  <div id="install-banner" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 install-banner rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm w-[90%]">
     <div class="flex-1">
       <p class="text-sm font-semibold">Add Daily Grid Games</p>
       <p class="text-xs text-slate-400">Install the app for faster access.</p>
@@ -217,12 +253,46 @@
     <button id="install-banner-close" class="text-slate-400 text-sm">✕</button>
   </div>
 
+  <nav class="bottom-nav fixed bottom-0 inset-x-0 px-6 py-3 flex items-center justify-around text-xs">
+    <a href="/games/" class="flex flex-col items-center gap-1 text-sky-200">
+      <span class="text-base">◆</span>
+      Games
+    </a>
+    <a href="#reminders" class="flex flex-col items-center gap-1 text-slate-300">
+      <span class="text-base">●</span>
+      Reminders
+    </a>
+    <a href="/support/" class="flex flex-col items-center gap-1 text-slate-300">
+      <span class="text-base">◇</span>
+      Support
+    </a>
+  </nav>
+
   <script>
     const installBtn = document.getElementById('install-btn');
     const installBanner = document.getElementById('install-banner');
     const installBannerBtn = document.getElementById('install-banner-btn');
     const installBannerClose = document.getElementById('install-banner-close');
     const notificationsBtn = document.getElementById('notifications-btn');
+    const reminderStatus = document.getElementById('reminder-status');
+
+    const chips = Array.from(document.querySelectorAll('[data-filter]'));
+    const cards = Array.from(document.querySelectorAll('[data-game-id]'));
+    const recentList = document.getElementById('recent-list');
+    const recentEmpty = document.getElementById('recent-empty');
+
+    const RECENT_KEY = 'dg_recent_games';
+    const PLAY_COUNT_KEY = 'dg_games_play_count';
+
+    const gameMeta = {
+      dailygrid: { name: 'Daily Grid', path: '/', logo: '/Images/web%20icon.png', tag: 'Core' },
+      snake: { name: 'Snake', path: '/games/snake/', logo: '/games/snake/snake-logo.png', tag: 'Daily' },
+      pathways: { name: 'Pathways', path: '/games/pathways/', logo: '/games/pathways/pathways-logo.png', tag: 'Daily' },
+      lattice: { name: 'Lattice', path: '/games/lattice/', logo: '/games/lattice/lattice-logo.png?v=2', tag: 'Daily' },
+      bits: { name: 'Bits', path: '/games/bits/', logo: '/games/bits/bitsnew-logo.jpg', tag: 'New' },
+      hashi: { name: 'Bridgeworks', path: '/games/hashi/', logo: '/games/hashi/hashi-logo.jpg', tag: 'New' },
+      shikaku: { name: 'Parcel', path: '/games/shikaku/', logo: '/games/shikaku/shikaku-logo.jpg', tag: 'New' }
+    };
 
     let deferredPrompt = null;
 
@@ -233,6 +303,75 @@
     function isStandalone() {
       return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     }
+
+    function getRecent() {
+      try {
+        const raw = localStorage.getItem(RECENT_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function setRecent(list) {
+      localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 6)));
+    }
+
+    function recordPlay(id) {
+      const recent = getRecent().filter(item => item !== id);
+      recent.unshift(id);
+      setRecent(recent);
+      const count = Number(localStorage.getItem(PLAY_COUNT_KEY) || '0') + 1;
+      localStorage.setItem(PLAY_COUNT_KEY, String(count));
+    }
+
+    function renderRecent() {
+      const recent = getRecent();
+      if (!recentList) return;
+      if (recent.length === 0) {
+        if (recentEmpty) recentEmpty.classList.remove('hidden');
+        recentList.innerHTML = '';
+        return;
+      }
+      if (recentEmpty) recentEmpty.classList.add('hidden');
+      recentList.innerHTML = recent.slice(0, 3).map((id) => {
+        const meta = gameMeta[id];
+        if (!meta) return '';
+        return `
+          <a href="${meta.path}" class="game-card glass rounded-2xl p-4 flex items-center gap-4" data-game-id="${id}">
+            <img src="${meta.logo}" alt="${meta.name}" class="w-12 h-12 rounded-xl">
+            <div class="flex-1">
+              <p class="font-semibold">${meta.name}</p>
+              <p class="text-xs text-slate-400">${meta.tag}</p>
+            </div>
+            <span class="text-sky-200 text-sm font-semibold">Play →</span>
+          </a>
+        `;
+      }).join('');
+    }
+
+    function applyFilter(filter) {
+      cards.forEach((card) => {
+        const category = card.dataset.category;
+        const show = filter === 'all' || category === filter;
+        card.style.display = show ? '' : 'none';
+      });
+    }
+
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        applyFilter(chip.dataset.filter);
+      });
+    });
+
+    cards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const id = card.dataset.gameId;
+        if (id) recordPlay(id);
+      });
+    });
 
     window.addEventListener('beforeinstallprompt', (event) => {
       event.preventDefault();
@@ -269,9 +408,16 @@
       alert('Notifications are coming soon. We will ask after you have played a few puzzles.');
     });
 
+    const playCount = Number(localStorage.getItem(PLAY_COUNT_KEY) || '0');
+    if (playCount >= 3) {
+      reminderStatus.textContent = 'You are eligible for reminders once notifications are ready.';
+    }
+
     if (isIos() && !isStandalone()) {
       installBanner?.classList.remove('hidden');
     }
+
+    renderRecent();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
