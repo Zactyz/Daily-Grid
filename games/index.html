@@ -86,9 +86,13 @@
       background: rgba(15, 23, 42, 0.9);
     }
 
+    @media (max-width: 899px) {
+      .desktop-only { display: none !important; }
+    }
+
     @media (min-width: 900px) {
-      .mobile-only { display: none; }
-      .desktop-only { display: block; }
+      .mobile-only { display: none !important; }
+      .desktop-only { display: block !important; }
     }
   </style>
 </head>
@@ -105,7 +109,12 @@
 
     <div id="ios-install-banner" class="hidden ios-banner rounded-2xl p-3 mb-6">
       <div class="flex items-center gap-3">
-        <div class="text-amber-200 text-lg">⬆︎</div>
+        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0-12l-4 4m4-4l4 4"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14a2 2 0 002-2v-5H3v5a2 2 0 002 2z"/>
+          </svg>
+        </div>
         <div class="text-xs text-slate-300">
           Add to Home Screen: tap Share, then “Add to Home Screen”.
         </div>
@@ -308,6 +317,19 @@
     </footer>
   </div>
 
+  <div id="ios-install-banner-bottom" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 ios-banner rounded-2xl px-4 py-3 flex items-center gap-3 max-w-sm w-[92%]">
+    <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+      <svg class="w-4 h-4 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0-12l-4 4m4-4l4 4"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 21h14a2 2 0 002-2v-5H3v5a2 2 0 002 2z"/>
+      </svg>
+    </div>
+    <div class="flex-1 text-xs text-slate-300">
+      Add to Home Screen: tap Share, then “Add to Home Screen”.
+    </div>
+    <button id="ios-banner-close" class="text-slate-400 text-sm">✕</button>
+  </div>
+
   <script>
     const RECENT_KEY = 'dg_recent_games';
 
@@ -376,9 +398,16 @@
     const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     const iosBanner = document.getElementById('ios-install-banner');
-    if (isIos && !isStandalone && iosBanner) {
-      iosBanner.classList.remove('hidden');
+    const iosBannerBottom = document.getElementById('ios-install-banner-bottom');
+    const iosBannerClose = document.getElementById('ios-banner-close');
+    if (isIos && !isStandalone) {
+      iosBanner?.classList.add('hidden');
+      iosBannerBottom?.classList.remove('hidden');
     }
+
+    iosBannerClose?.addEventListener('click', () => {
+      iosBannerBottom?.classList.add('hidden');
+    });
 
     renderRecent();
 
