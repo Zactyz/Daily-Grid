@@ -33,7 +33,7 @@ const GAME_META = [
     id: 'bits',
     name: 'Bits',
     path: '/games/bits/',
-    logo: '/games/bits/bits-logo.jpg',
+    logo: '/games/bits/bitsnew-logo.jpg',
     submittedKeyPrefix: 'dailygrid_bits_submitted_',
     theme: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400' },
     shareUrl: 'https://dailygrid.app/games/bits/'
