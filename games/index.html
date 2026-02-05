@@ -500,7 +500,8 @@
       }
       recentSection.classList.remove('hidden');
       if (recentEmpty) recentEmpty.classList.add('hidden');
-      recentList.innerHTML = recent.slice(0, 2).map((id) => {
+      const displayed = recent.slice(0, 2);
+      recentList.innerHTML = displayed.map((id) => {
         const meta = gameMeta[id];
         if (!meta) return '';
         return `
@@ -521,7 +522,7 @@
           </a>
         `;
       }).join('');
-      return new Set(recent);
+      return new Set(displayed);
     }
 
     function updateCards() {

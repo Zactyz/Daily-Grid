@@ -39,6 +39,7 @@ let cells = [];
 let dragStart = null;
 let currentSelection = null;
 let usingTouch = false;
+let activeTouchId = null;
 let shell = null;
 let currentMode = 'daily';
 let puzzleId = getPTDateYYYYMMDD();
@@ -623,6 +624,7 @@ function handlePointerUp(event) {
 function handleTouchStart(event) {
   if (!event.touches || event.touches.length === 0) return;
   usingTouch = true;
+  activeTouchId = event.touches[0].identifier;
   event.preventDefault();
   const touch = event.touches[0];
   beginDrag(touch.clientX, touch.clientY, event.target);
@@ -631,14 +633,14 @@ function handleTouchStart(event) {
 function handleTouchMove(event) {
   if (!usingTouch || !event.touches || event.touches.length === 0) return;
   event.preventDefault();
-  const touch = event.touches[0];
+  const touch = Array.from(event.touches).find(t => t.identifier === activeTouchId) || event.touches[0];
   moveDrag(touch.clientX, touch.clientY, event.target);
 }
 
 function handleTouchEnd(event) {
   if (!usingTouch) return;
   event.preventDefault();
-  const touch = event.changedTouches?.[0];
+  const touch = Array.from(event.changedTouches || []).find(t => t.identifier === activeTouchId) || event.changedTouches?.[0];
   if (touch) {
     endDrag(touch.clientX, touch.clientY, event.target);
   } else {
@@ -646,6 +648,16 @@ function handleTouchEnd(event) {
     clearSelection();
   }
   usingTouch = false;
+  activeTouchId = null;
+}
+
+function handleTouchCancel(event) {
+  if (!usingTouch) return;
+  event.preventDefault();
+  dragStart = null;
+  clearSelection();
+  usingTouch = false;
+  activeTouchId = null;
 }
 
 function getElapsedMs() {
@@ -925,9 +937,10 @@ document.addEventListener('DOMContentLoaded', () => {
   els.grid?.addEventListener('pointerdown', handlePointerDown, { passive: false });
   els.grid?.addEventListener('pointermove', handlePointerMove, { passive: false });
   window.addEventListener('pointerup', handlePointerUp);
-  els.grid?.addEventListener('touchstart', handleTouchStart, { passive: false });
-  els.grid?.addEventListener('touchmove', handleTouchMove, { passive: false });
-  window.addEventListener('touchend', handleTouchEnd, { passive: false });
+  els.grid?.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+  els.grid?.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+  window.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+  window.addEventListener('touchcancel', handleTouchCancel, { passive: false, capture: true });
   els.showSolutionBtn?.addEventListener('click', () => showSolution());
   els.solutionRetryBtn?.addEventListener('click', () => {
     resetPuzzle({ resetTimer: true });

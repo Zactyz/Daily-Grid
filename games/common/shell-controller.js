@@ -206,6 +206,7 @@ export function createShellController(adapter, elementOverrides = null) {
         completionMs = adapter.getCompletionMs?.() ?? completionMs;
         modalShown = true;
       }
+      saveCompletedState();
     }
   }
 
