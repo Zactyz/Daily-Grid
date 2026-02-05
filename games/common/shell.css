@@ -6,6 +6,12 @@
   --shell-text-muted: rgba(255, 255, 255, 0.6);
 }
 
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .shell-nav {
   position: sticky;
   top: 0;

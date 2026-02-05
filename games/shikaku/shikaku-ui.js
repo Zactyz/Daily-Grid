@@ -516,7 +516,7 @@ function handlePointerDown(event) {
   if (event.currentTarget && event.currentTarget.setPointerCapture) {
     event.currentTarget.setPointerCapture(event.pointerId);
   }
-  const target = event.target.closest('.cell');
+  const target = event.target.closest('.cell') ?? document.elementFromPoint(event.clientX, event.clientY)?.closest('.cell');
   if (!target) return;
   if (!timerStarted) startTimer();
   if (isPaused) resumeTimer();
@@ -532,7 +532,7 @@ function handlePointerDown(event) {
 function handlePointerMove(event) {
   if (!dragStart) return;
   event.preventDefault();
-  const target = event.target.closest('.cell');
+  const target = event.target.closest('.cell') ?? document.elementFromPoint(event.clientX, event.clientY)?.closest('.cell');
   if (!target) return;
   const rect = rectFromPoints(dragStart, {
     r: Number(target.dataset.r),
@@ -545,7 +545,7 @@ function handlePointerMove(event) {
 function handlePointerUp(event) {
   if (!dragStart) return;
   event.preventDefault();
-  const target = event.target.closest('.cell');
+  const target = event.target.closest('.cell') ?? document.elementFromPoint(event.clientX, event.clientY)?.closest('.cell');
   if (!target) {
     dragStart = null;
     clearSelection();
