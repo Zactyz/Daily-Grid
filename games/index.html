@@ -158,14 +158,6 @@
       </div>
     </div>
 
-    <section id="recent-section" class="mb-6 hidden">
-      <div class="flex items-center justify-between mb-3">
-        <span class="app-section-title">Recently Played</span>
-        <span id="recent-empty" class="text-xs text-slate-500">Play a puzzle to pin it here.</span>
-      </div>
-      <div id="recent-list" class="grid gap-3"></div>
-    </section>
-
     <section class="mb-6">
       <div class="app-section-title mb-3">Daily Puzzles</div>
       <div id="daily-list" class="grid gap-3">
@@ -423,8 +415,6 @@
   </div>
 
   <script>
-    const RECENT_KEY = 'dg_recent_games';
-    const PLAY_COUNT_KEY = 'dg_games_play_count';
 
     const completedPrefixes = {
       snake: 'dailygrid_completed_',
@@ -485,68 +475,8 @@
       }
     }
 
-    function getRecent() {
-      try {
-        const raw = localStorage.getItem(RECENT_KEY);
-        return raw ? JSON.parse(raw) : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function setRecent(list) {
-      localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 4)));
-    }
-
-    function recordPlay(id) {
-      const recent = getRecent().filter(item => item !== id);
-      recent.unshift(id);
-      setRecent(recent);
-      const count = Number(localStorage.getItem(PLAY_COUNT_KEY) || '0') + 1;
-      localStorage.setItem(PLAY_COUNT_KEY, String(count));
-    }
-
-    function renderRecent() {
-      const recentList = document.getElementById('recent-list');
-      const recentEmpty = document.getElementById('recent-empty');
-      const recentSection = document.getElementById('recent-section');
-      if (!recentList || !recentSection) return new Set();
-      const recent = getRecent().filter(id => gameMeta[id] && !isCompletedToday(id));
-      if (recent.length === 0) {
-        recentSection.classList.add('hidden');
-        if (recentList) recentList.innerHTML = '';
-        return new Set();
-      }
-      recentSection.classList.remove('hidden');
-      if (recentEmpty) recentEmpty.classList.add('hidden');
-      const displayed = recent.slice(0, 2);
-      recentList.innerHTML = displayed.map((id) => {
-        const meta = gameMeta[id];
-        if (!meta) return '';
-        return `
-          <a href="${meta.path}" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="${id}" data-source="recent">
-            <div class="relative">
-              <img src="${meta.logo}" alt="${meta.name}" class="w-12 h-12 rounded-xl">
-            </div>
-            <div class="flex-1">
-              <p class="font-semibold">${meta.name}</p>
-              <p class="text-xs text-slate-400">Jump back in</p>
-            </div>
-            <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
-            <span class="play-text">Play</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-          </span>
-          </a>
-        `;
-      }).join('');
-      return new Set(displayed);
-    }
-
     function updateCards() {
-      const recentSet = renderRecent();
-      const dailyList = document.getElementById('daily-list');
+            const dailyList = document.getElementById('daily-list');
       const completedList = document.getElementById('completed-list');
       const completedSection = document.getElementById('completed-section');
       const cards = Array.from(document.querySelectorAll('#daily-list a.app-card[data-game-id], #completed-list a.app-card[data-game-id]'));
@@ -573,12 +503,7 @@
           if (dailyList && card.parentElement !== dailyList) dailyList.appendChild(card);
         }
 
-        if (recentSet.has(id) && !completed && dailyList && card.parentElement === dailyList) {
-          card.classList.add('hidden');
-        } else {
-          card.classList.remove('hidden');
-        }
-      });
+              });
 
       if (completedSection) {
         if (completedList && completedList.children.length > 0) completedSection.classList.remove('hidden');
@@ -594,11 +519,6 @@
         }
       }
     }
-
-    document.querySelectorAll('[data-game-id]').forEach((card) => {
-      card.addEventListener('click', () => {
-        const id = card.dataset.gameId;
-        if (id) recordPlay(id);
       });
     });
 
