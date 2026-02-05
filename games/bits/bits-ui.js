@@ -6,10 +6,10 @@ import { buildShareCard } from '../common/share-card.js';
 const GRID_SIZE = 6;
 const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
 const STATE_PREFIX = 'dailygrid_bits_state_';
-const MIN_CLUES = 4;
-const MAX_CLUES = 8;
-const MIN_ADJ = 4;
-const MAX_ADJ = 8;
+const MIN_CLUES = 5;
+const MAX_CLUES = 9;
+const MIN_ADJ = 6;
+const MAX_ADJ = 10;
 
 let descriptor = null;
 let solutionGrid = null;
@@ -67,6 +67,40 @@ function makeRng(seedString) {
 
 function rngInt(rng, min, max) {
   return Math.floor(rng() * (max - min + 1)) + min;
+}
+
+function weightedPickIndex(weights, rng) {
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  if (total <= 0) return -1;
+  let roll = rng() * total;
+  for (let i = 0; i < weights.length; i += 1) {
+    roll -= weights[i];
+    if (roll <= 0) return i;
+  }
+  return weights.length - 1;
+}
+
+function pickWeightedUnique(indices, weights, count, rng) {
+  const picked = new Set();
+  const localWeights = weights.slice();
+  while (picked.size < count) {
+    const idx = weightedPickIndex(localWeights, rng);
+    if (idx < 0) break;
+    picked.add(indices[idx]);
+    localWeights[idx] = 0;
+    if (localWeights.every(w => w === 0)) break;
+  }
+  return picked;
+}
+
+function quadrantFor(r, c) {
+  const half = GRID_SIZE / 2;
+  const top = r < half;
+  const left = c < half;
+  if (top && left) return 0;
+  if (top && !left) return 1;
+  if (!top && left) return 2;
+  return 3;
 }
 
 function shuffleInPlace(arr, rng) {
@@ -474,6 +508,8 @@ function generateDescriptor(seedString) {
   const rng = makeRng(seedString);
   const maxAttempts = 40;
   const maxSelections = 40;
+  const center = (GRID_SIZE - 1) / 2;
+  const maxDist = Math.hypot(center, center);
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const solution = generateFullGrid(rng);
@@ -484,8 +520,45 @@ function generateDescriptor(seedString) {
       const adjCount = rngInt(rng, MIN_ADJ, MAX_ADJ);
 
       const allIndices = Array.from({ length: TOTAL_CELLS }, (_, i) => i);
-      shuffleInPlace(allIndices, rng);
-      const clueIndices = new Set(allIndices.slice(0, clueCount));
+      const weights = allIndices.map((idx) => {
+        const r = Math.floor(idx / GRID_SIZE);
+        const c = idx % GRID_SIZE;
+        const dist = Math.hypot(r - center, c - center);
+        return 1 + (1 - dist / maxDist) * 2.5;
+      });
+
+      const clueIndices = new Set();
+      if (clueCount >= 4) {
+        const quadrantPicks = [0, 1, 2, 3];
+        quadrantPicks.forEach((q) => {
+          const quadrantCandidates = allIndices.filter((idx) => {
+            const r = Math.floor(idx / GRID_SIZE);
+            const c = idx % GRID_SIZE;
+            return quadrantFor(r, c) === q;
+          });
+          const quadrantWeights = quadrantCandidates.map((idx) => {
+            const r = Math.floor(idx / GRID_SIZE);
+            const c = idx % GRID_SIZE;
+            const dist = Math.hypot(r - center, c - center);
+            return 1 + (1 - dist / maxDist) * 2.5;
+          });
+          const pickSet = pickWeightedUnique(quadrantCandidates, quadrantWeights, 1, rng);
+          pickSet.forEach(idx => clueIndices.add(idx));
+        });
+      }
+
+      if (clueIndices.size < clueCount) {
+        const remaining = allIndices.filter(idx => !clueIndices.has(idx));
+        const remainingWeights = remaining.map((idx) => {
+          const r = Math.floor(idx / GRID_SIZE);
+          const c = idx % GRID_SIZE;
+          const dist = Math.hypot(r - center, c - center);
+          return 1 + (1 - dist / maxDist) * 2.5;
+        });
+        const picks = pickWeightedUnique(remaining, remainingWeights, clueCount - clueIndices.size, rng);
+        picks.forEach(idx => clueIndices.add(idx));
+      }
+
       const clues = Array.from(clueIndices).map(idx => {
         const r = Math.floor(idx / GRID_SIZE);
         const c = idx % GRID_SIZE;
@@ -499,13 +572,43 @@ function generateDescriptor(seedString) {
           if (r < GRID_SIZE - 1) adjacencyPairs.push({ r, c, dir: 'down' });
         }
       }
-      shuffleInPlace(adjacencyPairs, rng);
-      const adjacencies = adjacencyPairs.slice(0, adjCount).map((pair) => {
+      const adjWeights = adjacencyPairs.map((pair) => {
+        const midR = pair.dir === 'right' ? pair.r : pair.r + 0.5;
+        const midC = pair.dir === 'right' ? pair.c + 0.5 : pair.c;
+        const dist = Math.hypot(midR - center, midC - center);
+        return 1 + (1 - dist / maxDist) * 2;
+      });
+      const adjIndices = Array.from({ length: adjacencyPairs.length }, (_, i) => i);
+      const adjPick = pickWeightedUnique(adjIndices, adjWeights, adjCount, rng);
+      const adjacencies = Array.from(adjPick).map((idx) => {
+        const pair = adjacencyPairs[idx];
         const { r, c, dir } = pair;
         const a = solution[r][c];
         const b = dir === 'right' ? solution[r][c + 1] : solution[r + 1][c];
         return { r, c, dir, type: a === b ? 'equal' : 'different' };
       });
+
+      const hasEqual = adjacencies.some(adj => adj.type === 'equal');
+      const hasDiff = adjacencies.some(adj => adj.type === 'different');
+      if (!hasEqual || !hasDiff) {
+        const remainingAdj = adjacencyPairs.filter((pair, idx) => !adjPick.has(idx));
+        for (const pair of remainingAdj) {
+          const { r, c, dir } = pair;
+          const a = solution[r][c];
+          const b = dir === 'right' ? solution[r][c + 1] : solution[r + 1][c];
+          const type = a === b ? 'equal' : 'different';
+          if (!hasEqual && type === 'equal') {
+            adjacencies.pop();
+            adjacencies.push({ r, c, dir, type });
+            break;
+          }
+          if (!hasDiff && type === 'different') {
+            adjacencies.pop();
+            adjacencies.push({ r, c, dir, type });
+            break;
+          }
+        }
+      }
 
       const solutions = countSolutions({ clues, adjacencies }, 2);
       if (solutions === 1) {
