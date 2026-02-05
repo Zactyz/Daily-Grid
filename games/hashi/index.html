@@ -149,6 +149,9 @@
       border-radius: 16px;
       background: #1a0f0c;
       display: block;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .progress-text {
@@ -261,6 +264,13 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
         Reset
+      </button>
+      <button id="undo-btn" class="btn btn-secondary flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l-4-4 4-4"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10h7a5 5 0 110 10h-1"/>
+        </svg>
+        Undo
       </button>
       <button id="exit-replay-btn" class="hidden btn btn-secondary flex items-center justify-center w-10 h-10 p-0" title="Exit Replay">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

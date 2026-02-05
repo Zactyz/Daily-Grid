@@ -24,6 +24,7 @@ const els = {
   solutionActions: document.getElementById('solution-actions'),
   solutionRetryBtn: document.getElementById('solution-retry-btn'),
   solutionNextBtn: document.getElementById('solution-next-btn'),
+  undoBtn: document.getElementById('undo-btn'),
   pauseBtn: document.getElementById('pause-btn'),
   resetBtn: document.getElementById('reset-btn')
 };
@@ -41,6 +42,8 @@ let completionMs = null;
 let shell = null;
 let tickInterval = null;
 let solutionShown = false;
+const UNDO_LIMIT = 100;
+let undoStack = [];
 
 function getPuzzleIdForMode(mode) {
   if (mode === 'practice') return `practice-${puzzleSeed}`;
@@ -918,6 +921,24 @@ function resetSolutionUI() {
   els.resetBtn?.classList.remove('hidden');
 }
 
+function updateUndoButton() {
+  if (!els.undoBtn) return;
+  const disabled = isPaused || isComplete || undoStack.length === 0;
+  els.undoBtn.disabled = disabled;
+  els.undoBtn.style.opacity = disabled ? '0.45' : '';
+  els.undoBtn.style.pointerEvents = disabled ? 'none' : '';
+}
+
+function snapshotValues() {
+  return cells.map(cell => cell.value);
+}
+
+function pushUndo() {
+  undoStack.push(snapshotValues());
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  updateUndoButton();
+}
+
 function applySavedValues(savedValues) {
   if (!Array.isArray(savedValues)) return;
   cells.forEach((cell, idx) => {
@@ -936,6 +957,7 @@ function handleCellClick(event) {
   if (!timerStarted) startTimer();
   if (isPaused) resumeTimer();
 
+  pushUndo();
   const nextValue = cell.value === null ? 0 : cell.value === 0 ? 1 : null;
   cell.value = nextValue;
   updateCellAppearance(cell);
@@ -955,6 +977,7 @@ function startTimer() {
   timerStarted = true;
   isPaused = false;
   startTimestamp = performance.now();
+  updateUndoButton();
   saveProgress();
 }
 
@@ -962,6 +985,7 @@ function pauseTimer() {
   if (!timerStarted || isPaused) return;
   baseElapsed = getElapsedMs();
   isPaused = true;
+  updateUndoButton();
   saveProgress();
 }
 
@@ -973,6 +997,7 @@ function resumeTimer() {
   if (!isPaused) return;
   isPaused = false;
   startTimestamp = performance.now();
+  updateUndoButton();
   saveProgress();
 }
 
@@ -1001,6 +1026,7 @@ function completePuzzle() {
   isComplete = true;
   isPaused = true;
   timerStarted = true;
+  updateUndoButton();
   saveProgress();
   shell?.update();
 }
@@ -1022,6 +1048,7 @@ function showSolution() {
   isPaused = true;
   timerStarted = true;
   completionMs = getElapsedMs();
+  updateUndoButton();
   shell?.showToast('Solution revealed!');
   els.showSolutionBtn?.classList.add('hidden');
   els.solutionActions?.classList.remove('hidden');
@@ -1040,6 +1067,8 @@ function resetPuzzle({ resetTimer }) {
   });
   isComplete = false;
   completionMs = null;
+  undoStack = [];
+  updateUndoButton();
 
   if (resetTimer) {
     baseElapsed = 0;
@@ -1164,6 +1193,8 @@ function resetPracticePuzzle() {
   isPaused = false;
   isComplete = false;
   completionMs = null;
+  undoStack = [];
+  updateUndoButton();
   resetSolutionUI();
   updateProgressText();
   validateBoard();
@@ -1190,6 +1221,8 @@ function switchMode(mode) {
   validateBoard();
   updateGridLabel();
   setDateLabel();
+  undoStack = [];
+  updateUndoButton();
   resetSolutionUI();
   shell?.update();
 }
@@ -1215,6 +1248,8 @@ function init() {
   setDateLabel();
   initShell();
   ensureTicker();
+  undoStack = [];
+  updateUndoButton();
   resetSolutionUI();
   shell?.update();
 }
@@ -1229,6 +1264,23 @@ document.addEventListener('DOMContentLoaded', () => {
   els.solutionNextBtn?.addEventListener('click', () => {
     resetSolutionUI();
     resetPracticePuzzle();
+  });
+  els.undoBtn?.addEventListener('click', () => {
+    if (isPaused || isComplete) return;
+    const snap = undoStack.pop();
+    if (!snap) return;
+    cells.forEach((cell, idx) => {
+      if (cell.isClue) return;
+      const value = snap[idx];
+      cell.value = value === 0 || value === 1 ? value : null;
+      cell.invalid = false;
+      updateCellAppearance(cell);
+    });
+    updateProgressText();
+    validateBoard();
+    saveProgress();
+    updateUndoButton();
+    shell?.update();
   });
   window.startPracticeMode = () => switchMode('practice');
   window.startDailyMode = () => switchMode('daily');

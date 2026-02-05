@@ -13,7 +13,8 @@ const els = {
   canvas: document.getElementById('hashi-canvas'),
   progress: document.getElementById('progress-text'),
   puzzleDate: document.getElementById('puzzle-date'),
-  islandCount: document.getElementById('island-count')
+  islandCount: document.getElementById('island-count'),
+  undoBtn: document.getElementById('undo-btn')
 };
 
 let puzzle = null;
@@ -34,6 +35,8 @@ let tickInterval = null;
 let pointerDownIsland = null;
 let visibilityEdges = [];
 let solutionShown = false;
+const UNDO_LIMIT = 100;
+let undoStack = [];
 const solutionEls = {
   showSolutionBtn: document.getElementById('show-solution-btn'),
   solutionActions: document.getElementById('solution-actions'),
@@ -235,6 +238,14 @@ function updateProgressText() {
   els.progress.textContent = '';
 }
 
+function updateUndoButton() {
+  if (!els.undoBtn) return;
+  const disabled = isPaused || isComplete || undoStack.length === 0;
+  els.undoBtn.disabled = disabled;
+  els.undoBtn.style.opacity = disabled ? '0.45' : '';
+  els.undoBtn.style.pointerEvents = disabled ? 'none' : '';
+}
+
 function getElapsedMs() {
   if (!timerStarted) return baseElapsed;
   if (isPaused) return baseElapsed;
@@ -246,6 +257,7 @@ function startTimer() {
   timerStarted = true;
   isPaused = false;
   startTimestamp = performance.now();
+  updateUndoButton();
   saveProgress();
 }
 
@@ -253,6 +265,7 @@ function pauseTimer() {
   if (!timerStarted || isPaused) return;
   baseElapsed = getElapsedMs();
   isPaused = true;
+  updateUndoButton();
   saveProgress();
 }
 
@@ -264,6 +277,7 @@ function resumeTimer() {
   if (!isPaused) return;
   isPaused = false;
   startTimestamp = performance.now();
+  updateUndoButton();
   saveProgress();
 }
 
@@ -273,6 +287,8 @@ function resetPuzzle({ resetTimer }) {
   isComplete = false;
   completionMs = null;
   solutionShown = false;
+  undoStack = [];
+  updateUndoButton();
 
   if (resetTimer) {
     baseElapsed = 0;
@@ -326,6 +342,7 @@ function checkCompletion() {
     baseElapsed = completionMs;
     isPaused = true;
     timerStarted = true;
+    updateUndoButton();
     saveProgress();
     shell?.update();
   }
@@ -340,6 +357,9 @@ function cycleBridge(a, b) {
   }
   const current = getBridgeCount(a, b);
   const next = (current + 1) % 3;
+  undoStack.push(Array.from(bridges.entries()).map(([key, count]) => ({ key, count })));
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  updateUndoButton();
   setBridgeCount(a, b, next);
   selected = null;
   updateProgressText();
@@ -364,11 +384,15 @@ function getIslandAtPoint(clientX, clientY) {
 
 function handlePointerDown(event) {
   if (isComplete) return;
+  event.preventDefault();
+  if (els.canvas?.setPointerCapture) els.canvas.setPointerCapture(event.pointerId);
   pointerDownIsland = getIslandAtPoint(event.clientX, event.clientY);
 }
 
 function handlePointerUp(event) {
   if (isComplete) return;
+  event.preventDefault();
+  if (els.canvas?.releasePointerCapture) els.canvas.releasePointerCapture(event.pointerId);
   const endIsland = getIslandAtPoint(event.clientX, event.clientY);
   if (!endIsland) {
     const edgeHit = getEdgeAtPoint(event.clientX, event.clientY);
@@ -413,6 +437,10 @@ function handlePointerUp(event) {
 }
 
 function handlePointerLeave() {
+  pointerDownIsland = null;
+}
+
+function handlePointerCancel() {
   pointerDownIsland = null;
 }
 
@@ -901,6 +929,8 @@ function applySavedState(saved) {
       bridges.set(key, count);
     });
   }
+  undoStack = [];
+  updateUndoButton();
 }
 
 function initState() {
@@ -938,6 +968,8 @@ function resetPracticePuzzle() {
   bridges.clear();
   selected = null;
   solutionShown = false;
+  undoStack = [];
+  updateUndoButton();
   baseElapsed = 0;
   startTimestamp = 0;
   timerStarted = false;
@@ -968,6 +1000,8 @@ function switchMode(mode) {
   bridges.clear();
   selected = null;
   solutionShown = false;
+  undoStack = [];
+  updateUndoButton();
   initState();
   updateProgressText();
   setDateLabel();
@@ -1059,14 +1093,33 @@ function init() {
   draw();
   initShell();
   ensureTicker();
+  updateUndoButton();
   shell?.update();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
-  els.canvas?.addEventListener('pointerdown', handlePointerDown);
-  els.canvas?.addEventListener('pointerup', handlePointerUp);
+  els.canvas?.addEventListener('pointerdown', handlePointerDown, { passive: false });
+  els.canvas?.addEventListener('pointerup', handlePointerUp, { passive: false });
   els.canvas?.addEventListener('pointerleave', handlePointerLeave);
+  els.canvas?.addEventListener('pointercancel', handlePointerCancel);
+  els.undoBtn?.addEventListener('click', () => {
+    if (isPaused || isComplete) return;
+    const snap = undoStack.pop();
+    if (!snap) return;
+    bridges.clear();
+    snap.forEach(({ key, count }) => {
+      if (!key || typeof count !== 'number') return;
+      if (count > 0) bridges.set(key, count);
+    });
+    selected = null;
+    updateProgressText();
+    draw();
+    checkCompletion();
+    saveProgress();
+    updateUndoButton();
+    shell?.update();
+  });
   solutionEls.showSolutionBtn?.addEventListener('click', showSolution);
   solutionEls.solutionRetryBtn?.addEventListener('click', () => resetPuzzle({ resetTimer: true }));
   solutionEls.solutionNextBtn?.addEventListener('click', () => resetPracticePuzzle());
