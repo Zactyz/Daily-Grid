@@ -25,6 +25,13 @@ const RESUME_ICON = `
 
 let touchGuardInitialized = false;
 
+function shouldAllowDoubleTap(target) {
+  if (!target) return false;
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return true;
+  if (target.closest('#game-container') || target.closest('.game-touch')) return true;
+  return false;
+}
+
 function initTouchGuards() {
   if (touchGuardInitialized || typeof window === 'undefined') return;
   touchGuardInitialized = true;
@@ -32,8 +39,7 @@ function initTouchGuards() {
 
   document.addEventListener('touchend', (event) => {
     const target = event.target;
-    const isEditable = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
-    if (isEditable) return;
+    if (shouldAllowDoubleTap(target)) return;
     const now = Date.now();
     if (now - lastTouchEnd <= 300) {
       event.preventDefault();
@@ -125,10 +131,28 @@ export function createShellController(adapter, elementOverrides = null) {
     }
   }
 
+  function loadCompletedState() {
+    if (!meta?.completedKeyPrefix) return false;
+    try {
+      return localStorage.getItem(puzzleKeyPrefix(meta.completedKeyPrefix)) === 'true';
+    } catch {
+      return false;
+    }
+  }
+
   function saveSubmittedState() {
     if (!meta?.submittedKeyPrefix) return;
     try {
       localStorage.setItem(puzzleKeyPrefix(meta.submittedKeyPrefix), 'true');
+    } catch {
+      // ignore
+    }
+  }
+
+  function saveCompletedState() {
+    if (!meta?.completedKeyPrefix) return;
+    try {
+      localStorage.setItem(puzzleKeyPrefix(meta.completedKeyPrefix), 'true');
     } catch {
       // ignore
     }
@@ -314,6 +338,9 @@ export function createShellController(adapter, elementOverrides = null) {
       completionMs = adapter.getElapsedMs();
       adapter.setCompletionMs?.(completionMs);
     }
+    if (adapter.getMode() === 'daily' && !isInReplayMode) {
+      saveCompletedState();
+    }
   }
 
   function resetShellState() {
@@ -395,6 +422,7 @@ export function createShellController(adapter, elementOverrides = null) {
 
       hasSubmittedScore = true;
       saveSubmittedState();
+      saveCompletedState();
 
       if (elements.percentileMsg) {
         const msg = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;

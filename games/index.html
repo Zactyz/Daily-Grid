@@ -407,6 +407,14 @@
     const RECENT_KEY = 'dg_recent_games';
     const PLAY_COUNT_KEY = 'dg_games_play_count';
 
+    const completedPrefixes = {
+      snake: 'dailygrid_completed_',
+      pathways: 'dailygrid_pathways_completed_',
+      lattice: 'dailygrid_lattice_completed_',
+      bits: 'dailygrid_bits_completed_',
+      hashi: 'dailygrid_hashi_completed_',
+      shikaku: 'dailygrid_shikaku_completed_'
+    };
     const submittedPrefixes = {
       snake: 'dailygrid_submitted_',
       pathways: 'dailygrid_pathways_submitted_',
@@ -440,11 +448,19 @@
     }
 
     function isCompletedToday(id) {
-      const prefix = submittedPrefixes[id];
-      if (!prefix) return false;
       const puzzleId = getPTDateYYYYMMDD();
+      const completedPrefix = completedPrefixes[id];
+      if (completedPrefix) {
+        try {
+          if (localStorage.getItem(`${completedPrefix}${puzzleId}`) === 'true') return true;
+        } catch {
+          // ignore
+        }
+      }
+      const submittedPrefix = submittedPrefixes[id];
+      if (!submittedPrefix) return false;
       try {
-        return localStorage.getItem(`${prefix}${puzzleId}`) === 'true';
+        return localStorage.getItem(`${submittedPrefix}${puzzleId}`) === 'true';
       } catch {
         return false;
       }
@@ -476,7 +492,7 @@
       const recentEmpty = document.getElementById('recent-empty');
       const recentSection = document.getElementById('recent-section');
       if (!recentList || !recentSection) return new Set();
-      const recent = getRecent().filter(id => !isCompletedToday(id));
+      const recent = getRecent().filter(id => gameMeta[id] && !isCompletedToday(id));
       if (recent.length === 0) {
         recentSection.classList.add('hidden');
         if (recentList) recentList.innerHTML = '';
