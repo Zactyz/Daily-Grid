@@ -158,12 +158,6 @@
         <h1 class="text-2xl font-semibold text-amber-200">Daily Grid Games</h1>
       </div>
     </div>
-
-    <div id="ios-install-banner" class="hidden ios-banner with-pointer rounded-[1.9rem] px-5 py-4 mb-6">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-16 rounded-[1.15rem] bg-slate-100 border border-slate-200 flex items-center justify-center">
-          <img src="/games/assets/apple-share.png" alt="Share icon" class="w-8 h-8 object-contain">
-        </div>
         <div class="text-[15px] text-slate-800 leading-snug">
           Add to Home Screen: tap
           <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700 shadow-sm">
@@ -532,11 +526,9 @@
 
     const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    const iosBanner = document.getElementById('ios-install-banner');
     const iosBannerBottom = document.getElementById('ios-install-banner-bottom');
     const iosBannerClose = document.getElementById('ios-banner-close');
     if (isIos && !isStandalone) {
-      iosBanner?.classList.add('hidden');
       iosBannerBottom?.classList.remove('hidden');
     }
 
