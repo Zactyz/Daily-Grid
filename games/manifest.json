@@ -5,8 +5,8 @@
   "start_url": "/games/",
   "scope": "/games/",
   "display": "standalone",
-  "background_color": "#16223b",
-  "theme_color": "#16223b",
+  "background_color": "#1f2d4f",
+  "theme_color": "#1f2d4f",
   "orientation": "portrait",
   "icons": [
     {
