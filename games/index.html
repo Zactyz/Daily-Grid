@@ -121,18 +121,18 @@
       position: relative;
     }
 
-    .ios-banner.with-pointer::before {
-      content: '';
+    .ios-banner .banner-tail {
       position: absolute;
       left: 50%;
-      bottom: -11px;
-      width: 22px;
-      height: 14px;
-      background: rgba(255, 255, 255, 0.92);
+      bottom: -12px;
+      width: 26px;
+      height: 16px;
       transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.92);
       clip-path: polygon(50% 100%, 0 0, 100% 0);
-      box-shadow: 0 8px 14px rgba(15, 23, 42, 0.08);
       border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 8px 14px rgba(15, 23, 42, 0.08);
+      z-index: 1;
     }
 
     .ios-banner-bottom {
@@ -165,7 +165,7 @@
 </head>
 <body class="min-h-screen flex flex-col">
   <!-- Mobile App Style -->
-  <main class="mobile-only px-4 pt-6 pb-6">
+  <main class="mobile-only px-4 pt-6 pb-3">
     <div class="flex items-center gap-3 mb-6 app-header">
       <img src="/Images/web%20icon.png" alt="Daily Grid Games" class="w-10 h-10 rounded-xl">
       <div>
@@ -410,11 +410,12 @@
   </div>
 
   <div id="ios-install-banner-bottom" class="ios-banner with-pointer rounded-[1.9rem] px-5 py-4 flex items-center gap-4 max-w-md w-[94%] ios-banner-bottom">
-    <div class="w-14 h-16 rounded-[1.15rem] bg-slate-100 border border-slate-200 flex items-center justify-center">
-      <img src="/games/assets/dg-games-180.png" alt="Daily Grid Games" class="w-9 h-9 rounded-[0.9rem] object-contain">
+    <span class="banner-tail" aria-hidden="true"></span>
+    <div class="flex items-center justify-center">
+      <img src="/games/assets/dg-games-180.png" alt="Daily Grid Games" class="w-12 h-12 rounded-[1rem] object-contain">
     </div>
     <div class="flex-1 text-[15px] text-slate-800 leading-snug">
-      Download these games: tap
+      Download the games: tap
       <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700 shadow-sm">
         <img src="/games/assets/apple-share.png" alt="Share icon" class="w-4 h-4 object-contain">
         Share
