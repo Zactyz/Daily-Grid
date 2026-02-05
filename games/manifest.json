@@ -1,0 +1,21 @@
+{
+  "name": "Daily Grid Games",
+  "short_name": "DG Games",
+  "description": "Daily Grid Games — a focused hub for daily puzzles.",
+  "start_url": "/games/",
+  "scope": "/games/",
+  "display": "standalone",
+  "background_color": "#070a14",
+  "theme_color": "#0b1120",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/Images/web%20icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["games", "puzzle"],
+  "lang": "en",
+  "dir": "ltr"
+}
