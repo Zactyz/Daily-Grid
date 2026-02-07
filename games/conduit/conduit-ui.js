@@ -5,7 +5,7 @@ import { buildShareCard } from '../common/share-card.js';
 import { ConduitEngine } from './conduit-engine.js';
 import { ConduitRenderer } from './conduit-renderer.js';
 import { ConduitInput } from './conduit-input.js';
-import { fetchDescriptor, GRID_SIZE, rotateMaskSteps } from './conduit-utils.js';
+import { fetchDescriptor, rotateMaskSteps } from './conduit-utils.js';
 
 const STATE_PREFIX = 'dailygrid_conduit_state_';
 
@@ -76,10 +76,13 @@ function resumeTimer() {
 
 function updateProgress() {
   if (!engine || !els.progress) return;
-  const matched = engine.getCompletionCount();
-  const total = GRID_SIZE * GRID_SIZE;
-  const percent = Math.floor((matched / total) * 100);
-  els.progress.textContent = `Aligned segments: ${matched} / ${total} • ${percent}%`;
+  const powered = engine.getCompletionCount();
+  const active = engine.getActiveCount();
+  const exitPowered = engine.getExitPoweredCount();
+  const exitTotal = engine.getExitCount();
+  const percent = active ? Math.floor((powered / active) * 100) : 0;
+  const exitText = exitTotal ? ` • Exits: ${exitPowered}/${exitTotal}` : '';
+  els.progress.textContent = `Powered: ${powered} / ${active} • ${percent}%${exitText}`;
 }
 
 function setDateLabel() {
@@ -92,8 +95,8 @@ function setDateLabel() {
 }
 
 function setGridLabel() {
-  if (!els.gridSize) return;
-  els.gridSize.textContent = `${GRID_SIZE}x${GRID_SIZE}`;
+  if (!els.gridSize || !descriptor) return;
+  els.gridSize.textContent = `${descriptor.width}x${descriptor.height}`;
 }
 
 function handleBoardInteraction() {
@@ -186,7 +189,7 @@ function applySavedState(saved) {
   if (!engine || !saved?.rotations) return;
   const cells = engine.getCells();
   cells.forEach((cell, idx) => {
-    if (cell.isPrefill) return;
+    if (cell.isPrefill || !cell.isActive) return;
     const rot = saved.rotations[idx];
     if (typeof rot !== 'number') return;
     cell.rotation = rot % 4;
@@ -246,6 +249,7 @@ function resetPracticePuzzle() {
   completionMs = null;
   loadDescriptor().then(() => {
     updateProgress();
+    setGridLabel();
     setDateLabel();
     shell?.update();
   });
@@ -265,6 +269,7 @@ function switchMode(mode) {
   loadDescriptor().then(() => {
     initState();
     updateProgress();
+    setGridLabel();
     setDateLabel();
     shell?.update();
   });
@@ -284,7 +289,7 @@ function initShell() {
     gameId: 'conduit',
     getMode: () => currentMode,
     getPuzzleId: () => puzzleId,
-    getGridLabel: () => `${GRID_SIZE}x${GRID_SIZE} Flow`,
+    getGridLabel: () => `${descriptor?.width || 7}x${descriptor?.height || 7} Circuit`,
     getElapsedMs: () => getElapsedMs(),
     formatTime,
     autoStartOnProgress: true,
@@ -313,7 +318,7 @@ function initShell() {
     getShareMeta: () => ({
       gameName: 'Conduit',
       shareUrl: 'https://dailygrid.app/games/conduit/',
-      gridLabel: '7x7 Flow'
+      gridLabel: `${descriptor?.width || 7}x${descriptor?.height || 7} Circuit`
     }),
     getShareFile: () => buildShareImage(),
     getCompletionMs: () => completionMs,
@@ -338,7 +343,7 @@ async function buildShareImage() {
     backgroundEnd: '#0b1424',
     dateText: puzzleDate,
     timeText: formatTime(finalTime || 0),
-    gridLabel: 'Grid 7x7',
+    gridLabel: `Grid ${descriptor?.width || 7}x${descriptor?.height || 7}`,
     footerText: 'dailygrid.app/games/conduit'
   });
 }

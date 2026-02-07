@@ -188,22 +188,11 @@
         Practice Mode
       </div>
       <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Perimeter</h1>
-      <p class="text-zinc-500 text-sm">Trace the single loop, honor the guard numbers, and keep every corridor logical.</p>
+      <p class="text-zinc-500 text-sm">Build one continuous loop, guided by the perimeter counts in each cell.</p>
     </header>
 
-    <div class="flex gap-3 mb-3 w-full max-w-xs">
-      <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
-        <div class="text-[10px] uppercase tracking-wider text-sky-400/60 mb-0.5">Time</div>
-        <div id="timer" class="text-xl font-bold mono accent-text">0:00</div>
-      </div>
-      <div class="flex-1 stat-card px-4 py-2.5 rounded-xl text-center">
-        <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Grid</div>
-        <div id="grid-size" class="text-xl font-bold mono text-zinc-300">4x4 dots</div>
-      </div>
-    </div>
-
     <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
-      <div id="progress-text" class="progress-text mb-3">Loop progress: 0 / 16 segments</div>
+      <div id="progress-text" class="progress-text mb-3">Clues: 0 / 0 • Lines: 0</div>
       <canvas id="perimeter-canvas" class="celebrate-target"></canvas>
 
       <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
@@ -258,10 +247,10 @@
       <summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">How to Play</summary>
       <div class="px-5 pb-5 pt-1">
         <ul class="text-zinc-400 space-y-2.5 text-sm">
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-sky-500/15 text-sky-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Draw a single unbroken loop that touches every dot exactly once.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-sky-500/15 text-sky-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Each guard tells you how many segments branch off from that dot.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-sky-500/15 text-sky-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>White guards force straight lines, black guards demand turns.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-sky-500/15 text-sky-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>Use the dots, not the spaces—every move is about continuity.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-sky-500/15 text-sky-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Draw one continuous loop along the grid lines.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-sky-500/15 text-sky-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Numbers show how many sides of that cell belong to the loop.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-sky-500/15 text-sky-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Every dot connects to 0 or 2 lines—no branches or dead ends.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-sky-500/15 text-sky-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>Tap again to place an X and mark edges that cannot be used.</span></li>
         </ul>
       </div>
     </details>

@@ -1,7 +1,7 @@
 {
   "name": "Perimeter by Daily Grid",
   "short_name": "Perimeter",
-  "description": "Weave a single loop that satisfies every guard.",
+  "description": "Trace one continuous loop that matches every perimeter clue.",
   "start_url": "/games/perimeter/",
   "display": "standalone",
   "background_color": "#0c1018",

@@ -37,9 +37,9 @@ function getStateKey() {
 
 function updateProgress() {
   if (!engine || !els.progress) return;
-  const current = engine.getPlayerEdges().length;
-  const target = engine.puzzle.solutionEdges.size;
-  els.progress.textContent = `Loop progress: ${current} / ${target} segments`;
+  const { satisfied, total } = engine.getClueProgress();
+  const lines = engine.getLineEdges().length;
+  els.progress.textContent = `Clues: ${satisfied} / ${total} • Lines: ${lines}`;
 }
 
 function setDateLabel() {
@@ -73,8 +73,7 @@ function resumeTimer() {
 
 function resetPuzzle({ resetTimer }) {
   if (!engine) return;
-  engine.playerEdges.clear();
-  engine.isComplete = false;
+  engine.reset();
 
   if (resetTimer) {
     engine.timeMs = 0;
@@ -125,7 +124,7 @@ function loadState() {
 function saveProgress() {
   if (currentMode !== 'daily' || !engine) return;
   const payload = {
-    edges: engine.getPlayerEdges(),
+    edges: Array.from(engine.edgeStates.entries()),
     timeMs: engine.timeMs,
     timerStarted: engine.timerStarted,
     isPaused: engine.isPaused,
@@ -141,13 +140,13 @@ function saveProgress() {
 
 function applySavedState(saved) {
   if (!engine || !saved) return;
-  engine.playerEdges = new Set(saved.edges || []);
+  engine.edgeStates = new Map(saved.edges || []);
   engine.timeMs = saved.timeMs ?? 0;
   engine.timerStarted = saved.timerStarted ?? false;
   engine.isPaused = saved.isPaused ?? false;
   engine.isComplete = saved.isComplete ?? false;
   completionMs = saved.completionMs ?? null;
-  engine.syncCompletion();
+  engine.syncStatus();
 }
 
 function initState() {
@@ -164,11 +163,39 @@ function initState() {
   renderer?.render();
 }
 
+function loadPuzzle() {
+  engine = new PerimeterEngine(puzzleId);
+  if (!renderer) {
+    renderer = new PerimeterRenderer(els.canvas, engine);
+  } else {
+    renderer.setEngine(engine);
+  }
+  if (!input) {
+    input = new PerimeterInput(els.canvas, engine, renderer, {
+      onEdgeChange: () => {
+        renderer.render();
+        updateProgress();
+      },
+      onInteraction: () => {
+        handleInteraction();
+      }
+    });
+  } else {
+    input.setEngine(engine);
+    input.setRenderer(renderer);
+  }
+  renderer.render();
+}
+
 function resetPracticePuzzle() {
   puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
   puzzleId = getPuzzleIdForMode('practice');
-  resetPuzzle({ resetTimer: true });
+  loadPuzzle();
+  initState();
+  updateProgress();
+  setGridLabel();
   setDateLabel();
+  shell?.update();
 }
 
 function switchMode(mode) {
@@ -181,8 +208,10 @@ function switchMode(mode) {
     puzzleSeed = getPTDateYYYYMMDD();
   }
   puzzleId = getPuzzleIdForMode(mode);
+  loadPuzzle();
   initState();
   updateProgress();
+  setGridLabel();
   setDateLabel();
   shell?.update();
 }
@@ -206,14 +235,14 @@ function initShell() {
     gameId: 'perimeter',
     getMode: () => currentMode,
     getPuzzleId: () => puzzleId,
-    getGridLabel: () => engine?.getGridLabel() || '4x4 dots',
+    getGridLabel: () => engine?.getGridLabel() || '6x6 cells',
     getElapsedMs: () => engine?.timeMs || 0,
     formatTime,
     autoStartOnProgress: true,
     isComplete: () => engine?.isComplete || false,
     isPaused: () => engine?.isPaused || false,
     isStarted: () => engine?.timerStarted || false,
-    hasProgress: () => (engine?.getPlayerEdges().length || 0) > 0,
+    hasProgress: () => (engine?.edgeStates?.size || 0) > 0,
     pause: () => pauseTimer(),
     resume: () => resumeTimer(),
     startGame: () => startTimer(),
@@ -235,7 +264,7 @@ function initShell() {
     getShareMeta: () => ({
       gameName: 'Perimeter',
       shareUrl: 'https://dailygrid.app/games/perimeter/',
-      gridLabel: engine?.getGridLabel() || '4x4 dots'
+      gridLabel: engine?.getGridLabel() || '6x6 cells'
     }),
     getShareFile: () => buildShareImage(),
     getCompletionMs: () => completionMs,
@@ -260,25 +289,13 @@ async function buildShareImage() {
     backgroundEnd: '#121a2a',
     dateText: puzzleDate,
     timeText: formatTime(finalTime || 0),
-    gridLabel: 'Grid 4x4',
+    gridLabel: `Grid ${engine?.getGridSize() || 6}x${engine?.getGridSize() || 6}`,
     footerText: 'dailygrid.app/games/perimeter'
   });
 }
 
 function init() {
-  engine = new PerimeterEngine();
-  renderer = new PerimeterRenderer(els.canvas, engine);
-  input = new PerimeterInput(els.canvas, engine, renderer, {
-    onEdgeChange: () => {
-      renderer.render();
-      updateProgress();
-    },
-    onInteraction: () => {
-      handleInteraction();
-    }
-  });
-  renderer.render();
-
+  loadPuzzle();
   initState();
   updateProgress();
   setGridLabel();

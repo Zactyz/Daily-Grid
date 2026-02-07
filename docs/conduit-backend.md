@@ -22,9 +22,10 @@ All requests share the same CORS-friendly envelope and rely on `env.DB` (the `da
 ### `GET /api/conduit/leaderboard?puzzleId=...`
 - Fetches the top 10 finishes plus a total count for the requested day.
 - Returns `{ top10: [...], total }` where `top10` entries include `rank`, `timeMs`, `initials`, and `hintsUsed`.
+- The UI displays **Top 3** (with an ellipsis row + the player's rank if they are outside the top 3).
 
 ### `POST /api/conduit/claim-initials`
-- Called after a top-10 completion to persist up to 3 uppercase initials.
+- Called after a completion to persist up to 3 uppercase initials (the UI encourages this even if the rank is outside the Top 3).
 - Validates UUID + initials, rejects claims if no score exists, and enforces the 10-minute claim window from when the score was created.
 - Updates just the matching row in `conduit_scores` and returns `{ success: true }`.
 
