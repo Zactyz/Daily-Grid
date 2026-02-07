@@ -271,12 +271,6 @@ textarea,
   0% {
     transform: translate3d(0, -20px, 0) rotate(var(--rot));
   }
-  35% {
-    transform: translate3d(calc(var(--dx) * 0.6), 30vh, 0) rotate(calc(var(--rot) + 120deg));
-  }
-  65% {
-    transform: translate3d(calc(var(--dx) * -0.25), 70vh, 0) rotate(calc(var(--rot) + 240deg));
-  }
   100% {
     transform: translate3d(var(--dx), 110vh, 0) rotate(calc(var(--rot) + 360deg));
   }
