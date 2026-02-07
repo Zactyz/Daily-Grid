@@ -84,6 +84,8 @@ When adding a new game, update these shared locations so it appears everywhere:
   - Submitted: `${submittedKeyPrefix}${YYYY-MM-DD}` (daily only)
   - Completed: `${completedKeyPrefix}${YYYY-MM-DD}` (daily only)
 - Provide `getCompletionPayload()` and `getAnonId()` in the adapter.
+- Leaderboard display is capped at Top 5. If the player ranks below Top 5, the UI shows an ellipsis row and their rank.
+- The shell stores the player’s local leaderboard entry under `dailygrid_${gameId}_leaderboard_${puzzleId}` to support this.
 
 ## 10) Sharing previews (social/iMessage)
 - Add OG/Twitter meta tags to the game’s `index.html`.
@@ -96,6 +98,7 @@ When adding a new game, update these shared locations so it appears everywhere:
 - Ensure the app back arrow is present on mobile (shell handles this).
 - Avoid extra scrolling space on mobile (see recent padding fixes).
 - Disable unwanted text selection/zoom in interactive areas (`touch-action: manipulation`, `user-select: none`).
+- Add `celebrate-target` to the main game board element so the completion pulse animation can run before the modal.
 
 ## 12) Consistency rules
 - Timer display is owned by the shell.

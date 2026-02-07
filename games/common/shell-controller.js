@@ -117,6 +117,7 @@ export function createShellController(adapter, elementOverrides = null) {
   let toastTimeout = null;
   const wantsLeaderboard = new URLSearchParams(window.location.search).get('leaderboard') === '1';
   let leaderboardDeepLink = wantsLeaderboard;
+  let modalPending = false;
 
   function puzzleKeyPrefix(prefix) {
     return `${prefix}${adapter.getPuzzleId()}`;
@@ -137,6 +138,31 @@ export function createShellController(adapter, elementOverrides = null) {
       return localStorage.getItem(puzzleKeyPrefix(meta.completedKeyPrefix)) === 'true';
     } catch {
       return false;
+    }
+  }
+
+  function leaderboardEntryKey() {
+    return `dailygrid_${adapter.gameId}_leaderboard_${adapter.getPuzzleId()}`;
+  }
+
+  function loadLocalLeaderboardEntry() {
+    try {
+      const raw = localStorage.getItem(leaderboardEntryKey());
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || !Number.isFinite(data.rank)) return null;
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveLocalLeaderboardEntry(entry) {
+    if (!entry || !Number.isFinite(entry.rank)) return;
+    try {
+      localStorage.setItem(leaderboardEntryKey(), JSON.stringify(entry));
+    } catch {
+      // ignore
     }
   }
 
@@ -397,7 +423,8 @@ export function createShellController(adapter, elementOverrides = null) {
       container: elements.leaderboardList,
       api: `/api/${adapter.gameId}/leaderboard`,
       puzzleId: adapter.getPuzzleId(),
-      formatTimeFn: adapter.formatTime
+      formatTimeFn: adapter.formatTime,
+      playerEntry: loadLocalLeaderboardEntry()
     });
   }
 
@@ -425,6 +452,15 @@ export function createShellController(adapter, elementOverrides = null) {
       hasSubmittedScore = true;
       saveSubmittedState();
       saveCompletedState();
+
+      if (Number.isFinite(data.rank)) {
+        const existingEntry = loadLocalLeaderboardEntry();
+        saveLocalLeaderboardEntry({
+          rank: data.rank,
+          timeMs: payload.timeMs,
+          initials: existingEntry?.initials ?? null
+        });
+      }
 
       if (elements.percentileMsg) {
         const msg = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
@@ -454,6 +490,11 @@ export function createShellController(adapter, elementOverrides = null) {
         anonId: adapter.getAnonId(),
         initials
       });
+      const existingEntry = loadLocalLeaderboardEntry();
+      if (existingEntry) {
+        existingEntry.initials = initials;
+        saveLocalLeaderboardEntry(existingEntry);
+      }
       elements.claimInitialsForm?.classList.add('hidden');
       await loadLeaderboardIntoModal();
     } catch (error) {
@@ -753,6 +794,54 @@ export function createShellController(adapter, elementOverrides = null) {
     }
   }
 
+  function runDefaultCelebration() {
+    const targets = document.querySelectorAll('.celebrate-target');
+    if (!targets.length) return 0;
+    targets.forEach((el) => {
+      el.classList.remove('celebrate-animate');
+      void el.offsetWidth;
+      el.classList.add('celebrate-animate');
+    });
+    const durationMs = 900;
+    window.setTimeout(() => {
+      targets.forEach((el) => el.classList.remove('celebrate-animate'));
+    }, durationMs);
+    return durationMs;
+  }
+
+  function startCompletionSequence() {
+    if (modalPending) return;
+    modalPending = true;
+
+    const finish = () => {
+      modalPending = false;
+      if (modalShown) return;
+      modalShown = true;
+      showCompletionModal();
+    };
+
+    let result = null;
+    try {
+      result = adapter.onCelebrate?.();
+    } catch {
+      result = null;
+    }
+
+    if (result && typeof result.then === 'function') {
+      result.then(finish).catch(finish);
+      return;
+    }
+
+    if (typeof result === 'number' && result > 0) {
+      window.setTimeout(finish, result);
+      return;
+    }
+
+    const duration = runDefaultCelebration();
+    if (duration > 0) window.setTimeout(finish, duration);
+    else finish();
+  }
+
   function update() {
     syncPuzzleState();
     setCompletionTimeIfNeeded();
@@ -768,6 +857,7 @@ export function createShellController(adapter, elementOverrides = null) {
 
     if (leaderboardDeepLink && adapter.getMode() === 'daily' && adapter.isComplete() && !isInReplayMode) {
       leaderboardDeepLink = false;
+      modalPending = false;
       modalShown = true;
       showCompletionModal({ force: true });
     }
@@ -778,9 +868,8 @@ export function createShellController(adapter, elementOverrides = null) {
         saveReplayMode(false);
         adapter.onReplayStateChange?.(false);
       }
-      if (!modalShown && (!adapter.shouldShowCompletionModal || adapter.shouldShowCompletionModal())) {
-        modalShown = true;
-        showCompletionModal();
+      if (!modalShown && !modalPending && (!adapter.shouldShowCompletionModal || adapter.shouldShowCompletionModal())) {
+        startCompletionSequence();
       }
     }
   }

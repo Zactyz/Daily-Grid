@@ -551,16 +551,13 @@ function moveDrag(clientX, clientY, target) {
 function endDrag(clientX, clientY, target) {
   if (!dragStart) return;
   const cell = getCellFromPoint(clientX, clientY, target);
-  if (!cell) {
-    dragStart = null;
-    clearSelection();
-    return;
-  }
-
-  const end = { r: Number(cell.dataset.r), c: Number(cell.dataset.c) };
-  const rect = rectFromPoints(dragStart, end);
+  const fallbackRect = currentSelection ? { ...currentSelection } : null;
+  const rect = cell
+    ? rectFromPoints(dragStart, { r: Number(cell.dataset.r), c: Number(cell.dataset.c) })
+    : fallbackRect;
   dragStart = null;
   clearSelection();
+  if (!rect) return;
 
   if (rect.r1 === rect.r2 && rect.c1 === rect.c2) {
     const assigned = cellAssignments[rect.r1][rect.c1];

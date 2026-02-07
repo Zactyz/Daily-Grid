@@ -1037,10 +1037,11 @@ function showSolution() {
     return;
   }
   solutionShown = true;
+  clearInvalids();
   cells.forEach(cell => {
-    if (cell.isClue) return;
-    cell.value = solutionGrid[cell.r][cell.c];
-    cell.invalid = false;
+    if (!cell.isClue) {
+      cell.value = solutionGrid[cell.r][cell.c];
+    }
     updateCellAppearance(cell);
   });
   updateProgressText();
