@@ -32,7 +32,7 @@ function shouldAllowDoubleTap(target) {
   return false;
 }
 
-function initTouchGuards() {
+  function initTouchGuards() {
   if (touchGuardInitialized || typeof window === 'undefined') return;
   touchGuardInitialized = true;
   let lastTouchEnd = 0;
@@ -50,9 +50,9 @@ function initTouchGuards() {
   document.addEventListener('gesturestart', (event) => {
     event.preventDefault();
   }, { passive: false });
-}
+  }
 
-function defaultElements() {
+  function defaultElements() {
   return {
     timer: document.getElementById('timer'),
     pauseBtn: document.getElementById('pause-btn'),
@@ -99,12 +99,12 @@ function defaultElements() {
     toast: document.getElementById('shell-toast'),
     toastText: document.getElementById('shell-toast-text')
   };
-}
+  }
 
-export function createShellController(adapter, elementOverrides = null) {
+  export function createShellController(adapter, elementOverrides = null) {
   initTouchGuards();
   const meta = getGameMeta(adapter.gameId);
-  const elements = { ...defaultElements(), ...(elementOverrides || {}) };
+    const elements = { ...defaultElements(), ...(elementOverrides || {}) };
 
   let modalShown = false;
   let completionMs = null;
@@ -479,8 +479,12 @@ export function createShellController(adapter, elementOverrides = null) {
         elements.percentileMsg.classList.remove('hidden');
       }
 
-      if (data.rank <= 10 && elements.claimInitialsForm) {
-        elements.claimInitialsForm.classList.remove('hidden');
+      if (elements.claimInitialsForm) {
+        if (latestPlayerEntry?.initials) {
+          elements.claimInitialsForm.classList.add('hidden');
+        } else {
+          elements.claimInitialsForm.classList.remove('hidden');
+        }
       }
     } catch (error) {
       if (elements.percentileMsg) {
@@ -558,8 +562,8 @@ export function createShellController(adapter, elementOverrides = null) {
         }
       });
 
-      submitScoreIfNeeded();
-      loadLeaderboardIntoModal();
+      submitScoreIfNeeded()
+        .finally(() => loadLeaderboardIntoModal());
     } else {
       const practiceTitle = adapter.getPracticeModalTitle?.() || 'Nice Job!';
       const practiceSubtitle = adapter.getPracticeModalSubtitle?.() || 'Practice puzzle complete';
@@ -788,6 +792,18 @@ export function createShellController(adapter, elementOverrides = null) {
       });
     }
 
+    window.addEventListener('popstate', () => {
+      try {
+        const bannerFlag = sessionStorage.getItem('dailygrid_return_to_games');
+        if (bannerFlag === '1') {
+          sessionStorage.removeItem('dailygrid_return_to_games');
+          window.location.href = '/games/';
+        }
+      } catch {
+        // ignore
+      }
+    });
+
     document.addEventListener('visibilitychange', () => {
       if (adapter.pauseOnHide === false) return;
       if (document.visibilityState === 'hidden') {
@@ -855,6 +871,14 @@ export function createShellController(adapter, elementOverrides = null) {
       result = null;
     }
 
+    if (navigator?.vibrate) {
+      try {
+        navigator.vibrate([20, 40, 20]);
+      } catch {
+        // ignore
+      }
+    }
+
     if (result && typeof result.then === 'function') {
       result.then(finish).catch(finish);
       return;
@@ -902,9 +926,9 @@ export function createShellController(adapter, elementOverrides = null) {
     }
   }
 
-  init();
+    init();
 
-  return {
+    return {
     update,
     resetUI: resetShellState,
     showCompletionModal,

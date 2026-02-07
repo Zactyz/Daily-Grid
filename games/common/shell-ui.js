@@ -27,15 +27,17 @@ export async function loadLeaderboard({
       return;
     }
     const fmt = formatTimeFn || formatTime;
-    const topEntries = data.top10.slice(0, 5);
+    const topEntries = data.top10.slice(0, 3);
     const rows = [];
     topEntries.forEach((entry, idx) => {
       const rank = Number.isFinite(entry.rank) ? entry.rank : idx + 1;
       const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+      const isPlayer = playerEntry && Number.isFinite(playerEntry.rank) && playerEntry.rank === rank;
+      const initials = isPlayer ? (playerEntry.initials || 'YOU') : (entry.initials || '???');
       rows.push({
         type: 'entry',
         rank,
-        initials: entry.initials || '???',
+        initials,
         timeMs: entry.timeMs,
         rankClass
       });
@@ -50,7 +52,7 @@ export async function loadLeaderboard({
       rows.push({
         type: 'entry',
         rank: playerEntry.rank,
-        initials: playerEntry.initials || '???',
+        initials: playerEntry.initials || 'YOU',
         timeMs: playerEntry.timeMs,
         rankClass: ''
       });
