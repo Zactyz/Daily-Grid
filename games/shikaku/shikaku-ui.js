@@ -13,6 +13,7 @@ const STATE_PREFIX = 'dailygrid_shikaku_state_';
 const SIZE_RANGE = { min: 6, max: 8 };
 const RECT_RANGE = { min: 6, max: 8 };
 const MIN_RECT_AREA = 2;
+const MAX_RECT_AREA = 12;
 
 const els = {
   grid: document.getElementById('parcel-grid'),
@@ -138,7 +139,9 @@ function generatePartition(size, targetRects, rng) {
       rects.push(split.right ?? split.bottom);
     }
     if (rects.length !== targetRects) continue;
-    return rects;
+    if (rects.every(rect => rectArea(rect) <= MAX_RECT_AREA)) {
+      return rects;
+    }
   }
   return null;
 }
@@ -274,7 +277,8 @@ function generatePuzzle(seedStr) {
     const rng = createSeededRandom(baseSeed + attempt * 9973);
     const size = randInt(rng, SIZE_RANGE.min, SIZE_RANGE.max);
     const maxRects = Math.min(RECT_RANGE.max, Math.floor((size * size) / MIN_RECT_AREA));
-    const minRects = Math.min(RECT_RANGE.min, maxRects);
+    const minRectsByArea = Math.ceil((size * size) / MAX_RECT_AREA);
+    const minRects = Math.min(Math.max(RECT_RANGE.min, minRectsByArea), maxRects);
     const targetRects = randInt(rng, minRects, Math.max(minRects, maxRects));
     const rects = generatePartition(size, targetRects, rng);
     if (!rects) continue;
