@@ -1,15 +1,15 @@
 {
-  "name": "Sentinel Loop by Daily Grid",
-  "short_name": "Sentinel",
+  "name": "Perimeter by Daily Grid",
+  "short_name": "Perimeter",
   "description": "Weave a single loop that satisfies every guard.",
-  "start_url": "/games/shingoki/",
+  "start_url": "/games/perimeter/",
   "display": "standalone",
   "background_color": "#0c1018",
   "theme_color": "#0c1018",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/games/shingoki/shingoki-logo.svg",
+      "src": "/games/perimeter/perimeter-logo.svg",
       "sizes": "64x64",
       "type": "image/svg+xml",
       "purpose": "any maskable"

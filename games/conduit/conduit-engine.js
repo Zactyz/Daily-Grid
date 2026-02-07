@@ -1,5 +1,5 @@
 import { createSeededRandom } from '../common/utils.js';
-import { DIR_MASKS, OPPOSITE_DIR, rotateMaskSteps, DIR_SEQUENCE } from './pipes-utils.js';
+import { DIR_MASKS, OPPOSITE_DIR, rotateMaskSteps, DIR_SEQUENCE } from './conduit-utils.js';
 
 const MASK_TO_DIR = {
   [DIR_MASKS.N]: 'N',
@@ -15,7 +15,7 @@ const DIRECTION_DELTAS = {
   W: { dr: 0, dc: -1 }
 };
 
-export class PipesEngine {
+export class ConduitEngine {
   constructor(descriptor) {
     this.descriptor = descriptor;
     this.width = descriptor.width;
@@ -35,7 +35,7 @@ export class PipesEngine {
         r: solution.r,
         c: solution.c,
         solutionMask: solution.connections,
-        pipeType: solution.pipeType,
+        segmentType: solution.segmentType,
         isPrefill: isLocked,
         flowPressure: solution.flowPressure,
         rotation,

@@ -1,0 +1,17 @@
+{
+  "name": "Conduit",
+  "short_name": "Conduit",
+  "description": "Daily luminous circuit puzzle from Daily Grid.",
+  "start_url": "/games/conduit/",
+  "scope": "/games/conduit/",
+  "display": "standalone",
+  "background_color": "#070c12",
+  "theme_color": "#070c12",
+  "icons": [
+    {
+      "src": "/games/conduit/conduit-logo.svg",
+      "sizes": "120x120",
+      "type": "image/svg+xml"
+    }
+  ]
+}

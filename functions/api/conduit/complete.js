@@ -1,4 +1,6 @@
-import { validateUUID, validateEnv } from '../../_shared/snake-utils-server.js';
+// POST /api/conduit/complete - Submit completion time
+
+import { getPTDateYYYYMMDD, validateUUID, validateEnv } from '../../_shared/snake-utils-server.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -40,7 +42,7 @@ export async function onRequest(context) {
       });
     }
 
-    if (typeof timeMs !== 'number' || timeMs < 3000 || timeMs > 3600000) {
+    if (timeMs < 3000 || timeMs > 3600000) {
       return new Response(JSON.stringify({ error: 'Invalid time' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -48,7 +50,7 @@ export async function onRequest(context) {
     }
 
     const existingScore = await env.DB.prepare(`
-      SELECT time_ms FROM shingoki_scores
+      SELECT time_ms FROM conduit_scores
       WHERE puzzle_id = ?1 AND anon_id = ?2
     `).bind(puzzleId, anonId).first();
 
@@ -58,20 +60,20 @@ export async function onRequest(context) {
       userTime = existingScore.time_ms;
     } else {
       await env.DB.prepare(`
-        INSERT INTO shingoki_scores (puzzle_id, anon_id, time_ms, hints_used)
+        INSERT INTO conduit_scores (puzzle_id, anon_id, time_ms, hints_used)
         VALUES (?1, ?2, ?3, ?4)
       `).bind(puzzleId, anonId, timeMs, hintsUsed).run();
     }
 
     const fasterCountResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
-      FROM shingoki_scores
+      FROM conduit_scores
       WHERE puzzle_id = ?1 AND time_ms < ?2
     `).bind(puzzleId, userTime).first();
 
     const totalResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
-      FROM shingoki_scores
+      FROM conduit_scores
       WHERE puzzle_id = ?1
     `).bind(puzzleId).first();
 
@@ -91,7 +93,7 @@ export async function onRequest(context) {
     });
 
   } catch (error) {
-    console.error('Shingoki complete API error:', error);
+    console.error('Conduit complete API error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

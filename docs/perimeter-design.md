@@ -1,9 +1,9 @@
-# Shingoki design notes
+# Perimeter design notes
 
 ## 1. Grid constraints
 
 ### Loop fundamentals
-Shingoki (aka Semaphores) is played on a grid of dots. The player draws a single non-branching, non-crossing loop that travels along the orthogonal edges between dots and must pass through every circled node exactly once. Each circled node is a "guard" that imposes a behavior on the loop as it passes through: white guards force the path to continue straight, while black guards force it to turn. The loop must satisfy every guard simultaneously, so the circles become the anchors that turn an otherwise free loop into a determinate puzzle [1].
+Perimeter (aka Semaphores) is played on a grid of dots. The player draws a single non-branching, non-crossing loop that travels along the orthogonal edges between dots and must pass through every circled node exactly once. Each circled node is a "guard" that imposes a behavior on the loop as it passes through: white guards force the path to continue straight, while black guards force it to turn. The loop must satisfy every guard simultaneously, so the circles become the anchors that turn an otherwise free loop into a determinate puzzle [1].
 
 ### Guard placement
 Guards live on the intersections and only appear where the loop passes. Because each guard restricts the local behavior of the loop, their colors should be spread so that they can actually be honored. Tips for placement:
@@ -50,10 +50,10 @@ Keep the palette airy: the ivory ground means any line, text, or panel should av
 ## 3. Shared vs custom obligations
 | Feature | Shared | Custom |
 | --- | --- | --- |
-| Leaderboard / submission helpers | `games/common/utils.js` (date formatting, anon IDs, formatting time) + backend endpoints (`functions/api/shingoki/`) | None (re-use common flow). Ensure submission keys follow `dailygrid_shingoki_submitted_{date}` like other games.
+| Leaderboard / submission helpers | `games/common/utils.js` (date formatting, anon IDs, formatting time) + backend endpoints (`functions/api/perimeter/`) | None (re-use common flow). Ensure submission keys follow `dailygrid_perimeter_submitted_{date}` like other games.
 | Share text + copy fallback | `games/common/share.js` (buildShareText, shareWithFallback, logo caching) | Supply `shareUrl`/`gameName` that match the new front-end and include the blue-on-ivory hero image.
 | Visual chrome (nav, buttons, modals) | Style patterns/components that appear across Snake/Pathways/Lattice (glass cards, detail accordions, pause overlay). | The board layout, guard symbols, and new palette need their own CSS/HTML but can reuse class names (e.g., `.btn`, `.glass-strong`).
-| Puzzle data flow | The `puzzleId`/`guild` concept, scoreboard API, and daily-notice UI should follow the existing naming (e.g., `games/common` share + scoreboard). | Loop logic, guard metadata, palette-specific icons, and clue language must be bespoke for Shingoki.
+| Puzzle data flow | The `puzzleId`/`guild` concept, scoreboard API, and daily-notice UI should follow the existing naming (e.g., `games/common` share + scoreboard). | Loop logic, guard metadata, palette-specific icons, and clue language must be bespoke for Perimeter.
 | Modal & overlay behaviors | Leverage the same `details`-based collapsible pattern plus share/leaderboard modals used by other games to keep interactions consistent. | The labels and text inside (e.g., guard explanations) should reflect the blue-and-ivory story.
 
 ---
@@ -70,5 +70,5 @@ Keep the palette airy: the ivory ground means any line, text, or panel should av
 ---
 
 ## References
-1. Shingoki FAQ — loop rules, guard colors, and number meaning: https://www.puzzle-shingoki.com/faq.php
-2. Shingoki Solver repo (sample sizes/solver limits): https://raw.githubusercontent.com/joshprzybyszewski/shingokisolver/main/README.md
+1. Perimeter FAQ — loop rules, guard colors, and number meaning: https://www.puzzle-perimeter.com/faq.php
+2. Perimeter Solver repo (sample sizes/solver limits): https://raw.githubusercontent.com/joshprzybyszewski/perimetersolver/main/README.md

@@ -908,20 +908,19 @@ function shouldAllowDoubleTap(target) {
     document.querySelectorAll('.shell-confetti').forEach((node) => node.remove());
     const container = document.createElement('div');
     container.className = 'shell-confetti';
-    const pieceCount = 32;
+    const pieceCount = 28;
     let maxDuration = 0;
     for (let i = 0; i < pieceCount; i += 1) {
       const piece = document.createElement('span');
       piece.className = 'shell-confetti-piece';
-      const width = 6 + Math.random() * 7;
-      const height = width * (0.5 + Math.random() * 0.7);
-      const duration = 3600 + Math.random() * 2000;
-      const delay = Math.random() * 320;
-      const dx = (Math.random() * 240 - 120).toFixed(1);
+      const width = 6 + Math.random() * 6;
+      const height = width * (0.5 + Math.random() * 0.6);
+      const duration = 2000 + Math.random() * 900;
+      const delay = Math.random() * 180;
+      const dx = (Math.random() * 90 - 45).toFixed(1);
       const rot = (Math.random() * 360).toFixed(1);
-      const opacity = (0.55 + Math.random() * 0.4).toFixed(2);
-      const xStart = (Math.random() * 110 - 5).toFixed(2);
-      piece.style.setProperty('--x', `${xStart}%`);
+      const opacity = (0.6 + Math.random() * 0.35).toFixed(2);
+      piece.style.setProperty('--x', `${(Math.random() * 100).toFixed(2)}%`);
       piece.style.setProperty('--w', `${width.toFixed(1)}px`);
       piece.style.setProperty('--h', `${height.toFixed(1)}px`);
       piece.style.setProperty('--o', opacity);
@@ -936,7 +935,7 @@ function shouldAllowDoubleTap(target) {
     document.body.appendChild(container);
     window.setTimeout(() => {
       container.remove();
-    }, maxDuration + 500);
+    }, maxDuration + 400);
     return maxDuration;
   }
 

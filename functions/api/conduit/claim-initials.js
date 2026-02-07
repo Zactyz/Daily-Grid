@@ -1,4 +1,4 @@
-// POST /api/pipes/claim-initials - Claim top-10 initials
+// POST /api/conduit/claim-initials - Claim top-10 initials
 
 import { validateUUID, validateEnv } from '../../_shared/snake-utils-server.js';
 
@@ -44,7 +44,7 @@ export async function onRequest(context) {
 
     const scoreCheck = await env.DB.prepare(`
       SELECT created_at
-      FROM pipes_scores
+      FROM conduit_scores
       WHERE puzzle_id = ?1 AND anon_id = ?2
     `).bind(puzzleId, anonId).first();
 
@@ -65,7 +65,7 @@ export async function onRequest(context) {
     }
 
     const updateResult = await env.DB.prepare(`
-      UPDATE pipes_scores
+      UPDATE conduit_scores
       SET initials = ?1
       WHERE puzzle_id = ?2 AND anon_id = ?3
     `).bind(initials, puzzleId, anonId).run();
@@ -86,7 +86,7 @@ export async function onRequest(context) {
     });
 
   } catch (error) {
-    console.error('Pipes claim initials API error:', error);
+    console.error('Conduit claim initials API error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

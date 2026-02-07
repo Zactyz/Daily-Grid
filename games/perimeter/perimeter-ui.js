@@ -2,14 +2,14 @@ import { getPTDateYYYYMMDD, getOrCreateAnonId, formatTime } from '../common/util
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
-import { ShingokiEngine } from './shingoki-engine.js';
-import { ShingokiRenderer } from './shingoki-renderer.js';
-import { ShingokiInput } from './shingoki-input.js';
+import { PerimeterEngine } from './perimeter-engine.js';
+import { PerimeterRenderer } from './perimeter-renderer.js';
+import { PerimeterInput } from './perimeter-input.js';
 
-const STATE_PREFIX = 'dailygrid_shingoki_state_';
+const STATE_PREFIX = 'dailygrid_perimeter_state_';
 
 const els = {
-  canvas: document.getElementById('shingoki-canvas'),
+  canvas: document.getElementById('perimeter-canvas'),
   progress: document.getElementById('progress-text'),
   puzzleDate: document.getElementById('puzzle-date'),
   gridSize: document.getElementById('grid-size')
@@ -203,7 +203,7 @@ function initShell() {
   if (shell) return;
 
   shell = createShellController({
-    gameId: 'shingoki',
+    gameId: 'perimeter',
     getMode: () => currentMode,
     getPuzzleId: () => puzzleId,
     getGridLabel: () => engine?.getGridLabel() || '4x4 dots',
@@ -233,8 +233,8 @@ function initShell() {
       hintsUsed: engine?.hintsUsed || 0
     }),
     getShareMeta: () => ({
-      gameName: 'Sentinel Loop',
-      shareUrl: 'https://dailygrid.app/games/shingoki/',
+      gameName: 'Perimeter',
+      shareUrl: 'https://dailygrid.app/games/perimeter/',
       gridLabel: engine?.getGridLabel() || '4x4 dots'
     }),
     getShareFile: () => buildShareImage(),
@@ -252,8 +252,8 @@ async function buildShareImage() {
   const finalTime = completionMs ?? engine?.timeMs ?? 0;
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
-    gameName: 'Sentinel Loop',
-    logoPath: '/games/shingoki/shingoki-logo.svg',
+    gameName: 'Perimeter',
+    logoPath: '/games/perimeter/perimeter-logo.svg',
     accent: '#7da2ff',
     accentSoft: 'rgba(125, 162, 255, 0.12)',
     backgroundStart: '#0c1018',
@@ -261,14 +261,14 @@ async function buildShareImage() {
     dateText: puzzleDate,
     timeText: formatTime(finalTime || 0),
     gridLabel: 'Grid 4x4',
-    footerText: 'dailygrid.app/games/shingoki'
+    footerText: 'dailygrid.app/games/perimeter'
   });
 }
 
 function init() {
-  engine = new ShingokiEngine();
-  renderer = new ShingokiRenderer(els.canvas, engine);
-  input = new ShingokiInput(els.canvas, engine, renderer, {
+  engine = new PerimeterEngine();
+  renderer = new PerimeterRenderer(els.canvas, engine);
+  input = new PerimeterInput(els.canvas, engine, renderer, {
     onEdgeChange: () => {
       renderer.render();
       updateProgress();

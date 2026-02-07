@@ -2,7 +2,7 @@ import { createSeededRandom, getPTDateYYYYMMDD, hashString } from '../common/uti
 
 export const GRID_SIZE = 7;
 export const STORAGE_KEYS = {
-  PIPES_PROGRESS: 'dailygrid_pipes_progress'
+  CONDUIT_PROGRESS: 'dailygrid_conduit_progress'
 };
 
 export const DIR_MASKS = {
@@ -33,7 +33,7 @@ export function rotateMask(mask, steps = 1) {
   return current;
 }
 
-export function pipeTypeFromMask(mask) {
+export function segmentTypeFromMask(mask) {
   const count = [DIR_MASKS.N, DIR_MASKS.E, DIR_MASKS.S, DIR_MASKS.W]
     .map((flag) => (mask & flag) ? 1 : 0)
     .reduce((a, b) => a + b, 0);
@@ -80,12 +80,12 @@ function getDirectionBetween(from, to) {
 export async function fetchDescriptor(puzzleId) {
   const id = puzzleId || getPTDateYYYYMMDD();
   try {
-    const resp = await fetch(`/api/pipes/puzzle?puzzleId=${id}`);
+    const resp = await fetch(`/api/conduit/puzzle?puzzleId=${id}`);
     if (resp.ok) {
       return await resp.json();
     }
   } catch (error) {
-    console.warn('Pipes puzzle fetch failed, falling back to mock descriptor', error);
+    console.warn('Conduit puzzle fetch failed, falling back to mock descriptor', error);
   }
   return generateMockDescriptor(id);
 }
@@ -132,7 +132,7 @@ function generateMockDescriptor(puzzleId) {
     const r = Math.floor(idx / width);
     const c = idx % width;
     const mask = connections[idx];
-    const type = pipeTypeFromMask(mask);
+    const type = segmentTypeFromMask(mask);
     const isPrefill = prefillHints.has(idx);
     if (isPrefill) {
       prefilledCells.push({ r, c, connections: mask });
@@ -141,13 +141,13 @@ function generateMockDescriptor(puzzleId) {
       r,
       c,
       connections: mask,
-      pipeType: type === 'endpoint' ? 'straight' : type,
+      segmentType: type === 'endpoint' ? 'straight' : type,
       isPrefill,
       flowPressure: 1 + ((r + c) % 3)
     });
   }
 
-  const phaseSeed = hashString(`pipes:${puzzleId}`) + 0x42;
+  const phaseSeed = hashString(`conduit:${puzzleId}`) + 0x42;
   const metadata = {
     difficulty: 'medium',
     junctions: solutionCells.filter((cell) => [3, 4].includes(
@@ -165,7 +165,7 @@ function generateMockDescriptor(puzzleId) {
 
   return {
     puzzleId,
-    seed: hashString(`pipes:${puzzleId}`),
+    seed: hashString(`conduit:${puzzleId}`),
     width,
     height,
     entryPoints,

@@ -2,15 +2,15 @@ import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from '../common/util
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
-import { PipesEngine } from './pipes-engine.js';
-import { PipesRenderer } from './pipes-renderer.js';
-import { PipesInput } from './pipes-input.js';
-import { fetchDescriptor, GRID_SIZE, rotateMaskSteps } from './pipes-utils.js';
+import { ConduitEngine } from './conduit-engine.js';
+import { ConduitRenderer } from './conduit-renderer.js';
+import { ConduitInput } from './conduit-input.js';
+import { fetchDescriptor, GRID_SIZE, rotateMaskSteps } from './conduit-utils.js';
 
-const STATE_PREFIX = 'dailygrid_pipes_state_';
+const STATE_PREFIX = 'dailygrid_conduit_state_';
 
 const els = {
-  canvas: document.getElementById('pipes-canvas'),
+  canvas: document.getElementById('conduit-canvas'),
   progress: document.getElementById('progress-text'),
   puzzleDate: document.getElementById('puzzle-date'),
   gridSize: document.getElementById('grid-size')
@@ -115,7 +115,7 @@ function handleBoardInteraction() {
 
 function resetPuzzle({ resetTimer }) {
   if (!descriptor) return;
-  engine = new PipesEngine(descriptor);
+  engine = new ConduitEngine(descriptor);
   renderer?.setEngine(engine);
   renderer?.render();
   input?.setEngine(engine);
@@ -218,16 +218,16 @@ function initState() {
 
 async function loadDescriptor() {
   descriptor = await fetchDescriptor(puzzleId);
-  engine = new PipesEngine(descriptor);
+  engine = new ConduitEngine(descriptor);
   if (!renderer) {
-    renderer = new PipesRenderer(els.canvas, engine);
+    renderer = new ConduitRenderer(els.canvas, engine);
   } else {
     renderer.setEngine(engine);
   }
   renderer.render();
 
   if (!input) {
-    input = new PipesInput(els.canvas, engine, renderer, handleBoardInteraction);
+    input = new ConduitInput(els.canvas, engine, renderer, handleBoardInteraction);
   } else {
     input.setEngine(engine);
     input.setRenderer?.(renderer);
@@ -281,7 +281,7 @@ function initShell() {
   if (shell) return;
 
   shell = createShellController({
-    gameId: 'pipes',
+    gameId: 'conduit',
     getMode: () => currentMode,
     getPuzzleId: () => puzzleId,
     getGridLabel: () => `${GRID_SIZE}x${GRID_SIZE} Flow`,
@@ -311,8 +311,8 @@ function initShell() {
       hintsUsed: 0
     }),
     getShareMeta: () => ({
-      gameName: 'Flowline',
-      shareUrl: 'https://dailygrid.app/games/pipes/',
+      gameName: 'Conduit',
+      shareUrl: 'https://dailygrid.app/games/conduit/',
       gridLabel: '7x7 Flow'
     }),
     getShareFile: () => buildShareImage(),
@@ -330,8 +330,8 @@ async function buildShareImage() {
   const finalTime = completionMs ?? getElapsedMs();
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
-    gameName: 'Flowline',
-    logoPath: '/games/pipes/pipes-logo.svg',
+    gameName: 'Conduit',
+    logoPath: '/games/conduit/conduit-logo.svg',
     accent: '#4ce0e8',
     accentSoft: 'rgba(76, 224, 232, 0.12)',
     backgroundStart: '#070c12',
@@ -339,7 +339,7 @@ async function buildShareImage() {
     dateText: puzzleDate,
     timeText: formatTime(finalTime || 0),
     gridLabel: 'Grid 7x7',
-    footerText: 'dailygrid.app/games/pipes'
+    footerText: 'dailygrid.app/games/conduit'
   });
 }
 

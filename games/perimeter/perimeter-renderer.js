@@ -1,4 +1,4 @@
-export class ShingokiRenderer {
+export class PerimeterRenderer {
   constructor(canvas, engine) {
     this.canvas = canvas;
     this.engine = engine;
