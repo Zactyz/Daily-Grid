@@ -66,11 +66,42 @@ Avoid re-spawning animation loops on mode switches. Reuse the loop and swap adap
   - `external-game-promo`, `external-game-logo`, `external-game-text`
 - The shell will show it only for completed daily puzzles.
 
-## 8) Consistency rules
+## 8) Register the game in shared lists
+When adding a new game, update these shared locations so it appears everywhere:
+- `games/common/games.js`
+  - Add to `GAME_META` with `id`, `name`, `path`, `logo`, `submittedKeyPrefix`, `completedKeyPrefix`, `theme`, and `shareUrl`.
+  - This powers the completion banners and personalized ordering.
+- `games/index.html`
+  - Add a card in the Daily Puzzles list.
+  - Add the `gameMeta` entry for play/leaderboard routing.
+  - Add `completedPrefixes` and `submittedPrefixes` for completion status.
+- `games/practice/index.html`
+  - Add the practice hub card for the game.
+
+## 9) Leaderboard + storage keys
+- Create a D1 table in `scripts/init-db.sql` for the new game (matching existing tables).
+- The shell reads completion state from localStorage using your prefixes:
+  - Submitted: `${submittedKeyPrefix}${YYYY-MM-DD}` (daily only)
+  - Completed: `${completedKeyPrefix}${YYYY-MM-DD}` (daily only)
+- Provide `getCompletionPayload()` and `getAnonId()` in the adapter.
+
+## 10) Sharing previews (social/iMessage)
+- Add OG/Twitter meta tags to the game’s `index.html`.
+- Add an OG image under `games/assets/` and reference it in:
+  - `og:image`, `twitter:image`, and `og:url` tags.
+- Also update `/games/index.html` with `og:image` for the games list page.
+
+## 11) Mobile + PWA expectations
+- Keep desktop layout intact; use mobile styles to feel app-like.
+- Ensure the app back arrow is present on mobile (shell handles this).
+- Avoid extra scrolling space on mobile (see recent padding fixes).
+- Disable unwanted text selection/zoom in interactive areas (`touch-action: manipulation`, `user-select: none`).
+
+## 12) Consistency rules
 - Timer display is owned by the shell.
 - Mode badges and buttons are owned by the shell.
 - Completion modal copy is standardized in the shell.
 - Use the shell template IDs exactly as written.
 
-## 9) When in doubt
+## 13) When in doubt
 Follow the existing games: `games/snake`, `games/pathways`, `games/lattice`.
