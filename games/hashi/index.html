@@ -491,10 +491,16 @@
   </script>
   <script type="module" src="/games/hashi/hashi-ui.js"></script>
   <script type="module">
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('practice') === '1' || params.get('mode') === 'practice') {
-      window.startPracticeMode?.();
+  const params = new URLSearchParams(window.location.search);
+  const wantsPractice = params.get('practice') === '1' || params.get('mode') === 'practice';
+  if (wantsPractice) {
+    const start = () => window.startPracticeMode?.();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(start, 0), { once: true });
+    } else {
+      setTimeout(start, 0);
     }
-  </script>
+  }
+</script>
 </body>
 </html>

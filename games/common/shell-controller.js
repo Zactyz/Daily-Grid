@@ -96,6 +96,7 @@ function defaultElements() {
     backToDailyBtn: document.getElementById('back-to-daily-btn'),
     dailyBadge: document.getElementById('daily-badge'),
     practiceBadge: document.getElementById('practice-badge'),
+    mobileBackLink: document.querySelector('.mobile-app-bar a'),
     toast: document.getElementById('shell-toast'),
     toastText: document.getElementById('shell-toast-text')
   };
@@ -234,8 +235,8 @@ export function createShellController(adapter, elementOverrides = null) {
   }
 
   function updateModeUI() {
-    if (!elements.dailyBadge && !elements.practiceBadge) return;
-    if (adapter.getMode() === 'daily') {
+    const isDaily = adapter.getMode() === 'daily';
+    if (isDaily) {
       elements.dailyBadge?.classList.remove('hidden');
       elements.practiceBadge?.classList.add('hidden');
       elements.practiceModeBtn?.classList.remove('hidden');
@@ -245,6 +246,11 @@ export function createShellController(adapter, elementOverrides = null) {
       elements.practiceBadge?.classList.remove('hidden');
       elements.practiceModeBtn?.classList.add('hidden');
       elements.backToDailyBtn?.classList.remove('hidden');
+    }
+    if (elements.mobileBackLink) {
+      const dailyHref = elements.mobileBackLink.dataset.dailyHref || '/games/';
+      const practiceHref = elements.mobileBackLink.dataset.practiceHref || '/games/practice/';
+      elements.mobileBackLink.setAttribute('href', isDaily ? dailyHref : practiceHref);
     }
   }
 

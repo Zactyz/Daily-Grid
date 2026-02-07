@@ -117,6 +117,20 @@
       color: rgba(212, 166, 80, 0.75);
     }
 
+    .all-complete {
+      background: rgba(217, 174, 85, 0.08);
+      border: 1px solid rgba(217, 174, 85, 0.25);
+      border-radius: 1rem;
+      padding: 0.85rem 1rem;
+      color: #fdecc1;
+    }
+
+    .all-complete a {
+      color: #f8d98a;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
     .ios-banner {
       border: 1px solid rgba(15, 23, 42, 0.08);
       background: rgba(255, 255, 255, 0.92);
@@ -186,6 +200,19 @@
 
     <section class="mb-6">
       <div class="app-section-title mb-3">Daily Puzzles</div>
+      <div id="all-complete-message" class="all-complete hidden mb-3">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-full bg-emerald-400/20 border border-emerald-300/30 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <div class="text-sm leading-relaxed">
+            <div class="font-semibold text-amber-100">Great job! All games complete for today.</div>
+            <div class="text-xs text-amber-200/80">Come back tomorrow or <a href="/games/practice/">practice</a> to be at the top of the leaderboard.</div>
+          </div>
+        </div>
+      </div>
       <div id="daily-list" class="grid gap-3">
         <a href="/games/snake/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="snake">
           <div class="relative">
@@ -198,6 +225,10 @@
           </div>
           <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
             <span class="play-text">Play</span>
+            <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h6m0 0v6m0-6L10 14"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+            </svg>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -214,6 +245,10 @@
           </div>
           <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
             <span class="play-text">Play</span>
+            <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h6m0 0v6m0-6L10 14"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+            </svg>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -230,6 +265,10 @@
           </div>
           <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
             <span class="play-text">Play</span>
+            <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h6m0 0v6m0-6L10 14"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+            </svg>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -246,6 +285,10 @@
           </div>
           <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
             <span class="play-text">Play</span>
+            <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h6m0 0v6m0-6L10 14"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+            </svg>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -262,6 +305,10 @@
           </div>
           <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
             <span class="play-text">Play</span>
+            <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h6m0 0v6m0-6L10 14"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+            </svg>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -278,6 +325,10 @@
           </div>
           <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
             <span class="play-text">Play</span>
+            <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h6m0 0v6m0-6L10 14"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+            </svg>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -530,12 +581,12 @@
         else completedSection.classList.add('hidden');
       }
 
-      const mobileHeader = document.querySelector('.app-header h1');
-      if (mobileHeader && completedCount === Object.keys(submittedPrefixes).length) {
-        mobileHeader.textContent = 'All games complete';
-        const subtitle = mobileHeader.parentElement?.querySelector('p');
-        if (subtitle) {
-          subtitle.innerHTML = 'Great job! All games complete for today. Come back tomorrow or <a href="/games/practice/" class="text-amber-300 underline underline-offset-4">practice</a> to be at the top of the leaderboard.';
+      const allCompleteMsg = document.getElementById('all-complete-message');
+      if (allCompleteMsg) {
+        if (completedCount === Object.keys(submittedPrefixes).length) {
+          allCompleteMsg.classList.remove('hidden');
+        } else {
+          allCompleteMsg.classList.add('hidden');
         }
       }
     }

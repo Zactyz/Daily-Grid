@@ -604,146 +604,16 @@
     </div>
 
     <script type="module">
-        import { PathwaysEngine } from './pathways-engine.js';
-        import { PathwaysRenderer } from './pathways-renderer.js';
-        import { PathwaysInput } from './pathways-input.js';
-        import { PathwaysUI } from './pathways-ui.js';
-        import { getPTDateYYYYMMDD, STORAGE_KEYS } from './pathways-utils.js';
-        import { generatePuzzleForDate } from './pathways-puzzle-generator.js';
-        import { mountShell } from '../common/shell-mount.js';
-
-        let engine, renderer, input, ui;
-        let lastTime = Date.now();
-        let currentMode = 'daily';
-        let loopStarted = false;
-        let resizeBound = false;
-        mountShell();
-
-        function getPuzzle(mode) {
-            let puzzleId;
-            if (mode === 'daily') {
-                puzzleId = getPTDateYYYYMMDD();
-            } else {
-                puzzleId = `practice-${Date.now()}-${Math.random()}`;
-            }
-            return generatePuzzleForDate(puzzleId);
-        }
-
-        function init(mode = 'daily') {
-            currentMode = mode;
-            const storageKey = mode === 'daily' ? STORAGE_KEYS.PATHWAYS_PROGRESS : 'dailygrid_pathways_practice';
-            
-            try {
-                const puzzle = getPuzzle(mode);
-                const canvas = document.getElementById('game-canvas');
-                
-                const gridSizeEl = document.getElementById('grid-size');
-                if (gridSizeEl) {
-                    gridSizeEl.textContent = `${puzzle.width}x${puzzle.height}`;
-                }
-                
-                document.getElementById('loading-state')?.classList.add('hidden');
-                document.getElementById('game-container')?.classList.remove('hidden');
-                
-                engine = new PathwaysEngine(puzzle, storageKey);
-                renderer = new PathwaysRenderer(canvas, engine);
-                ui = new PathwaysUI(engine, reset, nextLevel, currentMode);
-                ui.setRenderer(renderer);
-
-                const onUpdate = () => {
-                    renderer.render();
-                    ui.update();
-                };
-                const onValidation = () => {
-                    // Validation check callback - triggered when user finishes a drag
-                    ui.checkAndShowValidation();
-                };
-
-                if (input) {
-                    input.engine = engine;
-                    input.renderer = renderer;
-                    input.onUpdate = onUpdate;
-                    input.onValidationCheck = onValidation;
-                } else {
-                    input = new PathwaysInput(canvas, engine, renderer, onUpdate, onValidation);
-                }
-
-                if (!loopStarted) {
-                    loopStarted = true;
-                    gameLoop();
-                }
-
-                if (!resizeBound) {
-                    resizeBound = true;
-                    window.addEventListener('resize', () => {
-                        if (!renderer) return;
-                        renderer.resize();
-                        renderer.render();
-                    });
-                }
-                
-                renderer.render();
-                ui.update();
-                ui.updatePauseState();
-            } catch (error) {
-                console.error('Failed to initialize game:', error);
-                document.getElementById('loading-state').innerHTML = `
-                    <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-red-500/10 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </div>
-                    <div class="text-red-400 font-medium mb-1">Failed to load</div>
-                    <div class="text-xs text-zinc-500">Please refresh to try again</div>
-                `;
-            }
-        }
-
-        function reset() {
-            engine.reset(true);
-            renderer.render();
-            ui.resetUI();
-            ui.update();
-        }
-
-        function nextLevel() {
-            if (currentMode === 'practice') {
-                init('practice');
-            }
-        }
-
-        window.startPracticeMode = () => init('practice');
-        window.startDailyMode = () => init('daily');
-
-        const practiceParams = new URLSearchParams(window.location.search);
-        if (practiceParams.get('practice') === '1' || practiceParams.get('mode') === 'practice') {
-            window.startPracticeMode();
-        }
-
-        // Mode buttons handled by shared shell controller.
-        
-        function gameLoop() {
-            const now = Date.now();
-            const delta = now - lastTime;
-            lastTime = now;
-            
-            if (engine && renderer && ui && input) {
-                engine.updateTime(delta);
-                renderer.render();
-                ui.update();
-                input.updateTouchBehavior();
-            }
-            
-            requestAnimationFrame(gameLoop);
-        }
-
-        init();
-        
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/games/pathways/sw.js')
-                .then(() => console.log('Service Worker registered'))
-                .catch((err) => console.log('Service Worker registration failed:', err));
-        }
-    </script>
+  const params = new URLSearchParams(window.location.search);
+  const wantsPractice = params.get('practice') === '1' || params.get('mode') === 'practice';
+  if (wantsPractice) {
+    const start = () => window.startPracticeMode?.();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(start, 0), { once: true });
+    } else {
+      setTimeout(start, 0);
+    }
+  }
+</script>
 </body>
 </html>
