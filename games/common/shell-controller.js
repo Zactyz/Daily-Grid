@@ -444,17 +444,8 @@ function shouldAllowDoubleTap(target) {
     const timeMs = completionMs ?? adapter.getElapsedMs();
     const shareMeta = adapter.getShareMeta?.() || {};
     const gameName = shareMeta.gameName || meta?.name || adapter.gameId;
-    const shareUrl = shareMeta.shareUrl || meta?.shareUrl || '';
-    const gridLabel = shareMeta.gridLabel || adapter.getGridLabel();
-    const puzzleLabel = shareMeta.puzzleLabel || formatDateForShare(adapter.getPuzzleId());
-
-    const shareText = buildShareText({
-      gameName,
-      puzzleLabel,
-      gridLabel,
-      timeText: adapter.formatTime(timeMs || 0),
-      shareUrl
-    });
+    const shareUrl = '';
+    const shareText = buildShareText({ gameName });
 
     try {
       const shareFile = await adapter.getShareFile?.();

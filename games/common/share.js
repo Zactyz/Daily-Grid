@@ -1,14 +1,7 @@
 const logoCache = new Map();
 
-export function buildShareText({ gameName, puzzleLabel, gridLabel, timeText, shareUrl }) {
-  const parts = [
-    `${gameName} by Daily Grid`,
-    `${puzzleLabel} • ${gridLabel}`,
-    `Time: ${timeText}`,
-    '',
-    shareUrl
-  ];
-  return parts.join('\n');
+export function buildShareText({ gameName }) {
+  return `I just completed the daily ${gameName} puzzle on Daily Grid. Can you beat my time?`;
 }
 
 export function formatDateForShare(dateStr) {
@@ -25,9 +18,11 @@ export function formatDateForShare(dateStr) {
 export async function shareWithFallback({ shareText, shareTitle, shareUrl, shareFile, onCopy, onError }) {
   const shareData = {
     title: shareTitle,
-    text: shareText,
-    url: shareUrl
+    text: shareText
   };
+  if (shareUrl) {
+    shareData.url = shareUrl;
+  }
 
   if (shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
     shareData.files = [shareFile];
