@@ -146,6 +146,26 @@ function shouldAllowDoubleTap(target) {
     return `dailygrid_${adapter.gameId}_leaderboard_${adapter.getPuzzleId()}`;
   }
 
+  function leaderboardSeenKey() {
+    return `dailygrid_${adapter.gameId}_leaderboard_seen_${adapter.getPuzzleId()}`;
+  }
+
+  function hasSeenLeaderboard() {
+    try {
+      return localStorage.getItem(leaderboardSeenKey()) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function markLeaderboardSeen() {
+    try {
+      localStorage.setItem(leaderboardSeenKey(), '1');
+    } catch {
+      // ignore
+    }
+  }
+
   function loadLocalLeaderboardEntry() {
     try {
       const raw = localStorage.getItem(leaderboardEntryKey());
@@ -164,6 +184,30 @@ function shouldAllowDoubleTap(target) {
       localStorage.setItem(leaderboardEntryKey(), JSON.stringify(entry));
     } catch {
       // ignore
+    }
+  }
+
+  function getPlayerEntry() {
+    return latestPlayerEntry || loadLocalLeaderboardEntry();
+  }
+
+  function shouldUseYouLabel(entry) {
+    if (!entry) return false;
+    if (entry.initials) return false;
+    return !hasSeenLeaderboard();
+  }
+
+  function updateClaimInitialsVisibility() {
+    if (!elements.claimInitialsForm) return;
+    if (adapter.getMode() !== 'daily') {
+      elements.claimInitialsForm.classList.add('hidden');
+      return;
+    }
+    const entry = getPlayerEntry();
+    if (entry && !entry.initials) {
+      elements.claimInitialsForm.classList.remove('hidden');
+    } else {
+      elements.claimInitialsForm.classList.add('hidden');
     }
   }
 
@@ -429,12 +473,15 @@ function shouldAllowDoubleTap(target) {
 
   async function loadLeaderboardIntoModal() {
     if (!elements.leaderboardList) return;
+    updateClaimInitialsVisibility();
+    const entry = getPlayerEntry();
     await loadLeaderboard({
       container: elements.leaderboardList,
       api: `/api/${adapter.gameId}/leaderboard`,
       puzzleId: adapter.getPuzzleId(),
       formatTimeFn: adapter.formatTime,
-      playerEntry: latestPlayerEntry || loadLocalLeaderboardEntry()
+      playerEntry: entry,
+      preferYouLabel: shouldUseYouLabel(entry)
     });
   }
 
@@ -474,18 +521,13 @@ function shouldAllowDoubleTap(target) {
       }
 
       if (elements.percentileMsg) {
-        const msg = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
+        const topPct = Math.max(1, Math.round(100 - (data.percentile ?? 0)));
+        const msg = `Top ${topPct}% of solvers today.`;
         elements.percentileMsg.textContent = msg;
         elements.percentileMsg.classList.remove('hidden');
       }
 
-      if (elements.claimInitialsForm) {
-        if (latestPlayerEntry?.initials) {
-          elements.claimInitialsForm.classList.add('hidden');
-        } else {
-          elements.claimInitialsForm.classList.remove('hidden');
-        }
-      }
+      updateClaimInitialsVisibility();
     } catch (error) {
       if (elements.percentileMsg) {
         elements.percentileMsg.textContent = 'Leaderboard temporarily unavailable';
@@ -579,6 +621,10 @@ function shouldAllowDoubleTap(target) {
 
   function hideCompletionModal() {
     elements.completionModal?.classList.add('hidden');
+    const entry = getPlayerEntry();
+    if (entry && !entry.initials) {
+      markLeaderboardSeen();
+    }
   }
 
   function confirmReset() {
@@ -873,7 +919,7 @@ function shouldAllowDoubleTap(target) {
 
     if (navigator?.vibrate) {
       try {
-        navigator.vibrate([20, 40, 20]);
+        navigator.vibrate([30, 60, 30]);
       } catch {
         // ignore
       }

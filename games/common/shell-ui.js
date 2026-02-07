@@ -14,7 +14,8 @@ export async function loadLeaderboard({
   puzzleId,
   emptyText = 'No scores yet - be the first!',
   formatTimeFn,
-  playerEntry
+  playerEntry,
+  preferYouLabel = false
 }) {
   if (!container) return;
   container.innerHTML = '<p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>';
@@ -28,12 +29,15 @@ export async function loadLeaderboard({
     }
     const fmt = formatTimeFn || formatTime;
     const topEntries = data.top10.slice(0, 3);
+    const playerLabel = playerEntry?.initials
+      ? playerEntry.initials
+      : (preferYouLabel ? 'YOU' : '---');
     const rows = [];
     topEntries.forEach((entry, idx) => {
       const rank = Number.isFinite(entry.rank) ? entry.rank : idx + 1;
       const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
       const isPlayer = playerEntry && Number.isFinite(playerEntry.rank) && playerEntry.rank === rank;
-      const initials = isPlayer ? (playerEntry.initials || 'YOU') : (entry.initials || '???');
+      const initials = isPlayer ? playerLabel : (entry.initials || '???');
       rows.push({
         type: 'entry',
         rank,
@@ -52,7 +56,7 @@ export async function loadLeaderboard({
       rows.push({
         type: 'entry',
         rank: playerEntry.rank,
-        initials: playerEntry.initials || 'YOU',
+        initials: playerLabel,
         timeMs: playerEntry.timeMs,
         rankClass: ''
       });
