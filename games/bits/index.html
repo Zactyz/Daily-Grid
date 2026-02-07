@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/jpeg" href="/games/bits/bitsnew-logo.jpg">
+    <link rel="manifest" href="/games/bits/manifest.json">
+    <meta name="theme-color" content="#010b05">
+    <title>Bits by Daily Grid</title>
+    <link rel="apple-touch-icon" href="/games/bits/bitsnew-logo.jpg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bits">
+    <meta name="description" content="Bits — a neon logic grid where 0s and 1s click into place.">
+    <meta property="og:title" content="Bits — Daily Grid">
+    <meta property="og:description" content="Bits — a neon logic grid where 0s and 1s click into place.">
+    <meta property="og:image" content="https://dailygrid.app/games/assets/og-bits.png">
+    <meta property="og:url" content="https://dailygrid.app/games/bits/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bits — Daily Grid">
+    <meta name="twitter:description" content="Bits — a neon logic grid where 0s and 1s click into place.">
+    <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-bits.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/games/common/shell.css">
+    <style>
+        :root {
+            --brand-bg: #010b05;
+            --brand-accent: #5bff94;
+            --brand-accent-dim: #41d97f;
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.06);
+        }
+
+        * { -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--brand-bg);
+            color: #e9fefe;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(91, 255, 148, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(129, 255, 216, 0.05), transparent),
+                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(91, 255, 148, 0.03), transparent);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow:
+                0 4px 24px -4px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            letter-spacing: 0.01em;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-dim));
+            color: #041008;
+            box-shadow: 0 2px 12px rgba(91, 255, 148, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(91, 255, 148, 0.35);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a1a1aa;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #e8e8ed;
+        }
+
+        .timer-display {
+            background: linear-gradient(135deg, rgba(91, 255, 148, 0.12), rgba(91, 255, 148, 0.04));
+            border: 1px solid rgba(91, 255, 148, 0.25);
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .accent-text { color: var(--brand-accent); }
+        .accent-glow { text-shadow: 0 0 30px rgba(91, 255, 148, 0.4); }
+
+        /* grid */
+        #bits-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
+        .grid-cell {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 14px;
+            border: 1px solid rgba(91, 255, 148, 0.25);
+            background: rgba(2, 20, 13, 0.85);
+            color: rgba(91, 255, 148, 0.95);
+            font-size: 1.6rem;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            position: relative;
+            overflow: visible;
+        }
+
+        .grid-cell.filled {
+            box-shadow: none;
+        }
+
+        .grid-cell.value-0 {
+            color: #8fe4ff;
+            background: rgba(6, 40, 52, 0.75);
+        }
+
+        .grid-cell.value-1 {
+            color: #c6ff8a;
+            background: rgba(16, 48, 18, 0.75);
+        }
+
+        .grid-cell.clue {
+            pointer-events: none;
+            background: rgba(120, 94, 12, 0.2);
+            border-color: rgba(255, 216, 115, 0.55);
+            box-shadow: 0 0 14px rgba(255, 210, 90, 0.35);
+        }
+
+        .grid-cell.clue.value-0 {
+            color: #bfefff;
+            background: rgba(36, 40, 20, 0.55);
+        }
+
+        .grid-cell.clue.value-1 {
+            color: #f6ffb0;
+            background: rgba(40, 44, 16, 0.55);
+        }
+
+        .grid-cell:hover:not(.clue) {
+            transform: translateY(-1px);
+            border-color: rgba(91, 255, 148, 0.5);
+            box-shadow: 0 10px 18px rgba(0, 255, 178, 0.12);
+        }
+
+        .adj-hint {
+            position: absolute;
+            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
+            pointer-events: none;
+        }
+
+        .adj-hint-right {
+            top: 50%;
+            right: -0.4rem;
+            transform: translate(50%, -50%);
+        }
+
+        .adj-hint-down {
+            bottom: -0.35rem;
+            left: 50%;
+            transform: translate(-50%, 50%);
+        }
+
+        .adj-hint.equal { color: #ffffff; }
+        .adj-hint.different { color: #ffffff; }
+
+        .progress-text {
+            text-align: center;
+            color: rgba(233, 254, 254, 0.7);
+            letter-spacing: 0.12em;
+            font-size: 0.8rem;
+        }
+
+        .grid-cell.invalid {
+            border-color: rgba(255, 92, 92, 0.9);
+            box-shadow: 0 0 14px rgba(255, 92, 92, 0.55);
+            background: rgba(72, 8, 8, 0.65);
+        }
+
+        /* modal */
+        .modal-backdrop {
+            background: rgba(5, 8, 6, 0.9);
+            backdrop-filter: blur(8px);
+        }
+
+        #leaderboard-list {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .leaderboard-row { transition: background 0.15s ease; }
+        .leaderboard-row:hover { background: rgba(255, 255, 255, 0.03); }
+
+        /* details */
+        details summary { list-style: none; }
+        details summary::-webkit-details-marker { display: none; }
+        details summary::marker { content: ''; }
+        summary.details-plus::after {
+            content: '+';
+            float: right;
+            font-weight: 300;
+            font-size: 1.25rem;
+            color: #71717a;
+            transition: transform 0.2s ease;
+        }
+        details[open] summary.details-plus::after { transform: rotate(45deg); }
+
+        .mobile-app-bar {
+            display: none;
+            position: fixed;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 80;
+            pointer-events: none;
+        }
+
+        .mobile-app-bar a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            background: rgba(5, 10, 12, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #e5fff2;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
+        }
+
+        @media (max-width: 899px) {
+            nav { display: none !important; }
+  main { padding-top: 3.5rem !important; padding-bottom: 1.5rem !important; }
+            .mobile-app-bar { display: flex; }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-app-bar">
+        <a href="/games/" aria-label="Back to games">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+        </a>
+    </div>
+    <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <a href="/games/bits/" class="flex items-center gap-2.5 transition-all hover:opacity-80">
+                <img src="/games/bits/bitsnew-logo.jpg" alt="Bits Logo" class="w-9 h-9 rounded-lg">
+                <span class="font-semibold text-lg tracking-tight hidden sm:block">Bits</span>
+            </a>
+            <div class="flex gap-5 text-sm font-medium text-zinc-400">
+                <a href="/" class="hover:text-white transition-colors">Home</a>
+                <a href="/games/" class="text-white">Games</a>
+                <a href="/support/" class="hover:text-white transition-colors">Support</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
+        <header class="text-center mb-6 w-full">
+            <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300/90 text-xs font-medium mb-3 uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Daily Puzzle
+            </div>
+            <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/20 text-emerald-300/90 text-xs font-medium mb-3 uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Practice Mode
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Bits</h1>
+            <p class="text-zinc-500 text-sm">Neon logic pulses where zeros and ones lock into place.</p>
+        </header>
+
+        <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
+            <div id="bits-grid"></div>
+
+            <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 flex items-center justify-center mb-4">
+                    <svg class="w-10 h-10 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="text-2xl font-bold text-white tracking-wide">Ready?</span>
+                <span id="start-overlay-text" class="text-sm text-white/60 mt-1">Tap to begin</span>
+            </div>
+
+            <div id="pause-overlay" class="hidden absolute inset-0 bg-black/60 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10">
+                <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
+                    </svg>
+                </div>
+                <span class="text-2xl font-bold text-white tracking-wide">Paused</span>
+                <span class="text-sm text-white/60 mt-1">Tap to resume</span>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mb-8">
+            <button id="leaderboard-btn" class="btn btn-secondary flex items-center gap-2 hidden">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+                Leaderboard
+            </button>
+            <button id="pause-btn" class="btn btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/>
+                </svg>
+                Pause
+            </button>
+            <button id="reset-btn" class="btn btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Reset
+            </button>
+            <button id="undo-btn" class="btn btn-secondary flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l-4-4 4-4"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10h7a5 5 0 110 10h-1"/>
+                </svg>
+                Undo
+            </button>
+            <button id="exit-replay-btn" class="hidden btn btn-secondary flex items-center justify-center w-10 h-10 p-0" title="Exit Replay">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <details class="glass-strong rounded-xl w-full max-w-md">
+            <summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">How to Play</summary>
+            <div class="px-5 pb-5 pt-1">
+                <ul class="text-zinc-400 space-y-2.5 text-sm">
+                    <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Each row and column must have three 1s and three 0s.</span></li>
+                    <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>No three identical digits can be adjacent horizontally or vertically.</span></li>
+                    <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Rows and columns must be unique.</span></li>
+                    <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>Adjacency hints show <strong>=</strong> for same and <strong>×</strong> for different.</span></li>
+                </ul>
+                <p class="text-xs text-zinc-500 mt-4 pt-3 border-t border-white/5">Tip: Tap a cell to cycle between blank, 0, and 1.</p>
+            </div>
+        </details>
+
+        <button id="practice-mode-btn" class="w-full max-w-md mt-4 py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-medium hover:bg-white/5 hover:text-white transition-colors flex items-center justify-center gap-2 group">
+            <span>Try Practice Levels</span>
+            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+        </button>
+
+        <button id="show-solution-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-emerald-500/30 text-emerald-300 text-sm font-medium hover:bg-emerald-500/10 transition-colors flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            Show Solution
+        </button>
+
+        <div id="solution-actions" class="hidden w-full max-w-md mt-4 flex gap-3">
+            <button id="solution-retry-btn" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors">
+                Try Again
+            </button>
+            <button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm font-medium hover:bg-emerald-500/30 transition-colors">
+                Next Puzzle
+            </button>
+        </div>
+
+        <!-- External cross-game promo (shown after completion) -->
+        <a id="external-game-promo" href="#" class="hidden w-full max-w-md mt-4 py-3 px-4 rounded-xl border transition-all flex items-center justify-center gap-3">
+            <img id="external-game-logo" src="" alt="" class="w-7 h-7 rounded-lg">
+            <div class="flex-1 text-left">
+                <div id="external-game-text" class="font-semibold text-sm"></div>
+                <div class="text-xs opacity-70">Continue your daily streak</div>
+            </div>
+            <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </a>
+
+        <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-emerald-500/20 text-emerald-300 text-sm font-medium hover:bg-emerald-500/10 transition-colors flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            <span>Back to Daily Puzzle</span>
+        </button>
+    </main>
+
+    <div id="shell-toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-50 px-4 py-2 rounded-full text-xs font-semibold tracking-wide bg-black/70 border border-white/10 text-white">
+        <span id="shell-toast-text"></span>
+    </div>
+
+    <div id="reset-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4">
+        <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-semibold text-white mb-2">Reset Level?</h2>
+            <p class="text-sm text-white/60">This will clear the board. Your time will keep running.</p>
+            <div class="flex gap-3 mt-6">
+                <button id="cancel-reset-btn" class="btn btn-secondary flex-1">Cancel</button>
+                <button id="confirm-reset-btn" class="btn btn-primary flex-1">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exit-replay-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4">
+        <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-semibold text-white mb-2">Exit Replay?</h2>
+            <p class="text-sm text-white/60">Return to your completed puzzle.</p>
+            <div class="flex gap-3 mt-6">
+                <button id="cancel-exit-replay-btn" class="btn btn-secondary flex-1">Cancel</button>
+                <button id="confirm-exit-replay-btn" class="btn btn-primary flex-1">Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="completion-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4">
+        <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h2 id="modal-title" class="text-2xl font-bold text-center">Solved!</h2>
+            <p id="modal-subtitle" class="text-sm text-white/60 text-center mb-4">Great job on today's Bits</p>
+
+            <div class="timer-display rounded-xl p-4 text-center mb-4">
+                <div class="text-xs uppercase tracking-wider text-emerald-400/60 mb-1">Your Time</div>
+                <div id="final-time" class="text-3xl font-bold mono accent-text">0:00</div>
+            </div>
+
+            <p id="percentile-msg" class="text-center text-sm text-white/60 mb-4"></p>
+
+            <form id="claim-initials-form" class="hidden mb-5">
+                <label class="block text-xs text-zinc-500 mb-2 uppercase tracking-wider">Claim your spot</label>
+                <div class="flex gap-3">
+                    <input type="text" id="initials-input" maxlength="3" placeholder="ABC" class="flex-1 min-w-0 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-center uppercase mono text-lg tracking-widest placeholder:text-zinc-600" />
+                    <button type="submit" class="btn btn-primary flex-shrink-0 px-6">Save</button>
+                </div>
+            </form>
+
+            <div id="next-game-promo" class="hidden mb-5">
+                <a id="next-game-link" href="#" class="block w-full py-3 px-4 rounded-xl text-center transition-all border">
+                    <div class="flex items-center justify-center gap-3">
+                        <img id="next-game-logo" src="" alt="" class="w-8 h-8 rounded-lg">
+                        <div class="text-left flex-1">
+                            <div id="next-game-text" class="font-semibold text-sm"></div>
+                            <div class="text-xs opacity-70">Continue your daily streak</div>
+                        </div>
+                        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mb-5">
+                <h3 id="leaderboard-title" class="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                    Today's Top Scores
+                </h3>
+                <div id="leaderboard-list" class="text-sm rounded-lg overflow-hidden bg-black/20">
+                    <p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <div class="flex gap-3">
+                    <button id="share-btn" class="btn btn-primary flex-1 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        </svg>
+                        Share
+                    </button>
+                    <button id="practice-infinite-btn" class="btn btn-secondary flex-1 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Practice
+                    </button>
+                    <button id="close-modal-btn" class="btn btn-secondary flex-1">Close</button>
+                </div>
+
+                <div id="practice-complete-actions" class="hidden flex-col gap-3">
+                    <div class="flex gap-3">
+                        <button id="try-again-btn" class="btn btn-secondary flex-1">Try Again</button>
+                        <button id="next-level-btn" class="btn btn-primary flex-1">Next Puzzle</button>
+                    </div>
+                    <button id="back-to-daily-complete-btn" class="btn btn-secondary">Back to Daily Puzzle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { mountShell } from '../common/shell-mount.js';
+        mountShell();
+    </script>
+    <script type="module" src="./bits-ui.js"></script>
+    <script type="module">
+  const params = new URLSearchParams(window.location.search);
+  const wantsPractice = params.get('practice') === '1' || params.get('mode') === 'practice';
+  if (wantsPractice) {
+    const start = () => window.startPracticeMode?.();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(start, 0), { once: true });
+    } else {
+      setTimeout(start, 0);
+    }
+  }
+</script>
+</body>
+</html>

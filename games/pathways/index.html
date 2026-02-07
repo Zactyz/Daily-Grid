@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
     <link rel="icon" type="image/png" href="/games/pathways/pathways-logo.png">
     <link rel="apple-touch-icon" href="/games/pathways/pathways-logo.png">
     <link rel="manifest" href="/games/pathways/manifest.json">
@@ -12,6 +12,15 @@
     <meta name="apple-mobile-web-app-title" content="Pathways">
     <title>Pathways by Daily Grid</title>
     <meta name="description" content="Pathways: A calm daily color-connection puzzle. Connect the colors. Complete the grid.">
+    <meta property="og:title" content="Pathways — Daily Grid">
+    <meta property="og:description" content="Pathways: A calm daily color-connection puzzle. Connect the colors. Complete the grid.">
+    <meta property="og:image" content="https://dailygrid.app/games/assets/og-pathways.png">
+    <meta property="og:url" content="https://dailygrid.app/games/pathways/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pathways — Daily Grid">
+    <meta name="twitter:description" content="Pathways: A calm daily color-connection puzzle. Connect the colors. Complete the grid.">
+    <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-pathways.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/games/common/shell.css">
@@ -233,9 +242,46 @@
             outline: 2px solid var(--brand-accent);
             outline-offset: 2px;
         }
+
+        .mobile-app-bar {
+            display: none;
+            position: fixed;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 80;
+            pointer-events: none;
+        }
+
+        .mobile-app-bar a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            background: rgba(8, 10, 12, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #f8f4ef;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
+        }
+
+        @media (max-width: 899px) {
+            nav { display: none !important; }
+            .mobile-app-bar { display: flex; }
+            main { padding-top: 3.5rem !important; padding-bottom: 1.5rem !important; }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col overflow-y-auto">
+    <div class="mobile-app-bar">
+        <a href="/games/" aria-label="Back to games">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+        </a>
+    </div>
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6">
         <div class="max-w-5xl mx-auto flex justify-between items-center">
@@ -267,18 +313,6 @@
             <p class="text-zinc-500 text-sm">Connect the colors. Complete the grid.</p>
         </header>
 
-        <!-- Stats Row -->
-        <div class="flex gap-3 mb-3 w-full max-w-xs">
-            <div class="flex-1 timer-display px-4 py-2.5 rounded-xl text-center">
-                <div class="text-[10px] uppercase tracking-wider text-rose-400/60 mb-0.5">Time</div>
-                <div id="timer" class="text-xl font-bold mono accent-text">0:00</div>
-            </div>
-            <div class="flex-1 stat-card px-4 py-2.5 rounded-xl text-center">
-                <div class="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">Grid</div>
-                <div id="grid-size" class="text-xl font-bold mono text-zinc-300">5x5</div>
-            </div>
-        </div>
-
         <!-- Obstacle Hint (shown when puzzle has special obstacle) -->
         <div id="obstacle-hint" class="hidden w-full max-w-xs mb-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs text-center">
             <span id="obstacle-hint-text"></span>
@@ -303,8 +337,8 @@
         </div>
 
         <!-- Game Container -->
-        <div id="game-container" class="hidden glass-strong p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
-            <canvas id="game-canvas"></canvas>
+        <div id="game-container" class="hidden glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
+            <canvas id="game-canvas" class="celebrate-target"></canvas>
             <!-- Start Overlay (shown initially for new puzzles) -->
             <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
                 <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-500/30 to-teal-500/20 flex items-center justify-center mb-4">
@@ -517,7 +551,7 @@
                     <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                     </svg>
-                    Today's Top 10
+                    Today's Top Scores
                 </h3>
                 <div id="leaderboard-list" class="text-sm rounded-lg overflow-hidden bg-black/20">
                     <p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>
@@ -680,6 +714,11 @@
 
         window.startPracticeMode = () => init('practice');
         window.startDailyMode = () => init('daily');
+
+        const practiceParams = new URLSearchParams(window.location.search);
+        if (practiceParams.get('practice') === '1' || practiceParams.get('mode') === 'practice') {
+            window.startPracticeMode();
+        }
 
         // Mode buttons handled by shared shell controller.
         

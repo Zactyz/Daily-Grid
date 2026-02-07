@@ -1,5 +1,5 @@
 import { formatDateForShare, buildShareText, shareWithFallback, showShareFeedback } from './share.js';
-import { getUncompletedGames } from './games.js';
+import { getUncompletedGamesSorted } from './games.js';
 import { formatTime } from './utils.js';
 
 export function toggleModal(el, show) {
@@ -8,7 +8,15 @@ export function toggleModal(el, show) {
   else el.classList.remove('show');
 }
 
-export async function loadLeaderboard({ container, api, puzzleId, emptyText = 'No scores yet - be the first!', formatTimeFn }) {
+export async function loadLeaderboard({
+  container,
+  api,
+  puzzleId,
+  emptyText = 'No scores yet - be the first!',
+  formatTimeFn,
+  playerEntry,
+  preferYouLabel = false
+}) {
   if (!container) return;
   container.innerHTML = '<p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>';
   try {
@@ -20,12 +28,57 @@ export async function loadLeaderboard({ container, api, puzzleId, emptyText = 'N
       return;
     }
     const fmt = formatTimeFn || formatTime;
-    container.innerHTML = data.top10.map((entry, idx) => `
-      <div class="leaderboard-row flex items-center justify-between px-3 py-2.5 ${idx < data.top10.length - 1 ? 'border-b border-white/5' : ''}">
-        <span>${idx + 1}. ${entry.initials || '???'}</span>
-        <span>${fmt(entry.timeMs)}</span>
-      </div>
-    `).join('');
+    const topEntries = data.top10.slice(0, 3);
+    const playerLabel = playerEntry?.initials
+      ? playerEntry.initials
+      : (preferYouLabel ? 'YOU' : '---');
+    const rows = [];
+    topEntries.forEach((entry, idx) => {
+      const rank = Number.isFinite(entry.rank) ? entry.rank : idx + 1;
+      const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+      const isPlayer = playerEntry && Number.isFinite(playerEntry.rank) && playerEntry.rank === rank;
+      const initials = isPlayer ? playerLabel : (entry.initials || '???');
+      rows.push({
+        type: 'entry',
+        rank,
+        initials,
+        timeMs: entry.timeMs,
+        rankClass
+      });
+    });
+
+    const showPlayer = playerEntry
+      && Number.isFinite(playerEntry.rank)
+      && playerEntry.rank > topEntries.length;
+
+    if (showPlayer) {
+      rows.push({ type: 'ellipsis' });
+      rows.push({
+        type: 'entry',
+        rank: playerEntry.rank,
+        initials: playerLabel,
+        timeMs: playerEntry.timeMs,
+        rankClass: ''
+      });
+    }
+
+    container.innerHTML = rows.map((row, idx) => {
+      const border = idx < rows.length - 1 ? 'border-b border-white/5' : '';
+      if (row.type === 'ellipsis') {
+        return `
+          <div class="leaderboard-row leaderboard-ellipsis flex items-center px-3 py-2.5 ${border}">
+            <span>…</span>
+          </div>
+        `;
+      }
+      const timeText = Number.isFinite(row.timeMs) ? fmt(row.timeMs) : '—';
+      return `
+        <div class="leaderboard-row flex items-center justify-between px-3 py-2.5 ${border}">
+          <span class="leaderboard-name ${row.rankClass}">${row.rank}. ${row.initials}</span>
+          <span class="leaderboard-time">${timeText}</span>
+        </div>
+      `;
+    }).join('');
   } catch (error) {
     container.innerHTML = '<p class="text-zinc-500 text-center py-6 text-xs">Leaderboard unavailable</p>';
   }
@@ -59,7 +112,7 @@ export async function claimInitials({ api, puzzleId, anonId, initials }) {
 
 export function updateNextGamePromo({ gameId, puzzleId, elements }) {
   if (!elements?.nextGamePromo) return;
-  const next = getUncompletedGames(gameId, puzzleId)[0];
+  const next = getUncompletedGamesSorted(gameId, puzzleId)[0];
   if (!next) {
     elements.nextGamePromo.classList.add('hidden');
     return;

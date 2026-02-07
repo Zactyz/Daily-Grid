@@ -1,149 +1,602 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="/Images/web%20icon.png">
-    <title>More Games - Daily Grid</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --brand-bg: #020617;
-            --brand-gold: #D4A650;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--brand-bg);
-            color: #F8FAFC;
-        }
-        h1, h2 {
-            font-family: 'Merriweather', serif;
-        }
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .gold-gradient {
-            background: linear-gradient(135deg, #D4A650, #E5C37E);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .card-hover {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .card-hover:hover {
-            transform: translateY(-5px);
-            border-color: rgba(212, 166, 80, 0.3);
-            background: rgba(255, 255, 255, 0.05);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0b1120">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Daily Grid Games">
+  <link rel="manifest" href="/games/manifest.json">
+  <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
+  <link rel="icon" type="image/png" href="/Images/web%20icon.png">
+  <title>Daily Grid Games</title>
+  <meta name="description" content="Daily Grid Games — a focused hub for daily puzzles.">
+  <meta property="og:title" content="Daily Grid Games">
+  <meta property="og:description" content="Daily Grid Games — a focused hub for daily puzzles.">
+  <meta property="og:image" content="https://dailygrid.app/games/assets/og-games.png">
+  <meta property="og:url" content="https://dailygrid.app/games/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Daily Grid Games">
+  <meta name="twitter:description" content="Daily Grid Games — a focused hub for daily puzzles.">
+  <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-games.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand-bg: #020617;
+      --brand-gold: #D4A650;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--brand-bg);
+      color: #F8FAFC;
+    }
+
+    h1, h2 {
+      font-family: 'Merriweather', serif;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .gold-gradient {
+      background: linear-gradient(135deg, #D4A650, #E5C37E);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .card-hover {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card-hover:hover {
+      transform: translateY(-5px);
+      border-color: rgba(212, 166, 80, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .mobile-only {
+      display: block;
+    }
+
+    .desktop-only {
+      display: none;
+    }
+
+    .app-header {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .app-card {
+      border: 1px solid rgba(212, 166, 80, 0.2);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .app-card:hover {
+      border-color: rgba(212, 166, 80, 0.45);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .app-card.complete {
+      opacity: 0.7;
+      filter: grayscale(0.2);
+      border-color: rgba(148, 163, 184, 0.2);
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .complete-mark {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.95);
+      color: #052e16;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(15, 23, 42, 0.9);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.45);
+    }
+
+    .app-section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      color: rgba(212, 166, 80, 0.75);
+    }
+
+    .all-complete {
+      background: rgba(217, 174, 85, 0.08);
+      border: 1px solid rgba(217, 174, 85, 0.25);
+      border-radius: 1rem;
+      padding: 0.85rem 1rem;
+      color: #fdecc1;
+    }
+
+    .all-complete a {
+      color: #f8d98a;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .ios-banner {
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(255, 255, 255, 0.92);
+      color: #0f172a;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+      backdrop-filter: blur(22px);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', sans-serif;
+      overflow: visible;
+    }
+
+    .ios-banner.with-pointer {
+      position: relative;
+    }
+
+    .ios-banner .banner-tail {
+      position: absolute;
+      left: 50%;
+      bottom: -12px;
+      width: 26px;
+      height: 16px;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.92);
+      clip-path: polygon(50% 100%, 0 0, 100% 0);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 8px 14px rgba(15, 23, 42, 0.08);
+      z-index: 1;
+    }
+
+    .ios-banner-bottom {
+      bottom: env(safe-area-inset-bottom, 0px);
+      z-index: 70;
+    }
+
+    #ios-install-banner-bottom {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: env(safe-area-inset-bottom, 0px);
+      z-index: 70;
+      display: none;
+    }
+
+    #ios-install-banner-bottom.show {
+      display: flex;
+    }
+
+    @media (max-width: 899px) {
+      .desktop-only { display: none !important; }
+    }
+
+    @media (min-width: 900px) {
+      .mobile-only { display: none !important; }
+      .desktop-only { display: block !important; }
+    }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col">
-    <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 glass py-4 px-6 flex justify-between items-center">
-        <a href="/" class="flex items-center gap-3 transition-transform hover:scale-105">
-            <img src="/Images/web%20icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-lg">
-            <span class="font-bold text-xl tracking-tight hidden sm:block">Daily Grid</span>
-        </a>
-        <div class="flex gap-6 text-sm font-medium">
-            <a href="/" class="hover:text-amber-500 transition-colors">Home</a>
-            <a href="/games/" class="text-amber-500 font-bold">Games</a>
-            <a href="/support/" class="hover:text-amber-500 transition-colors">Support</a>
+  <!-- Mobile App Style -->
+  <main class="mobile-only px-4 pt-6 pb-3">
+    <div class="flex items-center gap-3 mb-6 app-header">
+      <img src="/Images/web%20icon.png" alt="Daily Grid Games" class="w-10 h-10 rounded-xl">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.3em] text-slate-400">Daily Grid</p>
+        <h1 class="text-2xl font-semibold text-amber-200">Daily Grid Games</h1>
+      </div>
+    </div>
+
+    <section class="mb-6">
+      <div class="app-section-title mb-3">Daily Puzzles</div>
+      <div id="all-complete-message" class="all-complete hidden mb-3">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-full bg-emerald-400/20 border border-emerald-300/30 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <div class="text-sm leading-relaxed">
+            <div class="font-semibold text-amber-100">Great job! All games complete for today.</div>
+            <div class="text-xs text-amber-200/80">Come back tomorrow or <a href="/games/practice/" class="inline-flex items-center gap-1">practice
+              <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h6m0 0v6m0-6L10 14"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+              </svg>
+            </a> to be at the top of the leaderboard.</div>
+          </div>
         </div>
+      </div>
+      <div id="daily-list" class="grid gap-3">
+        <a href="/games/snake/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="snake">
+          <div class="relative">
+            <img src="/games/snake/snake-logo.png" alt="Snake" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Snake</p>
+            <p class="text-xs text-slate-400">Connect numbers in sequence.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
+        <a href="/games/pathways/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="pathways">
+          <div class="relative">
+            <img src="/games/pathways/pathways-logo.png" alt="Pathways" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Pathways</p>
+            <p class="text-xs text-slate-400">Pair colors with clean paths.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
+        <a href="/games/lattice/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="lattice">
+          <div class="relative">
+            <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Lattice</p>
+            <p class="text-xs text-slate-400">Logic deductions with clues.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
+        <a href="/games/bits/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="bits">
+          <div class="relative">
+            <img src="/games/bits/bitsnew-logo.jpg" alt="Bits" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Bits</p>
+            <p class="text-xs text-slate-400">Balance the binary grid.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
+        <a href="/games/hashi/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="hashi">
+          <div class="relative">
+            <img src="/games/hashi/hashi-logo.jpg" alt="Bridgeworks" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Bridgeworks</p>
+            <p class="text-xs text-slate-400">Link islands into one network.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
+        <a href="/games/shikaku/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="shikaku">
+          <div class="relative">
+            <img src="/games/shikaku/shikaku-logo.jpg" alt="Parcel" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Parcel</p>
+            <p class="text-xs text-slate-400">Pack the grid with rectangles.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
+      </div>
+    </section>
+
+    <section id="completed-section" class="mb-6 hidden">
+      <div class="app-section-title mb-3">Completed</div>
+      <div id="completed-list" class="grid gap-3"></div>
+    </section>
+  </main>
+
+  <!-- Desktop (unchanged layout) -->
+  <div class="desktop-only min-h-screen flex flex-col">
+    <nav class="fixed top-0 w-full z-50 glass py-4 px-6 flex justify-between items-center">
+      <a href="/" class="flex items-center gap-3 transition-transform hover:scale-105">
+        <img src="/Images/web%20icon.png" alt="Logo" class="w-10 h-10 rounded-xl shadow-lg">
+        <span class="font-bold text-xl tracking-tight hidden sm:block">Daily Grid</span>
+      </a>
+      <div class="flex gap-6 text-sm font-medium">
+        <a href="/" class="hover:text-amber-500 transition-colors">Home</a>
+        <a href="/games/" class="text-amber-500 font-bold">Games</a>
+        <a href="/support/" class="hover:text-amber-500 transition-colors">Support</a>
+      </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="flex-grow max-w-6xl mx-auto px-6 py-20 text-center">
-        <header class="mb-20">
-            <div class="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm font-semibold mb-6 uppercase tracking-widest">
-                Daily Challenges
-            </div>
-            <h1 class="text-5xl lg:text-6xl font-black mb-6">Three <span class="gold-gradient">Daily Puzzles</span></h1>
-            <p class="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                Handcrafted logic puzzles released every day. Choose your challenge, sharpen your mind, compete on the leaderboard.
-            </p>
-        </header>
-
-        <!-- Games Grid -->
-        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <!-- Game 1: Daily Grid -->
-            <a href="/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-                <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-16 h-16 rounded-2xl mb-6 shadow-lg">
-                <h2 class="text-2xl font-bold mb-2">Daily Grid</h2>
-                <p class="text-slate-400 text-sm leading-relaxed mb-6">The original. Fill the grid with perfect logic.</p>
-                <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-                    Play Today's Puzzle
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </span>
-            </a>
-
-            <!-- Snake Game Card -->
-            <a href="/games/snake/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-                <img src="/games/snake/snake-logo.png" alt="Snake" class="w-16 h-16 rounded-2xl mb-6">
-                <h2 class="text-2xl font-bold mb-2">Snake</h2>
-                <p class="text-slate-400 text-sm leading-relaxed mb-6">Connect numbers in order with one continuous path.</p>
-                <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-                    Play Today's Puzzle
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </span>
-            </a>
-
-            <!-- Pathways Game Card -->
-            <a href="/games/pathways/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-                <img src="/games/pathways/pathways-logo.png" alt="Pathways" class="w-16 h-16 rounded-2xl mb-6">
-                <h2 class="text-2xl font-bold mb-2">Pathways</h2>
-                <p class="text-slate-400 text-sm leading-relaxed mb-6">Match colored pairs with continuous paths.</p>
-                <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-                    Play Today's Puzzle
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </span>
-            </a>
-
-            <!-- Lattice Game Card -->
-            <a href="/games/lattice/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-                <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-16 h-16 rounded-2xl mb-6">
-                <h2 class="text-2xl font-bold mb-2">Lattice</h2>
-                <p class="text-slate-400 text-sm leading-relaxed mb-6">A daily logic grid puzzle powered by clues and deduction.</p>
-                <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-                    Play Today's Puzzle
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </span>
-            </a>
+      <header class="mb-20">
+        <div class="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm font-semibold mb-6 uppercase tracking-widest">
+          Daily Challenges
         </div>
-        
-        <!-- Practice Mode Info -->
-        <div class="mt-16 max-w-3xl mx-auto glass p-8 rounded-3xl">
-            <h3 class="text-xl font-bold mb-3">Can't wait for tomorrow?</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">
-                Each game includes <span class="text-amber-500 font-semibold">unlimited practice mode</span> with randomly generated puzzles. 
-                Perfect your skills without the pressure of the daily timer.
-            </p>
-        </div>
+        <h1 class="text-5xl lg:text-6xl font-black mb-6"><span class="gold-gradient">Daily Puzzles</span></h1>
+        <p class="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          Handcrafted logic puzzles released every day. Choose your challenge, sharpen your mind, compete on the leaderboard.
+        </p>
+      </header>
 
-        <!-- Ad Placeholder / Monetization Space -->
-        <div class="mt-32 max-w-4xl mx-auto">
-            <div class="p-4 border border-white/5 rounded-xl text-[10px] text-slate-600 uppercase tracking-[0.2em] mb-4">Space for Non-Intrusive Partner Content</div>
-            <div class="h-32 w-full bg-white/5 rounded-2xl flex items-center justify-center border border-dashed border-white/10">
-                <p class="text-slate-500 italic text-sm">A calm space for quality puzzle recommendations</p>
-            </div>
+      <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <a href="/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-16 h-16 rounded-2xl mb-6 shadow-lg">
+          <h2 class="text-2xl font-bold mb-2">Daily Grid</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">The original. Fill the grid with perfect logic.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+
+        <a href="/games/snake/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/snake/snake-logo.png" alt="Snake" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Snake</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Connect numbers in order with one continuous path.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+
+        <a href="/games/pathways/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/pathways/pathways-logo.png" alt="Pathways" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Pathways</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Match colored pairs with continuous paths.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+
+        <a href="/games/lattice/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Lattice</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">A daily logic grid puzzle powered by clues and deduction.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+
+        <a href="/games/bits/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/bits/bitsnew-logo.jpg" alt="Bits" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Bits</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Balance the binary grid with elegant 0s and 1s.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+
+        <a href="/games/hashi/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/hashi/hashi-logo.jpg" alt="Bridgeworks" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Bridgeworks</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Link numbered islands into a single elegant bridge network.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+
+        <a href="/games/shikaku/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/shikaku/shikaku-logo.jpg" alt="Parcel" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Parcel</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Divide the grid into perfect rectangles that match every clue.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+      </div>
+
+      <div class="mt-16 max-w-3xl mx-auto glass p-8 rounded-3xl">
+        <h3 class="text-xl font-bold mb-3">Can't wait for tomorrow?</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Each game includes <span class="text-amber-500 font-semibold">unlimited practice mode</span> with randomly generated puzzles.
+          Perfect your skills without the pressure of the daily timer.
+        </p>
+      </div>
+
+      <div class="mt-32 max-w-4xl mx-auto">
+        <div class="p-4 border border-white/5 rounded-xl text-[10px] text-slate-600 uppercase tracking-[0.2em] mb-4">Space for Non-Intrusive Partner Content</div>
+        <div class="h-32 w-full bg-white/5 rounded-2xl flex items-center justify-center border border-dashed border-white/10">
+          <p class="text-slate-500 italic text-sm">A calm space for quality puzzle recommendations</p>
         </div>
+      </div>
     </main>
 
-    <!-- Footer -->
     <footer class="py-12 px-6 border-t border-white/5 text-center mt-auto">
-        <div class="max-w-6xl mx-auto">
-            <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-12 h-12 rounded-xl mx-auto mb-6 grayscale opacity-50">
-            <p class="text-slate-500 mb-8">&copy; 2026 Zachary Zimmerman. All rights reserved.</p>
-            <div class="flex justify-center gap-8 text-sm font-medium text-slate-400">
-                <a href="/" class="hover:text-amber-500 transition-colors">Home</a>
-                <a href="/privacy/" class="hover:text-amber-500 transition-colors">Privacy Policy</a>
-                <a href="/terms/" class="hover:text-amber-500 transition-colors">Terms of Service</a>
-                <a href="/support/" class="hover:text-amber-500 transition-colors">Support</a>
-            </div>
+      <div class="max-w-6xl mx-auto">
+        <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-12 h-12 rounded-xl mx-auto mb-6 grayscale opacity-50">
+        <p class="text-slate-500 mb-8">&copy; 2026 Zachary Zimmerman. All rights reserved.</p>
+        <div class="flex justify-center gap-8 text-sm font-medium text-slate-400">
+          <a href="/" class="hover:text-amber-500 transition-colors">Home</a>
+          <a href="/privacy/" class="hover:text-amber-500 transition-colors">Privacy Policy</a>
+          <a href="/terms/" class="hover:text-amber-500 transition-colors">Terms of Service</a>
+          <a href="/support/" class="hover:text-amber-500 transition-colors">Support</a>
         </div>
+      </div>
     </footer>
+  </div>
+
+  <div id="ios-install-banner-bottom" class="ios-banner with-pointer rounded-[1.9rem] px-5 py-4 flex items-center gap-4 max-w-md w-[94%] ios-banner-bottom">
+    <span class="banner-tail" aria-hidden="true"></span>
+    <div class="flex items-center justify-center">
+      <img src="/games/assets/dg-games-180.png" alt="Daily Grid Games" class="w-12 h-12 rounded-[1rem] object-contain">
+    </div>
+    <div class="flex-1 text-[15px] text-slate-800 leading-snug">
+      Download the games: tap
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 font-semibold text-slate-700 shadow-sm">
+        <img src="/games/assets/apple-share.png" alt="Share icon" class="w-4 h-4 object-contain">
+        Share
+      </span>
+      then “Add to Home Screen”.
+    </div>
+    <button id="ios-banner-close" class="text-slate-500 text-base">✕</button>
+  </div>
+
+  <script>
+
+    const completedPrefixes = {
+      snake: 'dailygrid_completed_',
+      pathways: 'dailygrid_pathways_completed_',
+      lattice: 'dailygrid_lattice_completed_',
+      bits: 'dailygrid_bits_completed_',
+      hashi: 'dailygrid_hashi_completed_',
+      shikaku: 'dailygrid_shikaku_completed_'
+    };
+    const submittedPrefixes = {
+      snake: 'dailygrid_submitted_',
+      pathways: 'dailygrid_pathways_submitted_',
+      lattice: 'dailygrid_lattice_submitted_',
+      bits: 'dailygrid_bits_submitted_',
+      hashi: 'dailygrid_hashi_submitted_',
+      shikaku: 'dailygrid_shikaku_submitted_'
+    };
+
+    const gameMeta = {
+      snake: { name: 'Snake', path: '/games/snake/', logo: '/games/snake/snake-logo.png' },
+      pathways: { name: 'Pathways', path: '/games/pathways/', logo: '/games/pathways/pathways-logo.png' },
+      lattice: { name: 'Lattice', path: '/games/lattice/', logo: '/games/lattice/lattice-logo.png?v=2' },
+      bits: { name: 'Bits', path: '/games/bits/', logo: '/games/bits/bitsnew-logo.jpg' },
+      hashi: { name: 'Bridgeworks', path: '/games/hashi/', logo: '/games/hashi/hashi-logo.jpg' },
+      shikaku: { name: 'Parcel', path: '/games/shikaku/', logo: '/games/shikaku/shikaku-logo.jpg' }
+    };
+
+    function getPTDateYYYYMMDD(now = new Date()) {
+      const dtf = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Los_Angeles',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const parts = dtf.formatToParts(now);
+      const y = parts.find(p => p.type === 'year')?.value;
+      const m = parts.find(p => p.type === 'month')?.value;
+      const d = parts.find(p => p.type === 'day')?.value;
+      return `${y}-${m}-${d}`;
+    }
+
+    function isCompletedToday(id) {
+      const puzzleId = getPTDateYYYYMMDD();
+      const completedPrefix = completedPrefixes[id];
+      if (completedPrefix) {
+        try {
+          if (localStorage.getItem(`${completedPrefix}${puzzleId}`) === 'true') return true;
+        } catch {
+          // ignore
+        }
+      }
+      const submittedPrefix = submittedPrefixes[id];
+      if (!submittedPrefix) return false;
+      try {
+        return localStorage.getItem(`${submittedPrefix}${puzzleId}`) === 'true';
+      } catch {
+        return false;
+      }
+    }
+
+    function updateCards() {
+      const dailyList = document.getElementById('daily-list');
+      const completedList = document.getElementById('completed-list');
+      const completedSection = document.getElementById('completed-section');
+      const cards = Array.from(document.querySelectorAll('#daily-list a.app-card[data-game-id], #completed-list a.app-card[data-game-id]'));
+      let completedCount = 0;
+      cards.forEach((card) => {
+        const id = card.dataset.gameId;
+        const completed = isCompletedToday(id);
+        if (completed) completedCount += 1;
+        const playText = card.querySelector('.play-text');
+        const check = card.querySelector('.complete-mark');
+        const meta = gameMeta[id];
+        if (meta) {
+          card.href = completed ? `${meta.path}?leaderboard=1` : meta.path;
+        }
+        if (completed) {
+          card.classList.add('complete');
+          if (check) check.classList.remove('hidden');
+          if (playText) playText.textContent = 'View Leaderboard';
+          if (completedList && card.parentElement !== completedList) completedList.appendChild(card);
+        } else {
+          card.classList.remove('complete');
+          if (check) check.classList.add('hidden');
+          if (playText) playText.textContent = 'Play';
+          if (dailyList && card.parentElement !== dailyList) dailyList.appendChild(card);
+        }
+      });
+
+      if (completedSection) {
+        if (completedList && completedList.children.length > 0) completedSection.classList.remove('hidden');
+        else completedSection.classList.add('hidden');
+      }
+
+      const allCompleteMsg = document.getElementById('all-complete-message');
+      if (allCompleteMsg) {
+        if (completedCount === Object.keys(submittedPrefixes).length) {
+          allCompleteMsg.classList.remove('hidden');
+        } else {
+          allCompleteMsg.classList.add('hidden');
+        }
+      }
+    }
+
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const iosBannerBottom = document.getElementById('ios-install-banner-bottom');
+    const iosBannerClose = document.getElementById('ios-banner-close');
+    if (isIos && !isStandalone) {
+      iosBannerBottom?.classList.add('show');
+    }
+
+    iosBannerClose?.addEventListener('click', () => {
+      iosBannerBottom?.classList.remove('show');
+    });
+
+    updateCards();
+    window.addEventListener('pageshow', () => {
+      updateCards();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') updateCards();
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/games/sw.js');
+      });
+    }
+  </script>
 </body>
 </html>

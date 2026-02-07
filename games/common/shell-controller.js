@@ -1,5 +1,5 @@
 import { buildShareText, formatDateForShare, shareWithFallback, showShareFeedback } from './share.js';
-import { getGameMeta } from './games.js';
+import { getGameMeta, recordGameCompletion } from './games.js';
 import { loadLeaderboard, submitScore, claimInitials, updateNextGamePromo } from './shell-ui.js';
 
 const RESET_ICON = `
@@ -23,7 +23,36 @@ const RESUME_ICON = `
   Resume
 `;
 
-function defaultElements() {
+let touchGuardInitialized = false;
+
+function shouldAllowDoubleTap(target) {
+  if (!target) return false;
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return true;
+  if (target.closest('#game-container') || target.closest('.game-touch')) return true;
+  return false;
+}
+
+  function initTouchGuards() {
+  if (touchGuardInitialized || typeof window === 'undefined') return;
+  touchGuardInitialized = true;
+  let lastTouchEnd = 0;
+
+  document.addEventListener('touchend', (event) => {
+    const target = event.target;
+    if (shouldAllowDoubleTap(target)) return;
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  document.addEventListener('gesturestart', (event) => {
+    event.preventDefault();
+  }, { passive: false });
+  }
+
+  function defaultElements() {
   return {
     timer: document.getElementById('timer'),
     pauseBtn: document.getElementById('pause-btn'),
@@ -70,11 +99,12 @@ function defaultElements() {
     toast: document.getElementById('shell-toast'),
     toastText: document.getElementById('shell-toast-text')
   };
-}
+  }
 
-export function createShellController(adapter, elementOverrides = null) {
+  export function createShellController(adapter, elementOverrides = null) {
+  initTouchGuards();
   const meta = getGameMeta(adapter.gameId);
-  const elements = { ...defaultElements(), ...(elementOverrides || {}) };
+    const elements = { ...defaultElements(), ...(elementOverrides || {}) };
 
   let modalShown = false;
   let completionMs = null;
@@ -85,6 +115,10 @@ export function createShellController(adapter, elementOverrides = null) {
   let lastPuzzleId = null;
   let lastMode = null;
   let toastTimeout = null;
+  const wantsLeaderboard = new URLSearchParams(window.location.search).get('leaderboard') === '1';
+  let leaderboardDeepLink = wantsLeaderboard;
+  let modalPending = false;
+  let latestPlayerEntry = null;
 
   function puzzleKeyPrefix(prefix) {
     return `${prefix}${adapter.getPuzzleId()}`;
@@ -99,10 +133,97 @@ export function createShellController(adapter, elementOverrides = null) {
     }
   }
 
+  function loadCompletedState() {
+    if (!meta?.completedKeyPrefix) return false;
+    try {
+      return localStorage.getItem(puzzleKeyPrefix(meta.completedKeyPrefix)) === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  function leaderboardEntryKey() {
+    return `dailygrid_${adapter.gameId}_leaderboard_${adapter.getPuzzleId()}`;
+  }
+
+  function leaderboardSeenKey() {
+    return `dailygrid_${adapter.gameId}_leaderboard_seen_${adapter.getPuzzleId()}`;
+  }
+
+  function hasSeenLeaderboard() {
+    try {
+      return localStorage.getItem(leaderboardSeenKey()) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function markLeaderboardSeen() {
+    try {
+      localStorage.setItem(leaderboardSeenKey(), '1');
+    } catch {
+      // ignore
+    }
+  }
+
+  function loadLocalLeaderboardEntry() {
+    try {
+      const raw = localStorage.getItem(leaderboardEntryKey());
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || !Number.isFinite(data.rank)) return null;
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveLocalLeaderboardEntry(entry) {
+    if (!entry || !Number.isFinite(entry.rank)) return;
+    try {
+      localStorage.setItem(leaderboardEntryKey(), JSON.stringify(entry));
+    } catch {
+      // ignore
+    }
+  }
+
+  function getPlayerEntry() {
+    return latestPlayerEntry || loadLocalLeaderboardEntry();
+  }
+
+  function shouldUseYouLabel(entry) {
+    if (!entry) return false;
+    if (entry.initials) return false;
+    return !hasSeenLeaderboard();
+  }
+
+  function updateClaimInitialsVisibility() {
+    if (!elements.claimInitialsForm) return;
+    if (adapter.getMode() !== 'daily') {
+      elements.claimInitialsForm.classList.add('hidden');
+      return;
+    }
+    const entry = getPlayerEntry();
+    if (entry && !entry.initials) {
+      elements.claimInitialsForm.classList.remove('hidden');
+    } else {
+      elements.claimInitialsForm.classList.add('hidden');
+    }
+  }
+
   function saveSubmittedState() {
     if (!meta?.submittedKeyPrefix) return;
     try {
       localStorage.setItem(puzzleKeyPrefix(meta.submittedKeyPrefix), 'true');
+    } catch {
+      // ignore
+    }
+  }
+
+  function saveCompletedState() {
+    if (!meta?.completedKeyPrefix) return;
+    try {
+      localStorage.setItem(puzzleKeyPrefix(meta.completedKeyPrefix), 'true');
     } catch {
       // ignore
     }
@@ -139,6 +260,7 @@ export function createShellController(adapter, elementOverrides = null) {
 
     lastPuzzleId = puzzleId;
     lastMode = mode;
+    latestPlayerEntry = null;
 
     modalShown = false;
     completionMs = adapter.getCompletionMs?.() ?? null;
@@ -156,6 +278,7 @@ export function createShellController(adapter, elementOverrides = null) {
         completionMs = adapter.getCompletionMs?.() ?? completionMs;
         modalShown = true;
       }
+      saveCompletedState();
     }
   }
 
@@ -183,8 +306,8 @@ export function createShellController(adapter, elementOverrides = null) {
   }
 
   function updateModeUI() {
-    if (!elements.dailyBadge && !elements.practiceBadge) return;
-    if (adapter.getMode() === 'daily') {
+    const isDaily = adapter.getMode() === 'daily';
+    if (isDaily) {
       elements.dailyBadge?.classList.remove('hidden');
       elements.practiceBadge?.classList.add('hidden');
       elements.practiceModeBtn?.classList.remove('hidden');
@@ -243,6 +366,14 @@ export function createShellController(adapter, elementOverrides = null) {
     });
   }
 
+  function markBannerNavigation() {
+    try {
+      sessionStorage.setItem('dailygrid_return_to_games', '1');
+    } catch {
+      // ignore
+    }
+  }
+
   function updateResetButton() {
     if (!elements.resetBtn) return;
     if (adapter.isSolutionShown?.()) {
@@ -288,6 +419,10 @@ export function createShellController(adapter, elementOverrides = null) {
       completionMs = adapter.getElapsedMs();
       adapter.setCompletionMs?.(completionMs);
     }
+    if (adapter.getMode() === 'daily' && !isInReplayMode) {
+      saveCompletedState();
+      recordGameCompletion(adapter.gameId, adapter.getPuzzleId());
+    }
   }
 
   function resetShellState() {
@@ -309,17 +444,8 @@ export function createShellController(adapter, elementOverrides = null) {
     const timeMs = completionMs ?? adapter.getElapsedMs();
     const shareMeta = adapter.getShareMeta?.() || {};
     const gameName = shareMeta.gameName || meta?.name || adapter.gameId;
-    const shareUrl = shareMeta.shareUrl || meta?.shareUrl || '';
-    const gridLabel = shareMeta.gridLabel || adapter.getGridLabel();
-    const puzzleLabel = shareMeta.puzzleLabel || formatDateForShare(adapter.getPuzzleId());
-
-    const shareText = buildShareText({
-      gameName,
-      puzzleLabel,
-      gridLabel,
-      timeText: adapter.formatTime(timeMs || 0),
-      shareUrl
-    });
+    const shareUrl = '';
+    const shareText = buildShareText({ gameName });
 
     try {
       const shareFile = await adapter.getShareFile?.();
@@ -338,11 +464,15 @@ export function createShellController(adapter, elementOverrides = null) {
 
   async function loadLeaderboardIntoModal() {
     if (!elements.leaderboardList) return;
+    updateClaimInitialsVisibility();
+    const entry = getPlayerEntry();
     await loadLeaderboard({
       container: elements.leaderboardList,
       api: `/api/${adapter.gameId}/leaderboard`,
       puzzleId: adapter.getPuzzleId(),
-      formatTimeFn: adapter.formatTime
+      formatTimeFn: adapter.formatTime,
+      playerEntry: entry,
+      preferYouLabel: shouldUseYouLabel(entry)
     });
   }
 
@@ -369,16 +499,26 @@ export function createShellController(adapter, elementOverrides = null) {
 
       hasSubmittedScore = true;
       saveSubmittedState();
+      saveCompletedState();
+
+      if (Number.isFinite(data.rank)) {
+        const existingEntry = loadLocalLeaderboardEntry();
+        latestPlayerEntry = {
+          rank: data.rank,
+          timeMs: payload.timeMs,
+          initials: existingEntry?.initials ?? null
+        };
+        saveLocalLeaderboardEntry(latestPlayerEntry);
+      }
 
       if (elements.percentileMsg) {
-        const msg = `You ranked ${data.rank} out of ${data.total} solvers today (top ${100 - data.percentile}%)!`;
+        const topPct = Math.max(1, Math.round(100 - (data.percentile ?? 0)));
+        const msg = `You finished in the top ${topPct}% of solvers!`;
         elements.percentileMsg.textContent = msg;
         elements.percentileMsg.classList.remove('hidden');
       }
 
-      if (data.rank <= 10 && elements.claimInitialsForm) {
-        elements.claimInitialsForm.classList.remove('hidden');
-      }
+      updateClaimInitialsVisibility();
     } catch (error) {
       if (elements.percentileMsg) {
         elements.percentileMsg.textContent = 'Leaderboard temporarily unavailable';
@@ -398,6 +538,15 @@ export function createShellController(adapter, elementOverrides = null) {
         anonId: adapter.getAnonId(),
         initials
       });
+      const existingEntry = loadLocalLeaderboardEntry();
+      if (existingEntry) {
+        existingEntry.initials = initials;
+        latestPlayerEntry = existingEntry;
+        saveLocalLeaderboardEntry(existingEntry);
+      } else if (latestPlayerEntry) {
+        latestPlayerEntry.initials = initials;
+        saveLocalLeaderboardEntry(latestPlayerEntry);
+      }
       elements.claimInitialsForm?.classList.add('hidden');
       await loadLeaderboardIntoModal();
     } catch (error) {
@@ -446,8 +595,8 @@ export function createShellController(adapter, elementOverrides = null) {
         }
       });
 
-      submitScoreIfNeeded();
-      loadLeaderboardIntoModal();
+      submitScoreIfNeeded()
+        .finally(() => loadLeaderboardIntoModal());
     } else {
       const practiceTitle = adapter.getPracticeModalTitle?.() || 'Nice Job!';
       const practiceSubtitle = adapter.getPracticeModalSubtitle?.() || 'Practice puzzle complete';
@@ -463,6 +612,10 @@ export function createShellController(adapter, elementOverrides = null) {
 
   function hideCompletionModal() {
     elements.completionModal?.classList.add('hidden');
+    const entry = getPlayerEntry();
+    if (entry && !entry.initials) {
+      markLeaderboardSeen();
+    }
   }
 
   function confirmReset() {
@@ -526,6 +679,7 @@ export function createShellController(adapter, elementOverrides = null) {
     elements.closeModalBtn = replace(elements.closeModalBtn);
     elements.shareBtn = replace(elements.shareBtn);
     elements.claimInitialsForm = replace(elements.claimInitialsForm);
+    elements.initialsInput = elements.claimInitialsForm?.querySelector('#initials-input') || elements.initialsInput;
     elements.tryAgainBtn = replace(elements.tryAgainBtn);
     elements.nextLevelBtn = replace(elements.nextLevelBtn);
     elements.backToDailyCompleteBtn = replace(elements.backToDailyCompleteBtn);
@@ -602,6 +756,11 @@ export function createShellController(adapter, elementOverrides = null) {
 
     elements.claimInitialsForm?.addEventListener('submit', handleClaimInitials);
 
+    elements.nextGameLink?.addEventListener('click', markBannerNavigation);
+    elements.nextGamePromo?.addEventListener('click', markBannerNavigation);
+    elements.externalGameLink?.addEventListener('click', markBannerNavigation);
+    elements.externalGamePromo?.addEventListener('click', markBannerNavigation);
+
     elements.tryAgainBtn?.addEventListener('click', () => {
       hideCompletionModal();
       resetShellState();
@@ -638,6 +797,50 @@ export function createShellController(adapter, elementOverrides = null) {
       adapter.onStartDaily?.();
     });
 
+    const mobileBackLink = document.querySelector('.mobile-app-bar a');
+    if (mobileBackLink) {
+      mobileBackLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        try {
+          const bannerFlag = sessionStorage.getItem('dailygrid_return_to_games');
+          if (bannerFlag === '1') {
+            sessionStorage.removeItem('dailygrid_return_to_games');
+            window.location.href = '/games/';
+            return;
+          }
+        } catch {}
+        if (window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+        let fallback = '/games/';
+        try {
+          const ref = document.referrer;
+          if (ref) {
+            const refUrl = new URL(ref);
+            if (refUrl.origin === window.location.origin) {
+              if (refUrl.pathname.startsWith('/games/practice')) fallback = '/games/practice/';
+              else if (refUrl.pathname.startsWith('/games/')) fallback = '/games/';
+              else fallback = '/';
+            }
+          }
+        } catch {}
+        window.location.href = fallback;
+      });
+    }
+
+    window.addEventListener('popstate', () => {
+      try {
+        const bannerFlag = sessionStorage.getItem('dailygrid_return_to_games');
+        if (bannerFlag === '1') {
+          sessionStorage.removeItem('dailygrid_return_to_games');
+          window.location.href = '/games/';
+        }
+      } catch {
+        // ignore
+      }
+    });
+
     document.addEventListener('visibilitychange', () => {
       if (adapter.pauseOnHide === false) return;
       if (document.visibilityState === 'hidden') {
@@ -672,6 +875,114 @@ export function createShellController(adapter, elementOverrides = null) {
     }
   }
 
+  function runDefaultCelebration() {
+    const targets = document.querySelectorAll('.celebrate-target');
+    if (!targets.length) return 0;
+    targets.forEach((el) => {
+      el.classList.remove('celebrate-animate');
+      void el.offsetWidth;
+      el.classList.add('celebrate-animate');
+    });
+    const durationMs = 2400;
+    window.setTimeout(() => {
+      targets.forEach((el) => el.classList.remove('celebrate-animate'));
+    }, durationMs);
+    return durationMs;
+  }
+
+  function getCelebrateColor() {
+    const shareMeta = adapter.getShareMeta?.() || {};
+    const metaColor = shareMeta.accent || shareMeta.accentColor || shareMeta.color;
+    if (metaColor) return metaColor;
+    try {
+      const cssAccent = getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim();
+      if (cssAccent) return cssAccent;
+    } catch {
+      // ignore
+    }
+    return '#D4A650';
+  }
+
+  function runConfetti(color) {
+    if (!color) return 0;
+    document.querySelectorAll('.shell-confetti').forEach((node) => node.remove());
+    const container = document.createElement('div');
+    container.className = 'shell-confetti';
+    const pieceCount = 32;
+    let maxDuration = 0;
+    for (let i = 0; i < pieceCount; i += 1) {
+      const piece = document.createElement('span');
+      piece.className = 'shell-confetti-piece';
+      const width = 6 + Math.random() * 7;
+      const height = width * (0.5 + Math.random() * 0.7);
+      const duration = 3600 + Math.random() * 2000;
+      const delay = Math.random() * 320;
+      const dx = (Math.random() * 240 - 120).toFixed(1);
+      const rot = (Math.random() * 360).toFixed(1);
+      const opacity = (0.55 + Math.random() * 0.4).toFixed(2);
+      const xStart = (Math.random() * 110 - 5).toFixed(2);
+      piece.style.setProperty('--x', `${xStart}%`);
+      piece.style.setProperty('--w', `${width.toFixed(1)}px`);
+      piece.style.setProperty('--h', `${height.toFixed(1)}px`);
+      piece.style.setProperty('--o', opacity);
+      piece.style.setProperty('--dur', `${duration.toFixed(0)}ms`);
+      piece.style.setProperty('--delay', `${delay.toFixed(0)}ms`);
+      piece.style.setProperty('--dx', `${dx}px`);
+      piece.style.setProperty('--rot', `${rot}deg`);
+      piece.style.backgroundColor = color;
+      container.appendChild(piece);
+      maxDuration = Math.max(maxDuration, duration + delay);
+    }
+    document.body.appendChild(container);
+    window.setTimeout(() => {
+      container.remove();
+    }, maxDuration + 500);
+    return maxDuration;
+  }
+
+  function startCompletionSequence() {
+    if (modalPending) return;
+    modalPending = true;
+
+    const finish = () => {
+      modalPending = false;
+      if (modalShown) return;
+      modalShown = true;
+      showCompletionModal();
+    };
+
+    runConfetti(getCelebrateColor());
+
+    let result = null;
+    try {
+      result = adapter.onCelebrate?.();
+    } catch {
+      result = null;
+    }
+
+    if (navigator?.vibrate) {
+      try {
+        navigator.vibrate([30, 60, 30]);
+      } catch {
+        // ignore
+      }
+    }
+
+    if (result && typeof result.then === 'function') {
+      result.then(finish).catch(finish);
+      return;
+    }
+
+    if (typeof result === 'number' && result > 0) {
+      window.setTimeout(finish, result);
+      return;
+    }
+
+    const duration = runDefaultCelebration();
+    if (duration > 0) window.setTimeout(finish, duration);
+    else finish();
+  }
+
   function update() {
     syncPuzzleState();
     setCompletionTimeIfNeeded();
@@ -685,22 +996,28 @@ export function createShellController(adapter, elementOverrides = null) {
     updateModeUI();
     updateExternalPromo();
 
+    if (leaderboardDeepLink && adapter.getMode() === 'daily' && adapter.isComplete() && !isInReplayMode) {
+      leaderboardDeepLink = false;
+      modalPending = false;
+      modalShown = true;
+      showCompletionModal({ force: true });
+    }
+
     if (adapter.isComplete()) {
       if (isInReplayMode) {
         isInReplayMode = false;
         saveReplayMode(false);
         adapter.onReplayStateChange?.(false);
       }
-      if (!modalShown && (!adapter.shouldShowCompletionModal || adapter.shouldShowCompletionModal())) {
-        modalShown = true;
-        showCompletionModal();
+      if (!modalShown && !modalPending && (!adapter.shouldShowCompletionModal || adapter.shouldShowCompletionModal())) {
+        startCompletionSequence();
       }
     }
   }
 
-  init();
+    init();
 
-  return {
+    return {
     update,
     resetUI: resetShellState,
     showCompletionModal,

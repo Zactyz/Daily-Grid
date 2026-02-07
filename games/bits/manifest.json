@@ -1,0 +1,21 @@
+{
+  "name": "Bits by Daily Grid",
+  "short_name": "Bits",
+  "description": "A neon binary puzzle where every row and column balance exactly three zeroes and three ones.",
+  "start_url": "/games/bits/",
+  "display": "standalone",
+  "background_color": "#010a06",
+  "theme_color": "#010a06",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/games/bits/bitsnew-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "puzzle"],
+  "lang": "en",
+  "dir": "ltr"
+}

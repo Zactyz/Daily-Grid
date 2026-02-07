@@ -953,6 +953,7 @@ function render() {
         const td = document.createElement('td');
         const div = document.createElement('div');
         div.className = cellClass(state[cat.category][i][j]);
+        div.classList.add('celebrate-target');
         div.textContent = cellText(state[cat.category][i][j]);
 
         div.addEventListener('click', () => {
@@ -1231,6 +1232,9 @@ function wireUI() {
     // New practice puzzle
     startPractice();
   });
+
+  window.startPracticeMode = () => startPractice();
+  window.startDailyMode = () => startDaily();
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') saveProgress(true);
