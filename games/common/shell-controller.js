@@ -513,7 +513,7 @@ function shouldAllowDoubleTap(target) {
 
       if (elements.percentileMsg) {
         const topPct = Math.max(1, Math.round(100 - (data.percentile ?? 0)));
-        const msg = `Top ${topPct}% of solvers today.`;
+        const msg = `You finished in the top ${topPct}% of solvers!`;
         elements.percentileMsg.textContent = msg;
         elements.percentileMsg.classList.remove('hidden');
       }
@@ -883,11 +883,61 @@ function shouldAllowDoubleTap(target) {
       void el.offsetWidth;
       el.classList.add('celebrate-animate');
     });
-    const durationMs = 900;
+    const durationMs = 2400;
     window.setTimeout(() => {
       targets.forEach((el) => el.classList.remove('celebrate-animate'));
     }, durationMs);
     return durationMs;
+  }
+
+  function getCelebrateColor() {
+    const shareMeta = adapter.getShareMeta?.() || {};
+    const metaColor = shareMeta.accent || shareMeta.accentColor || shareMeta.color;
+    if (metaColor) return metaColor;
+    try {
+      const cssAccent = getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim();
+      if (cssAccent) return cssAccent;
+    } catch {
+      // ignore
+    }
+    return '#D4A650';
+  }
+
+  function runConfetti(color) {
+    if (!color) return 0;
+    document.querySelectorAll('.shell-confetti').forEach((node) => node.remove());
+    const container = document.createElement('div');
+    container.className = 'shell-confetti';
+    const pieceCount = 32;
+    let maxDuration = 0;
+    for (let i = 0; i < pieceCount; i += 1) {
+      const piece = document.createElement('span');
+      piece.className = 'shell-confetti-piece';
+      const width = 6 + Math.random() * 7;
+      const height = width * (0.5 + Math.random() * 0.7);
+      const duration = 3600 + Math.random() * 2000;
+      const delay = Math.random() * 320;
+      const dx = (Math.random() * 240 - 120).toFixed(1);
+      const rot = (Math.random() * 360).toFixed(1);
+      const opacity = (0.55 + Math.random() * 0.4).toFixed(2);
+      const xStart = (Math.random() * 110 - 5).toFixed(2);
+      piece.style.setProperty('--x', `${xStart}%`);
+      piece.style.setProperty('--w', `${width.toFixed(1)}px`);
+      piece.style.setProperty('--h', `${height.toFixed(1)}px`);
+      piece.style.setProperty('--o', opacity);
+      piece.style.setProperty('--dur', `${duration.toFixed(0)}ms`);
+      piece.style.setProperty('--delay', `${delay.toFixed(0)}ms`);
+      piece.style.setProperty('--dx', `${dx}px`);
+      piece.style.setProperty('--rot', `${rot}deg`);
+      piece.style.backgroundColor = color;
+      container.appendChild(piece);
+      maxDuration = Math.max(maxDuration, duration + delay);
+    }
+    document.body.appendChild(container);
+    window.setTimeout(() => {
+      container.remove();
+    }, maxDuration + 500);
+    return maxDuration;
   }
 
   function startCompletionSequence() {
@@ -900,6 +950,8 @@ function shouldAllowDoubleTap(target) {
       modalShown = true;
       showCompletionModal();
     };
+
+    runConfetti(getCelebrateColor());
 
     let result = null;
     try {

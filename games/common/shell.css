@@ -218,8 +218,8 @@ textarea,
 }
 
 .celebrate-animate {
-  animation: celebratePulse 1.35s ease-in-out 0s 2;
-  filter: drop-shadow(0 0 12px rgba(255, 226, 150, 0.35));
+  animation: celebratePulse 1.2s ease-in-out 0s 2;
+  filter: drop-shadow(0 0 22px rgba(255, 226, 150, 0.7));
   will-change: transform, filter;
 }
 
@@ -228,16 +228,65 @@ textarea,
     transform: scale(1);
     filter: drop-shadow(0 0 0 rgba(255, 226, 150, 0));
   }
-  40% {
-    transform: scale(1.04);
-    filter: drop-shadow(0 0 16px rgba(255, 226, 150, 0.45));
+  30% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 24px rgba(255, 226, 150, 0.8));
   }
-  70% {
-    transform: scale(0.985);
-    filter: drop-shadow(0 0 10px rgba(255, 226, 150, 0.3));
+  55% {
+    transform: scale(0.96);
+    filter: drop-shadow(0 0 14px rgba(255, 226, 150, 0.45));
+  }
+  85% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 26px rgba(255, 226, 150, 0.85));
   }
   100% {
     transform: scale(1);
     filter: drop-shadow(0 0 0 rgba(255, 226, 150, 0));
+  }
+}
+
+.shell-confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.shell-confetti-piece {
+  position: absolute;
+  top: -16px;
+  left: var(--x);
+  width: var(--w);
+  height: var(--h);
+  opacity: var(--o);
+  border-radius: 999px;
+  transform: translate3d(0, 0, 0) rotate(var(--rot));
+  animation: confettiFall var(--dur) cubic-bezier(0.25, 0.46, 0.45, 0.94) var(--delay) forwards;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translate3d(0, -20px, 0) rotate(var(--rot));
+  }
+  35% {
+    transform: translate3d(calc(var(--dx) * 0.6), 30vh, 0) rotate(calc(var(--rot) + 120deg));
+  }
+  65% {
+    transform: translate3d(calc(var(--dx) * -0.25), 70vh, 0) rotate(calc(var(--rot) + 240deg));
+  }
+  100% {
+    transform: translate3d(var(--dx), 110vh, 0) rotate(calc(var(--rot) + 360deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrate-animate {
+    animation: none;
+  }
+  .shell-confetti-piece {
+    animation: none;
   }
 }
