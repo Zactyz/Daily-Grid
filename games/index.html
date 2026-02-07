@@ -585,6 +585,12 @@
     });
 
     updateCards();
+    window.addEventListener('pageshow', () => {
+      updateCards();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') updateCards();
+    });
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
