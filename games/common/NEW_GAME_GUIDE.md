@@ -92,6 +92,8 @@ When adding a new game, update these shared locations so it appears everywhere:
 - Add an OG image under `games/assets/` and reference it in:
   - `og:image`, `twitter:image`, and `og:url` tags.
 - Also update `/games/index.html` with `og:image` for the games list page.
+- Share button text is standardized to: “I just completed the daily {GameName} puzzle on Daily Grid. Can you beat my time?”
+- Share URLs are intentionally omitted from the share payload.
 
 ## 11) Mobile + PWA expectations
 - Keep desktop layout intact; use mobile styles to feel app-like.
