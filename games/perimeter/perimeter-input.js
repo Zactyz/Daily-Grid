@@ -1,4 +1,4 @@
-export class ShingokiInput {
+export class PerimeterInput {
   constructor(canvas, engine, renderer, callbacks = {}) {
     this.canvas = canvas;
     this.engine = engine;

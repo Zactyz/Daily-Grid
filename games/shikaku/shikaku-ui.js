@@ -10,8 +10,8 @@ import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
 
 const STATE_PREFIX = 'dailygrid_shikaku_state_';
-const SIZE_RANGE = { min: 6, max: 8 };
-const RECT_RANGE = { min: 6, max: 8 };
+const SIZE_RANGE = { min: 7, max: 9 };
+const RECT_RANGE = { min: 6, max: 7 };
 const MIN_RECT_AREA = 2;
 const MAX_RECT_AREA = 12;
 
@@ -622,9 +622,10 @@ function handlePointerMove(event) {
 
 function handlePointerUp(event) {
   if (activePointerId !== event.pointerId) return;
-  if (!dragStart) return;
   event.preventDefault();
-  endDrag(event.clientX, event.clientY, event.target);
+  if (dragStart) {
+    endDrag(event.clientX, event.clientY, event.target);
+  }
   activePointerId = null;
 }
 
@@ -943,10 +944,16 @@ function init() {
 document.addEventListener('DOMContentLoaded', () => {
   init();
   const supportsPointer = 'PointerEvent' in window;
-  if (supportsPointer) {
+  const prefersTouch = (() => {
+    if (!('ontouchstart' in window)) return false;
+    const ua = navigator.userAgent || '';
+    return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  })();
+  if (supportsPointer && !prefersTouch) {
     els.grid?.addEventListener('pointerdown', handlePointerDown, { passive: false });
-    els.grid?.addEventListener('pointermove', handlePointerMove, { passive: false });
     window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointermove', handlePointerMove, { passive: false });
+    window.addEventListener('pointercancel', handlePointerUp);
   } else {
     els.grid?.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
     els.grid?.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });

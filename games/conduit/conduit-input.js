@@ -1,4 +1,4 @@
-export class PipesInput {
+export class ConduitInput {
   constructor(canvas, engine, renderer, onChange) {
     this.canvas = canvas;
     this.engine = engine;

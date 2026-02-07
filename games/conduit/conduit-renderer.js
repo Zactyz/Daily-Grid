@@ -1,4 +1,4 @@
-import { DIR_MASKS, GRID_SIZE } from './pipes-utils.js';
+import { DIR_MASKS, GRID_SIZE } from './conduit-utils.js';
 
 const BACKGROUND_COLOR = '#020617';
 const GRID_COLOR = 'rgba(255,255,255,0.08)';
@@ -8,7 +8,7 @@ const SUPPORT_COLOR = '#0f172a';
 const PREFILL_ACCENT = 'rgba(52, 211, 153, 0.16)';
 const PADDING = 16;
 
-export class PipesRenderer {
+export class ConduitRenderer {
   constructor(canvas, engine) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');

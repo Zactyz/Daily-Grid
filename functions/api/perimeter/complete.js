@@ -1,6 +1,4 @@
-// POST /api/pipes/complete - Submit completion time
-
-import { getPTDateYYYYMMDD, validateUUID, validateEnv } from '../../_shared/snake-utils-server.js';
+import { validateUUID, validateEnv } from '../../_shared/snake-utils-server.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -42,7 +40,7 @@ export async function onRequest(context) {
       });
     }
 
-    if (timeMs < 3000 || timeMs > 3600000) {
+    if (typeof timeMs !== 'number' || timeMs < 3000 || timeMs > 3600000) {
       return new Response(JSON.stringify({ error: 'Invalid time' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -50,7 +48,7 @@ export async function onRequest(context) {
     }
 
     const existingScore = await env.DB.prepare(`
-      SELECT time_ms FROM pipes_scores
+      SELECT time_ms FROM perimeter_scores
       WHERE puzzle_id = ?1 AND anon_id = ?2
     `).bind(puzzleId, anonId).first();
 
@@ -60,20 +58,20 @@ export async function onRequest(context) {
       userTime = existingScore.time_ms;
     } else {
       await env.DB.prepare(`
-        INSERT INTO pipes_scores (puzzle_id, anon_id, time_ms, hints_used)
+        INSERT INTO perimeter_scores (puzzle_id, anon_id, time_ms, hints_used)
         VALUES (?1, ?2, ?3, ?4)
       `).bind(puzzleId, anonId, timeMs, hintsUsed).run();
     }
 
     const fasterCountResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
-      FROM pipes_scores
+      FROM perimeter_scores
       WHERE puzzle_id = ?1 AND time_ms < ?2
     `).bind(puzzleId, userTime).first();
 
     const totalResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
-      FROM pipes_scores
+      FROM perimeter_scores
       WHERE puzzle_id = ?1
     `).bind(puzzleId).first();
 
@@ -93,7 +91,7 @@ export async function onRequest(context) {
     });
 
   } catch (error) {
-    console.error('Pipes complete API error:', error);
+    console.error('Perimeter complete API error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

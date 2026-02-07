@@ -42,7 +42,7 @@ export async function onRequest(context) {
 
     const scoreCheck = await env.DB.prepare(`
       SELECT created_at
-      FROM shingoki_scores
+      FROM perimeter_scores
       WHERE puzzle_id = ?1 AND anon_id = ?2
     `).bind(puzzleId, anonId).first();
 
@@ -63,7 +63,7 @@ export async function onRequest(context) {
     }
 
     const updateResult = await env.DB.prepare(`
-      UPDATE shingoki_scores
+      UPDATE perimeter_scores
       SET initials = ?1
       WHERE puzzle_id = ?2 AND anon_id = ?3
     `).bind(initials, puzzleId, anonId).run();
@@ -84,7 +84,7 @@ export async function onRequest(context) {
     });
 
   } catch (error) {
-    console.error('Shingoki claim initials API error:', error);
+    console.error('Perimeter claim initials API error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

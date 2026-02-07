@@ -130,8 +130,8 @@ CREATE INDEX IF NOT EXISTS idx_shikaku_puzzle_created
 CREATE INDEX IF NOT EXISTS idx_shikaku_puzzle_anon 
   ON shikaku_scores(puzzle_id, anon_id);
 
--- Pipes (Flowline) game leaderboard table
-CREATE TABLE IF NOT EXISTS pipes_scores (
+-- Conduit game leaderboard table
+CREATE TABLE IF NOT EXISTS conduit_scores (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   puzzle_id TEXT NOT NULL,
   anon_id TEXT NOT NULL,
@@ -143,11 +143,33 @@ CREATE TABLE IF NOT EXISTS pipes_scores (
 );
 
 -- Indexes for efficient queries
-CREATE INDEX IF NOT EXISTS idx_pipes_puzzle_time 
-  ON pipes_scores(puzzle_id, time_ms);
+CREATE INDEX IF NOT EXISTS idx_conduit_puzzle_time 
+  ON conduit_scores(puzzle_id, time_ms);
 
-CREATE INDEX IF NOT EXISTS idx_pipes_puzzle_created 
-  ON pipes_scores(puzzle_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_conduit_puzzle_created 
+  ON conduit_scores(puzzle_id, created_at);
 
-CREATE INDEX IF NOT EXISTS idx_pipes_puzzle_anon 
-  ON pipes_scores(puzzle_id, anon_id);
+CREATE INDEX IF NOT EXISTS idx_conduit_puzzle_anon 
+  ON conduit_scores(puzzle_id, anon_id);
+
+-- Perimeter game leaderboard table
+CREATE TABLE IF NOT EXISTS perimeter_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  puzzle_id TEXT NOT NULL,
+  anon_id TEXT NOT NULL,
+  time_ms INTEGER NOT NULL,
+  hints_used INTEGER DEFAULT 0,
+  initials TEXT CHECK(length(initials) <= 3),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(puzzle_id, anon_id)
+);
+
+-- Indexes for efficient queries
+CREATE INDEX IF NOT EXISTS idx_perimeter_puzzle_time 
+  ON perimeter_scores(puzzle_id, time_ms);
+
+CREATE INDEX IF NOT EXISTS idx_perimeter_puzzle_created 
+  ON perimeter_scores(puzzle_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_perimeter_puzzle_anon 
+  ON perimeter_scores(puzzle_id, anon_id);

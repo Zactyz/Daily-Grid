@@ -138,7 +138,7 @@ function buildPuzzle() {
 
 const PUZZLE = buildPuzzle();
 
-export class ShingokiEngine {
+export class PerimeterEngine {
   constructor() {
     this.puzzle = PUZZLE;
     this.playerEdges = new Set();

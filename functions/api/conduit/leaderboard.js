@@ -1,3 +1,7 @@
+// GET /api/conduit/leaderboard?puzzleId=YYYY-MM-DD - Fetch top 10
+
+import { validateEnv } from '../../_shared/snake-utils-server.js';
+
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -19,9 +23,7 @@ export async function onRequest(context) {
   }
 
   try {
-    if (!env.DB) {
-      throw new Error('Database binding (DB) not configured');
-    }
+    validateEnv(env);
 
     const url = new URL(request.url);
     const puzzleId = url.searchParams.get('puzzleId');
@@ -35,7 +37,7 @@ export async function onRequest(context) {
 
     const top10Result = await env.DB.prepare(`
       SELECT time_ms, initials, hints_used
-      FROM shingoki_scores
+      FROM conduit_scores
       WHERE puzzle_id = ?1
       ORDER BY time_ms ASC
       LIMIT 10
@@ -43,7 +45,7 @@ export async function onRequest(context) {
 
     const totalResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
-      FROM shingoki_scores
+      FROM conduit_scores
       WHERE puzzle_id = ?1
     `).bind(puzzleId).first();
 
@@ -63,7 +65,7 @@ export async function onRequest(context) {
     });
 
   } catch (error) {
-    console.error('Shingoki leaderboard API error:', error);
+    console.error('Conduit leaderboard API error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

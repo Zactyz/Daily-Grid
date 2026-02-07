@@ -1,7 +1,3 @@
-// GET /api/pipes/leaderboard?puzzleId=YYYY-MM-DD - Fetch top 10
-
-import { validateEnv } from '../../_shared/snake-utils-server.js';
-
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -23,7 +19,9 @@ export async function onRequest(context) {
   }
 
   try {
-    validateEnv(env);
+    if (!env.DB) {
+      throw new Error('Database binding (DB) not configured');
+    }
 
     const url = new URL(request.url);
     const puzzleId = url.searchParams.get('puzzleId');
@@ -37,7 +35,7 @@ export async function onRequest(context) {
 
     const top10Result = await env.DB.prepare(`
       SELECT time_ms, initials, hints_used
-      FROM pipes_scores
+      FROM perimeter_scores
       WHERE puzzle_id = ?1
       ORDER BY time_ms ASC
       LIMIT 10
@@ -45,7 +43,7 @@ export async function onRequest(context) {
 
     const totalResult = await env.DB.prepare(`
       SELECT COUNT(*) as count
-      FROM pipes_scores
+      FROM perimeter_scores
       WHERE puzzle_id = ?1
     `).bind(puzzleId).first();
 
@@ -65,7 +63,7 @@ export async function onRequest(context) {
     });
 
   } catch (error) {
-    console.error('Pipes leaderboard API error:', error);
+    console.error('Perimeter leaderboard API error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
