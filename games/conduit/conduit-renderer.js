@@ -1,11 +1,17 @@
-import { DIR_MASKS, GRID_SIZE } from './conduit-utils.js';
+import { DIR_MASKS } from './conduit-utils.js';
 
 const BACKGROUND_COLOR = '#020617';
 const GRID_COLOR = 'rgba(255,255,255,0.08)';
-const VALID_COLOR = '#34d399';
-const BROKEN_COLOR = '#fb923c';
+const POWER_COLOR = '#4ce0e8';
+const DIM_COLOR = 'rgba(148, 163, 184, 0.55)';
+const BROKEN_COLOR = '#f97316';
 const SUPPORT_COLOR = '#0f172a';
-const PREFILL_ACCENT = 'rgba(52, 211, 153, 0.16)';
+const PREFILL_ACCENT = 'rgba(76, 224, 232, 0.18)';
+const POWER_HALO = 'rgba(76, 224, 232, 0.2)';
+const BLOCKED_FILL = 'rgba(11, 15, 20, 0.85)';
+const BLOCKED_STROKE = 'rgba(148, 163, 184, 0.15)';
+const ENTRY_COLOR = '#5eead4';
+const EXIT_COLOR = '#fbbf24';
 const PADDING = 16;
 
 export class ConduitRenderer {
@@ -33,13 +39,15 @@ export class ConduitRenderer {
   }
 
   _updateMetrics(width, height) {
+    const gridSize = this.engine?.width || 7;
     const boardSize = Math.min(width, height) - PADDING * 2;
     this.metrics.boardSize = boardSize;
-    this.metrics.cellSize = boardSize / GRID_SIZE;
+    this.metrics.cellSize = boardSize / gridSize;
     this.metrics.offsetX = (width - boardSize) / 2 + PADDING;
     this.metrics.offsetY = (height - boardSize) / 2 + PADDING;
     this.metrics.cssWidth = width;
     this.metrics.cssHeight = height;
+    this.metrics.gridSize = gridSize;
   }
 
   getMetrics() {
@@ -47,14 +55,14 @@ export class ConduitRenderer {
   }
 
   getCellAt(cssX, cssY) {
-    const { offsetX, offsetY, cellSize } = this.metrics;
+    const { offsetX, offsetY, cellSize, gridSize } = this.metrics;
     const relativeX = cssX - offsetX;
     const relativeY = cssY - offsetY;
     if (relativeX < 0 || relativeY < 0) return null;
     const col = Math.floor(relativeX / cellSize);
     const row = Math.floor(relativeY / cellSize);
-    if (col < 0 || col >= GRID_SIZE || row < 0 || row >= GRID_SIZE) return null;
-    return row * GRID_SIZE + col;
+    if (col < 0 || col >= gridSize || row < 0 || row >= gridSize) return null;
+    return row * gridSize + col;
   }
 
   render() {
@@ -73,10 +81,10 @@ export class ConduitRenderer {
   _drawGrid(ctx) {
     ctx.strokeStyle = GRID_COLOR;
     ctx.lineWidth = 1;
-    const { boardSize, offsetX, offsetY } = this.metrics;
-    const step = boardSize / GRID_SIZE;
+    const { boardSize, offsetX, offsetY, gridSize } = this.metrics;
+    const step = boardSize / gridSize;
     ctx.beginPath();
-    for (let i = 0; i <= GRID_SIZE; i += 1) {
+    for (let i = 0; i <= gridSize; i += 1) {
       const pos = i * step;
       ctx.moveTo(offsetX + pos, offsetY);
       ctx.lineTo(offsetX + pos, offsetY + boardSize);
@@ -91,10 +99,34 @@ export class ConduitRenderer {
     const cells = this.engine.getCells();
 
     cells.forEach((cell) => {
+      if (cell.isBlocked) {
+        const x = offsetX + cell.c * cellSize;
+        const y = offsetY + cell.r * cellSize;
+        ctx.fillStyle = BLOCKED_FILL;
+        ctx.strokeStyle = BLOCKED_STROKE;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.rect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = BLOCKED_STROKE;
+        ctx.beginPath();
+        ctx.moveTo(x + cellSize * 0.25, y + cellSize * 0.25);
+        ctx.lineTo(x + cellSize * 0.75, y + cellSize * 0.75);
+        ctx.moveTo(x + cellSize * 0.75, y + cellSize * 0.25);
+        ctx.lineTo(x + cellSize * 0.25, y + cellSize * 0.75);
+        ctx.stroke();
+        return;
+      }
+      if (!cell.isActive) return;
+
       const centerX = offsetX + cell.c * cellSize + cellSize / 2;
       const centerY = offsetY + cell.r * cellSize + cellSize / 2;
       const mask = cell.playerMask;
-      const color = cell.status === 'broken' ? BROKEN_COLOR : VALID_COLOR;
+      const color = cell.status === 'broken'
+        ? BROKEN_COLOR
+        : cell.powered ? POWER_COLOR : DIM_COLOR;
+      const lineWidth = cell.powered ? 6 : 4;
 
       if (cell.isPrefill) {
         ctx.fillStyle = PREFILL_ACCENT;
@@ -103,8 +135,15 @@ export class ConduitRenderer {
         ctx.fill();
       }
 
+      if (cell.powered) {
+        ctx.fillStyle = POWER_HALO;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, cellSize * 0.36, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       ctx.lineCap = 'round';
-      ctx.lineWidth = 5;
+      ctx.lineWidth = lineWidth;
       ctx.strokeStyle = color;
 
       const len = cellSize * 0.35;
@@ -117,7 +156,7 @@ export class ConduitRenderer {
       ctx.beginPath();
       ctx.arc(centerX, centerY, cellSize * 0.12, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#94a3b8';
+      ctx.strokeStyle = cell.powered ? POWER_COLOR : '#94a3b8';
       ctx.lineWidth = 2;
       ctx.stroke();
     });
@@ -134,12 +173,14 @@ export class ConduitRenderer {
     const descriptor = this.engine.getDescriptor();
     if (!descriptor.entryPoints) return;
     const { offsetX, offsetY, cellSize } = this.metrics;
-    const radius = cellSize * 0.08;
+    const radius = cellSize * 0.09;
 
     descriptor.entryPoints.forEach((entry) => {
       const cx = offsetX + entry.c * cellSize + cellSize / 2;
       const cy = offsetY + entry.r * cellSize + cellSize / 2;
       const dir = entry.dir;
+      const isExit = entry.role === 'exit';
+      const color = isExit ? EXIT_COLOR : ENTRY_COLOR;
       let targetX = cx;
       let targetY = cy;
       const len = cellSize * 0.4;
@@ -149,15 +190,23 @@ export class ConduitRenderer {
       if (dir === 'E') targetX += len;
       if (dir === 'W') targetX -= len;
 
-      ctx.strokeStyle = VALID_COLOR;
+      ctx.strokeStyle = color;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(targetX, targetY);
       ctx.stroke();
-      ctx.fillStyle = VALID_COLOR;
+      ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
+      if (isExit) {
+        ctx.moveTo(targetX, targetY - radius);
+        ctx.lineTo(targetX + radius, targetY);
+        ctx.lineTo(targetX, targetY + radius);
+        ctx.lineTo(targetX - radius, targetY);
+        ctx.closePath();
+      } else {
+        ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
+      }
       ctx.fill();
     });
   }

@@ -1,13 +1,6 @@
 import { createSeededRandom } from '../common/utils.js';
 import { DIR_MASKS, OPPOSITE_DIR, rotateMaskSteps, DIR_SEQUENCE } from './conduit-utils.js';
 
-const MASK_TO_DIR = {
-  [DIR_MASKS.N]: 'N',
-  [DIR_MASKS.E]: 'E',
-  [DIR_MASKS.S]: 'S',
-  [DIR_MASKS.W]: 'W'
-};
-
 const DIRECTION_DELTAS = {
   N: { dr: -1, dc: 0 },
   E: { dr: 0, dc: 1 },
@@ -27,38 +20,53 @@ export class ConduitEngine {
 
   reset() {
     this.cells = this.descriptor.solutionCells.map((solution, index) => {
-      const isLocked = !!solution.isPrefill;
+      const isBlocked = !!solution.isBlocked;
+      const isActive = !!solution.isActive;
+      const isLocked = !!solution.isPrefill || isBlocked || !isActive;
       const rotation = isLocked ? 0 : Math.floor(this.random() * 4);
-      const playerMask = rotateMaskSteps(solution.connections, rotation);
+      const playerMask = isActive ? rotateMaskSteps(solution.connections, rotation) : 0;
       return {
         index,
         r: solution.r,
         c: solution.c,
         solutionMask: solution.connections,
         segmentType: solution.segmentType,
-        isPrefill: isLocked,
-        flowPressure: solution.flowPressure,
+        isPrefill: !!solution.isPrefill,
+        isBlocked,
+        isActive,
         rotation,
         playerMask,
-        status: 'unknown'
+        powered: false,
+        status: 'inactive'
       };
     });
+    this.activeCount = this.cells.filter((cell) => cell.isActive).length;
     this._buildEntrySet();
     this._evaluateStatuses();
   }
 
   _buildEntrySet() {
     this.entrySet = new Set();
-    if (Array.isArray(this.descriptor.entryPoints)) {
-      this.descriptor.entryPoints.forEach(({ r, c, dir }) => {
-        this.entrySet.add(`${r}-${c}-${dir}`);
-      });
+    this.sourceEntry = null;
+    this.exitEntries = [];
+    const entries = Array.isArray(this.descriptor.entryPoints) ? this.descriptor.entryPoints : [];
+    entries.forEach(({ r, c, dir, role }) => {
+      this.entrySet.add(`${r}-${c}-${dir}`);
+      if (role === 'source' && !this.sourceEntry) {
+        this.sourceEntry = { r, c, dir, role };
+      } else if (role === 'exit') {
+        this.exitEntries.push({ r, c, dir, role });
+      }
+    });
+    if (!this.sourceEntry && entries.length) {
+      const fallback = entries[0];
+      this.sourceEntry = { r: fallback.r, c: fallback.c, dir: fallback.dir, role: 'source' };
     }
   }
 
   rotateCell(index) {
     const cell = this.cells[index];
-    if (!cell || cell.isPrefill) return false;
+    if (!cell || cell.isPrefill || cell.isBlocked || !cell.isActive) return false;
     cell.rotation = (cell.rotation + 1) % 4;
     cell.playerMask = rotateMaskSteps(cell.solutionMask, cell.rotation);
     this._evaluateStatuses();
@@ -66,8 +74,19 @@ export class ConduitEngine {
   }
 
   _evaluateStatuses() {
+    let brokenCount = 0;
     for (let cell of this.cells) {
-      cell.status = 'valid';
+      if (cell.isBlocked) {
+        cell.status = 'blocked';
+        cell.powered = false;
+        continue;
+      }
+      if (!cell.isActive) {
+        cell.status = 'inactive';
+        cell.powered = false;
+        continue;
+      }
+
       const mask = cell.playerMask;
       const { r, c } = cell;
       let broken = false;
@@ -77,8 +96,9 @@ export class ConduitEngine {
         const hasConnection = Boolean(mask & maskFlag);
         const adjacent = this._getNeighbor(r, c, dir);
         const needed = this._hasEntry(r, c, dir);
+
         if (hasConnection) {
-          if (adjacent) {
+          if (adjacent && adjacent.isActive) {
             if (!(adjacent.playerMask & DIR_MASKS[OPPOSITE_DIR[dir]])) {
               broken = true;
               break;
@@ -87,8 +107,12 @@ export class ConduitEngine {
             broken = true;
             break;
           }
-        } else if (adjacent) {
-          if (adjacent.playerMask & DIR_MASKS[OPPOSITE_DIR[dir]]) {
+        } else {
+          if (adjacent && adjacent.isActive && (adjacent.playerMask & DIR_MASKS[OPPOSITE_DIR[dir]])) {
+            broken = true;
+            break;
+          }
+          if (needed) {
             broken = true;
             break;
           }
@@ -96,7 +120,11 @@ export class ConduitEngine {
       }
 
       cell.status = broken ? 'broken' : 'valid';
+      if (broken) brokenCount += 1;
     }
+
+    this.brokenCount = brokenCount;
+    this._evaluatePower();
   }
 
   _getNeighbor(r, c, dir) {
@@ -112,6 +140,60 @@ export class ConduitEngine {
     return this.entrySet?.has(`${r}-${c}-${dir}`) || false;
   }
 
+  _evaluatePower() {
+    this.poweredSet = new Set();
+    this.exitPoweredCount = 0;
+    const source = this.sourceEntry;
+    if (!source) {
+      this.cells.forEach((cell) => {
+        cell.powered = false;
+        if (cell.status === 'valid') cell.status = 'valid';
+      });
+      return;
+    }
+
+    const start = this.cells[source.r * this.width + source.c];
+    if (!start || !start.isActive || !(start.playerMask & DIR_MASKS[source.dir])) {
+      this.cells.forEach((cell) => {
+        cell.powered = false;
+        if (cell.status === 'valid') cell.status = 'valid';
+      });
+      return;
+    }
+
+    const queue = [start];
+    this.poweredSet.add(start.index);
+
+    while (queue.length) {
+      const cell = queue.shift();
+      for (let dir of DIR_SEQUENCE) {
+        if (!(cell.playerMask & DIR_MASKS[dir])) continue;
+        const neighbor = this._getNeighbor(cell.r, cell.c, dir);
+        if (!neighbor || !neighbor.isActive) continue;
+        if (!(neighbor.playerMask & DIR_MASKS[OPPOSITE_DIR[dir]])) continue;
+        if (this.poweredSet.has(neighbor.index)) continue;
+        this.poweredSet.add(neighbor.index);
+        queue.push(neighbor);
+      }
+    }
+
+    this.cells.forEach((cell) => {
+      cell.powered = this.poweredSet.has(cell.index);
+      if (cell.status === 'valid' && cell.powered) {
+        cell.status = 'powered';
+      } else if (cell.status === 'powered' && !cell.powered) {
+        cell.status = 'valid';
+      }
+    });
+
+    if (this.exitEntries.length) {
+      this.exitPoweredCount = this.exitEntries.filter((entry) => {
+        const cell = this.cells[entry.r * this.width + entry.c];
+        return cell?.isActive && cell.powered && (cell.playerMask & DIR_MASKS[entry.dir]);
+      }).length;
+    }
+  }
+
   getCells() {
     return this.cells;
   }
@@ -121,10 +203,26 @@ export class ConduitEngine {
   }
 
   getCompletionCount() {
-    return this.cells.filter((cell) => cell.playerMask === cell.solutionMask).length;
+    return this.poweredSet?.size || 0;
+  }
+
+  getActiveCount() {
+    return this.activeCount || 0;
+  }
+
+  getExitCount() {
+    return this.exitEntries?.length || 0;
+  }
+
+  getExitPoweredCount() {
+    return this.exitPoweredCount || 0;
   }
 
   isSolved() {
-    return this.getCompletionCount() === this.totalCells;
+    if (!this.activeCount) return false;
+    if (this.brokenCount > 0) return false;
+    if ((this.poweredSet?.size || 0) !== this.activeCount) return false;
+    if (this.exitEntries?.length && this.exitPoweredCount !== this.exitEntries.length) return false;
+    return true;
   }
 }

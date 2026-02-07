@@ -4,8 +4,8 @@ export class ConduitInput {
     this.engine = engine;
     this.renderer = renderer;
     this.onChange = onChange;
-    this._boundClick = this._handleClick.bind(this);
-    this.canvas.addEventListener('click', this._boundClick);
+    this._boundPointer = this._handlePointer.bind(this);
+    this.canvas.addEventListener('pointerdown', this._boundPointer, { passive: false });
   }
 
   setEngine(engine) {
@@ -17,17 +17,20 @@ export class ConduitInput {
   }
 
   destroy() {
-    this.canvas.removeEventListener('click', this._boundClick);
+    this.canvas.removeEventListener('pointerdown', this._boundPointer);
   }
 
-  _handleClick(event) {
+  _handlePointer(event) {
+    event.preventDefault();
     const rect = this.canvas.getBoundingClientRect();
     const cssX = event.clientX - rect.left;
     const cssY = event.clientY - rect.top;
     if (!this.renderer) return;
     const index = this.renderer.getCellAt(cssX, cssY);
     if (index === null) return;
-    this.engine.rotateCell(index);
-    this.onChange?.();
+    const didRotate = this.engine.rotateCell(index);
+    if (didRotate) {
+      this.onChange?.();
+    }
   }
 }

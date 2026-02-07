@@ -19,6 +19,14 @@ export class PerimeterInput {
     this.canvas.addEventListener('contextmenu', this.handleContextMenu);
   }
 
+  setEngine(engine) {
+    this.engine = engine;
+  }
+
+  setRenderer(renderer) {
+    this.renderer = renderer;
+  }
+
   handlePointerDown(event) {
     if (event.button && event.button !== 0) return;
     event.preventDefault();
