@@ -10,8 +10,8 @@ import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
 
 const STATE_PREFIX = 'dailygrid_shikaku_state_';
-const SIZE_RANGE = { min: 5, max: 7 };
-const RECT_RANGE = { min: 6, max: 10 };
+const SIZE_RANGE = { min: 6, max: 8 };
+const RECT_RANGE = { min: 6, max: 8 };
 const MIN_RECT_AREA = 2;
 
 const els = {
