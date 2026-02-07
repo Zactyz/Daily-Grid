@@ -1,5 +1,5 @@
 import { buildShareText, formatDateForShare, shareWithFallback, showShareFeedback } from './share.js';
-import { getGameMeta } from './games.js';
+import { getGameMeta, recordGameCompletion } from './games.js';
 import { loadLeaderboard, submitScore, claimInitials, updateNextGamePromo } from './shell-ui.js';
 
 const RESET_ICON = `
@@ -341,6 +341,7 @@ export function createShellController(adapter, elementOverrides = null) {
     }
     if (adapter.getMode() === 'daily' && !isInReplayMode) {
       saveCompletedState();
+      recordGameCompletion(adapter.gameId, adapter.getPuzzleId());
     }
   }
 

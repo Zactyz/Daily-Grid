@@ -1,5 +1,5 @@
 import { formatDateForShare, buildShareText, shareWithFallback, showShareFeedback } from './share.js';
-import { getUncompletedGames } from './games.js';
+import { getUncompletedGamesSorted } from './games.js';
 import { formatTime } from './utils.js';
 
 export function toggleModal(el, show) {
@@ -59,7 +59,7 @@ export async function claimInitials({ api, puzzleId, anonId, initials }) {
 
 export function updateNextGamePromo({ gameId, puzzleId, elements }) {
   if (!elements?.nextGamePromo) return;
-  const next = getUncompletedGames(gameId, puzzleId)[0];
+  const next = getUncompletedGamesSorted(gameId, puzzleId)[0];
   if (!next) {
     elements.nextGamePromo.classList.add('hidden');
     return;
