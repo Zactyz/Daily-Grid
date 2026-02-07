@@ -39,6 +39,7 @@ const rectOverlays = new Map();
 let cells = [];
 let dragStart = null;
 let currentSelection = null;
+let lastSelection = null;
 let usingTouch = false;
 let activeTouchId = null;
 let activePointerId = null;
@@ -306,6 +307,7 @@ function applyPuzzle(seedStr) {
   rectangles.clear();
   rectOverlays.forEach(overlay => overlay.remove());
   rectOverlays.clear();
+  lastSelection = null;
   buildGrid();
 }
 
@@ -318,7 +320,7 @@ function buildGrid() {
     for (let c = 0; c < gridSize; c += 1) {
       const clue = clues.find(cl => cl.r === r && cl.c === c);
       const cell = document.createElement('div');
-      cell.className = 'cell';
+      cell.className = 'cell celebrate-target';
       cell.dataset.r = String(r);
       cell.dataset.c = String(c);
       if (clue) {
@@ -380,6 +382,7 @@ function clearSelection() {
 function applySelection(rect) {
   clearSelection();
   if (!rect) return;
+  lastSelection = rect;
   for (let r = rect.r1; r <= rect.r2; r += 1) {
     for (let c = rect.c1; c <= rect.c2; c += 1) {
       const cell = cellAt(r, c);
@@ -551,7 +554,7 @@ function moveDrag(clientX, clientY, target) {
 function endDrag(clientX, clientY, target) {
   if (!dragStart) return;
   const cell = getCellFromPoint(clientX, clientY, target);
-  const fallbackRect = currentSelection ? { ...currentSelection } : null;
+  const fallbackRect = currentSelection ? { ...currentSelection } : (lastSelection ? { ...lastSelection } : null);
   const rect = cell
     ? rectFromPoints(dragStart, { r: Number(cell.dataset.r), c: Number(cell.dataset.c) })
     : fallbackRect;
@@ -708,6 +711,7 @@ function resetPuzzle({ resetTimer }) {
   cells.forEach(cell => cell.classList.remove('assigned'));
   clearSelection();
   dragStart = null;
+  lastSelection = null;
   isComplete = false;
   completionMs = null;
 

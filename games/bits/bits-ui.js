@@ -717,7 +717,7 @@ function createGrid() {
   cells.forEach((cell, index) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'grid-cell';
+    btn.className = 'grid-cell celebrate-target';
     btn.dataset.index = index.toString();
     btn.addEventListener('click', handleCellClick);
     cell.element = btn;

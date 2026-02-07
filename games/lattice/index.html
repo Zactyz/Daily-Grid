@@ -220,7 +220,7 @@
         }
         @media (max-width: 480px) { th { max-width: 120px; } }
 
-        /* Leaderboard: keep modal buttons reachable even with a full Top 10 */
+        /* Leaderboard: keep modal buttons reachable even with a full list */
         #leaderboard-list {
             max-height: 40vh;
             overflow-y: auto;
@@ -338,7 +338,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10h9a6 6 0 110 12h-1" />
                 </svg>
             </button>
-            <div id="board" class="overflow-auto celebrate-target"></div>
+            <div id="board" class="overflow-auto"></div>
 
             <!-- Start Overlay (match Snake/Pathways) -->
             <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-start pt-10 z-30 cursor-pointer">
@@ -543,7 +543,7 @@
                     <svg class="w-4 h-4" style="color: var(--brand-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                     </svg>
-                    Today's Top 10
+                    Today's Top Scores
                 </h3>
                 <div id="leaderboard-list" class="text-sm rounded-lg overflow-hidden bg-black/20">
                     <p class="text-zinc-500 text-center py-6 text-xs">Loading...</p>

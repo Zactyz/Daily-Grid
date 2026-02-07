@@ -118,6 +118,7 @@ export function createShellController(adapter, elementOverrides = null) {
   const wantsLeaderboard = new URLSearchParams(window.location.search).get('leaderboard') === '1';
   let leaderboardDeepLink = wantsLeaderboard;
   let modalPending = false;
+  let latestPlayerEntry = null;
 
   function puzzleKeyPrefix(prefix) {
     return `${prefix}${adapter.getPuzzleId()}`;
@@ -215,6 +216,7 @@ export function createShellController(adapter, elementOverrides = null) {
 
     lastPuzzleId = puzzleId;
     lastMode = mode;
+    latestPlayerEntry = null;
 
     modalShown = false;
     completionMs = adapter.getCompletionMs?.() ?? null;
@@ -318,6 +320,14 @@ export function createShellController(adapter, elementOverrides = null) {
         nextGameText: elements.externalGameText
       }
     });
+  }
+
+  function markBannerNavigation() {
+    try {
+      sessionStorage.setItem('dailygrid_return_to_games', '1');
+    } catch {
+      // ignore
+    }
   }
 
   function updateResetButton() {
@@ -424,7 +434,7 @@ export function createShellController(adapter, elementOverrides = null) {
       api: `/api/${adapter.gameId}/leaderboard`,
       puzzleId: adapter.getPuzzleId(),
       formatTimeFn: adapter.formatTime,
-      playerEntry: loadLocalLeaderboardEntry()
+      playerEntry: latestPlayerEntry || loadLocalLeaderboardEntry()
     });
   }
 
@@ -455,11 +465,12 @@ export function createShellController(adapter, elementOverrides = null) {
 
       if (Number.isFinite(data.rank)) {
         const existingEntry = loadLocalLeaderboardEntry();
-        saveLocalLeaderboardEntry({
+        latestPlayerEntry = {
           rank: data.rank,
           timeMs: payload.timeMs,
           initials: existingEntry?.initials ?? null
-        });
+        };
+        saveLocalLeaderboardEntry(latestPlayerEntry);
       }
 
       if (elements.percentileMsg) {
@@ -493,7 +504,11 @@ export function createShellController(adapter, elementOverrides = null) {
       const existingEntry = loadLocalLeaderboardEntry();
       if (existingEntry) {
         existingEntry.initials = initials;
+        latestPlayerEntry = existingEntry;
         saveLocalLeaderboardEntry(existingEntry);
+      } else if (latestPlayerEntry) {
+        latestPlayerEntry.initials = initials;
+        saveLocalLeaderboardEntry(latestPlayerEntry);
       }
       elements.claimInitialsForm?.classList.add('hidden');
       await loadLeaderboardIntoModal();
@@ -700,6 +715,11 @@ export function createShellController(adapter, elementOverrides = null) {
 
     elements.claimInitialsForm?.addEventListener('submit', handleClaimInitials);
 
+    elements.nextGameLink?.addEventListener('click', markBannerNavigation);
+    elements.nextGamePromo?.addEventListener('click', markBannerNavigation);
+    elements.externalGameLink?.addEventListener('click', markBannerNavigation);
+    elements.externalGamePromo?.addEventListener('click', markBannerNavigation);
+
     elements.tryAgainBtn?.addEventListener('click', () => {
       hideCompletionModal();
       resetShellState();
@@ -740,6 +760,14 @@ export function createShellController(adapter, elementOverrides = null) {
     if (mobileBackLink) {
       mobileBackLink.addEventListener('click', (event) => {
         event.preventDefault();
+        try {
+          const bannerFlag = sessionStorage.getItem('dailygrid_return_to_games');
+          if (bannerFlag === '1') {
+            sessionStorage.removeItem('dailygrid_return_to_games');
+            window.location.href = '/games/';
+            return;
+          }
+        } catch {}
         if (window.history.length > 1) {
           window.history.back();
           return;

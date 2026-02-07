@@ -218,7 +218,7 @@ textarea,
 }
 
 .celebrate-animate {
-  animation: celebratePulse 0.9s ease-in-out 0s 2;
+  animation: celebratePulse 1.1s ease-in-out 0s 2;
   filter: drop-shadow(0 0 12px rgba(255, 226, 150, 0.35));
   will-change: transform, filter;
 }

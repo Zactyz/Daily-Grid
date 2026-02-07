@@ -953,6 +953,7 @@ function render() {
         const td = document.createElement('td');
         const div = document.createElement('div');
         div.className = cellClass(state[cat.category][i][j]);
+        div.classList.add('celebrate-target');
         div.textContent = cellText(state[cat.category][i][j]);
 
         div.addEventListener('click', () => {
