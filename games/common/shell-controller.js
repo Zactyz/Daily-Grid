@@ -96,7 +96,6 @@ function defaultElements() {
     backToDailyBtn: document.getElementById('back-to-daily-btn'),
     dailyBadge: document.getElementById('daily-badge'),
     practiceBadge: document.getElementById('practice-badge'),
-    mobileBackLink: document.querySelector('.mobile-app-bar a'),
     toast: document.getElementById('shell-toast'),
     toastText: document.getElementById('shell-toast-text')
   };
@@ -246,11 +245,6 @@ export function createShellController(adapter, elementOverrides = null) {
       elements.practiceBadge?.classList.remove('hidden');
       elements.practiceModeBtn?.classList.add('hidden');
       elements.backToDailyBtn?.classList.remove('hidden');
-    }
-    if (elements.mobileBackLink) {
-      const dailyHref = elements.mobileBackLink.dataset.dailyHref || '/games/';
-      const practiceHref = elements.mobileBackLink.dataset.practiceHref || '/games/practice/';
-      elements.mobileBackLink.setAttribute('href', isDaily ? dailyHref : practiceHref);
     }
   }
 
@@ -699,6 +693,30 @@ export function createShellController(adapter, elementOverrides = null) {
       adapter.onResetUI?.();
       adapter.onStartDaily?.();
     });
+
+    const mobileBackLink = document.querySelector('.mobile-app-bar a');
+    if (mobileBackLink) {
+      mobileBackLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+        let fallback = '/games/';
+        try {
+          const ref = document.referrer;
+          if (ref) {
+            const refUrl = new URL(ref);
+            if (refUrl.origin === window.location.origin) {
+              if (refUrl.pathname.startsWith('/games/practice')) fallback = '/games/practice/';
+              else if (refUrl.pathname.startsWith('/games/')) fallback = '/games/';
+              else fallback = '/';
+            }
+          }
+        } catch {}
+        window.location.href = fallback;
+      });
+    }
 
     document.addEventListener('visibilitychange', () => {
       if (adapter.pauseOnHide === false) return;

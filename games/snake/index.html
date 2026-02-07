@@ -599,6 +599,11 @@
     </div>
 
     <script type="module">
+        import { mountShell } from '../common/shell-mount.js';
+        mountShell();
+    </script>
+    <script type="module" src="./snake-ui.js"></script>
+    <script type="module">
   const params = new URLSearchParams(window.location.search);
   const wantsPractice = params.get('practice') === '1' || params.get('mode') === 'practice';
   if (wantsPractice) {
