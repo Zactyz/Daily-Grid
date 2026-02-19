@@ -33,8 +33,13 @@
     .tray-body{min-height:34px;display:flex;align-items:center}
     .tray-hint{font-size:.62rem;color:#a1a1aa;margin-top:.3rem}
     .shape-grid{display:grid;gap:2px}
-    .shape-dot{width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,.06)}
+    .shape-grid-piece{--piece-cell-size:16px;justify-content:center}
+    .shape-dot{width:var(--piece-cell-size,10px);height:var(--piece-cell-size,10px);border-radius:4px;background:transparent}
     .shape-dot.on{background:var(--piece);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+    .shape-dot.hole{background:rgba(255,255,255,.045);border:1px dashed rgba(255,255,255,.08)}
+    .tray-piece-real{transition:border-color .15s ease,background .15s ease}
+    .tray-body-real{min-height:58px;display:flex;align-items:center;justify-content:center;width:100%}
+    .tray-body-real.tray-hole{opacity:.9}
     details summary{list-style:none}.details-plus::after{content:'+';float:right;font-size:1.2rem;color:#71717a}details[open] .details-plus::after{transform:rotate(45deg)}
     @media (max-width:899px){nav{display:none!important}main{padding-top:3.5rem!important}.mobile-app-bar{display:flex}}
   </style>
@@ -48,7 +53,7 @@
       <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse"></span>Daily Puzzle</div>
       <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/25 text-amber-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>Practice Mode</div>
       <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 text-amber-200">Polyfit</h1>
-      <p class="text-zinc-400 text-sm">Fill the amber footprint exactly. Drag pieces from the tray, rotate with <span class="font-semibold text-amber-300">Rotate</span> (or R), and place every shape.</p>
+      <p class="text-zinc-400 text-sm">Fill the amber footprint exactly. Drag pieces from tray to grid, reposition directly from the board, and tap any piece to rotate it.</p>
       <div class="text-xs mt-2 text-white/50"><span id="puzzle-date"></span> • <span id="grid-size"></span> • <span id="timer" class="font-mono">0:00</span></div>
     </header>
 
@@ -64,13 +69,13 @@
 
     <div class="flex gap-3 mb-4 flex-wrap justify-center">
       <button id="leaderboard-btn" class="btn btn-secondary hidden">Leaderboard</button>
-      <button id="rotate-piece-btn" class="btn btn-secondary">Rotate Piece</button>
+      <button id="rotate-piece-btn" class="hidden btn btn-secondary">Rotate Piece</button>
       <button id="pause-btn" class="btn btn-secondary">Pause</button>
       <button id="reset-btn" class="btn btn-secondary">Reset</button>
       <button id="exit-replay-btn" class="hidden btn btn-secondary flex items-center justify-center w-10 h-10 p-0" title="Exit Replay"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
 
-    <details class="glass-strong rounded-xl w-full max-w-md"><summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white">How to Play</summary><div class="px-5 pb-5 pt-1"><ul class="text-zinc-400 space-y-2.5 text-sm"><li>Drag a tray piece onto the board and release to place.</li><li>Tap board cells for quick place/remove fallback.</li><li>Rotate selected piece before placing for better fit.</li><li>Win when the amber footprint is filled exactly.</li></ul></div></details>
+    <details class="glass-strong rounded-xl w-full max-w-md"><summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white">How to Play</summary><div class="px-5 pb-5 pt-1"><ul class="text-zinc-400 space-y-2.5 text-sm"><li>Drag a piece from the bottom bank onto the board and release to snap it in.</li><li>Drag placed pieces directly to reposition them anywhere else.</li><li>Tap a piece (bank or board) to rotate it.</li><li>If a drop is invalid, the piece snaps back automatically.</li></ul></div></details>
 
     <button id="show-solution-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors">Show Solution</button>
     <div id="solution-actions" class="hidden w-full max-w-md mt-4 flex gap-3"><button id="solution-retry-btn" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors">Try Again</button><button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-colors">Next Level</button></div>

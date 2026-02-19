@@ -45,7 +45,7 @@ function updateProgress() {
   els.progress.textContent = `Goal: fill the amber footprint • Placed ${placed}/${engine.pieces.length} • Remaining ${remaining} • Cells ${filled}/${target}`;
 }
 
-function miniShapeHTML(piece) {
+function pieceShapeHTML(piece, { empty = false } = {}) {
   const cells = piece.variants[piece.variantIndex];
   const maxX = Math.max(...cells.map((c) => c[0]));
   const maxY = Math.max(...cells.map((c) => c[1]));
@@ -53,40 +53,47 @@ function miniShapeHTML(piece) {
   const rows = maxY + 1;
   const dots = new Set(cells.map(([x, y]) => `${x},${y}`));
   const blocks = [];
+
   for (let y = 0; y < rows; y += 1) {
     for (let x = 0; x < cols; x += 1) {
       const on = dots.has(`${x},${y}`);
-      blocks.push(`<span class="shape-dot ${on ? 'on' : ''}" style="--piece:${piece.color}"></span>`);
+      blocks.push(`<span class="shape-dot ${on ? (empty ? 'hole' : 'on') : ''}" style="--piece:${piece.color}"></span>`);
     }
   }
-  return `<span class="shape-grid" style="grid-template-columns:repeat(${cols},10px)">${blocks.join('')}</span>`;
+
+  return `<span class="shape-grid shape-grid-piece" style="grid-template-columns:repeat(${cols},var(--piece-cell-size,16px))">${blocks.join('')}</span>`;
 }
 
 function renderTray() {
+  const draggingId = input?.getDragPieceId?.() ?? null;
   els.tray.innerHTML = '';
-  els.tray.className = 'w-full mb-4 grid grid-cols-3 sm:grid-cols-6 gap-2 items-end';
+  els.tray.className = 'w-full mb-4 grid grid-cols-3 sm:grid-cols-6 gap-2.5 items-end';
 
   engine.pieces.forEach((p) => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'bg-transparent border-0 p-1.5 rounded-md';
+    b.className = 'tray-piece-real w-full min-h-[74px] rounded-xl border border-white/10 bg-transparent p-2 flex flex-col justify-center items-center';
     b.style.touchAction = 'none';
+    b.dataset.pieceId = String(p.id);
 
-    const shape = miniShapeHTML(p);
-    if (p.placed) {
-      const hole = shape.replace(/shape-dot on/g, 'shape-dot');
-      b.innerHTML = `<div style="opacity:.8">${hole}</div>`;
-    } else {
-      b.innerHTML = shape;
+    const liftedFromBank = draggingId === p.id && !p.placed;
+    const showHole = p.placed || liftedFromBank;
+
+    b.innerHTML = `<div class="tray-body-real ${showHole ? 'tray-hole' : ''}">${pieceShapeHTML(p, { empty: showHole })}</div>`;
+
+    if (!showHole) {
+      b.addEventListener('pointerdown', (event) => {
+        selectedPiece = p.id;
+        renderer.setSelected(selectedPiece);
+        input.startTrayDrag(p.id, event.clientX, event.clientY);
+        renderTray();
+        renderer.render();
+      });
     }
 
-    b.addEventListener('pointerdown', (event) => {
-      if (p.placed) return;
-      selectedPiece = p.id;
-      renderer.setSelected(selectedPiece);
-      input.startTrayDrag(p.id, event.clientX, event.clientY);
-      renderer.render();
-    });
+    if (selectedPiece === p.id) {
+      b.classList.add('ring-1', 'ring-amber-300/70');
+    }
 
     els.tray.appendChild(b);
   });
@@ -177,6 +184,7 @@ function initPuzzle() {
       renderer.setSelected(selectedPiece);
       renderTray();
     },
+    onStateChange: () => renderTray(),
     onChange: onInteract,
     onInteract
   });
@@ -273,16 +281,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initPuzzle();
   initShell();
 
-  els.rotate?.addEventListener('click', () => {
-    engine.rotateSelected(selectedPiece);
-    renderTray();
-    renderer.render();
-    save();
-  });
+  els.rotate?.classList.add('hidden');
 
   window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'r' && !engine.isComplete) {
-      engine.rotateSelected(selectedPiece);
+      input.rotatePiece(selectedPiece);
       renderTray();
       renderer.render();
       save();
