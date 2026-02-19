@@ -34,6 +34,57 @@ export class PolyfitRenderer {
     this.offsetY = (r.height - this.sizePx) / 2;
   }
 
+  pieceBoundsPx(pieceId) {
+    const p = this.engine.pieces[pieceId];
+    if (!p) return null;
+    const cells = p.variants[p.variantIndex];
+    const minX = Math.min(...cells.map(([x]) => x));
+    const minY = Math.min(...cells.map(([, y]) => y));
+    const maxX = Math.max(...cells.map(([x]) => x));
+    const maxY = Math.max(...cells.map(([, y]) => y));
+    return {
+      minX,
+      minY,
+      width: (maxX - minX + 1) * this.cell,
+      height: (maxY - minY + 1) * this.cell
+    };
+  }
+
+  getBoardPiecePointerOffset(pieceId, clientX, clientY) {
+    const piece = this.engine.pieces[pieceId];
+    if (!piece?.placed) return null;
+    const rect = this.canvas.getBoundingClientRect();
+    const b = this.pieceBoundsPx(pieceId);
+    if (!b) return null;
+
+    const topLeftX = this.offsetX + (piece.placed.x + b.minX) * this.cell;
+    const topLeftY = this.offsetY + (piece.placed.y + b.minY) * this.cell;
+
+    return {
+      x: clientX - rect.left - topLeftX,
+      y: clientY - rect.top - topLeftY
+    };
+  }
+
+  snapOriginForPointer(pieceId, clientX, clientY, anchorOffsetPx = null) {
+    const rect = this.canvas.getBoundingClientRect();
+    const b = this.pieceBoundsPx(pieceId);
+    if (!b) return null;
+
+    const anchorX = anchorOffsetPx?.x ?? b.width / 2;
+    const anchorY = anchorOffsetPx?.y ?? b.height / 2;
+
+    const localX = clientX - rect.left - this.offsetX;
+    const localY = clientY - rect.top - this.offsetY;
+
+    if (localX < 0 || localY < 0 || localX >= this.sizePx || localY >= this.sizePx) return null;
+
+    const originX = Math.round((localX - anchorX) / this.cell - b.minX);
+    const originY = Math.round((localY - anchorY) / this.cell - b.minY);
+
+    return { x: originX, y: originY };
+  }
+
   cellAt(clientX, clientY) {
     const r = this.canvas.getBoundingClientRect();
     const x = clientX - r.left - this.offsetX;
@@ -42,24 +93,6 @@ export class PolyfitRenderer {
     const cy = Math.floor(y / this.cell);
     if (cx < 0 || cy < 0 || cx >= this.engine.size || cy >= this.engine.size) return null;
     return [cx, cy];
-  }
-
-  drawPieceCells(pieceId, originX, originY, options = {}) {
-    const { alpha = 1, tone = null, inset = 3 } = options;
-    const { ctx } = this;
-    const p = this.engine.pieces[pieceId];
-    if (!p) return;
-    const color = tone || p.color;
-
-    ctx.globalAlpha = alpha;
-    p.variants[p.variantIndex].forEach(([dx, dy]) => {
-      const x = originX + dx;
-      const y = originY + dy;
-      if (x < 0 || y < 0 || x >= this.engine.size || y >= this.engine.size) return;
-      ctx.fillStyle = color;
-      ctx.fillRect(this.offsetX + x * this.cell + inset, this.offsetY + y * this.cell + inset, this.cell - inset * 2, this.cell - inset * 2);
-    });
-    ctx.globalAlpha = 1;
   }
 
   drawPlacementAffordance(pieceId, originX, originY, isValid) {
@@ -88,31 +121,67 @@ export class PolyfitRenderer {
 
   drawDraggingPiece() {
     if (!this.dragPiece) return;
-    const { pieceId, clientX, clientY, valid } = this.dragPiece;
+    const { pieceId, clientX, clientY, anchorOffsetPx } = this.dragPiece;
     const p = this.engine.pieces[pieceId];
     if (!p) return;
 
     const rect = this.canvas.getBoundingClientRect();
-    const minX = Math.min(...p.variants[p.variantIndex].map(([x]) => x));
-    const minY = Math.min(...p.variants[p.variantIndex].map(([, y]) => y));
+    const b = this.pieceBoundsPx(pieceId);
+    if (!b) return;
 
-    const anchorX = clientX - rect.left - this.offsetX;
-    const anchorY = clientY - rect.top - this.offsetY;
-    const gridX = anchorX / this.cell;
-    const gridY = anchorY / this.cell;
+    const anchorX = anchorOffsetPx?.x ?? b.width / 2;
+    const anchorY = anchorOffsetPx?.y ?? b.height / 2;
+    const topLeftX = clientX - rect.left - anchorX;
+    const topLeftY = clientY - rect.top - anchorY;
 
     const { ctx } = this;
     ctx.globalAlpha = 0.94;
     p.variants[p.variantIndex].forEach(([dx, dy]) => {
-      const x = this.offsetX + (gridX + dx - minX - 0.5) * this.cell + 3;
-      const y = this.offsetY + (gridY + dy - minY - 0.5) * this.cell + 3;
-      ctx.fillStyle = valid ? p.color : '#f87171';
+      const x = topLeftX + (dx - b.minX) * this.cell + 3;
+      const y = topLeftY + (dy - b.minY) * this.cell + 3;
+      ctx.fillStyle = p.color;
       ctx.fillRect(x, y, this.cell - 6, this.cell - 6);
       ctx.strokeStyle = 'rgba(0,0,0,.2)';
       ctx.lineWidth = 1;
       ctx.strokeRect(x + .5, y + .5, this.cell - 7, this.cell - 7);
     });
     ctx.globalAlpha = 1;
+  }
+
+  drawFootprint() {
+    const { ctx } = this;
+
+    for (let y = 0; y < this.engine.size; y += 1) {
+      for (let x = 0; x < this.engine.size; x += 1) {
+        const idx = y * this.engine.size + x;
+        if (!this.engine.targetMask[idx]) continue;
+        const px = this.offsetX + x * this.cell;
+        const py = this.offsetY + y * this.cell;
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.09)';
+        ctx.fillRect(px + 1, py + 1, this.cell - 2, this.cell - 2);
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.18)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px + 0.5, py + 0.5, this.cell - 1, this.cell - 1);
+
+        const neighbors = [
+          [x, y - 1, 0, 0, this.cell, 0],
+          [x + 1, y, this.cell, 0, this.cell, this.cell],
+          [x, y + 1, 0, this.cell, this.cell, this.cell],
+          [x - 1, y, 0, 0, 0, this.cell]
+        ];
+
+        neighbors.forEach(([nx, ny, x1, y1, x2, y2]) => {
+          if (nx < 0 || ny < 0 || nx >= this.engine.size || ny >= this.engine.size || !this.engine.targetMask[ny * this.engine.size + nx]) {
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.52)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(px + x1, py + y1);
+            ctx.lineTo(px + x2, py + y2);
+            ctx.stroke();
+          }
+        });
+      }
+    }
   }
 
   render() {
@@ -123,20 +192,7 @@ export class PolyfitRenderer {
     ctx.fillStyle = '#110e1a';
     ctx.fillRect(0, 0, w, h);
 
-    // Draw only the target footprint cells (avoid confusing full-board square grid)
-    for (let y = 0; y < this.engine.size; y += 1) {
-      for (let x = 0; x < this.engine.size; x += 1) {
-        const idx = y * this.engine.size + x;
-        if (!this.engine.targetMask[idx]) continue;
-        const px = this.offsetX + x * this.cell;
-        const py = this.offsetY + y * this.cell;
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.07)';
-        ctx.fillRect(px + 1, py + 1, this.cell - 2, this.cell - 2);
-        ctx.strokeStyle = 'rgba(245, 158, 11, 0.22)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(px + 0.5, py + 0.5, this.cell - 1, this.cell - 1);
-      }
-    }
+    this.drawFootprint();
 
     this.engine.board.forEach((id, idx) => {
       if (id === null) return;
@@ -149,13 +205,13 @@ export class PolyfitRenderer {
     });
 
     const activePreview = this.preview || (this.hover ? { pieceId: this.selectedId, x: this.hover[0], y: this.hover[1], valid: this.engine.canPlaceAt(this.selectedId, this.hover[0], this.hover[1]) } : null);
-    if (activePreview && !this.dragPiece) {
-      const { pieceId, x, y, valid } = activePreview;
-      this.drawPlacementAffordance(pieceId, x, y, !!valid);
+    if (activePreview && !this.dragPiece && activePreview.valid) {
+      const { pieceId, x, y } = activePreview;
+      this.drawPlacementAffordance(pieceId, x, y, true);
     }
 
-    if (this.preview && this.dragPiece) {
-      this.drawPlacementAffordance(this.preview.pieceId, this.preview.x, this.preview.y, !!this.preview.valid);
+    if (this.preview && this.dragPiece && this.preview.valid) {
+      this.drawPlacementAffordance(this.preview.pieceId, this.preview.x, this.preview.y, true);
     }
 
     this.drawDraggingPiece();

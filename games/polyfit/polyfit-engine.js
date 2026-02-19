@@ -78,6 +78,7 @@ export class PolyfitEngine {
   constructor(seedKey) {
     this.seedKey = seedKey;
     this.size = 6;
+    this.pieceCount = 6;
     this.timeMs = 0;
     this.timerStarted = false;
     this.isPaused = false;
@@ -92,8 +93,11 @@ export class PolyfitEngine {
   }
 
   generate(seedKey) {
+    const difficultyHash = hashString(`polyfit:difficulty:${seedKey}`);
+    this.pieceCount = 4 + (difficultyHash % 4); // 4..7 inclusive
+
     const rng = createSeededRandom(hashString(`polyfit:${seedKey}`));
-    this.pieces = Array.from({ length: 6 }).map((_, i) => {
+    this.pieces = Array.from({ length: this.pieceCount }).map((_, i) => {
       const base = SHAPES[Math.floor(rng() * SHAPES.length)];
       const opts = variants(base);
       return {
@@ -214,5 +218,5 @@ export class PolyfitEngine {
 
   getFillCount() { return this.board.filter((v) => v !== null).length; }
   getTargetCount() { return this.targetCount; }
-  getGridLabel() { return `${this.size}x${this.size} fit`; }
+  getGridLabel() { return `${this.size}x${this.size} • ${this.pieceCount} pieces`; }
 }

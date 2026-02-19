@@ -85,7 +85,7 @@ function renderTray() {
       b.addEventListener('pointerdown', (event) => {
         selectedPiece = p.id;
         renderer.setSelected(selectedPiece);
-        input.startTrayDrag(p.id, event.clientX, event.clientY);
+        input.startTrayDrag(p.id, event.clientX, event.clientY, b.getBoundingClientRect());
         renderTray();
         renderer.render();
       });
@@ -278,7 +278,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initPuzzle();
   initShell();
 
-  els.rotate?.classList.add('hidden');
+  els.rotate?.classList.remove('hidden');
+  els.rotate?.addEventListener('click', () => {
+    if (engine.isComplete) return;
+    input.rotatePiece(selectedPiece);
+    renderTray();
+    renderer.render();
+    save();
+  });
 
   window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'r' && !engine.isComplete) {

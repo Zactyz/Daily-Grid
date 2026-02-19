@@ -1,3 +1,5 @@
+const DRAG_THRESHOLD = 6;
+
 export class PolyfitInput {
   constructor(canvas, engine, renderer, callbacks = {}) {
     this.canvas = canvas;
@@ -16,7 +18,7 @@ export class PolyfitInput {
     canvas.addEventListener('pointermove', (e) => this.handleMove(e));
     canvas.addEventListener('pointerleave', () => this.handlePointerLeave());
     canvas.addEventListener('pointerdown', (e) => this.handleDown(e));
-    canvas.addEventListener('pointerup', (e) => this.handleTapUp(e));
+    canvas.addEventListener('pointerup', () => this.handleTapUp());
 
     window.addEventListener('pointermove', (e) => this.handleGlobalDragMove(e));
     window.addEventListener('pointerup', (e) => this.handleGlobalDragEnd(e));
@@ -34,7 +36,30 @@ export class PolyfitInput {
     return this.dragging?.pieceId ?? null;
   }
 
-  startTrayDrag(pieceId, clientX, clientY) {
+  computeTrayAnchor(pieceId, clientX, clientY, trayRect) {
+    const piece = this.engine.pieces[pieceId];
+    const cells = piece?.variants[piece.variantIndex];
+    if (!piece || !cells || !trayRect) return null;
+
+    const maxX = Math.max(...cells.map(([x]) => x));
+    const maxY = Math.max(...cells.map(([, y]) => y));
+    const cols = maxX + 1;
+    const rows = maxY + 1;
+    const pieceCell = 22;
+    const gap = 2;
+    const pieceWidth = cols * pieceCell + Math.max(0, cols - 1) * gap;
+    const pieceHeight = rows * pieceCell + Math.max(0, rows - 1) * gap;
+
+    const left = trayRect.left + (trayRect.width - pieceWidth) / 2;
+    const top = trayRect.top + (trayRect.height - pieceHeight) / 2;
+
+    return {
+      x: Math.max(0, Math.min(pieceWidth, clientX - left)),
+      y: Math.max(0, Math.min(pieceHeight, clientY - top))
+    };
+  }
+
+  startTrayDrag(pieceId, clientX, clientY, trayRect = null) {
     const piece = this.engine.pieces[pieceId];
     if (!piece || piece.placed) return;
 
@@ -46,7 +71,8 @@ export class PolyfitInput {
       startClientY: clientY,
       lastValid: { source: 'bank' },
       moved: false,
-      candidate: null
+      candidate: null,
+      anchorOffsetPx: this.computeTrayAnchor(pieceId, clientX, clientY, trayRect)
     };
 
     this.onSelectPiece?.(pieceId);
@@ -65,6 +91,7 @@ export class PolyfitInput {
       variantIndex: piece.placed.variantIndex
     };
 
+    const anchorOffsetPx = this.renderer.getBoardPiecePointerOffset(pieceId, clientX, clientY);
     this.engine.removePiece(pieceId);
 
     this.dragging = {
@@ -75,7 +102,8 @@ export class PolyfitInput {
       startClientY: clientY,
       lastValid,
       moved: false,
-      candidate: null
+      candidate: null,
+      anchorOffsetPx
     };
 
     this.onSelectPiece?.(pieceId);
@@ -89,8 +117,12 @@ export class PolyfitInput {
 
     if (!piece.placed) {
       this.engine.rotateSelected(pieceId);
+      if (this.dragging?.pieceId === pieceId) {
+        this.updateDragPreview(this.dragging.lastClientX ?? this.dragging.startClientX, this.dragging.lastClientY ?? this.dragging.startClientY);
+      } else {
+        this.renderer.render();
+      }
       this.onSelectPiece?.(pieceId);
-      this.renderer.render();
       this.onChange?.();
       return true;
     }
@@ -119,20 +151,22 @@ export class PolyfitInput {
   updateDragPreview(clientX, clientY) {
     if (!this.dragging) return;
 
-    const cell = this.renderer.cellAt(clientX, clientY);
-    if (!cell) {
+    this.dragging.lastClientX = clientX;
+    this.dragging.lastClientY = clientY;
+
+    const snapped = this.renderer.snapOriginForPointer(this.dragging.pieceId, clientX, clientY, this.dragging.anchorOffsetPx);
+    if (!snapped) {
       this.dragging.candidate = null;
       this.renderer.setPreview(null);
-      this.renderer.setDragPiece({ pieceId: this.dragging.pieceId, clientX, clientY, valid: false });
+      this.renderer.setDragPiece({ pieceId: this.dragging.pieceId, clientX, clientY, anchorOffsetPx: this.dragging.anchorOffsetPx });
       this.renderer.render();
       return;
     }
 
-    const [x, y] = cell;
-    const canPlace = this.engine.canPlaceAt(this.dragging.pieceId, x, y);
-    this.dragging.candidate = { x, y, valid: canPlace };
-    this.renderer.setPreview({ pieceId: this.dragging.pieceId, x, y, valid: canPlace });
-    this.renderer.setDragPiece({ pieceId: this.dragging.pieceId, clientX, clientY, valid: canPlace });
+    const canPlace = this.engine.canPlaceAt(this.dragging.pieceId, snapped.x, snapped.y);
+    this.dragging.candidate = canPlace ? { x: snapped.x, y: snapped.y, valid: true } : null;
+    this.renderer.setPreview(canPlace ? { pieceId: this.dragging.pieceId, x: snapped.x, y: snapped.y, valid: true } : null);
+    this.renderer.setDragPiece({ pieceId: this.dragging.pieceId, clientX, clientY, anchorOffsetPx: this.dragging.anchorOffsetPx });
     this.renderer.render();
   }
 
@@ -140,7 +174,7 @@ export class PolyfitInput {
     if (this.pressingBoard && !this.dragging) {
       const dx = Math.abs(e.clientX - this.pressingBoard.startClientX);
       const dy = Math.abs(e.clientY - this.pressingBoard.startClientY);
-      if (dx + dy > 6) {
+      if (dx + dy > DRAG_THRESHOLD) {
         this.startBoardDrag(this.pressingBoard.pieceId, this.pressingBoard.startClientX, this.pressingBoard.startClientY, this.pressingBoard.pointerId);
         this.pressingBoard = null;
       }
@@ -150,7 +184,7 @@ export class PolyfitInput {
 
     const dx = Math.abs(e.clientX - this.dragging.startClientX);
     const dy = Math.abs(e.clientY - this.dragging.startClientY);
-    if (dx + dy > 6) this.dragging.moved = true;
+    if (dx + dy > DRAG_THRESHOLD) this.dragging.moved = true;
 
     this.updateDragPreview(e.clientX, e.clientY);
   }
@@ -175,7 +209,7 @@ export class PolyfitInput {
     this.setState('idle');
   }
 
-  handleGlobalDragEnd(e) {
+  handleGlobalDragEnd() {
     if (this.pressingBoard && !this.dragging) {
       const pieceId = this.pressingBoard.pieceId;
       this.pressingBoard = null;
@@ -185,8 +219,18 @@ export class PolyfitInput {
 
     if (!this.dragging) return;
 
-    const { pieceId } = this.dragging;
+    const { pieceId, source, moved } = this.dragging;
     const candidate = this.dragging.candidate;
+
+    if (source === 'bank' && !moved) {
+      this.rotatePiece(pieceId);
+      this.dragging = null;
+      this.renderer.setPreview(null);
+      this.renderer.setDragPiece(null);
+      this.setState('idle');
+      this.renderer.render();
+      return;
+    }
 
     if (candidate?.valid && this.engine.tryPlace(pieceId, candidate.x, candidate.y)) {
       this.dragging = null;
@@ -218,18 +262,8 @@ export class PolyfitInput {
     this.renderer.render();
   }
 
-  handleTapUp(e) {
-    if (this.dragging) return;
-    const target = e.target?.closest?.('[data-piece-id]');
-    if (!target) return;
-    const pieceId = Number(target.dataset.pieceId);
-    if (Number.isNaN(pieceId)) return;
-
-    const piece = this.engine.pieces[pieceId];
-    if (!piece) return;
-    if (!piece.placed) {
-      this.rotatePiece(pieceId);
-    }
+  handleTapUp() {
+    // Board taps are handled in handleGlobalDragEnd via pressingBoard.
   }
 
   handleDown(e) {
