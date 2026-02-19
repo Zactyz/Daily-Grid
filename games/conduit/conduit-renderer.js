@@ -30,6 +30,9 @@ export class ConduitRenderer {
 
   setEngine(engine) {
     this.engine = engine;
+    const w = this.metrics.cssWidth || this.canvas.getBoundingClientRect().width;
+    const h = this.metrics.cssHeight || this.canvas.getBoundingClientRect().height;
+    this._updateMetrics(w, h);
   }
 
   resize() {

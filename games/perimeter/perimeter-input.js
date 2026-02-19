@@ -1,3 +1,5 @@
+import { normalizeWall } from '../common/utils.js';
+
 export class PerimeterInput {
   constructor(canvas, engine, renderer, callbacks = {}) {
     this.canvas = canvas;
@@ -5,9 +7,9 @@ export class PerimeterInput {
     this.renderer = renderer;
     this.onEdgeChange = callbacks.onEdgeChange;
     this.onInteraction = callbacks.onInteraction;
-    this.getMarkMode = callbacks.getMarkMode || (() => 'line');
     this.dragging = false;
     this.changed = new Set();
+    this.dragMode = 'draw'; // draw | erase
 
     this.canvas.style.touchAction = 'none';
     this.handlePointerDown = this.handlePointerDown.bind(this);
@@ -24,22 +26,18 @@ export class PerimeterInput {
   setEngine(engine) { this.engine = engine; }
   setRenderer(renderer) { this.renderer = renderer; }
 
-  _setEdge(edge, mode) {
+  _setEdge(edge, state, dedupe = true) {
     if (!edge) return false;
-    const [a,b] = edge;
-    const key = (a[0] < b[0] || (a[0] === b[0] && a[1] <= b[1]))
-      ? `${a[0]},${a[1]}-${b[0]},${b[1]}`
-      : `${b[0]},${b[1]}-${a[0]},${a[1]}`;
-    if (this.changed.has(key)) return false;
-    this.changed.add(key);
-    const norm = this.engine.toggleEdge(a, b); // cycles
-    if (!norm) return false;
-    const desired = mode === 'x' ? -1 : 1;
-    let guard = 0;
-    while ((this.engine.edgeStates.get(key) || 0) !== desired && guard < 3) {
-      this.engine.toggleEdge(a,b);
-      guard += 1;
-    }
+    const [a, b] = edge;
+    const key = normalizeWall(a, b);
+    if (dedupe && this.changed.has(key)) return false;
+    if (dedupe) this.changed.add(key);
+
+    const current = this.engine.edgeStates.get(key) || 0;
+    if (current === state) return false;
+
+    this.engine.setEdgeState(key, state);
+    this.engine.syncStatus();
     this.onEdgeChange?.();
     this.onInteraction?.();
     return true;
@@ -48,19 +46,32 @@ export class PerimeterInput {
   handlePointerDown(event) {
     if (event.button && event.button !== 0) return;
     event.preventDefault();
+
+    const edge = this.renderer.getNearestEdge(event.clientX, event.clientY);
+    if (!edge) return;
+
     this.dragging = true;
     this.changed.clear();
-    const edge = this.renderer.getNearestEdge(event.clientX, event.clientY);
-    const mode = event.button === 2 ? 'x' : this.getMarkMode();
-    this._setEdge(edge, mode);
+
+    const [a, b] = edge;
+    const key = normalizeWall(a, b);
+    const current = this.engine.edgeStates.get(key) || 0;
+
+    // tap on path = turn off, tap off path = draw line
+    this.dragMode = current === 1 ? 'erase' : 'draw';
+    const targetState = this.dragMode === 'draw' ? 1 : 0;
+    this._setEdge(edge, targetState, false);
   }
 
   handlePointerMove(event) {
     const edge = this.renderer.getNearestEdge(event.clientX, event.clientY);
     this.renderer.setHoverEdge(edge);
+
     if (this.dragging) {
-      this._setEdge(edge, this.getMarkMode());
+      const targetState = this.dragMode === 'draw' ? 1 : 0;
+      this._setEdge(edge, targetState, true);
     }
+
     this.renderer.render();
   }
 

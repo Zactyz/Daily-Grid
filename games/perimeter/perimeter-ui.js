@@ -13,9 +13,6 @@ const els = {
   progress: document.getElementById('progress-text'),
   puzzleDate: document.getElementById('puzzle-date'),
   gridSize: document.getElementById('grid-size'),
-  modeIndicator: document.getElementById('mode-indicator'),
-  markModeLineBtn: document.getElementById('mark-mode-line-btn'),
-  markModeXBtn: document.getElementById('mark-mode-x-btn'),
   showSolutionBtn: document.getElementById('show-solution-btn'),
   solutionActions: document.getElementById('solution-actions'),
   solutionRetryBtn: document.getElementById('solution-retry-btn'),
@@ -32,7 +29,6 @@ let puzzleSeed = puzzleId;
 let completionMs = null;
 let tickInterval = null;
 let lastTimestamp = 0;
-let markMode = 'line';
 let solutionShown = false;
 
 function getPuzzleIdForMode(mode) {
@@ -44,27 +40,7 @@ function getStateKey() {
   return `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 }
 
-function updateMarkModeUI() {
-  const lineActive = markMode === 'line';
-  if (els.modeIndicator) {
-    els.modeIndicator.textContent = `Current tool: ${lineActive ? 'Draw Lines' : 'Mark Xs'}`;
-  }
-
-  const activeClass = ['bg-sky-500/20', 'text-sky-200', 'border', 'border-sky-400/40'];
-  const inactiveClass = ['text-zinc-400', 'hover:text-zinc-200', 'hover:bg-white/5'];
-
-  if (els.markModeLineBtn) {
-    els.markModeLineBtn.classList.remove(...(lineActive ? inactiveClass : activeClass));
-    els.markModeLineBtn.classList.add(...(lineActive ? activeClass : inactiveClass));
-    els.markModeLineBtn.setAttribute('aria-pressed', lineActive ? 'true' : 'false');
-  }
-
-  if (els.markModeXBtn) {
-    els.markModeXBtn.classList.remove(...(lineActive ? activeClass : inactiveClass));
-    els.markModeXBtn.classList.add(...(lineActive ? inactiveClass : activeClass));
-    els.markModeXBtn.setAttribute('aria-pressed', lineActive ? 'false' : 'true');
-  }
-}
+// mark mode removed: tap edges to toggle line on/off
 
 function updatePracticeControls() {
   const practice = currentMode === 'practice';
@@ -93,12 +69,12 @@ function updateProgress() {
   }
 
   if (lines === 0) {
-    els.progress.textContent = `${markMode === 'line' ? 'Line' : 'X'} mode • Drag across edges to mark quickly.`;
+    els.progress.textContent = 'Tap any edge to draw a line. Tap a drawn edge again to remove it.';
     return;
   }
 
   const warning = invalidNodes > 0 ? ` • Fix ${invalidNodes} junction${invalidNodes === 1 ? '' : 's'}` : '';
-  els.progress.textContent = `${markMode === 'line' ? 'Line' : 'X'} mode • Clues: ${satisfied}/${total} • Lines: ${lines}${warning}`;
+  els.progress.textContent = `Clues: ${satisfied}/${total} • Lines: ${lines}${warning}`;
 }
 
 function setDateLabel() {
@@ -142,7 +118,6 @@ function resetPuzzle({ resetTimer }) {
 
   completionMs = null;
   solutionShown = false;
-  updateMarkModeUI();
   updateProgress();
   updatePracticeControls();
   renderer?.render();
@@ -256,8 +231,7 @@ function loadPuzzle() {
       },
       onInteraction: () => {
         handleInteraction();
-      },
-      getMarkMode: () => markMode
+      }
     });
   } else {
     input.setEngine(engine);
@@ -272,7 +246,6 @@ function resetPracticePuzzle() {
   solutionShown = false;
   loadPuzzle();
   initState();
-  updateMarkModeUI();
   updateProgress();
   setGridLabel();
   setDateLabel();
@@ -293,7 +266,6 @@ function switchMode(mode) {
   solutionShown = false;
   loadPuzzle();
   initState();
-  updateMarkModeUI();
   updateProgress();
   setGridLabel();
   setDateLabel();
@@ -388,7 +360,6 @@ async function buildShareImage() {
 function init() {
   loadPuzzle();
   initState();
-  updateMarkModeUI();
   updateProgress();
   setGridLabel();
   setDateLabel();
@@ -406,17 +377,7 @@ function init() {
 document.addEventListener('DOMContentLoaded', () => {
   init();
 
-  els.markModeLineBtn?.addEventListener('click', () => {
-    markMode = 'line';
-    updateMarkModeUI();
-    updateProgress();
-  });
-
-  els.markModeXBtn?.addEventListener('click', () => {
-    markMode = 'x';
-    updateMarkModeUI();
-    updateProgress();
-  });
+  // mark mode removed
 
   els.showSolutionBtn?.addEventListener('click', () => showSolution());
   els.solutionRetryBtn?.addEventListener('click', () => {
