@@ -236,7 +236,7 @@ export class ConduitRenderer {
       ctx.restore();
 
       // direction arrows OUTSIDE the cell
-      const arrowDir = isExit ? entry.dir : ({ N: 'S', S: 'N', E: 'W', W: 'E' }[entry.dir]);
+      const arrowDir = entry.dir;
       this._drawArrow(ctx, outerX, outerY, arrowDir, color, Math.max(9, cellSize * 0.16));
 
     });

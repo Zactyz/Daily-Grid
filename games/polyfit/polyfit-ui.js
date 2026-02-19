@@ -67,12 +67,12 @@ function pieceShapeHTML(piece, { empty = false } = {}) {
 function renderTray() {
   const draggingId = input?.getDragPieceId?.() ?? null;
   els.tray.innerHTML = '';
-  els.tray.className = 'w-full mb-4 grid grid-cols-3 sm:grid-cols-6 gap-2.5 items-end';
+  els.tray.className = 'w-full mb-4 grid grid-cols-3 sm:grid-cols-6 gap-1.5 items-end';
 
   engine.pieces.forEach((p) => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'tray-piece-real w-full min-h-[74px] rounded-xl border border-white/10 bg-transparent p-2 flex flex-col justify-center items-center';
+    b.className = 'tray-piece-real w-full min-h-[74px] rounded-md border-0 bg-transparent p-1.5 flex flex-col justify-center items-center';
     b.style.touchAction = 'none';
     b.dataset.pieceId = String(p.id);
 
@@ -91,9 +91,6 @@ function renderTray() {
       });
     }
 
-    if (selectedPiece === p.id) {
-      b.classList.add('ring-1', 'ring-amber-300/70');
-    }
 
     els.tray.appendChild(b);
   });

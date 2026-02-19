@@ -123,12 +123,19 @@ export class PolyfitRenderer {
     ctx.fillStyle = '#110e1a';
     ctx.fillRect(0, 0, w, h);
 
-    ctx.strokeStyle = 'rgba(255,255,255,.08)';
-    for (let i = 0; i <= this.engine.size; i += 1) {
-      const p = this.offsetX + i * this.cell;
-      ctx.beginPath(); ctx.moveTo(p, this.offsetY); ctx.lineTo(p, this.offsetY + this.sizePx); ctx.stroke();
-      const q = this.offsetY + i * this.cell;
-      ctx.beginPath(); ctx.moveTo(this.offsetX, q); ctx.lineTo(this.offsetX + this.sizePx, q); ctx.stroke();
+    // Draw only the target footprint cells (avoid confusing full-board square grid)
+    for (let y = 0; y < this.engine.size; y += 1) {
+      for (let x = 0; x < this.engine.size; x += 1) {
+        const idx = y * this.engine.size + x;
+        if (!this.engine.targetMask[idx]) continue;
+        const px = this.offsetX + x * this.cell;
+        const py = this.offsetY + y * this.cell;
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.07)';
+        ctx.fillRect(px + 1, py + 1, this.cell - 2, this.cell - 2);
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.22)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px + 0.5, py + 0.5, this.cell - 1, this.cell - 1);
+      }
     }
 
     this.engine.board.forEach((id, idx) => {
