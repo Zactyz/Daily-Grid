@@ -78,11 +78,19 @@ function updateProgress() {
   if (!engine || !els.progress) return;
   const powered = engine.getCompletionCount();
   const active = engine.getActiveCount();
+  const broken = engine.getBrokenCount();
   const exitPowered = engine.getExitPoweredCount();
   const exitTotal = engine.getExitCount();
   const percent = active ? Math.floor((powered / active) * 100) : 0;
+
+  if (powered === 0) {
+    els.progress.textContent = 'Rotate tiles to connect power from the source to every active tile.';
+    return;
+  }
+
+  const brokenText = broken > 0 ? ` • Fix ${broken} mismatch${broken === 1 ? '' : 'es'}` : '';
   const exitText = exitTotal ? ` • Exits: ${exitPowered}/${exitTotal}` : '';
-  els.progress.textContent = `Powered: ${powered} / ${active} • ${percent}%${exitText}`;
+  els.progress.textContent = `Powered: ${powered}/${active} • ${percent}%${exitText}${brokenText}`;
 }
 
 function setDateLabel() {

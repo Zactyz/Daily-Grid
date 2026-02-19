@@ -218,6 +218,10 @@ export class ConduitEngine {
     return this.exitPoweredCount || 0;
   }
 
+  getBrokenCount() {
+    return this.brokenCount || 0;
+  }
+
   isSolved() {
     if (!this.activeCount) return false;
     if (this.brokenCount > 0) return false;

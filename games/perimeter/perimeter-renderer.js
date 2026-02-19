@@ -9,6 +9,7 @@ const CLUE_BG = 'rgba(15, 23, 42, 0.75)';
 const CLUE_BORDER = 'rgba(148, 163, 184, 0.25)';
 const CLUE_OK = 'rgba(125, 162, 255, 0.35)';
 const CLUE_OK_TEXT = '#c7d2fe';
+const EDGE_PREVIEW = 'rgba(125, 162, 255, 0.45)';
 
 export class PerimeterRenderer {
   constructor(canvas, engine) {
@@ -19,6 +20,7 @@ export class PerimeterRenderer {
     this.dpr = window.devicePixelRatio || 1;
     this.cellSize = 0;
     this.dotRadius = 5;
+    this.hoverEdge = null;
     this.resize();
   }
 
@@ -70,6 +72,34 @@ export class PerimeterRenderer {
     return [clampedX, clampedY];
   }
 
+  getNearestEdge(clientX, clientY) {
+    const rect = this.canvas.getBoundingClientRect();
+    const localX = (clientX - rect.left - this.padding) / this.cellSize;
+    const localY = (clientY - rect.top - this.padding) / this.cellSize;
+    const cols = this.engine.getGridWidth();
+    const rows = this.engine.getGridHeight();
+
+    const gx = Math.round(localX);
+    const gy = Math.round(localY);
+    const dx = Math.abs(localX - gx);
+    const dy = Math.abs(localY - gy);
+    const threshold = 0.28;
+
+    if (dy < threshold && gx >= 0 && gx < cols - 1 && gy >= 0 && gy < rows) {
+      return [[gx, gy], [gx + 1, gy]];
+    }
+
+    if (dx < threshold && gy >= 0 && gy < rows - 1 && gx >= 0 && gx < cols) {
+      return [[gx, gy], [gx, gy + 1]];
+    }
+
+    return null;
+  }
+
+  setHoverEdge(edge) {
+    this.hoverEdge = edge;
+  }
+
   render() {
     const ctx = this.ctx;
     const width = this.displaySize;
@@ -82,6 +112,7 @@ export class PerimeterRenderer {
     this.drawGridLines(ctx);
     this.drawClues(ctx);
     this.drawEdges(ctx);
+    this.drawHoverEdge(ctx);
     this.drawDots(ctx);
   }
 
@@ -108,6 +139,23 @@ export class PerimeterRenderer {
       ctx.lineTo(xEnd, yPos);
       ctx.stroke();
     }
+  }
+
+  drawHoverEdge(ctx) {
+    if (!this.hoverEdge) return;
+    const [a, b] = this.hoverEdge;
+    const start = this.getDotPosition(a[0], a[1]);
+    const end = this.getDotPosition(b[0], b[1]);
+    ctx.save();
+    ctx.strokeStyle = EDGE_PREVIEW;
+    ctx.lineWidth = Math.max(4, this.cellSize * 0.2);
+    ctx.lineCap = 'round';
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+    ctx.restore();
   }
 
   drawEdges(ctx) {
@@ -175,7 +223,6 @@ export class PerimeterRenderer {
   drawClues(ctx) {
     const clues = this.engine.getClues();
     const clueStates = this.engine.getClueStates();
-    const size = this.engine.getGridSize();
 
     clues.forEach((clue) => {
       if (!clue.isGiven) return;

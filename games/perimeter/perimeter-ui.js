@@ -39,7 +39,15 @@ function updateProgress() {
   if (!engine || !els.progress) return;
   const { satisfied, total } = engine.getClueProgress();
   const lines = engine.getLineEdges().length;
-  els.progress.textContent = `Clues: ${satisfied} / ${total} • Lines: ${lines}`;
+  const invalidNodes = engine.getInvalidNodes().size;
+
+  if (lines === 0) {
+    els.progress.textContent = 'Tap any grid edge to place a line (tap again for X).';
+    return;
+  }
+
+  const warning = invalidNodes > 0 ? ` • Fix ${invalidNodes} junction${invalidNodes === 1 ? '' : 's'}` : '';
+  els.progress.textContent = `Clues: ${satisfied}/${total} • Lines: ${lines}${warning}`;
 }
 
 function setDateLabel() {
