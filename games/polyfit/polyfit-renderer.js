@@ -53,6 +53,40 @@ export class PolyfitRenderer {
     ctx.globalAlpha = 1;
   }
 
+  drawPreview(pieceId, originX, originY) {
+    const { ctx } = this;
+    const p = this.engine.pieces[pieceId];
+    if (!p) return;
+
+    p.variants[p.variantIndex].forEach(([dx, dy]) => {
+      const x = originX + dx;
+      const y = originY + dy;
+      if (x < 0 || y < 0 || x >= this.engine.size || y >= this.engine.size) return;
+      const idx = y * this.engine.size + x;
+      const validCell = this.engine.targetMask[idx] && this.engine.board[idx] === null;
+
+      const px = this.offsetX + x * this.cell + 3;
+      const py = this.offsetY + y * this.cell + 3;
+      const sz = this.cell - 6;
+
+      if (validCell) {
+        ctx.globalAlpha = 0.52;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(px, py, sz, sz);
+      } else {
+        // gray hole marker for invalid placement area
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.25)';
+        ctx.fillRect(px, py, sz, sz);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(px + 1, py + 1, sz - 2, sz - 2);
+      }
+    });
+    ctx.globalAlpha = 1;
+  }
+
   render() {
     const { ctx } = this;
     const w = this.canvas.getBoundingClientRect().width;
@@ -89,8 +123,7 @@ export class PolyfitRenderer {
     const activePreview = this.preview || (this.hover ? { pieceId: this.selectedId, x: this.hover[0], y: this.hover[1] } : null);
     if (activePreview) {
       const { pieceId, x, y } = activePreview;
-      const valid = this.engine.canPlaceAt(pieceId, x, y);
-      this.drawPiece(pieceId, x, y, valid ? 0.48 : 0.35, valid);
+      this.drawPreview(pieceId, x, y);
     }
   }
 }

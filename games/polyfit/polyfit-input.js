@@ -85,6 +85,9 @@ export class PolyfitInput {
       this.onSelectPiece?.(boardId);
       this.onChange?.();
       this.onInteract?.();
+      // immediately pick up and continue as drag
+      this.dragging = { pieceId: boardId };
+      this.updateDragPreview(e.clientX, e.clientY);
       return;
     }
 

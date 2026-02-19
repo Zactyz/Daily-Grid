@@ -1,7 +1,7 @@
 import { createSeededRandom, getPTDateYYYYMMDD, hashString } from '../common/utils.js';
 
-export const GRID_MIN = 5;
-export const GRID_MAX = 6;
+export const GRID_MIN = 4;
+export const GRID_MAX = 4;
 export const STORAGE_KEYS = {
   CONDUIT_PROGRESS: 'dailygrid_conduit_progress'
 };

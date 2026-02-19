@@ -79,21 +79,31 @@ export class PerimeterRenderer {
     const cols = this.engine.getGridWidth();
     const rows = this.engine.getGridHeight();
 
-    const gx = Math.round(localX);
-    const gy = Math.round(localY);
-    const dx = Math.abs(localX - gx);
-    const dy = Math.abs(localY - gy);
-    const threshold = 0.28;
+    const baseX = Math.floor(localX);
+    const baseY = Math.floor(localY);
 
-    if (dy < threshold && gx >= 0 && gx < cols - 1 && gy >= 0 && gy < rows) {
-      return [[gx, gy], [gx + 1, gy]];
-    }
+    const candidates = [];
+    const pushHorizontal = (x, y) => {
+      if (x < 0 || x >= cols - 1 || y < 0 || y >= rows) return;
+      const dist = Math.abs(localY - y) + Math.abs(localX - (x + 0.5)) * 0.2;
+      candidates.push({ dist, edge: [[x, y], [x + 1, y]] });
+    };
+    const pushVertical = (x, y) => {
+      if (x < 0 || x >= cols || y < 0 || y >= rows - 1) return;
+      const dist = Math.abs(localX - x) + Math.abs(localY - (y + 0.5)) * 0.2;
+      candidates.push({ dist, edge: [[x, y], [x, y + 1]] });
+    };
 
-    if (dx < threshold && gy >= 0 && gy < rows - 1 && gx >= 0 && gx < cols) {
-      return [[gx, gy], [gx, gy + 1]];
-    }
+    pushHorizontal(baseX, baseY);
+    pushHorizontal(baseX, baseY + 1);
+    pushVertical(baseX, baseY);
+    pushVertical(baseX + 1, baseY);
 
-    return null;
+    if (!candidates.length) return null;
+    candidates.sort((a, b) => a.dist - b.dist);
+    const best = candidates[0];
+    const threshold = 0.42;
+    return best.dist <= threshold ? best.edge : null;
   }
 
   setHoverEdge(edge) {
