@@ -103,12 +103,12 @@ function updateProgress() {
   }
 
   if (exitPowered === 0) {
-    els.progress.textContent = 'Rotate tiles 90° to route power from the source to both exits.';
+    els.progress.textContent = 'Rotate tiles 90° to route power from the top entrance to all 3 exits.';
     return;
   }
 
   if (exitPowered >= exitTotal && exitTotal > 0) {
-    els.progress.textContent = 'Both exits powered • Circuit complete';
+    els.progress.textContent = 'All exits powered • Circuit complete';
     return;
   }
 

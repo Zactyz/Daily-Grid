@@ -8,7 +8,8 @@ const DIM_COLOR = 'rgba(148, 163, 184, 0.6)';
 const BROKEN_COLOR = '#fb923c';
 const SUPPORT_COLOR = '#0f172a';
 const ENTRY_COLOR = '#fff27a';
-const EXIT_COLOR = '#ffd11a';
+const EXIT_COLOR_ON = '#ffd11a';
+const EXIT_COLOR_OFF = '#9ca3af';
 const PADDING = 16;
 
 const DIR_VEC = {
@@ -207,7 +208,11 @@ export class ConduitRenderer {
       const outerY = cy + v.y * (cellSize * 0.68);
 
       const isExit = entry.role === 'exit';
-      const color = isExit ? EXIT_COLOR : ENTRY_COLOR;
+      const exitPowered = isExit ? this.engine?.isExitPowered?.(entry) : false;
+      const sourceAligned = !isExit ? this.engine?.isSourceAligned?.() : false;
+      const color = isExit
+        ? (exitPowered ? EXIT_COLOR_ON : EXIT_COLOR_OFF)
+        : (sourceAligned ? ENTRY_COLOR : '#9ca3af');
 
       // conduit lead to the border
       ctx.strokeStyle = color;
@@ -217,7 +222,11 @@ export class ConduitRenderer {
       // glow bubble outside board edge
       ctx.save();
       ctx.globalAlpha = pulse;
-      ctx.fillStyle = isExit ? 'rgba(255, 209, 26, 0.28)' : 'rgba(255, 242, 122, 0.3)';
+      if (isExit) {
+        ctx.fillStyle = exitPowered ? 'rgba(255, 209, 26, 0.30)' : 'rgba(239, 68, 68, 0.24)';
+      } else {
+        ctx.fillStyle = sourceAligned ? 'rgba(255, 242, 122, 0.30)' : 'rgba(156, 163, 175, 0.24)';
+      }
       ctx.beginPath();
       ctx.arc(outerX, outerY, cellSize * 0.2, 0, Math.PI * 2);
       ctx.fill();

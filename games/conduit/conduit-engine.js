@@ -159,7 +159,7 @@ export class ConduitEngine {
     }
 
     const start = this.cells[source.r * this.width + source.c];
-    if (!start || !start.isActive) {
+    if (!start || !start.isActive || !(start.playerMask & DIR_MASKS[source.dir])) {
       this.cells.forEach((cell) => {
         cell.powered = false;
         if (cell.status === 'valid') cell.status = 'valid';
@@ -195,7 +195,7 @@ export class ConduitEngine {
     if (this.exitEntries.length) {
       this.exitPoweredCount = this.exitEntries.filter((entry) => {
         const cell = this.cells[entry.r * this.width + entry.c];
-        return cell?.isActive && cell.powered;
+        return cell?.isActive && cell.powered && (cell.playerMask & DIR_MASKS[entry.dir]);
       }).length;
     }
   }
@@ -226,6 +226,18 @@ export class ConduitEngine {
 
   getBrokenCount() {
     return this.brokenCount || 0;
+  }
+
+  isExitPowered(entry) {
+    if (!entry) return false;
+    const cell = this.cells?.[entry.r * this.width + entry.c];
+    return !!(cell?.isActive && cell.powered && (cell.playerMask & DIR_MASKS[entry.dir]));
+  }
+
+  isSourceAligned() {
+    if (!this.sourceEntry) return false;
+    const cell = this.cells?.[this.sourceEntry.r * this.width + this.sourceEntry.c];
+    return !!(cell?.isActive && (cell.playerMask & DIR_MASKS[this.sourceEntry.dir]));
   }
 
   isSolved() {

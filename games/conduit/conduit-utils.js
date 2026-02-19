@@ -1,6 +1,7 @@
 import { createSeededRandom, getPTDateYYYYMMDD, hashString } from '../common/utils.js';
 
-export const GRID_SIZE = 6;
+export const GRID_MIN = 5;
+export const GRID_MAX = 6;
 export const STORAGE_KEYS = {
   CONDUIT_PROGRESS: 'dailygrid_conduit_progress'
 };
@@ -95,7 +96,13 @@ export async function fetchDescriptor(puzzleId) {
     const resp = await fetch(`/api/conduit/puzzle?puzzleId=${id}`);
     if (resp.ok) {
       const data = await resp.json();
-      if (data?.width === GRID_SIZE && data?.height === GRID_SIZE) {
+      if (
+        Number.isInteger(data?.width) &&
+        Number.isInteger(data?.height) &&
+        data.width >= GRID_MIN &&
+        data.width <= GRID_MAX &&
+        data.height === data.width
+      ) {
         return data;
       }
     }
@@ -106,8 +113,9 @@ export async function fetchDescriptor(puzzleId) {
 }
 
 function generateMockDescriptor(puzzleId) {
-  const width = GRID_SIZE;
-  const height = GRID_SIZE;
+  const size = rng() < 0.5 ? GRID_MIN : GRID_MAX;
+  const width = size;
+  const height = size;
   const seed = hashString(`conduit:${puzzleId}`);
   const rng = createSeededRandom(seed);
   const total = width * height;
@@ -140,19 +148,20 @@ function generateMockDescriptor(puzzleId) {
     stack.push({ r: next.r, c: next.c });
   }
 
-  const isVertical = rng() < 0.5;
-  const sourceEdge = isVertical ? 'top' : 'left';
-  const exitEdge = isVertical ? 'bottom' : 'right';
-
+  const sourceEdge = 'top';
   const source = edgePick(sourceEdge, width, height, rng);
+
   const avoid = new Set([`${source.r},${source.c}`]);
-  const exitA = edgePick(exitEdge, width, height, rng, avoid);
-  avoid.add(`${exitA.r},${exitA.c}`);
-  const exitB = edgePick(exitEdge, width, height, rng, avoid);
+  const exitLeft = edgePick('left', width, height, rng, avoid);
+  avoid.add(`${exitLeft.r},${exitLeft.c}`);
+  const exitRight = edgePick('right', width, height, rng, avoid);
+  avoid.add(`${exitRight.r},${exitRight.c}`);
+  const exitBottom = edgePick('bottom', width, height, rng, avoid);
 
   connections[source.r * width + source.c] |= DIR_MASKS[source.dir];
-  connections[exitA.r * width + exitA.c] |= DIR_MASKS[exitA.dir];
-  connections[exitB.r * width + exitB.c] |= DIR_MASKS[exitB.dir];
+  connections[exitLeft.r * width + exitLeft.c] |= DIR_MASKS[exitLeft.dir];
+  connections[exitRight.r * width + exitRight.c] |= DIR_MASKS[exitRight.dir];
+  connections[exitBottom.r * width + exitBottom.c] |= DIR_MASKS[exitBottom.dir];
 
   const solutionCells = [];
   for (let idx = 0; idx < total; idx += 1) {
@@ -176,16 +185,17 @@ function generateMockDescriptor(puzzleId) {
     width,
     height,
     entryPoints: [
-      { edge: sourceEdge, index: isVertical ? source.c : source.r, dir: source.dir, r: source.r, c: source.c, role: 'source' },
-      { edge: exitEdge, index: isVertical ? exitA.c : exitA.r, dir: exitA.dir, r: exitA.r, c: exitA.c, role: 'exit' },
-      { edge: exitEdge, index: isVertical ? exitB.c : exitB.r, dir: exitB.dir, r: exitB.r, c: exitB.c, role: 'exit' }
+      { edge: sourceEdge, index: source.c, dir: source.dir, r: source.r, c: source.c, role: 'source' },
+      { edge: 'left', index: exitLeft.r, dir: exitLeft.dir, r: exitLeft.r, c: exitLeft.c, role: 'exit' },
+      { edge: 'right', index: exitRight.r, dir: exitRight.dir, r: exitRight.r, c: exitRight.c, role: 'exit' },
+      { edge: 'bottom', index: exitBottom.c, dir: exitBottom.dir, r: exitBottom.r, c: exitBottom.c, role: 'exit' }
     ],
     solutionCells,
     metadata: {
       difficulty: 'medium',
       activeCount: total,
       blockedCount: 0,
-      exitCount: 2
+      exitCount: 3
     }
   };
 }
