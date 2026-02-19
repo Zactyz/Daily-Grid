@@ -1,6 +1,6 @@
 import { createSeededRandom, getPTDateYYYYMMDD, hashString } from '../common/utils.js';
 
-export const GRID_SIZE = 7;
+export const GRID_SIZE = 6;
 export const STORAGE_KEYS = {
   CONDUIT_PROGRESS: 'dailygrid_conduit_progress'
 };
@@ -94,7 +94,10 @@ export async function fetchDescriptor(puzzleId) {
   try {
     const resp = await fetch(`/api/conduit/puzzle?puzzleId=${id}`);
     if (resp.ok) {
-      return await resp.json();
+      const data = await resp.json();
+      if (data?.width === GRID_SIZE && data?.height === GRID_SIZE) {
+        return data;
+      }
     }
   } catch (error) {
     console.warn('Conduit puzzle fetch failed, falling back to mock descriptor', error);

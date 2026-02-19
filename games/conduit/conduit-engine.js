@@ -159,7 +159,7 @@ export class ConduitEngine {
     }
 
     const start = this.cells[source.r * this.width + source.c];
-    if (!start || !start.isActive || !(start.playerMask & DIR_MASKS[source.dir])) {
+    if (!start || !start.isActive) {
       this.cells.forEach((cell) => {
         cell.powered = false;
         if (cell.status === 'valid') cell.status = 'valid';
@@ -195,7 +195,7 @@ export class ConduitEngine {
     if (this.exitEntries.length) {
       this.exitPoweredCount = this.exitEntries.filter((entry) => {
         const cell = this.cells[entry.r * this.width + entry.c];
-        return cell?.isActive && cell.powered && (cell.playerMask & DIR_MASKS[entry.dir]);
+        return cell?.isActive && cell.powered;
       }).length;
     }
   }
