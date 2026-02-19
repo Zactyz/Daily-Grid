@@ -194,23 +194,6 @@ export class ConduitRenderer {
     ctx.fill();
   }
 
-  _drawBoltIcon(ctx, x, y, color, size = 8) {
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x - size * 0.35, y - size * 0.7);
-    ctx.lineTo(x + size * 0.05, y - size * 0.2);
-    ctx.lineTo(x - size * 0.02, y - size * 0.2);
-    ctx.lineTo(x + size * 0.35, y + size * 0.7);
-    ctx.lineTo(x - size * 0.05, y + size * 0.15);
-    ctx.lineTo(x + size * 0.02, y + size * 0.15);
-    ctx.stroke();
-    ctx.restore();
-  }
-
   _drawEntries(ctx, t) {
     const descriptor = this.engine.getDescriptor();
     if (!descriptor.entryPoints) return;
@@ -222,12 +205,13 @@ export class ConduitRenderer {
       const cx = offsetX + entry.c * cellSize + cellSize / 2;
       const cy = offsetY + entry.r * cellSize + cellSize / 2;
 
-      const edgeX = cx + v.x * (cellSize * 0.38);
-      const edgeY = cy + v.y * (cellSize * 0.38);
-      const outerX = cx + v.x * (cellSize * 0.68);
-      const outerY = cy + v.y * (cellSize * 0.68);
-
       const isExit = entry.role === 'exit';
+      const leadInner = isExit ? 0.38 : 0.22;
+      const leadOuter = isExit ? 0.68 : 0.8;
+      const edgeX = cx + v.x * (cellSize * leadInner);
+      const edgeY = cy + v.y * (cellSize * leadInner);
+      const outerX = cx + v.x * (cellSize * leadOuter);
+      const outerY = cy + v.y * (cellSize * leadOuter);
       const exitPowered = isExit ? this.engine?.isExitPowered?.(entry) : false;
       const color = isExit
         ? (exitPowered ? EXIT_COLOR_ON : EXIT_COLOR_OFF)
@@ -255,10 +239,6 @@ export class ConduitRenderer {
       const arrowDir = isExit ? entry.dir : ({ N: 'S', S: 'N', E: 'W', W: 'E' }[entry.dir]);
       this._drawArrow(ctx, outerX, outerY, arrowDir, color, Math.max(9, cellSize * 0.16));
 
-      // bolt icon only on source/in arrow
-      if (!isExit) {
-        this._drawBoltIcon(ctx, outerX, outerY - cellSize * 0.24, '#fff8cc', Math.max(7, cellSize * 0.12));
-      }
     });
   }
 }

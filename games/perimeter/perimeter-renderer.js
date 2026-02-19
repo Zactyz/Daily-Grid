@@ -7,8 +7,8 @@ const CROSS_COLOR = 'rgba(148, 163, 184, 0.45)';
 const INVALID_COLOR = '#fb7185';
 const CLUE_BG = 'rgba(15, 23, 42, 0.75)';
 const CLUE_BORDER = 'rgba(148, 163, 184, 0.25)';
-const CLUE_OK = 'rgba(125, 162, 255, 0.35)';
-const CLUE_OK_TEXT = '#c7d2fe';
+const CLUE_OK = 'rgba(34, 197, 94, 0.30)';
+const CLUE_OK_TEXT = '#bbf7d0';
 const EDGE_PREVIEW = 'rgba(125, 162, 255, 0.45)';
 
 export class PerimeterRenderer {
@@ -258,7 +258,7 @@ export class PerimeterRenderer {
         text = INVALID_COLOR;
       } else if (state.complete) {
         fill = CLUE_OK;
-        stroke = LINE_COLOR;
+        stroke = '#22c55e';
         text = CLUE_OK_TEXT;
       }
 
