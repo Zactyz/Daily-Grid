@@ -206,8 +206,8 @@ export class ConduitRenderer {
       const cy = offsetY + entry.r * cellSize + cellSize / 2;
 
       const isExit = entry.role === 'exit';
-      const leadInner = isExit ? 0.38 : 0.22;
-      const leadOuter = isExit ? 0.68 : 0.8;
+      const leadInner = 0.38;
+      const leadOuter = 0.68;
       const edgeX = cx + v.x * (cellSize * leadInner);
       const edgeY = cy + v.y * (cellSize * leadInner);
       const outerX = cx + v.x * (cellSize * leadOuter);
