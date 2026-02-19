@@ -13,7 +13,13 @@ const els = {
   progress: document.getElementById('progress-text'),
   puzzleDate: document.getElementById('puzzle-date'),
   gridSize: document.getElementById('grid-size'),
-  markModeBtn: document.getElementById('mark-mode-btn')
+  modeIndicator: document.getElementById('mode-indicator'),
+  markModeLineBtn: document.getElementById('mark-mode-line-btn'),
+  markModeXBtn: document.getElementById('mark-mode-x-btn'),
+  showSolutionBtn: document.getElementById('show-solution-btn'),
+  solutionActions: document.getElementById('solution-actions'),
+  solutionRetryBtn: document.getElementById('solution-retry-btn'),
+  solutionNextBtn: document.getElementById('solution-next-btn')
 };
 
 let engine;
@@ -27,6 +33,7 @@ let completionMs = null;
 let tickInterval = null;
 let lastTimestamp = 0;
 let markMode = 'line';
+let solutionShown = false;
 
 function getPuzzleIdForMode(mode) {
   if (mode === 'practice') return `practice-${puzzleSeed}`;
@@ -37,19 +44,61 @@ function getStateKey() {
   return `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 }
 
+function updateMarkModeUI() {
+  const lineActive = markMode === 'line';
+  if (els.modeIndicator) {
+    els.modeIndicator.textContent = `Current tool: ${lineActive ? 'Draw Lines' : 'Mark Xs'}`;
+  }
+
+  const activeClass = ['bg-sky-500/20', 'text-sky-200', 'border', 'border-sky-400/40'];
+  const inactiveClass = ['text-zinc-400', 'hover:text-zinc-200', 'hover:bg-white/5'];
+
+  if (els.markModeLineBtn) {
+    els.markModeLineBtn.classList.remove(...(lineActive ? inactiveClass : activeClass));
+    els.markModeLineBtn.classList.add(...(lineActive ? activeClass : inactiveClass));
+    els.markModeLineBtn.setAttribute('aria-pressed', lineActive ? 'true' : 'false');
+  }
+
+  if (els.markModeXBtn) {
+    els.markModeXBtn.classList.remove(...(lineActive ? activeClass : inactiveClass));
+    els.markModeXBtn.classList.add(...(lineActive ? inactiveClass : activeClass));
+    els.markModeXBtn.setAttribute('aria-pressed', lineActive ? 'false' : 'true');
+  }
+}
+
+function updatePracticeControls() {
+  const practice = currentMode === 'practice';
+  if (practice && !engine?.isComplete && !solutionShown) {
+    els.showSolutionBtn?.classList.remove('hidden');
+  } else {
+    els.showSolutionBtn?.classList.add('hidden');
+  }
+
+  if (practice && solutionShown) {
+    els.solutionActions?.classList.remove('hidden');
+  } else {
+    els.solutionActions?.classList.add('hidden');
+  }
+}
+
 function updateProgress() {
   if (!engine || !els.progress) return;
   const { satisfied, total } = engine.getClueProgress();
   const lines = engine.getLineEdges().length;
   const invalidNodes = engine.getInvalidNodes().size;
 
+  if (solutionShown && currentMode === 'practice') {
+    els.progress.textContent = 'Solution shown • Try again or load another practice puzzle.';
+    return;
+  }
+
   if (lines === 0) {
-    els.progress.textContent = `Draw mode: ${markMode === 'line' ? 'Line' : 'X'} • Drag across edges to mark quickly.`;
+    els.progress.textContent = `${markMode === 'line' ? 'Line' : 'X'} mode • Drag across edges to mark quickly.`;
     return;
   }
 
   const warning = invalidNodes > 0 ? ` • Fix ${invalidNodes} junction${invalidNodes === 1 ? '' : 's'}` : '';
-  els.progress.textContent = `Mode: ${markMode === 'line' ? 'Line' : 'X'} • Clues: ${satisfied}/${total} • Lines: ${lines}${warning}`;
+  els.progress.textContent = `${markMode === 'line' ? 'Line' : 'X'} mode • Clues: ${satisfied}/${total} • Lines: ${lines}${warning}`;
 }
 
 function setDateLabel() {
@@ -92,7 +141,10 @@ function resetPuzzle({ resetTimer }) {
   }
 
   completionMs = null;
+  solutionShown = false;
+  updateMarkModeUI();
   updateProgress();
+  updatePracticeControls();
   renderer?.render();
   saveProgress();
   shell?.update();
@@ -102,12 +154,26 @@ function completeIfSolved() {
   if (!engine) return;
   if (!engine.isComplete) return;
   completionMs = completionMs ?? engine.timeMs;
+  updatePracticeControls();
   saveProgress();
   shell?.update();
 }
 
+function showSolution() {
+  if (currentMode !== 'practice' || !engine || engine.isComplete) return;
+
+  engine.edgeStates = new Map(engine.solutionLoop.map((edge) => [edge, 1]));
+  engine.syncStatus();
+  solutionShown = true;
+  completionMs = null;
+  renderer?.render();
+  updateProgress();
+  updatePracticeControls();
+  shell?.update();
+}
+
 function handleInteraction() {
-  if (!engine || engine.isComplete) return;
+  if (!engine || engine.isComplete || solutionShown) return;
   if (!engine.timerStarted) startTimer();
   if (engine.isPaused) resumeTimer();
   updateProgress();
@@ -170,7 +236,9 @@ function initState() {
     engine.isComplete = false;
     completionMs = null;
   }
+  solutionShown = false;
   renderer?.render();
+  updatePracticeControls();
 }
 
 function loadPuzzle() {
@@ -201,11 +269,14 @@ function loadPuzzle() {
 function resetPracticePuzzle() {
   puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
   puzzleId = getPuzzleIdForMode('practice');
+  solutionShown = false;
   loadPuzzle();
   initState();
+  updateMarkModeUI();
   updateProgress();
   setGridLabel();
   setDateLabel();
+  updatePracticeControls();
   shell?.update();
 }
 
@@ -219,11 +290,14 @@ function switchMode(mode) {
     puzzleSeed = getPTDateYYYYMMDD();
   }
   puzzleId = getPuzzleIdForMode(mode);
+  solutionShown = false;
   loadPuzzle();
   initState();
+  updateMarkModeUI();
   updateProgress();
   setGridLabel();
   setDateLabel();
+  updatePracticeControls();
   shell?.update();
 }
 
@@ -254,13 +328,19 @@ function initShell() {
     isPaused: () => engine?.isPaused || false,
     isStarted: () => engine?.timerStarted || false,
     hasProgress: () => (engine?.edgeStates?.size || 0) > 0,
+    isSolutionShown: () => solutionShown,
+    shouldShowCompletionModal: () => !solutionShown,
     pause: () => pauseTimer(),
     resume: () => resumeTimer(),
     startGame: () => startTimer(),
     resetGame: () => resetPuzzle({ resetTimer: false }),
     startReplay: () => {},
     exitReplay: () => {},
-    onResetUI: () => {},
+    onResetUI: () => {
+      solutionShown = false;
+      updatePracticeControls();
+      updateProgress();
+    },
     onTryAgain: () => resetPuzzle({ resetTimer: true }),
     onNextLevel: () => resetPracticePuzzle(),
     onBackToDaily: () => switchMode('daily'),
@@ -308,11 +388,13 @@ async function buildShareImage() {
 function init() {
   loadPuzzle();
   initState();
+  updateMarkModeUI();
   updateProgress();
   setGridLabel();
   setDateLabel();
   initShell();
   ensureTicker();
+  updatePracticeControls();
   shell?.update();
 
   window.addEventListener('resize', () => {
@@ -323,17 +405,25 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
-  if (els.markModeBtn) {
-    const syncModeBtn = () => {
-      els.markModeBtn.textContent = markMode === 'line' ? 'Mode: Line' : 'Mode: X';
-    };
-    syncModeBtn();
-    els.markModeBtn.addEventListener('click', () => {
-      markMode = markMode === 'line' ? 'x' : 'line';
-      syncModeBtn();
-      updateProgress();
-    });
-  }
+
+  els.markModeLineBtn?.addEventListener('click', () => {
+    markMode = 'line';
+    updateMarkModeUI();
+    updateProgress();
+  });
+
+  els.markModeXBtn?.addEventListener('click', () => {
+    markMode = 'x';
+    updateMarkModeUI();
+    updateProgress();
+  });
+
+  els.showSolutionBtn?.addEventListener('click', () => showSolution());
+  els.solutionRetryBtn?.addEventListener('click', () => {
+    resetPuzzle({ resetTimer: true });
+  });
+  els.solutionNextBtn?.addEventListener('click', () => resetPracticePuzzle());
+
   window.startPracticeMode = () => switchMode('practice');
   window.startDailyMode = () => switchMode('daily');
   window.addEventListener('beforeunload', saveProgress);
