@@ -3,13 +3,20 @@ import { DIR_MASKS } from './conduit-utils.js';
 const BACKGROUND_COLOR = '#05070a';
 const GRID_COLOR = 'rgba(255, 255, 255, 0.08)';
 const POWER_COLOR = '#ffe44d';
-const POWER_GLOW = 'rgba(255, 228, 77, 0.45)';
+const POWER_GLOW = 'rgba(255, 228, 77, 0.50)';
 const DIM_COLOR = 'rgba(148, 163, 184, 0.6)';
 const BROKEN_COLOR = '#fb923c';
-const SUPPORT_COLOR = '#111827';
-const ENTRY_COLOR = '#ffe44d';
-const EXIT_COLOR = '#facc15';
+const SUPPORT_COLOR = '#0f172a';
+const ENTRY_COLOR = '#fff27a';
+const EXIT_COLOR = '#ffd11a';
 const PADDING = 16;
+
+const DIR_VEC = {
+  N: { x: 0, y: -1 },
+  E: { x: 1, y: 0 },
+  S: { x: 0, y: 1 },
+  W: { x: -1, y: 0 }
+};
 
 export class ConduitRenderer {
   constructor(canvas, engine) {
@@ -40,8 +47,9 @@ export class ConduitRenderer {
     const boardSize = Math.min(width, height) - PADDING * 2;
     this.metrics.boardSize = boardSize;
     this.metrics.cellSize = boardSize / gridSize;
-    this.metrics.offsetX = (width - boardSize) / 2 + PADDING;
-    this.metrics.offsetY = (height - boardSize) / 2 + PADDING;
+    // keep perfectly centered; padding already accounted for in boardSize
+    this.metrics.offsetX = (width - boardSize) / 2;
+    this.metrics.offsetY = (height - boardSize) / 2;
     this.metrics.cssWidth = width;
     this.metrics.cssHeight = height;
     this.metrics.gridSize = gridSize;
@@ -103,13 +111,12 @@ export class ConduitRenderer {
       const isBroken = cell.status === 'broken';
       const isPowered = cell.powered;
       const color = isBroken ? BROKEN_COLOR : (isPowered ? POWER_COLOR : DIM_COLOR);
-      const coreWidth = isPowered ? 3.2 : 2.6;
       const len = cellSize * 0.35;
 
       if (isPowered) {
         ctx.fillStyle = POWER_GLOW;
         ctx.beginPath();
-        ctx.arc(centerX, centerY, cellSize * 0.38, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, cellSize * 0.42, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -121,26 +128,33 @@ export class ConduitRenderer {
 
       for (const [x1, y1, x2, y2] of segments) {
         if (isPowered) {
-          ctx.strokeStyle = 'rgba(255, 228, 77, 0.24)';
+          // outer bloom
+          ctx.strokeStyle = 'rgba(255, 228, 77, 0.30)';
           ctx.lineCap = 'round';
-          ctx.lineWidth = 8;
+          ctx.lineWidth = 9;
           this._drawLine(ctx, x1, y1, x2, y2);
 
-          ctx.strokeStyle = 'rgba(255, 245, 170, 0.95)';
-          ctx.lineWidth = coreWidth;
+          // hot electric body
+          const g = ctx.createLinearGradient(x1, y1, x2, y2);
+          g.addColorStop(0, '#ffd31a');
+          g.addColorStop(0.55, '#fff19a');
+          g.addColorStop(1, '#ffd31a');
+          ctx.strokeStyle = g;
+          ctx.lineWidth = 4;
           this._drawLine(ctx, x1, y1, x2, y2);
 
+          // moving current streak
           ctx.save();
-          ctx.strokeStyle = '#fff7c2';
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([5, 8]);
-          ctx.lineDashOffset = -(t * 0.02);
+          ctx.strokeStyle = '#fffde7';
+          ctx.lineWidth = 1.35;
+          ctx.setLineDash([4, 7]);
+          ctx.lineDashOffset = -(t * 0.03);
           this._drawLine(ctx, x1, y1, x2, y2);
           ctx.restore();
         } else {
           ctx.strokeStyle = color;
           ctx.lineCap = 'round';
-          ctx.lineWidth = isBroken ? 3 : coreWidth;
+          ctx.lineWidth = isBroken ? 3 : 2.6;
           this._drawLine(ctx, x1, y1, x2, y2);
         }
       }
@@ -162,45 +176,63 @@ export class ConduitRenderer {
     ctx.stroke();
   }
 
+  _drawArrow(ctx, x, y, dir, color, size = 8) {
+    const v = DIR_VEC[dir] || DIR_VEC.N;
+    const perpX = -v.y;
+    const perpY = v.x;
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x + v.x * size, y + v.y * size);
+    ctx.lineTo(x - v.x * size * 0.7 + perpX * size * 0.62, y - v.y * size * 0.7 + perpY * size * 0.62);
+    ctx.lineTo(x - v.x * size * 0.7 - perpX * size * 0.62, y - v.y * size * 0.7 - perpY * size * 0.62);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   _drawEntries(ctx, t) {
     const descriptor = this.engine.getDescriptor();
     if (!descriptor.entryPoints) return;
     const { offsetX, offsetY, cellSize } = this.metrics;
-    const radius = cellSize * 0.09;
-    const pulse = 0.8 + Math.sin(t * 0.005) * 0.2;
+    const pulse = 0.78 + Math.sin(t * 0.006) * 0.22;
 
     descriptor.entryPoints.forEach((entry) => {
+      const v = DIR_VEC[entry.dir] || DIR_VEC.N;
       const cx = offsetX + entry.c * cellSize + cellSize / 2;
       const cy = offsetY + entry.r * cellSize + cellSize / 2;
+
+      const edgeX = cx + v.x * (cellSize * 0.38);
+      const edgeY = cy + v.y * (cellSize * 0.38);
+      const outerX = cx + v.x * (cellSize * 0.68);
+      const outerY = cy + v.y * (cellSize * 0.68);
+
       const isExit = entry.role === 'exit';
       const color = isExit ? EXIT_COLOR : ENTRY_COLOR;
-      let targetX = cx;
-      let targetY = cy;
-      const len = cellSize * 0.4;
 
-      if (entry.dir === 'N') targetY -= len;
-      if (entry.dir === 'S') targetY += len;
-      if (entry.dir === 'E') targetX += len;
-      if (entry.dir === 'W') targetX -= len;
-
+      // conduit lead to the border
       ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
-      this._drawLine(ctx, cx, cy, targetX, targetY);
+      ctx.lineWidth = 3.4;
+      this._drawLine(ctx, edgeX, edgeY, outerX, outerY);
 
-      ctx.fillStyle = color;
+      // glow bubble outside board edge
+      ctx.save();
       ctx.globalAlpha = pulse;
+      ctx.fillStyle = isExit ? 'rgba(255, 209, 26, 0.28)' : 'rgba(255, 242, 122, 0.3)';
       ctx.beginPath();
-      if (isExit) {
-        ctx.moveTo(targetX, targetY - radius);
-        ctx.lineTo(targetX + radius, targetY);
-        ctx.lineTo(targetX, targetY + radius);
-        ctx.lineTo(targetX - radius, targetY);
-        ctx.closePath();
-      } else {
-        ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
-      }
+      ctx.arc(outerX, outerY, cellSize * 0.2, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
+      ctx.restore();
+
+      // direction arrows OUTSIDE the cell
+      const arrowDir = isExit ? entry.dir : ({ N: 'S', S: 'N', E: 'W', W: 'E' }[entry.dir]);
+      this._drawArrow(ctx, outerX, outerY, arrowDir, color, Math.max(6, cellSize * 0.12));
+
+      // tiny bolt marker for obvious electric in/out
+      ctx.fillStyle = '#fff8cc';
+      ctx.font = `${Math.max(9, cellSize * 0.16)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚡', outerX, outerY - cellSize * 0.18);
     });
   }
 }
