@@ -20,24 +20,26 @@ export class ConduitEngine {
 
   reset() {
     this.cells = this.descriptor.solutionCells.map((solution, index) => {
-      const isBlocked = !!solution.isBlocked;
-      const isActive = !!solution.isActive;
-      const isLocked = !!solution.isPrefill || isBlocked || !isActive;
+      const isActive = true;
+      const isBlocked = false;
+      const isLocked = false;
+      const baseMask = solution.connections || 0;
+      const fallbackMask = baseMask === 0 ? DIR_MASKS.E | DIR_MASKS.W : baseMask;
       const rotation = isLocked ? 0 : Math.floor(this.random() * 4);
-      const playerMask = isActive ? rotateMaskSteps(solution.connections, rotation) : 0;
+      const playerMask = rotateMaskSteps(fallbackMask, rotation);
       return {
         index,
         r: solution.r,
         c: solution.c,
-        solutionMask: solution.connections,
+        solutionMask: fallbackMask,
         segmentType: solution.segmentType,
-        isPrefill: !!solution.isPrefill,
+        isPrefill: false,
         isBlocked,
         isActive,
         rotation,
         playerMask,
         powered: false,
-        status: 'inactive'
+        status: 'valid'
       };
     });
     this.activeCount = this.cells.filter((cell) => cell.isActive).length;
@@ -61,6 +63,10 @@ export class ConduitEngine {
     if (!this.sourceEntry && entries.length) {
       const fallback = entries[0];
       this.sourceEntry = { r: fallback.r, c: fallback.c, dir: fallback.dir, role: 'source' };
+    }
+
+    if (this.exitEntries.length > 2) {
+      this.exitEntries = this.exitEntries.slice(0, 2);
     }
   }
 
@@ -223,10 +229,8 @@ export class ConduitEngine {
   }
 
   isSolved() {
-    if (!this.activeCount) return false;
-    if (this.brokenCount > 0) return false;
-    if ((this.poweredSet?.size || 0) !== this.activeCount) return false;
-    if (this.exitEntries?.length && this.exitPoweredCount !== this.exitEntries.length) return false;
-    return true;
+    if (!this.sourceEntry) return false;
+    if (!this.exitEntries?.length) return false;
+    return this.exitPoweredCount === this.exitEntries.length;
   }
 }

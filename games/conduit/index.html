@@ -15,8 +15,8 @@
   <style>
     :root {
       --brand-bg: #070c12;
-      --brand-accent: #4ce0e8;
-      --brand-accent-dim: #32b9c3;
+      --brand-accent: #ffe44d;
+      --brand-accent-dim: #facc15;
       --glass-bg: rgba(255, 255, 255, 0.02);
       --glass-border: rgba(255, 255, 255, 0.06);
     }
@@ -36,9 +36,9 @@
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(76, 224, 232, 0.08), transparent),
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 228, 77, 0.10), transparent),
         radial-gradient(ellipse 60% 40% at 100% 100%, rgba(245, 158, 11, 0.05), transparent),
-        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(76, 224, 232, 0.03), transparent);
+        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(255, 228, 77, 0.04), transparent);
       pointer-events: none;
       z-index: -1;
     }
@@ -95,12 +95,12 @@
     .btn-primary {
       background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-dim));
       color: #06121b;
-      box-shadow: 0 2px 12px rgba(76, 224, 232, 0.25);
+      box-shadow: 0 2px 12px rgba(255, 228, 77, 0.30);
     }
 
     .btn-primary:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(76, 224, 232, 0.35);
+      box-shadow: 0 4px 20px rgba(255, 228, 77, 0.40);
     }
 
     .btn-secondary {
@@ -116,8 +116,8 @@
     }
 
     .timer-display {
-      background: linear-gradient(135deg, rgba(76, 224, 232, 0.12), rgba(76, 224, 232, 0.04));
-      border: 1px solid rgba(76, 224, 232, 0.25);
+      background: linear-gradient(135deg, rgba(255, 228, 77, 0.14), rgba(255, 228, 77, 0.05));
+      border: 1px solid rgba(255, 228, 77, 0.30);
     }
 
     .stat-card {
@@ -126,7 +126,7 @@
     }
 
     .accent-text { color: var(--brand-accent); }
-    .accent-glow { text-shadow: 0 0 30px rgba(76, 224, 232, 0.4); }
+    .accent-glow { text-shadow: 0 0 30px rgba(255, 228, 77, 0.45); }
 
     #conduit-canvas {
       width: 100%;
@@ -134,14 +134,14 @@
       aspect-ratio: 1 / 1;
       border-radius: 16px;
       background: radial-gradient(circle at 30% 20%, #13263d 0%, #0b1220 58%, #070e19 100%);
-      border: 1px solid rgba(76, 224, 232, 0.2);
-      box-shadow: inset 0 0 40px rgba(76, 224, 232, 0.07), 0 10px 32px rgba(2, 6, 23, 0.45);
+      border: 1px solid rgba(255, 228, 77, 0.28);
+      box-shadow: inset 0 0 40px rgba(255, 228, 77, 0.10), 0 10px 32px rgba(2, 6, 23, 0.45);
       display: block;
     }
 
     .progress-text {
       text-align: center;
-      color: rgba(182, 243, 255, 0.85);
+      color: rgba(255, 244, 170, 0.9);
       letter-spacing: 0.08em;
       font-size: 0.8rem;
     }
@@ -182,25 +182,25 @@
 
   <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
     <header class="text-center mb-6 w-full">
-      <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300/90 text-xs font-medium mb-3 uppercase tracking-wider">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+      <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-400/10 border border-yellow-400/25 text-yellow-200/90 text-xs font-medium mb-3 uppercase tracking-wider">
+        <span class="w-1.5 h-1.5 rounded-full bg-yellow-300 animate-pulse"></span>
         Daily Puzzle
       </div>
-      <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-300/90 text-xs font-medium mb-3 uppercase tracking-wider">
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan-300"></span>
+      <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-200/90 text-xs font-medium mb-3 uppercase tracking-wider">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
         Practice Mode
       </div>
       <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Conduit</h1>
-      <p class="text-zinc-400 text-sm">Rotate tiles to complete the circuit. Power every active tile and feed all exits.</p>
+      <p class="text-zinc-400 text-sm">Route the current. Power both exits.</p>
     </header>
 
     <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
-      <div id="progress-text" class="progress-text mb-3">Powered: 0 / 0 • Exits: 0/0</div>
+      <div id="progress-text" class="progress-text mb-3">Exits powered: 0/2</div>
       <canvas id="conduit-canvas" class="celebrate-target"></canvas>
 
       <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer">
-        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500/30 to-cyan-600/20 flex items-center justify-center mb-4">
-          <svg class="w-10 h-10 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-400/30 to-amber-500/20 flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-yellow-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
@@ -222,7 +222,7 @@
 
     <div class="flex gap-3 mb-8">
       <button id="leaderboard-btn" class="btn btn-secondary flex items-center gap-2 hidden">
-        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
         </svg>
         Leaderboard
@@ -250,12 +250,12 @@
       <summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">How to Play</summary>
       <div class="px-5 pb-5 pt-1">
         <ul class="text-zinc-400 space-y-2.5 text-sm">
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Tap a tile to rotate. Drag across multiple tiles to rotate quickly.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Double-tap (or right click) a tile to rotate backwards for quick correction.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Guide the current from the inlet to the exit(s). Powered tiles glow.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Blocked tiles can’t be used. Fixed tiles are already locked in place.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>You only need to power the circuit tiles — empty squares can stay blank.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-cyan-500/15 text-cyan-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">5</span><span>Some puzzles feature two exits, so you’ll need to branch the flow.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-yellow-400/15 text-yellow-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Tap a tile to rotate it 90° clockwise.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-yellow-400/15 text-yellow-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Every move is a single 90° clockwise turn.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-yellow-400/15 text-yellow-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Guide power from the source to both exits through connected pipes.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-yellow-400/15 text-yellow-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>Every square is playable — there are no blocked cells.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-yellow-400/15 text-yellow-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">5</span><span>You do not need to power every square to win.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-yellow-400/15 text-yellow-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">6</span><span>Win as soon as both exits are powered.</span></li>
         </ul>
       </div>
     </details>
@@ -278,7 +278,7 @@
       </svg>
     </a>
 
-    <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-cyan-500/20 text-cyan-300 text-sm font-medium hover:bg-cyan-500/10 transition-colors flex items-center justify-center gap-2">
+    <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-yellow-400/20 text-yellow-200 text-sm font-medium hover:bg-yellow-400/10 transition-colors flex items-center justify-center gap-2">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
       </svg>
@@ -314,8 +314,8 @@
 
   <div id="completion-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4">
     <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
-      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-cyan-500/10 flex items-center justify-center">
-        <svg class="w-8 h-8 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-yellow-400/10 flex items-center justify-center">
+        <svg class="w-8 h-8 text-yellow-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>
       </div>
@@ -323,7 +323,7 @@
       <p id="modal-subtitle" class="text-sm text-white/60 text-center mb-4">Great job on today's Conduit</p>
 
       <div class="timer-display rounded-xl p-4 text-center mb-4">
-        <div class="text-xs uppercase tracking-wider text-cyan-400/60 mb-1">Your Time</div>
+        <div class="text-xs uppercase tracking-wider text-yellow-300/60 mb-1">Your Time</div>
         <div id="final-time" class="text-3xl font-bold mono accent-text">0:00</div>
       </div>
 
@@ -338,10 +338,10 @@
         <a id="next-game-link" href="#" class="flex items-center gap-3">
           <img id="next-game-logo" src="" alt="" class="w-10 h-10 rounded-xl">
           <div class="flex-1">
-            <p id="next-game-text" class="font-semibold text-sm text-cyan-200"></p>
-            <p class="text-xs text-cyan-100/70">Continue your streak</p>
+            <p id="next-game-text" class="font-semibold text-sm text-yellow-200"></p>
+            <p class="text-xs text-yellow-100/70">Continue your streak</p>
           </div>
-          <span class="text-cyan-400 text-sm font-semibold uppercase tracking-wide">Play</span>
+          <span class="text-yellow-300 text-sm font-semibold uppercase tracking-wide">Play</span>
         </a>
       </div>
 

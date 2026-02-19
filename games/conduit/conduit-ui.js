@@ -76,21 +76,20 @@ function resumeTimer() {
 
 function updateProgress() {
   if (!engine || !els.progress) return;
-  const powered = engine.getCompletionCount();
-  const active = engine.getActiveCount();
-  const broken = engine.getBrokenCount();
   const exitPowered = engine.getExitPoweredCount();
   const exitTotal = engine.getExitCount();
-  const percent = active ? Math.floor((powered / active) * 100) : 0;
 
-  if (powered === 0) {
-    els.progress.textContent = 'Rotate tiles to connect power from the source to every active tile.';
+  if (exitPowered === 0) {
+    els.progress.textContent = 'Rotate tiles 90° to route power from the source to both exits.';
     return;
   }
 
-  const brokenText = broken > 0 ? ` • Fix ${broken} mismatch${broken === 1 ? '' : 'es'}` : '';
-  const exitText = exitTotal ? ` • Exits: ${exitPowered}/${exitTotal}` : '';
-  els.progress.textContent = `Powered: ${powered}/${active} • ${percent}%${exitText}${brokenText}`;
+  if (exitPowered >= exitTotal && exitTotal > 0) {
+    els.progress.textContent = `Both exits powered • Circuit complete`;
+    return;
+  }
+
+  els.progress.textContent = `Exits powered: ${exitPowered}/${exitTotal}`;
 }
 
 function setDateLabel() {
@@ -286,8 +285,9 @@ function switchMode(mode) {
 function ensureTicker() {
   if (tickInterval) return;
   tickInterval = window.setInterval(() => {
+    renderer?.render();
     shell?.update();
-  }, 200);
+  }, 100);
 }
 
 function initShell() {
@@ -345,8 +345,8 @@ async function buildShareImage() {
   return buildShareCard({
     gameName: 'Conduit',
     logoPath: '/games/conduit/conduit-logo.svg',
-    accent: '#4ce0e8',
-    accentSoft: 'rgba(76, 224, 232, 0.12)',
+    accent: '#ffe44d',
+    accentSoft: 'rgba(255, 228, 77, 0.16)',
     backgroundStart: '#070c12',
     backgroundEnd: '#0b1424',
     dateText: puzzleDate,

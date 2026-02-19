@@ -1,17 +1,14 @@
 import { DIR_MASKS } from './conduit-utils.js';
 
-const BACKGROUND_COLOR = '#020617';
-const GRID_COLOR = 'rgba(255,255,255,0.08)';
-const POWER_COLOR = '#4ce0e8';
-const DIM_COLOR = 'rgba(148, 163, 184, 0.55)';
-const BROKEN_COLOR = '#f97316';
-const SUPPORT_COLOR = '#0f172a';
-const PREFILL_ACCENT = 'rgba(76, 224, 232, 0.18)';
-const POWER_HALO = 'rgba(76, 224, 232, 0.2)';
-const BLOCKED_FILL = 'rgba(11, 15, 20, 0.85)';
-const BLOCKED_STROKE = 'rgba(148, 163, 184, 0.15)';
-const ENTRY_COLOR = '#5eead4';
-const EXIT_COLOR = '#fbbf24';
+const BACKGROUND_COLOR = '#05070a';
+const GRID_COLOR = 'rgba(255, 255, 255, 0.08)';
+const POWER_COLOR = '#ffe44d';
+const POWER_GLOW = 'rgba(255, 228, 77, 0.45)';
+const DIM_COLOR = 'rgba(148, 163, 184, 0.6)';
+const BROKEN_COLOR = '#fb923c';
+const SUPPORT_COLOR = '#111827';
+const ENTRY_COLOR = '#ffe44d';
+const EXIT_COLOR = '#facc15';
 const PADDING = 16;
 
 export class ConduitRenderer {
@@ -68,14 +65,15 @@ export class ConduitRenderer {
   render() {
     const ctx = this.ctx;
     const { cssWidth, cssHeight } = this.metrics;
-    ctx.clearRect(0, 0, cssWidth, cssHeight);
+    const t = performance.now();
 
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
     ctx.fillStyle = BACKGROUND_COLOR;
     ctx.fillRect(0, 0, cssWidth, cssHeight);
 
     this._drawGrid(ctx);
-    this._drawCells(ctx);
-    this._drawEntries(ctx);
+    this._drawCells(ctx, t);
+    this._drawEntries(ctx, t);
   }
 
   _drawGrid(ctx) {
@@ -94,69 +92,64 @@ export class ConduitRenderer {
     ctx.stroke();
   }
 
-  _drawCells(ctx) {
+  _drawCells(ctx, t) {
     const { offsetX, offsetY, cellSize } = this.metrics;
     const cells = this.engine.getCells();
 
     cells.forEach((cell) => {
-      if (cell.isBlocked) {
-        const x = offsetX + cell.c * cellSize;
-        const y = offsetY + cell.r * cellSize;
-        ctx.fillStyle = BLOCKED_FILL;
-        ctx.strokeStyle = BLOCKED_STROKE;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.rect(x + 1, y + 1, cellSize - 2, cellSize - 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.strokeStyle = BLOCKED_STROKE;
-        ctx.beginPath();
-        ctx.moveTo(x + cellSize * 0.25, y + cellSize * 0.25);
-        ctx.lineTo(x + cellSize * 0.75, y + cellSize * 0.75);
-        ctx.moveTo(x + cellSize * 0.75, y + cellSize * 0.25);
-        ctx.lineTo(x + cellSize * 0.25, y + cellSize * 0.75);
-        ctx.stroke();
-        return;
-      }
-      if (!cell.isActive) return;
-
       const centerX = offsetX + cell.c * cellSize + cellSize / 2;
       const centerY = offsetY + cell.r * cellSize + cellSize / 2;
       const mask = cell.playerMask;
-      const color = cell.status === 'broken'
-        ? BROKEN_COLOR
-        : cell.powered ? POWER_COLOR : DIM_COLOR;
-      const lineWidth = cell.powered ? 6 : 4;
-
-      if (cell.isPrefill) {
-        ctx.fillStyle = PREFILL_ACCENT;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, cellSize * 0.45, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      if (cell.powered) {
-        ctx.fillStyle = POWER_HALO;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, cellSize * 0.36, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.lineCap = 'round';
-      ctx.lineWidth = lineWidth;
-      ctx.strokeStyle = color;
-
+      const isBroken = cell.status === 'broken';
+      const isPowered = cell.powered;
+      const color = isBroken ? BROKEN_COLOR : (isPowered ? POWER_COLOR : DIM_COLOR);
+      const coreWidth = isPowered ? 3.2 : 2.6;
       const len = cellSize * 0.35;
-      if (mask & DIR_MASKS.N) this._drawLine(ctx, centerX, centerY, centerX, centerY - len);
-      if (mask & DIR_MASKS.E) this._drawLine(ctx, centerX, centerY, centerX + len, centerY);
-      if (mask & DIR_MASKS.S) this._drawLine(ctx, centerX, centerY, centerX, centerY + len);
-      if (mask & DIR_MASKS.W) this._drawLine(ctx, centerX, centerY, centerX - len, centerY);
+
+      if (isPowered) {
+        ctx.fillStyle = POWER_GLOW;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, cellSize * 0.38, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const segments = [];
+      if (mask & DIR_MASKS.N) segments.push([centerX, centerY, centerX, centerY - len]);
+      if (mask & DIR_MASKS.E) segments.push([centerX, centerY, centerX + len, centerY]);
+      if (mask & DIR_MASKS.S) segments.push([centerX, centerY, centerX, centerY + len]);
+      if (mask & DIR_MASKS.W) segments.push([centerX, centerY, centerX - len, centerY]);
+
+      for (const [x1, y1, x2, y2] of segments) {
+        if (isPowered) {
+          ctx.strokeStyle = 'rgba(255, 228, 77, 0.24)';
+          ctx.lineCap = 'round';
+          ctx.lineWidth = 8;
+          this._drawLine(ctx, x1, y1, x2, y2);
+
+          ctx.strokeStyle = 'rgba(255, 245, 170, 0.95)';
+          ctx.lineWidth = coreWidth;
+          this._drawLine(ctx, x1, y1, x2, y2);
+
+          ctx.save();
+          ctx.strokeStyle = '#fff7c2';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 8]);
+          ctx.lineDashOffset = -(t * 0.02);
+          this._drawLine(ctx, x1, y1, x2, y2);
+          ctx.restore();
+        } else {
+          ctx.strokeStyle = color;
+          ctx.lineCap = 'round';
+          ctx.lineWidth = isBroken ? 3 : coreWidth;
+          this._drawLine(ctx, x1, y1, x2, y2);
+        }
+      }
 
       ctx.fillStyle = SUPPORT_COLOR;
       ctx.beginPath();
       ctx.arc(centerX, centerY, cellSize * 0.12, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = cell.powered ? POWER_COLOR : '#94a3b8';
+      ctx.strokeStyle = isPowered ? POWER_COLOR : '#94a3b8';
       ctx.lineWidth = 2;
       ctx.stroke();
     });
@@ -169,34 +162,33 @@ export class ConduitRenderer {
     ctx.stroke();
   }
 
-  _drawEntries(ctx) {
+  _drawEntries(ctx, t) {
     const descriptor = this.engine.getDescriptor();
     if (!descriptor.entryPoints) return;
     const { offsetX, offsetY, cellSize } = this.metrics;
     const radius = cellSize * 0.09;
+    const pulse = 0.8 + Math.sin(t * 0.005) * 0.2;
 
     descriptor.entryPoints.forEach((entry) => {
       const cx = offsetX + entry.c * cellSize + cellSize / 2;
       const cy = offsetY + entry.r * cellSize + cellSize / 2;
-      const dir = entry.dir;
       const isExit = entry.role === 'exit';
       const color = isExit ? EXIT_COLOR : ENTRY_COLOR;
       let targetX = cx;
       let targetY = cy;
       const len = cellSize * 0.4;
 
-      if (dir === 'N') targetY -= len;
-      if (dir === 'S') targetY += len;
-      if (dir === 'E') targetX += len;
-      if (dir === 'W') targetX -= len;
+      if (entry.dir === 'N') targetY -= len;
+      if (entry.dir === 'S') targetY += len;
+      if (entry.dir === 'E') targetX += len;
+      if (entry.dir === 'W') targetX -= len;
 
       ctx.strokeStyle = color;
       ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(targetX, targetY);
-      ctx.stroke();
+      this._drawLine(ctx, cx, cy, targetX, targetY);
+
       ctx.fillStyle = color;
+      ctx.globalAlpha = pulse;
       ctx.beginPath();
       if (isExit) {
         ctx.moveTo(targetX, targetY - radius);
@@ -208,6 +200,7 @@ export class ConduitRenderer {
         ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
       }
       ctx.fill();
+      ctx.globalAlpha = 1;
     });
   }
 }
