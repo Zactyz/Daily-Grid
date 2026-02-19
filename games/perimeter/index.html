@@ -178,7 +178,7 @@
       justify-content: center;
       width: 40px;
       height: 40px;
-      border-radius: 12px;
+      border-radius: 999px;
       background: rgba(8, 10, 12, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.12);
       color: #f8f4ef;
@@ -198,7 +198,7 @@
   <div class="mobile-app-bar">
     <a href="/games/" aria-label="Back to games">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
       </svg>
     </a>
   </div>
@@ -386,23 +386,26 @@
         </div>
       </form>
 
-      <div id="next-game-promo" class="hidden glass-strong p-3 rounded-xl mb-4">
-        <a id="next-game-link" href="#" class="flex items-center gap-3">
-          <img id="next-game-logo" src="" alt="" class="w-10 h-10 rounded-xl">
-          <div class="flex-1">
-            <p id="next-game-text" class="font-semibold text-sm text-sky-200"></p>
-            <p class="text-xs text-sky-100/70">Continue your streak</p>
+      <div id="next-game-promo" class="hidden mb-5">
+        <a id="next-game-link" href="#" class="block w-full py-3 px-4 rounded-xl text-center transition-all border">
+          <div class="flex items-center justify-center gap-3">
+            <img id="next-game-logo" src="" alt="" class="w-8 h-8 rounded-lg">
+            <div class="text-left flex-1">
+              <div id="next-game-text" class="font-semibold text-sm"></div>
+              <div class="text-xs opacity-70">Continue your daily streak</div>
+            </div>
+            <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
           </div>
-          <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
         </a>
       </div>
 
       <h3 id="leaderboard-title" class="text-sm font-semibold text-white/70 mt-2">Today's Top Scores</h3>
       <div id="leaderboard-list" class="leaderboard-list mt-3 max-h-[40vh] overflow-y-auto"></div>
 
-      <div class="flex gap-3 mt-5">
+      <div class="flex flex-col gap-3">
+        <div class="flex gap-3">
         <button id="share-btn" class="hidden btn btn-primary flex-1 flex items-center justify-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
@@ -417,7 +420,7 @@
           Practice
         </button>
         <button id="close-modal-btn" class="btn btn-secondary flex-1">Close</button>
-      </div>
+        </div>
 
       <div id="practice-complete-actions" class="hidden mt-4 flex flex-col gap-3">
         <div class="flex gap-3">
