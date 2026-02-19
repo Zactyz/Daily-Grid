@@ -112,11 +112,11 @@ export async function fetchDescriptor(puzzleId) {
 }
 
 function generateMockDescriptor(puzzleId) {
+  const seed = hashString(`conduit:${puzzleId}`);
+  const rng = createSeededRandom(seed);
   const size = rng() < 0.5 ? GRID_MIN : GRID_MAX;
   const width = size;
   const height = size;
-  const seed = hashString(`conduit:${puzzleId}`);
-  const rng = createSeededRandom(seed);
   const total = width * height;
   const connections = new Array(total).fill(0);
 
