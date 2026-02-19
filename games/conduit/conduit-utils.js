@@ -96,13 +96,12 @@ export async function fetchDescriptor(puzzleId) {
     const resp = await fetch(`/api/conduit/puzzle?puzzleId=${id}`);
     if (resp.ok) {
       const data = await resp.json();
-      if (
-        Number.isInteger(data?.width) &&
-        Number.isInteger(data?.height) &&
-        data.width >= GRID_MIN &&
-        data.width <= GRID_MAX &&
-        data.height === data.width
-      ) {
+      const hasValidGrid = Number.isInteger(data?.width) && Number.isInteger(data?.height) && data.height === data.width;
+      const inRange = hasValidGrid && data.width >= GRID_MIN && data.width <= GRID_MAX;
+      const hasCells = Array.isArray(data?.solutionCells) && data.solutionCells.length === data.width * data.height;
+      const hasEntries = Array.isArray(data?.entryPoints) && data.entryPoints.length >= 2;
+
+      if (inRange && hasCells && hasEntries) {
         return data;
       }
     }
