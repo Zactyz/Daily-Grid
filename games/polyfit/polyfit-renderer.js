@@ -64,25 +64,15 @@ export class PolyfitRenderer {
       if (x < 0 || y < 0 || x >= this.engine.size || y >= this.engine.size) return;
       const idx = y * this.engine.size + x;
       const validCell = this.engine.targetMask[idx] && this.engine.board[idx] === null;
+      if (!validCell) return;
 
       const px = this.offsetX + x * this.cell + 3;
       const py = this.offsetY + y * this.cell + 3;
       const sz = this.cell - 6;
 
-      if (validCell) {
-        ctx.globalAlpha = 0.52;
-        ctx.fillStyle = p.color;
-        ctx.fillRect(px, py, sz, sz);
-      } else {
-        // gray hole marker for invalid placement area
-        ctx.globalAlpha = 0.55;
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.25)';
-        ctx.fillRect(px, py, sz, sz);
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(px + 1, py + 1, sz - 2, sz - 2);
-      }
+      ctx.globalAlpha = 0.52;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(px, py, sz, sz);
     });
     ctx.globalAlpha = 1;
   }
@@ -95,14 +85,7 @@ export class PolyfitRenderer {
     ctx.fillStyle = '#110e1a';
     ctx.fillRect(0, 0, w, h);
 
-    for (let y = 0; y < this.engine.size; y += 1) {
-      for (let x = 0; x < this.engine.size; x += 1) {
-        const idx = y * this.engine.size + x;
-        if (!this.engine.targetMask[idx]) continue;
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.11)';
-        ctx.fillRect(this.offsetX + x * this.cell + 1, this.offsetY + y * this.cell + 1, this.cell - 2, this.cell - 2);
-      }
-    }
+    // do not paint full target footprint; keep board clean and only preview valid cells
 
     ctx.strokeStyle = 'rgba(255,255,255,.08)';
     for (let i = 0; i <= this.engine.size; i += 1) {

@@ -10,7 +10,7 @@ const SUPPORT_COLOR = '#0f172a';
 const ENTRY_COLOR = '#fff27a';
 const EXIT_COLOR_ON = '#ffd11a';
 const EXIT_COLOR_OFF = '#9ca3af';
-const PADDING = 24;
+const PADDING = 28;
 
 const DIR_VEC = {
   N: { x: 0, y: -1 },

@@ -1,6 +1,6 @@
 import { createSeededRandom, hashString, normalizeWall } from '../common/utils.js';
 
-const GRID_RANGE = { min: 5, max: 7 };
+const GRID_RANGE = { min: 4, max: 5 };
 const REGION_FILL_RANGE = { min: 0.35, max: 0.55 };
 const CLUE_HIDE_PROB = 0.45;
 

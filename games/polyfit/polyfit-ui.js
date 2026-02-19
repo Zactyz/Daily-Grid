@@ -64,29 +64,21 @@ function miniShapeHTML(piece) {
 
 function renderTray() {
   els.tray.innerHTML = '';
+  els.tray.className = 'w-full mb-4 grid grid-cols-3 sm:grid-cols-6 gap-2 items-end';
+
   engine.pieces.forEach((p) => {
     const b = document.createElement('button');
-    const isSelected = selectedPiece === p.id;
     b.type = 'button';
-    b.className = `tray-piece ${isSelected ? 'selected' : ''} ${p.placed ? 'placed' : ''}`;
-    b.style.setProperty('--piece-color', p.color);
-    b.innerHTML = `
-      <div class="tray-top">
-        <span class="tray-label">Piece ${p.id + 1}</span>
-        <span class="tray-state">${p.placed ? 'Placed' : 'Ready'}</span>
-      </div>
-      <div class="tray-body">${miniShapeHTML(p)}</div>
-      <div class="tray-hint">Drag to board • Tap to select</div>
-    `;
+    b.className = 'bg-transparent border-0 p-1.5 rounded-md';
+    b.style.touchAction = 'none';
 
-    b.addEventListener('click', () => {
-      if (!p.placed) {
-        selectedPiece = p.id;
-        renderer.setSelected(selectedPiece);
-        renderer.render();
-        renderTray();
-      }
-    });
+    const shape = miniShapeHTML(p);
+    if (p.placed) {
+      const hole = shape.replace(/shape-dot on/g, 'shape-dot');
+      b.innerHTML = `<div style="opacity:.8">${hole}</div>`;
+    } else {
+      b.innerHTML = shape;
+    }
 
     b.addEventListener('pointerdown', (event) => {
       if (p.placed) return;
@@ -94,7 +86,6 @@ function renderTray() {
       renderer.setSelected(selectedPiece);
       input.startTrayDrag(p.id, event.clientX, event.clientY);
       renderer.render();
-      renderTray();
     });
 
     els.tray.appendChild(b);

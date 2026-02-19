@@ -79,30 +79,39 @@ export class PerimeterRenderer {
     const cols = this.engine.getGridWidth();
     const rows = this.engine.getGridHeight();
 
-    const baseX = Math.floor(localX);
-    const baseY = Math.floor(localY);
-
+    const fx = Math.floor(localX);
+    const fy = Math.floor(localY);
     const candidates = [];
+
     const pushHorizontal = (x, y) => {
       if (x < 0 || x >= cols - 1 || y < 0 || y >= rows) return;
-      const dist = Math.abs(localY - y) + Math.abs(localX - (x + 0.5)) * 0.2;
-      candidates.push({ dist, edge: [[x, y], [x + 1, y]] });
-    };
-    const pushVertical = (x, y) => {
-      if (x < 0 || x >= cols || y < 0 || y >= rows - 1) return;
-      const dist = Math.abs(localX - x) + Math.abs(localY - (y + 0.5)) * 0.2;
-      candidates.push({ dist, edge: [[x, y], [x, y + 1]] });
+      const px = Math.min(Math.max(localX, x), x + 1);
+      const py = y;
+      const dx = localX - px;
+      const dy = localY - py;
+      candidates.push({ dist: Math.hypot(dx, dy), edge: [[x, y], [x + 1, y]] });
     };
 
-    pushHorizontal(baseX, baseY);
-    pushHorizontal(baseX, baseY + 1);
-    pushVertical(baseX, baseY);
-    pushVertical(baseX + 1, baseY);
+    const pushVertical = (x, y) => {
+      if (x < 0 || x >= cols || y < 0 || y >= rows - 1) return;
+      const px = x;
+      const py = Math.min(Math.max(localY, y), y + 1);
+      const dx = localX - px;
+      const dy = localY - py;
+      candidates.push({ dist: Math.hypot(dx, dy), edge: [[x, y], [x, y + 1]] });
+    };
+
+    for (let xx = fx - 1; xx <= fx + 1; xx += 1) {
+      for (let yy = fy - 1; yy <= fy + 1; yy += 1) {
+        pushHorizontal(xx, yy);
+        pushVertical(xx, yy);
+      }
+    }
 
     if (!candidates.length) return null;
     candidates.sort((a, b) => a.dist - b.dist);
     const best = candidates[0];
-    const threshold = 0.42;
+    const threshold = 0.5;
     return best.dist <= threshold ? best.edge : null;
   }
 
