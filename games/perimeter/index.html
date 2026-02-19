@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
   <link rel="icon" href="/games/perimeter/perimeter-logo.svg">
   <link rel="manifest" href="/games/perimeter/manifest.json">
   <meta name="theme-color" content="#0c1018">
@@ -347,7 +347,7 @@
 
     <div id="solution-actions" class="hidden w-full max-w-md mt-4 flex gap-3">
       <button id="solution-retry-btn" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors">Try Again</button>
-      <button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-sky-500/20 border border-sky-500/30 text-sky-200 text-sm font-medium hover:bg-sky-500/30 transition-colors">Next Puzzle</button>
+      <button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-sky-500/20 border border-sky-500/30 text-sky-200 text-sm font-medium hover:bg-sky-500/30 transition-colors">Next Level</button>
     </div>
   </main>
 
@@ -394,9 +394,12 @@
 
       <p id="percentile-msg" class="text-center text-sm text-white/60 mb-4"></p>
 
-      <form id="claim-initials-form" class="hidden flex gap-2 items-center justify-center mb-4">
-        <input id="initials-input" maxlength="3" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm uppercase tracking-widest w-24 text-center" placeholder="ABC" />
-        <button type="submit" class="btn btn-secondary">Claim</button>
+      <form id="claim-initials-form" class="hidden mb-5">
+        <label class="block text-xs text-zinc-500 mb-2 uppercase tracking-wider">Claim your spot</label>
+        <div class="flex gap-3">
+          <input id="initials-input" maxlength="3" placeholder="ABC" class="flex-1 min-w-0 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-center uppercase mono text-lg tracking-widest placeholder:text-zinc-600" />
+          <button type="submit" class="btn btn-primary flex-shrink-0 px-6">Save</button>
+        </div>
       </form>
 
       <div id="next-game-promo" class="hidden glass-strong p-3 rounded-xl mb-4">
@@ -406,7 +409,9 @@
             <p id="next-game-text" class="font-semibold text-sm text-sky-200"></p>
             <p class="text-xs text-sky-100/70">Continue your streak</p>
           </div>
-          <span class="text-sky-400 text-sm font-semibold uppercase tracking-wide">Play</span>
+          <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
         </a>
       </div>
 
