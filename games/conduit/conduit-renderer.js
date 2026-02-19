@@ -177,7 +177,7 @@ export class ConduitRenderer {
     ctx.stroke();
   }
 
-  _drawArrow(ctx, x, y, dir, color, size = 8) {
+  _drawArrow(ctx, x, y, dir, color, size = 10) {
     const v = DIR_VEC[dir] || DIR_VEC.N;
     const perpX = -v.y;
     const perpY = v.x;
@@ -189,6 +189,23 @@ export class ConduitRenderer {
     ctx.lineTo(x - v.x * size * 0.7 - perpX * size * 0.62, y - v.y * size * 0.7 - perpY * size * 0.62);
     ctx.closePath();
     ctx.fill();
+  }
+
+  _drawBoltIcon(ctx, x, y, color, size = 8) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - size * 0.35, y - size * 0.7);
+    ctx.lineTo(x + size * 0.05, y - size * 0.2);
+    ctx.lineTo(x - size * 0.02, y - size * 0.2);
+    ctx.lineTo(x + size * 0.35, y + size * 0.7);
+    ctx.lineTo(x - size * 0.05, y + size * 0.15);
+    ctx.lineTo(x + size * 0.02, y + size * 0.15);
+    ctx.stroke();
+    ctx.restore();
   }
 
   _drawEntries(ctx, t) {
@@ -209,39 +226,36 @@ export class ConduitRenderer {
 
       const isExit = entry.role === 'exit';
       const exitPowered = isExit ? this.engine?.isExitPowered?.(entry) : false;
-      const sourceAligned = !isExit ? this.engine?.isSourceAligned?.() : false;
       const color = isExit
         ? (exitPowered ? EXIT_COLOR_ON : EXIT_COLOR_OFF)
-        : (sourceAligned ? ENTRY_COLOR : '#9ca3af');
+        : ENTRY_COLOR;
 
       // conduit lead to the border
       ctx.strokeStyle = color;
-      ctx.lineWidth = 3.4;
+      ctx.lineWidth = 4.8;
       this._drawLine(ctx, edgeX, edgeY, outerX, outerY);
 
       // glow bubble outside board edge
       ctx.save();
       ctx.globalAlpha = pulse;
       if (isExit) {
-        ctx.fillStyle = exitPowered ? 'rgba(255, 209, 26, 0.30)' : 'rgba(239, 68, 68, 0.24)';
+        ctx.fillStyle = exitPowered ? 'rgba(255, 209, 26, 0.34)' : 'rgba(239, 68, 68, 0.42)';
       } else {
-        ctx.fillStyle = sourceAligned ? 'rgba(255, 242, 122, 0.30)' : 'rgba(156, 163, 175, 0.24)';
+        ctx.fillStyle = 'rgba(255, 242, 122, 0.34)';
       }
       ctx.beginPath();
-      ctx.arc(outerX, outerY, cellSize * 0.2, 0, Math.PI * 2);
+      ctx.arc(outerX, outerY, cellSize * 0.27, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
       // direction arrows OUTSIDE the cell
       const arrowDir = isExit ? entry.dir : ({ N: 'S', S: 'N', E: 'W', W: 'E' }[entry.dir]);
-      this._drawArrow(ctx, outerX, outerY, arrowDir, color, Math.max(6, cellSize * 0.12));
+      this._drawArrow(ctx, outerX, outerY, arrowDir, color, Math.max(9, cellSize * 0.16));
 
-      // tiny bolt marker for obvious electric in/out
-      ctx.fillStyle = '#fff8cc';
-      ctx.font = `${Math.max(9, cellSize * 0.16)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⚡', outerX, outerY - cellSize * 0.18);
+      // bolt icon only on source/in arrow
+      if (!isExit) {
+        this._drawBoltIcon(ctx, outerX, outerY - cellSize * 0.24, '#fff8cc', Math.max(7, cellSize * 0.12));
+      }
     });
   }
 }

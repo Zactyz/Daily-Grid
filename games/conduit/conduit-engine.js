@@ -65,8 +65,8 @@ export class ConduitEngine {
       this.sourceEntry = { r: fallback.r, c: fallback.c, dir: fallback.dir, role: 'source' };
     }
 
-    if (this.exitEntries.length > 2) {
-      this.exitEntries = this.exitEntries.slice(0, 2);
+    if (this.exitEntries.length > 3) {
+      this.exitEntries = this.exitEntries.slice(0, 3);
     }
   }
 
