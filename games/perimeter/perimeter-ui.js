@@ -12,7 +12,8 @@ const els = {
   canvas: document.getElementById('perimeter-canvas'),
   progress: document.getElementById('progress-text'),
   puzzleDate: document.getElementById('puzzle-date'),
-  gridSize: document.getElementById('grid-size')
+  gridSize: document.getElementById('grid-size'),
+  markModeBtn: document.getElementById('mark-mode-btn')
 };
 
 let engine;
@@ -25,6 +26,7 @@ let puzzleSeed = puzzleId;
 let completionMs = null;
 let tickInterval = null;
 let lastTimestamp = 0;
+let markMode = 'line';
 
 function getPuzzleIdForMode(mode) {
   if (mode === 'practice') return `practice-${puzzleSeed}`;
@@ -42,12 +44,12 @@ function updateProgress() {
   const invalidNodes = engine.getInvalidNodes().size;
 
   if (lines === 0) {
-    els.progress.textContent = 'Tap any grid edge to place a line (tap again for X).';
+    els.progress.textContent = `Draw mode: ${markMode === 'line' ? 'Line' : 'X'} • Drag across edges to mark quickly.`;
     return;
   }
 
   const warning = invalidNodes > 0 ? ` • Fix ${invalidNodes} junction${invalidNodes === 1 ? '' : 's'}` : '';
-  els.progress.textContent = `Clues: ${satisfied}/${total} • Lines: ${lines}${warning}`;
+  els.progress.textContent = `Mode: ${markMode === 'line' ? 'Line' : 'X'} • Clues: ${satisfied}/${total} • Lines: ${lines}${warning}`;
 }
 
 function setDateLabel() {
@@ -186,7 +188,8 @@ function loadPuzzle() {
       },
       onInteraction: () => {
         handleInteraction();
-      }
+      },
+      getMarkMode: () => markMode
     });
   } else {
     input.setEngine(engine);
@@ -320,6 +323,17 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
+  if (els.markModeBtn) {
+    const syncModeBtn = () => {
+      els.markModeBtn.textContent = markMode === 'line' ? 'Mode: Line' : 'Mode: X';
+    };
+    syncModeBtn();
+    els.markModeBtn.addEventListener('click', () => {
+      markMode = markMode === 'line' ? 'x' : 'line';
+      syncModeBtn();
+      updateProgress();
+    });
+  }
   window.startPracticeMode = () => switchMode('practice');
   window.startDailyMode = () => switchMode('daily');
   window.addEventListener('beforeunload', saveProgress);

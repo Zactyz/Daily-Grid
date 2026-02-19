@@ -81,6 +81,16 @@ const GAME_META = [
     completedKeyPrefix: 'dailygrid_perimeter_completed_',
     theme: { bg: 'bg-indigo-500/10', border: 'border-indigo-400/30', text: 'text-indigo-300' },
     shareUrl: 'https://dailygrid.app/games/perimeter/'
+  },
+  {
+    id: 'polyfit',
+    name: 'Polyfit',
+    path: '/games/polyfit/',
+    logo: '/games/polyfit/polyfit-logo.svg',
+    submittedKeyPrefix: 'dailygrid_polyfit_submitted_',
+    completedKeyPrefix: 'dailygrid_polyfit_completed_',
+    theme: { bg: 'bg-amber-500/10', border: 'border-amber-400/30', text: 'text-amber-300' },
+    shareUrl: 'https://dailygrid.app/games/polyfit/'
   }
 ];
 

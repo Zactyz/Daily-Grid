@@ -331,6 +331,22 @@
             </svg>
           </span>
         </a>
+        <a href="/games/polyfit/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="polyfit">
+          <div class="relative">
+            <img src="/games/polyfit/polyfit-logo.svg" alt="Polyfit" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Polyfit</p>
+            <p class="text-xs text-slate-400">Pack polyomino pieces into the box.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
         <a href="/games/perimeter/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="perimeter">
           <div class="relative">
             <img src="/games/perimeter/perimeter-logo.svg" alt="Perimeter" class="w-12 h-12 rounded-xl">
@@ -462,6 +478,15 @@
           </span>
         </a>
 
+        <a href="/games/polyfit/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/polyfit/polyfit-logo.svg" alt="Polyfit" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Polyfit</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Fit every polyomino piece into a tight box.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
         <a href="/games/perimeter/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
           <img src="/games/perimeter/perimeter-logo.svg" alt="Perimeter" class="w-16 h-16 rounded-2xl mb-6">
           <h2 class="text-2xl font-bold mb-2">Perimeter</h2>
@@ -529,7 +554,8 @@
       hashi: 'dailygrid_hashi_completed_',
       shikaku: 'dailygrid_shikaku_completed_',
       conduit: 'dailygrid_conduit_completed_',
-      perimeter: 'dailygrid_perimeter_completed_'
+      perimeter: 'dailygrid_perimeter_completed_',
+      polyfit: 'dailygrid_polyfit_completed_'
     };
     const submittedPrefixes = {
       snake: 'dailygrid_submitted_',
@@ -539,7 +565,8 @@
       hashi: 'dailygrid_hashi_submitted_',
       shikaku: 'dailygrid_shikaku_submitted_',
       conduit: 'dailygrid_conduit_submitted_',
-      perimeter: 'dailygrid_perimeter_submitted_'
+      perimeter: 'dailygrid_perimeter_submitted_',
+      polyfit: 'dailygrid_polyfit_submitted_'
     };
 
     const gameMeta = {
@@ -550,7 +577,8 @@
       hashi: { name: 'Bridgeworks', path: '/games/hashi/', logo: '/games/hashi/hashi-logo.jpg' },
       shikaku: { name: 'Parcel', path: '/games/shikaku/', logo: '/games/shikaku/shikaku-logo.jpg' },
       conduit: { name: 'Conduit', path: '/games/conduit/', logo: '/games/conduit/conduit-logo.svg' },
-      perimeter: { name: 'Perimeter', path: '/games/perimeter/', logo: '/games/perimeter/perimeter-logo.svg' }
+      perimeter: { name: 'Perimeter', path: '/games/perimeter/', logo: '/games/perimeter/perimeter-logo.svg' },
+      polyfit: { name: 'Polyfit', path: '/games/polyfit/', logo: '/games/polyfit/polyfit-logo.svg' }
     };
 
     function getPTDateYYYYMMDD(now = new Date()) {
