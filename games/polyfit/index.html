@@ -1,23 +1,94 @@
-<!DOCTYPE html><html lang="en"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Polyfit — Daily Grid</title>
-<link rel="manifest" href="/games/polyfit/manifest.json"><link rel="icon" href="/games/polyfit/polyfit-logo.svg">
-<meta name="theme-color" content="#120f1a"><script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="/games/common/shell.css">
-<style>body{background:#120f1a;color:#fff;font-family:Inter,sans-serif}#polyfit-canvas{width:100%;aspect-ratio:1;border-radius:14px;background:#1d1328}.btn{padding:.55rem 1rem;border:1px solid #ffffff22;border-radius:.6rem} .btnp{background:#f59e0b;color:#1a0f05;border:none}</style>
-</head><body>
-<main class="max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
-<header class="text-center mb-4"><div id="daily-badge" class="text-xs text-amber-300">Daily Puzzle</div><div id="practice-badge" class="hidden text-xs text-amber-300">Practice</div><h1 class="text-3xl font-bold">Polyfit</h1><p class="text-sm text-white/70">Fit every polyomino into the box. Tap a placed piece to remove it.</p><div class="text-xs mt-1 text-white/50"><span id="puzzle-date"></span> • <span id="grid-size"></span></div></header>
-<div id="game-container" class="w-full p-3 rounded-2xl border border-white/10 bg-white/5 game-touch"><div id="progress-text" class="text-center text-xs mb-2"></div><canvas id="polyfit-canvas" class="celebrate-target"></canvas></div>
-<div id="piece-tray" class="w-full mt-3 grid grid-cols-3 gap-2"></div>
-<div class="flex gap-2 my-3"><button id="rotate-piece-btn" class="btn">Rotate</button><button id="pause-btn" class="btn">Pause</button><button id="reset-btn" class="btn">Reset</button><button id="leaderboard-btn" class="btn hidden">Leaderboard</button></div>
-<button id="practice-mode-btn" class="w-full py-3 rounded-xl border border-white/10 text-sm text-white/70">Try Practice Levels</button>
-<button id="back-to-daily-btn" class="hidden w-full mt-3 py-3 rounded-xl border border-amber-500/20 text-amber-300 text-sm">Back to Daily Puzzle</button>
-</main>
-<div id="pause-overlay" class="hidden fixed inset-0 bg-black/70"></div><div id="start-overlay" class="hidden fixed inset-0 bg-black/40"></div>
-<div id="reset-modal" class="hidden fixed inset-0 bg-black/70 p-4"><div class="max-w-sm mx-auto mt-40 p-5 rounded-xl bg-zinc-900"><h2>Reset Puzzle?</h2><div class="mt-3 flex gap-2"><button id="cancel-reset-btn" class="btn flex-1">Cancel</button><button id="confirm-reset-btn" class="btn btnp flex-1">Reset</button></div></div></div>
-<div id="completion-modal" class="hidden fixed inset-0 bg-black/70 p-4"><div class="max-w-md mx-auto mt-16 p-5 rounded-xl bg-zinc-900"><h2 id="modal-title" class="text-2xl font-bold">Solved!</h2><p id="modal-subtitle" class="text-sm text-white/70 mb-2"></p><div id="final-time" class="text-3xl"></div><p id="percentile-msg" class="text-sm my-2"></p><form id="claim-initials-form" class="hidden"><input id="initials-input" maxlength="3" class="bg-black/30 border border-white/20 rounded px-2 py-1"><button class="btn">Claim</button></form><h3 id="leaderboard-title" class="mt-2">Today's Top Scores</h3><div id="leaderboard-list"></div><div class="flex gap-2 mt-3"><button id="share-btn" class="btn btnp flex-1">Share</button><button id="practice-infinite-btn" class="btn flex-1">Practice</button><button id="close-modal-btn" class="btn flex-1">Close</button></div><div id="practice-complete-actions" class="hidden mt-3"><div class="flex gap-2"><button id="try-again-btn" class="btn flex-1">Try Again</button><button id="next-level-btn" class="btn btnp flex-1">Next</button></div><button id="back-to-daily-complete-btn" class="btn w-full mt-2">Back to Daily</button></div><div id="next-game-promo" class="hidden"></div></div></div>
-<a id="external-game-promo" class="hidden"></a><div id="shell-toast" class="hidden"><span id="shell-toast-text"></span></div>
-<script type="module">import { mountShell } from '../common/shell-mount.js'; mountShell();</script>
-<script type="module" src="./polyfit-ui.js"></script>
-</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/games/polyfit/polyfit-logo.svg">
+  <link rel="manifest" href="/games/polyfit/manifest.json">
+  <meta name="theme-color" content="#120f1a">
+  <title>Polyfit — Daily Grid</title>
+  <link rel="apple-touch-icon" href="/games/polyfit/polyfit-logo.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/games/common/shell.css">
+  <style>
+    :root { --brand-bg:#120f1a; --brand-accent:#f59e0b; --brand-accent-dim:#d97706; --glass-bg:rgba(255,255,255,.02); --glass-border:rgba(255,255,255,.08); }
+    body{font-family:'Space Grotesk',sans-serif;background:var(--brand-bg);color:#f8fafc;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 45% at 50% -15%,rgba(245,158,11,.11),transparent),radial-gradient(ellipse 55% 35% at 100% 100%,rgba(245,158,11,.06),transparent);pointer-events:none;z-index:-1;}
+    .glass{background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border)}
+    .glass-strong{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .btn{padding:.625rem 1.2rem;border-radius:10px;font-weight:600;font-size:.875rem;transition:all .2s ease;display:flex;align-items:center;gap:.45rem}
+    .btn-primary{background:linear-gradient(135deg,var(--brand-accent),var(--brand-accent-dim));color:#1b1204}
+    .btn-secondary{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#d4d4d8}
+    .timer-display{background:linear-gradient(135deg,rgba(245,158,11,.14),rgba(245,158,11,.04));border:1px solid rgba(245,158,11,.24)}
+    #polyfit-canvas{width:100%;height:auto;aspect-ratio:1/1;border-radius:16px;background:#0f0b17;border:1px solid rgba(245,158,11,.2);display:block}
+    .progress-text{text-align:center;color:rgba(255,231,196,.88);letter-spacing:.03em;font-size:.76rem}
+    .modal-backdrop{background:rgba(3,6,15,.9);backdrop-filter:blur(8px)}
+    .mobile-app-bar{display:none;position:fixed;top:.75rem;left:.75rem;z-index:60}
+    .mobile-app-bar a{display:flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;border-radius:.75rem;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18)}
+    .tray-piece{border:1px solid rgba(255,255,255,.12);border-radius:.8rem;padding:.55rem .6rem;background:linear-gradient(145deg,rgba(255,255,255,.03),rgba(255,255,255,.01));text-align:left;transition:all .2s ease}
+    .tray-piece.selected{border-color:var(--piece-color);box-shadow:0 0 0 1px var(--piece-color),0 0 18px color-mix(in srgb,var(--piece-color) 38%, transparent)}
+    .tray-piece.placed{opacity:.45}
+    .tray-top{display:flex;justify-content:space-between;font-size:.67rem;color:#d4d4d8;margin-bottom:.35rem}
+    .tray-body{min-height:34px;display:flex;align-items:center}
+    .tray-hint{font-size:.62rem;color:#a1a1aa;margin-top:.3rem}
+    .shape-grid{display:grid;gap:2px}
+    .shape-dot{width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,.06)}
+    .shape-dot.on{background:var(--piece);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+    details summary{list-style:none}.details-plus::after{content:'+';float:right;font-size:1.2rem;color:#71717a}details[open] .details-plus::after{transform:rotate(45deg)}
+    @media (max-width:899px){nav{display:none!important}main{padding-top:3.5rem!important}.mobile-app-bar{display:flex}}
+  </style>
+</head>
+<body>
+  <div class="mobile-app-bar"><a href="/games/" aria-label="Back to games"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a></div>
+  <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6"><div class="max-w-5xl mx-auto flex justify-between items-center"><a href="/games/polyfit/" class="flex items-center gap-2.5 hover:opacity-80"><img src="/games/polyfit/polyfit-logo.svg" alt="Polyfit logo" class="w-9 h-9 rounded-lg"><span class="font-semibold text-lg tracking-tight hidden sm:block">Polyfit</span></a><div class="flex gap-5 text-sm font-medium text-zinc-400"><a href="/" class="hover:text-white">Home</a><a href="/games/" class="text-white">Games</a><a href="/support/" class="hover:text-white">Support</a></div></div></nav>
+
+  <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
+    <header class="text-center mb-6 w-full">
+      <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse"></span>Daily Puzzle</div>
+      <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/25 text-amber-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>Practice Mode</div>
+      <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 text-amber-200">Polyfit</h1>
+      <p class="text-zinc-400 text-sm">Fill the amber footprint exactly. Drag pieces from the tray, rotate with <span class="font-semibold text-amber-300">Rotate</span> (or R), and place every shape.</p>
+      <div class="text-xs mt-2 text-white/50"><span id="puzzle-date"></span> • <span id="grid-size"></span> • <span id="timer" class="font-mono">0:00</span></div>
+    </header>
+
+    <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-4 w-full relative">
+      <div id="progress-text" class="progress-text mb-3">Goal progress</div>
+      <canvas id="polyfit-canvas" class="celebrate-target"></canvas>
+
+      <div id="start-overlay" class="hidden absolute inset-0 bg-black/70 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10 cursor-pointer"><div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-600/20 flex items-center justify-center mb-4"><svg class="w-10 h-10 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><span class="text-2xl font-bold text-white tracking-wide">Ready?</span><span id="start-overlay-text" class="text-sm text-white/60 mt-1">Tap to begin</span></div>
+      <div id="pause-overlay" class="hidden absolute inset-0 bg-black/60 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center z-10"><div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-4"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/></svg></div><span class="text-2xl font-bold text-white tracking-wide">Paused</span><span class="text-sm text-white/60 mt-1">Tap to resume</span></div>
+    </div>
+
+    <div id="piece-tray" class="w-full mb-4 grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+
+    <div class="flex gap-3 mb-4 flex-wrap justify-center">
+      <button id="leaderboard-btn" class="btn btn-secondary hidden">Leaderboard</button>
+      <button id="rotate-piece-btn" class="btn btn-secondary">Rotate Piece</button>
+      <button id="pause-btn" class="btn btn-secondary">Pause</button>
+      <button id="reset-btn" class="btn btn-secondary">Reset</button>
+      <button id="exit-replay-btn" class="hidden btn btn-secondary flex items-center justify-center w-10 h-10 p-0" title="Exit Replay"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+
+    <details class="glass-strong rounded-xl w-full max-w-md"><summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white">How to Play</summary><div class="px-5 pb-5 pt-1"><ul class="text-zinc-400 space-y-2.5 text-sm"><li>Drag a tray piece onto the board and release to place.</li><li>Tap board cells for quick place/remove fallback.</li><li>Rotate selected piece before placing for better fit.</li><li>Win when the amber footprint is filled exactly.</li></ul></div></details>
+
+    <button id="show-solution-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors">Show Solution</button>
+    <div id="solution-actions" class="hidden w-full max-w-md mt-4 flex gap-3"><button id="solution-retry-btn" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors">Try Again</button><button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-colors">Next Puzzle</button></div>
+
+    <button id="practice-mode-btn" class="w-full max-w-md mt-4 py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-medium hover:bg-white/5 hover:text-white transition-colors">Try Practice Levels</button>
+    <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-amber-500/20 text-amber-300 text-sm font-medium hover:bg-amber-500/10 transition-colors">Back to Daily Puzzle</button>
+
+    <a id="external-game-promo" href="#" class="hidden w-full max-w-md mt-4 py-3 px-4 rounded-xl border transition-all flex items-center justify-center gap-3"><img id="external-game-logo" src="" alt="" class="w-7 h-7 rounded-lg"><div class="flex-1 text-left"><div id="external-game-text" class="font-semibold text-sm"></div><div class="text-xs opacity-70">Continue your daily streak</div></div></a>
+  </main>
+
+  <div id="shell-toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-6 z-50 px-4 py-2 rounded-full text-xs font-semibold tracking-wide bg-black/70 border border-white/10 text-white"><span id="shell-toast-text"></span></div>
+
+  <div id="reset-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4"><div class="glass-strong rounded-2xl p-6 w-full max-w-md"><h2 class="text-xl font-semibold text-white mb-2">Reset Puzzle?</h2><p class="text-sm text-white/60">This clears your placements and timer.</p><div class="flex gap-3 mt-6"><button id="cancel-reset-btn" class="btn btn-secondary flex-1">Cancel</button><button id="confirm-reset-btn" class="btn btn-primary flex-1">Reset</button></div></div></div>
+  <div id="exit-replay-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4"><div class="glass-strong rounded-2xl p-6 w-full max-w-md"><h2 class="text-xl font-semibold text-white mb-2">Exit Replay?</h2><p class="text-sm text-white/60">Return to your completed puzzle.</p><div class="flex gap-3 mt-6"><button id="cancel-exit-replay-btn" class="btn btn-secondary flex-1">Cancel</button><button id="confirm-exit-replay-btn" class="btn btn-primary flex-1">Exit</button></div></div></div>
+
+  <div id="completion-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4"><div class="glass-strong rounded-2xl p-6 w-full max-w-md"><div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-500/10 flex items-center justify-center"><svg class="w-8 h-8 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><h2 id="modal-title" class="text-2xl font-bold text-center">Solved!</h2><p id="modal-subtitle" class="text-sm text-white/60 text-center mb-4">Great job on today's Polyfit</p><div class="timer-display rounded-xl p-4 text-center mb-4"><div class="text-xs uppercase tracking-wider text-amber-400/70 mb-1">Your Time</div><div id="final-time" class="text-3xl font-bold font-mono text-amber-200">0:00</div></div><p id="percentile-msg" class="text-center text-sm text-white/60 mb-4"></p><form id="claim-initials-form" class="hidden flex gap-2 items-center justify-center mb-4"><input id="initials-input" maxlength="3" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm uppercase tracking-widest w-24 text-center" placeholder="ABC" /><button type="submit" class="btn btn-secondary">Claim</button></form><div id="next-game-promo" class="hidden glass-strong p-3 rounded-xl mb-4"><a id="next-game-link" href="#" class="flex items-center gap-3"><img id="next-game-logo" src="" alt="" class="w-10 h-10 rounded-xl"><div class="flex-1"><p id="next-game-text" class="font-semibold text-sm text-amber-100"></p><p class="text-xs text-amber-100/70">Continue your streak</p></div><span class="text-amber-300 text-sm font-semibold uppercase tracking-wide">Play</span></a></div><h3 id="leaderboard-title" class="text-sm font-semibold text-white/70 mt-2">Today's Top Scores</h3><div id="leaderboard-list" class="leaderboard-list mt-3 max-h-[40vh] overflow-y-auto"></div><div class="flex gap-3 mt-5"><button id="share-btn" class="btn btn-primary flex-1">Share</button><button id="practice-infinite-btn" class="btn btn-secondary flex-1">Practice</button><button id="close-modal-btn" class="btn btn-secondary flex-1">Close</button></div><div id="practice-complete-actions" class="hidden mt-4 flex flex-col gap-3"><div class="flex gap-3"><button id="try-again-btn" class="btn btn-secondary flex-1">Try Again</button><button id="next-level-btn" class="btn btn-primary flex-1">Next Puzzle</button></div><button id="back-to-daily-complete-btn" class="btn btn-secondary">Back to Daily Puzzle</button></div></div></div>
+
+  <script type="module">import { mountShell } from '../common/shell-mount.js'; mountShell();</script>
+  <script type="module" src="/games/polyfit/polyfit-ui.js"></script>
+</body>
+</html>

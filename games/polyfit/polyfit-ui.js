@@ -13,10 +13,14 @@ const els = {
   gridSize: document.getElementById('grid-size'),
   puzzleDate: document.getElementById('puzzle-date'),
   tray: document.getElementById('piece-tray'),
-  rotate: document.getElementById('rotate-piece-btn')
+  rotate: document.getElementById('rotate-piece-btn'),
+  showSolutionBtn: document.getElementById('show-solution-btn'),
+  solutionActions: document.getElementById('solution-actions'),
+  solutionRetryBtn: document.getElementById('solution-retry-btn'),
+  solutionNextBtn: document.getElementById('solution-next-btn')
 };
 
-let engine, renderer, input, shell;
+let engine; let renderer; let input; let shell;
 let currentMode = 'daily';
 let puzzleSeed = getPTDateYYYYMMDD();
 let puzzleId = puzzleSeed;
@@ -26,7 +30,7 @@ let tick;
 let lastTs = performance.now();
 
 const stateKey = () => `${STATE_PREFIX}${currentMode}_${puzzleId}`;
-const getPuzzleId = () => currentMode === 'practice' ? `practice-${puzzleSeed}` : getPTDateYYYYMMDD();
+const getPuzzleId = () => (currentMode === 'practice' ? `practice-${puzzleSeed}` : getPTDateYYYYMMDD());
 
 function setLabels() {
   els.gridSize.textContent = engine.getGridLabel();
@@ -34,20 +38,84 @@ function setLabels() {
 }
 
 function updateProgress() {
-  const placed = engine.pieces.filter(p=>p.placed).length;
-  els.progress.textContent = `Placed: ${placed}/${engine.pieces.length} • Filled: ${engine.getFillCount()}/${engine.getTargetCount()}`;
+  const placed = engine.pieces.filter((p) => p.placed).length;
+  const remaining = engine.pieces.length - placed;
+  const filled = engine.getFillCount();
+  const target = engine.getTargetCount();
+  els.progress.textContent = `Goal: fill the amber footprint • Placed ${placed}/${engine.pieces.length} • Remaining ${remaining} • Cells ${filled}/${target}`;
+}
+
+function miniShapeHTML(piece) {
+  const cells = piece.variants[piece.variantIndex];
+  const maxX = Math.max(...cells.map((c) => c[0]));
+  const maxY = Math.max(...cells.map((c) => c[1]));
+  const cols = maxX + 1;
+  const rows = maxY + 1;
+  const dots = new Set(cells.map(([x, y]) => `${x},${y}`));
+  const blocks = [];
+  for (let y = 0; y < rows; y += 1) {
+    for (let x = 0; x < cols; x += 1) {
+      const on = dots.has(`${x},${y}`);
+      blocks.push(`<span class="shape-dot ${on ? 'on' : ''}" style="--piece:${piece.color}"></span>`);
+    }
+  }
+  return `<span class="shape-grid" style="grid-template-columns:repeat(${cols},10px)">${blocks.join('')}</span>`;
 }
 
 function renderTray() {
   els.tray.innerHTML = '';
   engine.pieces.forEach((p) => {
     const b = document.createElement('button');
-    b.className = `px-3 py-2 rounded-lg border text-sm ${selectedPiece===p.id?'border-amber-300 text-amber-200':'border-white/10 text-white/70'} ${p.placed?'opacity-40':''}`;
-    b.textContent = `Piece ${p.id + 1}`;
-    b.style.background = `${p.color}22`;
-    b.onclick = () => { if (!p.placed) { selectedPiece = p.id; renderer.setSelected(selectedPiece); renderer.render(); renderTray(); } };
+    const isSelected = selectedPiece === p.id;
+    b.type = 'button';
+    b.className = `tray-piece ${isSelected ? 'selected' : ''} ${p.placed ? 'placed' : ''}`;
+    b.style.setProperty('--piece-color', p.color);
+    b.innerHTML = `
+      <div class="tray-top">
+        <span class="tray-label">Piece ${p.id + 1}</span>
+        <span class="tray-state">${p.placed ? 'Placed' : 'Ready'}</span>
+      </div>
+      <div class="tray-body">${miniShapeHTML(p)}</div>
+      <div class="tray-hint">Drag to board • Tap to select</div>
+    `;
+
+    b.addEventListener('click', () => {
+      if (!p.placed) {
+        selectedPiece = p.id;
+        renderer.setSelected(selectedPiece);
+        renderer.render();
+        renderTray();
+      }
+    });
+
+    b.addEventListener('pointerdown', (event) => {
+      if (p.placed) return;
+      selectedPiece = p.id;
+      renderer.setSelected(selectedPiece);
+      input.startTrayDrag(p.id, event.clientX, event.clientY);
+      renderer.render();
+      renderTray();
+    });
+
     els.tray.appendChild(b);
   });
+}
+
+function updateSolutionUI() {
+  const showPractice = currentMode === 'practice' && !engine.isComplete;
+  if (!showPractice) {
+    els.showSolutionBtn?.classList.add('hidden');
+    els.solutionActions?.classList.add('hidden');
+    return;
+  }
+
+  if (engine.solutionShown) {
+    els.showSolutionBtn?.classList.add('hidden');
+    els.solutionActions?.classList.remove('hidden');
+  } else {
+    els.showSolutionBtn?.classList.remove('hidden');
+    els.solutionActions?.classList.add('hidden');
+  }
 }
 
 function save() {
@@ -59,7 +127,9 @@ function save() {
     isComplete: engine.isComplete,
     completionMs,
     selectedPiece,
-    pieces: engine.pieces.map((p) => ({ variantIndex: p.variantIndex, placed: p.placed }))
+    solutionShown: engine.solutionShown,
+    pieces: engine.pieces.map((p) => ({ variantIndex: p.variantIndex, placed: p.placed })),
+    board: engine.board
   };
   localStorage.setItem(stateKey(), JSON.stringify(payload));
 }
@@ -76,46 +146,85 @@ function load() {
     engine.isComplete = !!s.isComplete;
     completionMs = s.completionMs ?? null;
     selectedPiece = s.selectedPiece ?? 0;
-    engine.board.fill(null);
-    (s.pieces || []).forEach((pState, i) => {
-      const p = engine.pieces[i];
-      if (!p) return;
-      p.variantIndex = pState.variantIndex || 0;
-      p.placed = pState.placed || null;
-      if (p.placed) {
-        p.variants[p.placed.variantIndex].forEach(([dx,dy]) => {
-          const x = p.placed.x + dx; const y = p.placed.y + dy;
-          engine.board[y*engine.size+x] = p.id;
-        });
-      }
-    });
-    engine.syncStatus();
-  } catch {}
+    engine.solutionShown = !!s.solutionShown;
+
+    if (Array.isArray(s.board) && s.board.length === engine.board.length) {
+      engine.board = s.board;
+      (s.pieces || []).forEach((pState, i) => {
+        const p = engine.pieces[i];
+        if (!p) return;
+        p.variantIndex = pState.variantIndex || 0;
+        p.placed = pState.placed || null;
+      });
+      engine.syncStatus();
+    }
+  } catch {
+    // ignore bad local state
+  }
 }
 
 function onInteract() {
   if (!engine.timerStarted) engine.startTimer();
-  if (engine.isPaused) engine.resume();
+  if (engine.isPaused && !engine.isComplete && !engine.solutionShown) engine.resume();
   if (engine.isComplete) completionMs = completionMs ?? engine.timeMs;
-  updateProgress(); renderTray(); renderer.render(); save(); shell?.update();
+  updateProgress();
+  updateSolutionUI();
+  renderTray();
+  renderer.render();
+  save();
+  shell?.update();
 }
 
 function initPuzzle() {
   engine = new PolyfitEngine(puzzleId);
   renderer = new PolyfitRenderer(els.canvas, engine);
   renderer.setSelected(selectedPiece);
-  input = new PolyfitInput(els.canvas, engine, renderer, { getSelected: () => selectedPiece, onChange: onInteract, onInteract });
+  input = new PolyfitInput(els.canvas, engine, renderer, {
+    getSelected: () => selectedPiece,
+    onSelectPiece: (pieceId) => {
+      selectedPiece = pieceId;
+      renderer.setSelected(selectedPiece);
+      renderTray();
+    },
+    onChange: onInteract,
+    onInteract
+  });
   load();
-  setLabels(); updateProgress(); renderTray(); renderer.render(); shell?.update();
+  setLabels();
+  updateProgress();
+  updateSolutionUI();
+  renderTray();
+  renderer.render();
+  shell?.update();
 }
 
 function switchMode(mode) {
   currentMode = mode;
-  puzzleSeed = mode === 'practice' ? `${Date.now().toString(36)}${Math.random().toString(36).slice(2,7)}` : getPTDateYYYYMMDD();
+  puzzleSeed = mode === 'practice' ? `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}` : getPTDateYYYYMMDD();
   puzzleId = getPuzzleId();
   completionMs = null;
   selectedPiece = 0;
   initPuzzle();
+}
+
+function resetGame({ resetTimer = true } = {}) {
+  engine.reset({ resetTimer });
+  completionMs = null;
+  updateProgress();
+  updateSolutionUI();
+  renderTray();
+  renderer.render();
+  save();
+}
+
+function showSolution() {
+  if (currentMode !== 'practice' || engine.solutionShown) return;
+  engine.revealSolution();
+  updateProgress();
+  updateSolutionUI();
+  renderTray();
+  renderer.render();
+  shell?.update();
 }
 
 function initShell() {
@@ -131,12 +240,16 @@ function initShell() {
     isPaused: () => engine.isPaused,
     isStarted: () => engine.timerStarted,
     hasProgress: () => engine.pieces.some((p) => p.placed),
+    isSolutionShown: () => engine.solutionShown,
+    shouldShowCompletionModal: () => !engine.solutionShown,
     pause: () => { engine.pause(); save(); },
     resume: () => { engine.resume(); save(); },
     startGame: () => { engine.startTimer(); save(); },
-    resetGame: () => { engine.reset(); completionMs = null; updateProgress(); renderTray(); renderer.render(); save(); },
-    startReplay: () => {}, exitReplay: () => {}, onResetUI: () => {},
-    onTryAgain: () => { engine.reset(); completionMs = null; updateProgress(); renderTray(); renderer.render(); save(); },
+    resetGame: () => resetGame({ resetTimer: true }),
+    startReplay: () => {},
+    exitReplay: () => {},
+    onResetUI: () => {},
+    onTryAgain: () => resetGame({ resetTimer: true }),
     onNextLevel: () => switchMode('practice'),
     onBackToDaily: () => switchMode('daily'),
     onPracticeInfinite: () => switchMode('practice'),
@@ -144,15 +257,23 @@ function initShell() {
     onStartDaily: () => switchMode('daily'),
     getAnonId: () => getOrCreateAnonId(),
     getCompletionPayload: () => ({ timeMs: Math.max(3000, Math.min(engine.timeMs, 3600000)), hintsUsed: 0 }),
-    getShareMeta: () => ({ gameName: 'Polyfit', shareUrl: 'https://dailygrid.app/games/polyfit/', gridLabel: engine.getGridLabel() }),
+    getShareMeta: () => ({ gameName: 'Polyfit', shareUrl: 'https://dailygrid.app/games/polyfit/', gridLabel: engine.getGridLabel(), accent: '#f59e0b' }),
     getShareFile: () => buildShareCard({
-      gameName: 'Polyfit', logoPath: '/games/polyfit/polyfit-logo.svg', accent: '#f59e0b', accentSoft: 'rgba(245,158,11,.12)',
-      backgroundStart: '#120f1a', backgroundEnd: '#251225', dateText: formatDateForShare(getPTDateYYYYMMDD()), timeText: formatTime(completionMs ?? engine.timeMs), gridLabel: `Grid ${engine.getGridLabel()}`, footerText: 'dailygrid.app/games/polyfit'
+      gameName: 'Polyfit',
+      logoPath: '/games/polyfit/polyfit-logo.svg',
+      accent: '#f59e0b',
+      accentSoft: 'rgba(245,158,11,.12)',
+      backgroundStart: '#120f1a',
+      backgroundEnd: '#251225',
+      dateText: formatDateForShare(getPTDateYYYYMMDD()),
+      timeText: formatTime(completionMs ?? engine.timeMs),
+      gridLabel: engine.getGridLabel(),
+      footerText: 'dailygrid.app/games/polyfit'
     }),
     getCompletionMs: () => completionMs,
     setCompletionMs: (ms) => { completionMs = ms; },
     isTimerRunning: () => engine.timerStarted && !engine.isPaused && !engine.isComplete,
-    disableReplay: true,
+    disableReplay: false,
     pauseOnHide: true
   });
 }
@@ -160,8 +281,34 @@ function initShell() {
 document.addEventListener('DOMContentLoaded', () => {
   initPuzzle();
   initShell();
-  els.rotate.onclick = () => { engine.rotateSelected(selectedPiece); renderer.render(); save(); };
-  tick = setInterval(() => { const now = performance.now(); engine.updateTime(now - lastTs); lastTs = now; shell?.update(); }, 200);
+
+  els.rotate?.addEventListener('click', () => {
+    engine.rotateSelected(selectedPiece);
+    renderTray();
+    renderer.render();
+    save();
+  });
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'r' && !engine.isComplete) {
+      engine.rotateSelected(selectedPiece);
+      renderTray();
+      renderer.render();
+      save();
+    }
+  });
+
+  els.showSolutionBtn?.addEventListener('click', showSolution);
+  els.solutionRetryBtn?.addEventListener('click', () => resetGame({ resetTimer: true }));
+  els.solutionNextBtn?.addEventListener('click', () => switchMode('practice'));
+
+  tick = setInterval(() => {
+    const now = performance.now();
+    engine.updateTime(now - lastTs);
+    lastTs = now;
+    shell?.update();
+  }, 200);
+
   window.addEventListener('resize', () => { renderer.resize(); renderer.render(); });
   window.addEventListener('beforeunload', save);
 });
