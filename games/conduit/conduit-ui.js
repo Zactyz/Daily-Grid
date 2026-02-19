@@ -12,8 +12,10 @@ const STATE_PREFIX = 'dailygrid_conduit_state_';
 const els = {
   canvas: document.getElementById('conduit-canvas'),
   progress: document.getElementById('progress-text'),
-  puzzleDate: document.getElementById('puzzle-date'),
-  gridSize: document.getElementById('grid-size')
+  showSolutionBtn: document.getElementById('show-solution-btn'),
+  solutionActions: document.getElementById('solution-actions'),
+  solutionRetryBtn: document.getElementById('solution-retry-btn'),
+  solutionNextBtn: document.getElementById('solution-next-btn')
 };
 
 let descriptor;
@@ -32,6 +34,7 @@ let isComplete = false;
 let completionMs = null;
 let tickInterval = null;
 let moveCount = 0;
+let solutionShown = false;
 
 function getPuzzleIdForMode(mode) {
   if (mode === 'practice') return `practice-${puzzleSeed}`;
@@ -46,6 +49,21 @@ function getElapsedMs() {
   if (!timerStarted) return baseElapsed;
   if (isPaused) return baseElapsed;
   return baseElapsed + (performance.now() - startTimestamp);
+}
+
+function updatePracticeControls() {
+  const practice = currentMode === 'practice';
+  if (practice && !isComplete && !solutionShown) {
+    els.showSolutionBtn?.classList.remove('hidden');
+  } else {
+    els.showSolutionBtn?.classList.add('hidden');
+  }
+
+  if (practice && solutionShown && !isComplete) {
+    els.solutionActions?.classList.remove('hidden');
+  } else {
+    els.solutionActions?.classList.add('hidden');
+  }
 }
 
 function startTimer() {
@@ -79,35 +97,26 @@ function updateProgress() {
   const exitPowered = engine.getExitPoweredCount();
   const exitTotal = engine.getExitCount();
 
+  if (solutionShown && currentMode === 'practice') {
+    els.progress.textContent = 'Solution shown • Try again or load the next practice puzzle.';
+    return;
+  }
+
   if (exitPowered === 0) {
     els.progress.textContent = 'Rotate tiles 90° to route power from the source to both exits.';
     return;
   }
 
   if (exitPowered >= exitTotal && exitTotal > 0) {
-    els.progress.textContent = `Both exits powered • Circuit complete`;
+    els.progress.textContent = 'Both exits powered • Circuit complete';
     return;
   }
 
   els.progress.textContent = `Exits powered: ${exitPowered}/${exitTotal}`;
 }
 
-function setDateLabel() {
-  if (!els.puzzleDate) return;
-  if (currentMode === 'practice') {
-    els.puzzleDate.textContent = 'Practice';
-    return;
-  }
-  els.puzzleDate.textContent = puzzleId;
-}
-
-function setGridLabel() {
-  if (!els.gridSize || !descriptor) return;
-  els.gridSize.textContent = `${descriptor.width}x${descriptor.height}`;
-}
-
 function handleBoardInteraction() {
-  if (!engine || isComplete) return;
+  if (!engine || isComplete || solutionShown) return;
   if (!timerStarted) startTimer();
   if (isPaused) resumeTimer();
 
@@ -133,6 +142,7 @@ function resetPuzzle({ resetTimer }) {
   moveCount = 0;
   isComplete = false;
   completionMs = null;
+  solutionShown = false;
 
   if (resetTimer) {
     baseElapsed = 0;
@@ -142,7 +152,24 @@ function resetPuzzle({ resetTimer }) {
   }
 
   updateProgress();
+  updatePracticeControls();
   saveProgress();
+  shell?.update();
+}
+
+function showSolution() {
+  if (currentMode !== 'practice' || !engine || isComplete) return;
+
+  engine.getCells().forEach((cell) => {
+    cell.rotation = 0;
+    cell.playerMask = cell.solutionMask;
+  });
+  engine._evaluateStatuses?.();
+
+  solutionShown = true;
+  renderer?.render();
+  updateProgress();
+  updatePracticeControls();
   shell?.update();
 }
 
@@ -153,6 +180,7 @@ function completePuzzle() {
   baseElapsed = completionMs;
   isPaused = true;
   timerStarted = true;
+  updatePracticeControls();
   saveProgress();
   shell?.update();
 }
@@ -223,7 +251,9 @@ function initState() {
     completionMs = null;
     moveCount = 0;
   }
+  solutionShown = false;
   renderer?.render();
+  updatePracticeControls();
 }
 
 async function loadDescriptor() {
@@ -254,10 +284,10 @@ function resetPracticePuzzle() {
   isPaused = false;
   isComplete = false;
   completionMs = null;
+  solutionShown = false;
   loadDescriptor().then(() => {
     updateProgress();
-    setGridLabel();
-    setDateLabel();
+    updatePracticeControls();
     shell?.update();
   });
 }
@@ -276,8 +306,7 @@ function switchMode(mode) {
   loadDescriptor().then(() => {
     initState();
     updateProgress();
-    setGridLabel();
-    setDateLabel();
+    updatePracticeControls();
     shell?.update();
   });
 }
@@ -297,7 +326,7 @@ function initShell() {
     gameId: 'conduit',
     getMode: () => currentMode,
     getPuzzleId: () => puzzleId,
-    getGridLabel: () => `${descriptor?.width || 7}x${descriptor?.height || 7} Circuit`,
+    getGridLabel: () => `${descriptor?.width || 6}x${descriptor?.height || 6} Circuit`,
     getElapsedMs: () => getElapsedMs(),
     formatTime,
     autoStartOnProgress: true,
@@ -305,14 +334,23 @@ function initShell() {
     isPaused: () => isPaused,
     isStarted: () => timerStarted,
     hasProgress: () => moveCount > 0,
+    isSolutionShown: () => solutionShown,
+    shouldShowCompletionModal: () => !solutionShown,
     pause: () => pauseTimer(),
     resume: () => resumeTimer(),
     startGame: () => startTimer(),
     resetGame: () => resetPuzzle({ resetTimer: false }),
     startReplay: () => {},
     exitReplay: () => {},
-    onResetUI: () => {},
-    onTryAgain: () => resetPuzzle({ resetTimer: true }),
+    onResetUI: () => {
+      solutionShown = false;
+      updatePracticeControls();
+      updateProgress();
+    },
+    onTryAgain: () => {
+      if (currentMode === 'practice') resetPracticePuzzle();
+      else resetPuzzle({ resetTimer: true });
+    },
     onNextLevel: () => resetPracticePuzzle(),
     onBackToDaily: () => switchMode('daily'),
     onPracticeInfinite: () => switchMode('practice'),
@@ -326,7 +364,7 @@ function initShell() {
     getShareMeta: () => ({
       gameName: 'Conduit',
       shareUrl: 'https://dailygrid.app/games/conduit/',
-      gridLabel: `${descriptor?.width || 7}x${descriptor?.height || 7} Circuit`
+      gridLabel: `${descriptor?.width || 6}x${descriptor?.height || 6} Circuit`
     }),
     getShareFile: () => buildShareImage(),
     getCompletionMs: () => completionMs,
@@ -351,7 +389,7 @@ async function buildShareImage() {
     backgroundEnd: '#0b1424',
     dateText: puzzleDate,
     timeText: formatTime(finalTime || 0),
-    gridLabel: `Grid ${descriptor?.width || 7}x${descriptor?.height || 7}`,
+    gridLabel: `Grid ${descriptor?.width || 6}x${descriptor?.height || 6}`,
     footerText: 'dailygrid.app/games/conduit'
   });
 }
@@ -362,16 +400,19 @@ async function init() {
   await loadDescriptor();
   initState();
   updateProgress();
-  setGridLabel();
-  setDateLabel();
   initShell();
   ensureTicker();
+  updatePracticeControls();
   shell?.update();
 
   window.addEventListener('resize', () => {
     renderer?.resize();
     renderer?.render();
   });
+
+  els.showSolutionBtn?.addEventListener('click', () => showSolution());
+  els.solutionRetryBtn?.addEventListener('click', () => resetPracticePuzzle());
+  els.solutionNextBtn?.addEventListener('click', () => resetPracticePuzzle());
 }
 
 document.addEventListener('DOMContentLoaded', () => {
