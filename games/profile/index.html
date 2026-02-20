@@ -280,7 +280,7 @@
 
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
-    import { requestPushPermission, unsubscribePush, isPushSubscribed, hasPushOptIn } from '/games/common/push.js';
+    import { requestPushPermission, unsubscribePush, isPushSubscribed, ensureSwRegistered } from '/games/common/push.js';
 
     mountTabBar('profile');
 
@@ -490,24 +490,26 @@
         if (toggle.checked) {
           if (!vapidPublicKey) {
             toggle.checked = false;
-            statusText.textContent = 'Not available right now — try again later';
+            statusText.textContent = 'Notifications unavailable — server not configured';
             return;
           }
           const anonId = getAnonId();
           statusText.textContent = 'Requesting permission…';
           toggle.disabled = true;
-          const ok = await requestPushPermission(anonId, vapidPublicKey);
+          const result = await requestPushPermission(anonId, vapidPublicKey);
           toggle.disabled = false;
-          toggle.checked = ok;
-          if (ok) {
+          toggle.checked = result.ok;
+          if (result.ok) {
             statusText.textContent = 'You will be notified when new puzzles are live';
-          } else if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+          } else if (result.reason === 'denied' || Notification.permission === 'denied') {
             toggle.disabled = true;
             statusText.textContent = isIos
-              ? 'Blocked — go to Settings > Daily Grid > Notifications to enable'
-              : 'Blocked in browser settings — tap to learn how to re-enable';
+              ? 'Blocked — Settings > Daily Grid > Notifications to re-enable'
+              : 'Blocked in browser settings — clear site permissions to re-enable';
+          } else if (result.reason === 'dismissed') {
+            statusText.textContent = 'Permission dismissed — tap toggle to try again';
           } else {
-            statusText.textContent = 'Could not enable — try again later';
+            statusText.textContent = 'Could not subscribe — try again later';
           }
         } else {
           statusText.textContent = 'Unsubscribing…';
@@ -528,6 +530,12 @@
     // ── Init ──────────────────────────────────────────────────────────────────
     renderProfile();
     renderVersion();
+
+    // Register the service worker early so navigator.serviceWorker.ready is
+    // available when the user taps the notification toggle (profile page doesn't
+    // load any game, so SW won't be registered otherwise).
+    ensureSwRegistered();
+
     // Load VAPID key first, then init the toggle so key is guaranteed available
     let vapidKey = null;
     try {

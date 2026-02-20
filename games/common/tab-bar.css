@@ -218,7 +218,7 @@ html.dg-tab-bar-active body {
  * = calc(84px + safe-area-inset-bottom)
  */
 .dg-tab-bar-page-padding {
-  padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 /* ─── Desktop: hide tab bar, use games page only ───────────────────────────── */

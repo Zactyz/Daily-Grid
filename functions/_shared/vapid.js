@@ -10,12 +10,16 @@
  *   VAPID_PRIVATE_KEY  - Base64url-encoded P-256 private key (32 bytes)
  *   VAPID_SUBJECT      - mailto: or https: subject URI
  *
- * Generate keys with:
+ * Generate keys with (JWK method — reliable private key extraction):
  *   node -e "
  *     const {generateKeyPairSync} = require('crypto');
- *     const {privateKey, publicKey} = generateKeyPairSync('ec', {namedCurve:'P-256'});
- *     console.log('PUBLIC:', publicKey.export({type:'spki',format:'der'}).slice(-65).toString('base64url'));
- *     console.log('PRIVATE:', privateKey.export({type:'pkcs8',format:'der'}).slice(-32).toString('base64url'));
+ *     const {privateKey} = generateKeyPairSync('ec', {namedCurve:'P-256'});
+ *     const j = privateKey.export({format:'jwk'});
+ *     const x = Buffer.from(j.x,'base64url');
+ *     const y = Buffer.from(j.y,'base64url');
+ *     const pub = Buffer.concat([Buffer.from([0x04]),x,y]);
+ *     console.log('PUBLIC:' + pub.toString('base64url'));
+ *     console.log('PRIVATE:' + j.d);
  *   "
  * Or use: https://vapidkeys.com
  */

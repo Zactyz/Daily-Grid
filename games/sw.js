@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'dg-games-v4';
+const CACHE_VERSION = 'dg-games-v5';
 const CORE_ASSETS = [
   '/games/',
   '/games/index.html',
@@ -48,14 +48,19 @@ self.addEventListener('activate', (event) => {
  * Wrap a cached Response to guarantee Content-Type: text/html.
  * iOS Safari PWA will download the page as a file if this header is absent
  * or incorrect in the cached entry.
+ *
+ * Only 200-range responses with a body can be reconstructed — 204, 304, and
+ * redirect responses do not carry a body and must be returned as-is to avoid
+ * the "Response body cannot be used with this status" TypeError.
  */
 function ensureHtmlContentType(response) {
   if (!response) return response;
+  if (response.status !== 200) return response;
   const ct = response.headers.get('content-type') || '';
   if (ct.includes('text/html')) return response;
   const headers = new Headers(response.headers);
   headers.set('content-type', 'text/html; charset=utf-8');
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  return new Response(response.body, { status: 200, statusText: 'OK', headers });
 }
 
 self.addEventListener('fetch', (event) => {
