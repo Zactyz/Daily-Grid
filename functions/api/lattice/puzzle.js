@@ -28,7 +28,7 @@ export async function onRequest(context) {
 
   try {
     const today = getPTDateYYYYMMDD();
-    const cacheKey = `pathways_puzzle:${today}`;
+    const cacheKey = `lattice_puzzle:${today}`;
     
     // Try to get from KV cache first
     if (env.PUZZLE_CACHE) {
