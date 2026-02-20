@@ -1,3 +1,6 @@
+const BANK_GAP = 8;
+const BANK_PAD = 12; // space between grid bottom and bank top, and below bank
+
 export class PolyfitRenderer {
   constructor(canvas, engine) {
     this.canvas = canvas;
@@ -9,7 +12,10 @@ export class PolyfitRenderer {
     this.dragPiece = null;
     this.invalidPiecePulse = null;
     this.rotationAnim = null;
-    this.padding = 18;
+    this.padding = 14;
+    this._bankPieceSlots = [];
+    this.canvasW = 0;
+    this.canvasH = 0;
     this.resize();
   }
 
@@ -40,22 +46,73 @@ export class PolyfitRenderer {
       this.rotationAnim = null;
       return null;
     }
+    // Animate -90° → 0° so piece appears to spin into new orientation.
     return {
-      angle: (Math.PI / 2) * t,
+      angle: (Math.PI / 2) * (t - 1),
       origin: this.rotationAnim.origin
     };
   }
 
   resize() {
     const r = this.canvas.getBoundingClientRect();
+    if (!r.width) return;
     const dpr = window.devicePixelRatio || 1;
+
+    const N = this.engine.pieces.length;
+    const bankRows = N <= 4 ? 1 : 2;
+    const bankCols = Math.ceil(N / bankRows);
+
+    // Grid fills available width
+    this.gridSizePx = r.width - this.padding * 2;
+    this.cell = this.gridSizePx / this.engine.size;
+    this.offsetX = this.padding;
+    this.offsetY = this.padding;
+
+    // Bank cell: fit bankCols×4-cell slots across the grid width
+    this.bankCell = Math.max(8, Math.floor((this.gridSizePx - (bankCols - 1) * BANK_GAP) / (bankCols * 4)));
+    this.bankSlotPx = 4 * this.bankCell;
+    this.bankCols = bankCols;
+    this.bankRows = bankRows;
+
+    // Center the bank row(s) within the grid width
+    const bankRowW = bankCols * this.bankSlotPx + (bankCols - 1) * BANK_GAP;
+    this.bankStartX = this.offsetX + (this.gridSizePx - bankRowW) / 2;
+    this.bankY = this.offsetY + this.gridSizePx + BANK_PAD;
+
+    // Total canvas logical height
+    const bankAreaH = bankRows * this.bankSlotPx + (bankRows - 1) * BANK_GAP;
+    const totalH = this.bankY + bankAreaH + BANK_PAD;
+
     this.canvas.width = r.width * dpr;
-    this.canvas.height = r.height * dpr;
+    this.canvas.height = totalH * dpr;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.sizePx = Math.min(r.width, r.height) - this.padding * 2;
-    this.cell = this.sizePx / this.engine.size;
-    this.offsetX = (r.width - this.sizePx) / 2;
-    this.offsetY = (r.height - this.sizePx) / 2;
+    this.canvasW = r.width;
+    this.canvasH = totalH;
+
+    // Pre-compute bank slot hit areas
+    this._bankPieceSlots = this.engine.pieces.map((p, i) => {
+      const col = i % bankCols;
+      const row = Math.floor(i / bankCols);
+      return {
+        x: this.bankStartX + col * (this.bankSlotPx + BANK_GAP),
+        y: this.bankY + row * (this.bankSlotPx + BANK_GAP),
+        w: this.bankSlotPx,
+        h: this.bankSlotPx,
+        pieceId: p.id
+      };
+    });
+  }
+
+  // Returns piece id if (localX, localY) is inside an unplaced bank slot; null otherwise.
+  getBankPieceAt(localX, localY) {
+    for (const slot of this._bankPieceSlots) {
+      if (localX >= slot.x && localX < slot.x + slot.w &&
+          localY >= slot.y && localY < slot.y + slot.h) {
+        const p = this.engine.pieces[slot.pieceId];
+        if (p && !p.placed) return slot.pieceId;
+      }
+    }
+    return null;
   }
 
   pieceBoundsPx(pieceId) {
@@ -101,7 +158,7 @@ export class PolyfitRenderer {
     const localX = clientX - rect.left - this.offsetX;
     const localY = clientY - rect.top - this.offsetY;
 
-    if (localX < 0 || localY < 0 || localX >= this.sizePx || localY >= this.sizePx) return null;
+    if (localX < 0 || localY < 0 || localX >= this.gridSizePx || localY >= this.gridSizePx) return null;
 
     const originX = Math.round((localX - anchorX) / this.cell - b.minX);
     const originY = Math.round((localY - anchorY) / this.cell - b.minY);
@@ -143,14 +200,17 @@ export class PolyfitRenderer {
     });
   }
 
-  drawPieceCells(piece, cells, topLeftX, topLeftY, alpha = 1) {
+  // Draws piece cells at an arbitrary top-left position.
+  // cellSize defaults to grid cell size (this.cell); pass bankCell for bank rendering.
+  drawPieceCells(piece, cells, topLeftX, topLeftY, alpha = 1, cellSize = null) {
+    const cs = cellSize ?? this.cell;
     const { ctx } = this;
     const minX = Math.min(...cells.map(([x]) => x));
     const minY = Math.min(...cells.map(([, y]) => y));
     const maxX = Math.max(...cells.map(([x]) => x));
     const maxY = Math.max(...cells.map(([, y]) => y));
-    const width = (maxX - minX + 1) * this.cell;
-    const height = (maxY - minY + 1) * this.cell;
+    const width = (maxX - minX + 1) * cs;
+    const height = (maxY - minY + 1) * cs;
 
     const rotation = this.getRotationState(piece.id);
     if (rotation) {
@@ -161,15 +221,16 @@ export class PolyfitRenderer {
       ctx.translate(-origin.x, -origin.y);
     }
 
+    const margin = Math.max(2, Math.round(cs * 0.05));
     ctx.globalAlpha = alpha;
     cells.forEach(([dx, dy]) => {
-      const x = topLeftX + (dx - minX) * this.cell + 3;
-      const y = topLeftY + (dy - minY) * this.cell + 3;
+      const x = topLeftX + (dx - minX) * cs + margin;
+      const y = topLeftY + (dy - minY) * cs + margin;
       ctx.fillStyle = piece.color;
-      ctx.fillRect(x, y, this.cell - 6, this.cell - 6);
+      ctx.fillRect(x, y, cs - 2 * margin, cs - 2 * margin);
       ctx.strokeStyle = 'rgba(0,0,0,.2)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(x + 0.5, y + 0.5, this.cell - 7, this.cell - 7);
+      ctx.strokeRect(x + 0.5, y + 0.5, cs - 2 * margin - 1, cs - 2 * margin - 1);
     });
     ctx.globalAlpha = 1;
 
@@ -193,7 +254,65 @@ export class PolyfitRenderer {
     const topLeftX = clientX - rect.left - anchorX;
     const topLeftY = clientY - rect.top - anchorY;
 
+    // Drag piece always renders at grid cell size
     this.drawPieceCells(p, p.variants[p.variantIndex], topLeftX, topLeftY, 0.94);
+  }
+
+  drawBank() {
+    const { ctx } = this;
+    const draggingId = this.dragPiece?.pieceId ?? null;
+
+    // Subtle separator line between grid and bank
+    ctx.strokeStyle = 'rgba(245,158,11,0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(this.offsetX, this.bankY - BANK_PAD / 2);
+    ctx.lineTo(this.offsetX + this.gridSizePx, this.bankY - BANK_PAD / 2);
+    ctx.stroke();
+
+    this._bankPieceSlots.forEach((slot) => {
+      const p = this.engine.pieces[slot.pieceId];
+      if (!p) return;
+
+      const cells = p.variants[p.variantIndex];
+      const bw = (Math.max(...cells.map(([x]) => x)) + 1) * this.bankCell;
+      const bh = (Math.max(...cells.map(([, y]) => y)) + 1) * this.bankCell;
+      const drawX = slot.x + (slot.w - bw) / 2;
+      const drawY = slot.y + (slot.h - bh) / 2;
+
+      const isDragging = draggingId === p.id && !p.placed;
+      const isPlaced = !!p.placed;
+      const isSelected = p.id === this.selectedId && !isPlaced && !isDragging;
+
+      if (isPlaced || isDragging) {
+        // Dim ghost placeholder so the player knows the slot exists
+        ctx.globalAlpha = 0.25;
+        cells.forEach(([dx, dy]) => {
+          ctx.fillStyle = p.color;
+          const m = Math.max(1, Math.round(this.bankCell * 0.05));
+          ctx.fillRect(drawX + dx * this.bankCell + m, drawY + dy * this.bankCell + m, this.bankCell - 2 * m, this.bankCell - 2 * m);
+        });
+        ctx.globalAlpha = 1;
+      } else {
+        // Selection highlight background
+        if (isSelected) {
+          ctx.fillStyle = `${p.color}20`;
+          ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
+        }
+
+        // Draw piece at bank cell size
+        this.drawPieceCells(p, cells, drawX, drawY, 1.0, this.bankCell);
+
+        // Selection border
+        if (isSelected) {
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = 0.6;
+          ctx.strokeRect(slot.x + 1, slot.y + 1, slot.w - 2, slot.h - 2);
+          ctx.globalAlpha = 1;
+        }
+      }
+    });
   }
 
   drawFootprint() {
@@ -233,12 +352,11 @@ export class PolyfitRenderer {
   }
 
   render() {
+    if (!this.canvasW || !this.canvasH) return;
     const { ctx } = this;
-    const w = this.canvas.getBoundingClientRect().width;
-    const h = this.canvas.getBoundingClientRect().height;
-    ctx.clearRect(0, 0, w, h);
+    ctx.clearRect(0, 0, this.canvasW, this.canvasH);
     ctx.fillStyle = '#110e1a';
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillRect(0, 0, this.canvasW, this.canvasH);
 
     this.drawFootprint();
 
@@ -262,6 +380,7 @@ export class PolyfitRenderer {
       this.drawPlacementAffordance(this.preview.pieceId, this.preview.x, this.preview.y, true);
     }
 
+    this.drawBank();
     this.drawDraggingPiece();
 
     if (this.rotationAnim) requestAnimationFrame(() => this.render());

@@ -25,7 +25,7 @@ function variants(cells) {
   const out = new Map();
   let cur = cells.map((c) => [...c]);
   for (let i = 0; i < 4; i += 1) {
-    [cur, cur.map(([x, y]) => [-x, y])].forEach((v) => out.set(keyOf(v), norm(v)));
+    out.set(keyOf(cur), norm(cur));
     cur = cur.map(([x, y]) => [y, -x]);
   }
   return [...out.values()];

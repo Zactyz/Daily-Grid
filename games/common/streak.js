@@ -44,18 +44,11 @@ export function recordStreak(gameId) {
 
 /**
  * Returns yesterday's date in Pacific Time as YYYY-MM-DD.
+ * Uses Intl (same approach as getPTDateYYYYMMDD) for consistency.
  */
 function getPTYesterdayYYYYMMDD() {
-  const now = new Date();
-  const ptOffset = getPTOffsetMs();
-  const ptMs = now.getTime() + ptOffset;
-  const ptDate = new Date(ptMs);
-  // Subtract one day
-  ptDate.setUTCDate(ptDate.getUTCDate() - 1);
-  const y = ptDate.getUTCFullYear();
-  const m = String(ptDate.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(ptDate.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  const yesterday = new Date(Date.now() - 24 * 3600 * 1000);
+  return getPTDateYYYYMMDD(yesterday);
 }
 
 /**
@@ -87,19 +80,16 @@ function getNthSundayOfMonth(year, month, n) {
 
 /**
  * Returns milliseconds until midnight Pacific Time (next day's puzzle).
+ * Uses getPTDateYYYYMMDD (Intl) for the current PT date, then computes the UTC
+ * timestamp for next PT midnight (08:00 UTC in PST, 07:00 UTC in PDT).
  */
 export function getMsUntilPTMidnight() {
-  const now = new Date();
+  const today = getPTDateYYYYMMDD();
+  const [y, m, d] = today.split('-').map(Number);
   const ptOffset = getPTOffsetMs();
-  const ptMs = now.getTime() + ptOffset;
-  const ptDate = new Date(ptMs);
-  // Build next midnight explicitly using Date.UTC so day+1 overflow is unambiguous
-  const nextMidnight = Date.UTC(
-    ptDate.getUTCFullYear(),
-    ptDate.getUTCMonth(),
-    ptDate.getUTCDate() + 1   // Date.UTC handles month/year rollover automatically
-  );
-  return nextMidnight - ptMs;
+  const hourOffset = Math.round(-ptOffset / (3600 * 1000));
+  const nextMidnightUTC = Date.UTC(y, m - 1, d + 1, hourOffset, 0, 0, 0);
+  return nextMidnightUTC - Date.now();
 }
 
 /**

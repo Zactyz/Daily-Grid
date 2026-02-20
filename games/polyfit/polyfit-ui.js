@@ -13,7 +13,6 @@ const els = {
   progress: document.getElementById('progress-text'),
   gridSize: document.getElementById('grid-size'),
   puzzleDate: document.getElementById('puzzle-date'),
-  tray: document.getElementById('piece-tray'),
   showSolutionBtn: document.getElementById('show-solution-btn'),
   solutionActions: document.getElementById('solution-actions'),
   solutionRetryBtn: document.getElementById('solution-retry-btn'),
@@ -28,7 +27,6 @@ let completionMs = null;
 let selectedPiece = 0;
 let tick;
 let lastTs = performance.now();
-let rotatingPieceId = null;
 
 const stateKey = () => `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 const getPuzzleId = () => (currentMode === 'practice' ? `practice-${puzzleSeed}` : getPTDateYYYYMMDD());
@@ -46,58 +44,6 @@ function updateProgress() {
     : `${placed} of ${engine.pieces.length} pieces placed • ${remaining} remaining`;
 }
 
-function pieceShapeHTML(piece, { empty = false } = {}) {
-  const cells = piece.variants[piece.variantIndex];
-  const maxX = Math.max(...cells.map((c) => c[0]));
-  const maxY = Math.max(...cells.map((c) => c[1]));
-  const cols = maxX + 1;
-  const rows = maxY + 1;
-  const dots = new Set(cells.map(([x, y]) => `${x},${y}`));
-  const blocks = [];
-
-  for (let y = 0; y < rows; y += 1) {
-    for (let x = 0; x < cols; x += 1) {
-      const on = dots.has(`${x},${y}`);
-      blocks.push(`<span class="shape-dot ${on ? (empty ? 'hole' : 'on') : ''}" style="--piece:${piece.color}"></span>`);
-    }
-  }
-
-  return `<span class="shape-grid shape-grid-piece" style="grid-template-columns:repeat(${cols},var(--piece-cell-size,16px))">${blocks.join('')}</span>`;
-}
-
-function renderTray() {
-  const draggingId = input?.getDragPieceId?.() ?? null;
-  els.tray.innerHTML = '';
-  els.tray.className = 'w-full mb-4 grid grid-cols-3 sm:grid-cols-6 gap-1.5 items-end';
-
-  engine.pieces.forEach((p) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'tray-piece-real w-full flex flex-col justify-center items-center';
-    b.style.touchAction = 'none';
-    b.dataset.pieceId = String(p.id);
-
-    const liftedFromBank = draggingId === p.id && !p.placed;
-    const showHole = p.placed || liftedFromBank;
-    if (rotatingPieceId === p.id) b.classList.add('rotating');
-
-    b.innerHTML = `<div class="tray-body-real ${showHole ? 'tray-hole' : ''}">${pieceShapeHTML(p, { empty: showHole })}</div>`;
-
-    if (!showHole) {
-      b.addEventListener('pointerdown', (event) => {
-        event.preventDefault();
-        selectedPiece = p.id;
-        renderer.setSelected(selectedPiece);
-        input.startTrayDrag(p.id, event.clientX, event.clientY, event.pointerId);
-        renderTray();
-        renderer.render();
-      });
-    }
-
-
-    els.tray.appendChild(b);
-  });
-}
 
 function updateSolutionUI() {
   const showPractice = currentMode === 'practice' && !engine.isComplete;
@@ -167,7 +113,6 @@ function onInteract() {
   if (engine.isComplete) completionMs = completionMs ?? engine.timeMs;
   updateProgress();
   updateSolutionUI();
-  renderTray();
   renderer.render();
   save();
   shell?.update();
@@ -175,7 +120,6 @@ function onInteract() {
 
 function initPuzzle() {
   input?.destroy();
-  rotatingPieceId = null;
   engine = new PolyfitEngine(puzzleId);
   renderer = new PolyfitRenderer(els.canvas, engine);
   renderer.setSelected(selectedPiece);
@@ -184,25 +128,16 @@ function initPuzzle() {
     onSelectPiece: (pieceId) => {
       selectedPiece = pieceId;
       renderer.setSelected(selectedPiece);
-      renderTray();
+      renderer.render();
     },
-    onStateChange: () => renderTray(),
+    onStateChange: () => renderer.render(),
     onChange: onInteract,
-    onInteract,
-    onRotatePiece: (pieceId) => {
-      rotatingPieceId = pieceId;
-      renderTray();
-      setTimeout(() => {
-        rotatingPieceId = null;
-        renderTray();
-      }, 180);
-    }
+    onInteract
   });
   load();
   setLabels();
   updateProgress();
   updateSolutionUI();
-  renderTray();
   renderer.render();
   shell?.update();
 }
@@ -224,7 +159,6 @@ function resetGame({ resetTimer = true } = {}) {
   completionMs = null;
   updateProgress();
   updateSolutionUI();
-  renderTray();
   renderer.render();
   save();
 }
@@ -234,7 +168,6 @@ function showSolution() {
   engine.revealSolution();
   updateProgress();
   updateSolutionUI();
-  renderTray();
   renderer.render();
   shell?.update();
 }

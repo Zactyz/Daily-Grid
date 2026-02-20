@@ -1,7 +1,7 @@
-// Separate drag thresholds: tray pieces benefit from a larger threshold to avoid
+// Separate drag thresholds: bank pieces benefit from a larger threshold to avoid
 // accidental drags when the user intends to tap-to-rotate.
 const BOARD_DRAG_THRESHOLD = 4;
-const TRAY_DRAG_THRESHOLD = 8;
+const BANK_DRAG_THRESHOLD = 8;
 
 export class PolyfitInput {
   constructor(canvas, engine, renderer, callbacks = {}) {
@@ -13,14 +13,12 @@ export class PolyfitInput {
     this.onInteract = callbacks.onInteract;
     this.onSelectPiece = callbacks.onSelectPiece;
     this.onStateChange = callbacks.onStateChange;
-    this.onRotatePiece = callbacks.onRotatePiece;
 
     this.state = 'idle'; // idle | dragging | placed | returning
     this.dragging = null;
     this.pressingBoard = null;
-    this.dragGhost = null;
+    this.pressingBank = null;
 
-    // Store bound refs so destroy() can remove the exact same function references.
     this._onMove         = (e) => this.handleMove(e);
     this._onLeave        = () => this.handlePointerLeave();
     this._onDown         = (e) => this.handleDown(e);
@@ -36,8 +34,6 @@ export class PolyfitInput {
 
     window.addEventListener('pointermove',   this._onGlobalMove);
     window.addEventListener('pointerup',     this._onGlobalUp);
-    // pointercancel fires when OS interrupts the pointer (e.g. incoming call).
-    // Treat it identically to pointerup so the drag state is always cleaned up.
     window.addEventListener('pointercancel', this._onGlobalCancel);
   }
 
@@ -49,7 +45,9 @@ export class PolyfitInput {
     this.canvas.removeEventListener('pointerleave', this._onLeave);
     this.canvas.removeEventListener('pointerdown',  this._onDown);
     this.canvas.removeEventListener('pointerup',    this._onTapUp);
-    if (this.dragGhost) { this.dragGhost.remove(); this.dragGhost = null; }
+    this.dragging = null;
+    this.pressingBoard = null;
+    this.pressingBank = null;
   }
 
   setEngine(engine) { this.engine = engine; }
@@ -62,117 +60,6 @@ export class PolyfitInput {
 
   getDragPieceId() {
     return this.dragging?.pieceId ?? null;
-  }
-
-  ensureGhost() {
-    if (this.dragGhost) return this.dragGhost;
-    const ghost = document.createElement('div');
-    ghost.className = 'polyfit-drag-ghost';
-    ghost.style.position = 'fixed';
-    ghost.style.left = '0';
-    ghost.style.top = '0';
-    ghost.style.pointerEvents = 'none';
-    ghost.style.zIndex = '80';
-    ghost.style.opacity = '0';
-    ghost.style.transition = 'opacity .08s ease-out';
-    document.body.appendChild(ghost);
-    this.dragGhost = ghost;
-    return ghost;
-  }
-
-  buildGhostShape(pieceId) {
-    const piece = this.engine.pieces[pieceId];
-    const cells = piece?.variants[piece.variantIndex];
-    if (!piece || !cells) return;
-    const maxX = Math.max(...cells.map(([x]) => x));
-    const maxY = Math.max(...cells.map(([, y]) => y));
-    const dotSet = new Set(cells.map(([x, y]) => `${x},${y}`));
-    const cellPx = 22;
-
-    const wrap = this.ensureGhost();
-    wrap.style.display = 'grid';
-    wrap.style.gridTemplateColumns = `repeat(${maxX + 1}, ${cellPx}px)`;
-    wrap.style.gap = '2px';
-    wrap.innerHTML = '';
-
-    for (let y = 0; y <= maxY; y += 1) {
-      for (let x = 0; x <= maxX; x += 1) {
-        const dot = document.createElement('span');
-        dot.style.width = `${cellPx}px`;
-        dot.style.height = `${cellPx}px`;
-        dot.style.borderRadius = '4px';
-        if (dotSet.has(`${x},${y}`)) {
-          dot.style.background = piece.color;
-          dot.style.boxShadow = 'inset 0 0 0 1px rgba(0,0,0,.15)';
-        } else {
-          dot.style.background = 'transparent';
-        }
-        wrap.appendChild(dot);
-      }
-    }
-  }
-
-  showGhost(pieceId) {
-    this.buildGhostShape(pieceId);
-    this.ensureGhost().style.opacity = '0.96';
-  }
-
-  hideGhost() {
-    if (!this.dragGhost) return;
-    this.dragGhost.style.opacity = '0';
-  }
-
-  moveGhost(clientX, clientY, anchorOffsetPx = null) {
-    if (!this.dragGhost) return;
-    const rect = this.dragGhost.getBoundingClientRect();
-    const anchorX = anchorOffsetPx?.x ?? rect.width / 2;
-    const anchorY = anchorOffsetPx?.y ?? rect.height / 2;
-    this.dragGhost.style.transform = `translate(${Math.round(clientX - anchorX)}px, ${Math.round(clientY - anchorY)}px)`;
-  }
-
-  // Computes the pointer's position relative to the piece shape center using pure
-  // geometry, with no DOM read. Avoids the zero-rect problem that occurs when the
-  // ghost element hasn't rendered yet at the time startTrayDrag is called.
-  computeTrayAnchor(pieceId) {
-    const piece = this.engine.pieces[pieceId];
-    const cells = piece?.variants[piece.variantIndex];
-    if (!piece || !cells) return null;
-
-    const maxX = Math.max(...cells.map(([x]) => x));
-    const maxY = Math.max(...cells.map(([, y]) => y));
-    const cols = maxX + 1;
-    const rows = maxY + 1;
-    const pieceCell = 22;
-    const gap = 2;
-    const pieceWidth = cols * pieceCell + Math.max(0, cols - 1) * gap;
-    const pieceHeight = rows * pieceCell + Math.max(0, rows - 1) * gap;
-
-    return {
-      x: (pieceWidth + gap) / 2,
-      y: (pieceHeight + gap) / 2
-    };
-  }
-
-  startTrayDrag(pieceId, clientX, clientY, pointerId = null) {
-    const piece = this.engine.pieces[pieceId];
-    if (!piece || piece.placed) return;
-
-    this.dragging = {
-      pieceId,
-      source: 'bank',
-      pointerId,
-      startClientX: clientX,
-      startClientY: clientY,
-      lastValid: { source: 'bank' },
-      moved: false,
-      candidate: null,
-      anchorOffsetPx: this.computeTrayAnchor(pieceId)
-    };
-
-    this.showGhost(pieceId);
-    this.onSelectPiece?.(pieceId);
-    this.setState('dragging');
-    this.updateDragPreview(clientX, clientY);
   }
 
   startBoardDrag(pieceId, clientX, clientY, pointerId = null) {
@@ -201,23 +88,19 @@ export class PolyfitInput {
       anchorOffsetPx
     };
 
-    this.showGhost(pieceId);
     this.onSelectPiece?.(pieceId);
     this.setState('dragging');
     this.updateDragPreview(clientX, clientY);
   }
 
-  // Only rotates unplaced pieces. Placed pieces are unplaced via board tap instead
-  // (see handleGlobalDragEnd), which removes the confusing floating-piece behavior.
+  // Rotates an unplaced piece and triggers canvas animation.
   rotatePiece(pieceId) {
     const piece = this.engine.pieces[pieceId];
     if (!piece || piece.placed) return false;
 
     this.engine.rotateSelected(pieceId);
-    this.onRotatePiece?.(pieceId);
     this.renderer.animateRotation(pieceId);
     if (this.dragging?.pieceId === pieceId) {
-      this.showGhost(pieceId);
       this.updateDragPreview(
         this.dragging.lastClientX ?? this.dragging.startClientX,
         this.dragging.lastClientY ?? this.dragging.startClientY
@@ -235,7 +118,6 @@ export class PolyfitInput {
 
     this.dragging.lastClientX = clientX;
     this.dragging.lastClientY = clientY;
-    this.moveGhost(clientX, clientY, this.dragging.anchorOffsetPx);
 
     const snapped = this.renderer.snapOriginForPointer(this.dragging.pieceId, clientX, clientY, this.dragging.anchorOffsetPx);
     if (!snapped) {
@@ -254,7 +136,37 @@ export class PolyfitInput {
   }
 
   handleGlobalDragMove(e) {
+    // Check pressingBank threshold → transition to full drag
+    if (this.pressingBank && !this.dragging) {
+      if (this.pressingBank.pointerId !== null && e.pointerId !== this.pressingBank.pointerId) return;
+      const dx = Math.abs(e.clientX - this.pressingBank.startClientX);
+      const dy = Math.abs(e.clientY - this.pressingBank.startClientY);
+      if (dx + dy > BANK_DRAG_THRESHOLD) {
+        const { pieceId, pointerId } = this.pressingBank;
+        const piece = this.engine.pieces[pieceId];
+        this.pressingBank = null;
+        if (piece && !piece.placed) {
+          this.dragging = {
+            pieceId,
+            source: 'bank',
+            pointerId,
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+            lastValid: { source: 'bank' },
+            moved: true,
+            candidate: null,
+            anchorOffsetPx: null // center anchor at grid cell size
+          };
+          this.setState('dragging');
+          this.updateDragPreview(e.clientX, e.clientY);
+        }
+      }
+      return;
+    }
+
+    // Check pressingBoard threshold → transition to board drag
     if (this.pressingBoard && !this.dragging) {
+      if (this.pressingBoard.pointerId !== null && e.pointerId !== this.pressingBoard.pointerId) return;
       const dx = Math.abs(e.clientX - this.pressingBoard.startClientX);
       const dy = Math.abs(e.clientY - this.pressingBoard.startClientY);
       if (dx + dy > BOARD_DRAG_THRESHOLD) {
@@ -264,10 +176,9 @@ export class PolyfitInput {
     }
 
     if (!this.dragging) return;
-    // Only track the pointer that started the drag
     if (this.dragging.pointerId !== null && e.pointerId !== this.dragging.pointerId) return;
 
-    const threshold = this.dragging.source === 'bank' ? TRAY_DRAG_THRESHOLD : BOARD_DRAG_THRESHOLD;
+    const threshold = this.dragging.source === 'bank' ? BANK_DRAG_THRESHOLD : BOARD_DRAG_THRESHOLD;
     const dx = Math.abs(e.clientX - this.dragging.startClientX);
     const dy = Math.abs(e.clientY - this.dragging.startClientY);
     if (dx + dy > threshold) this.dragging.moved = true;
@@ -287,7 +198,6 @@ export class PolyfitInput {
     }
 
     this.dragging = null;
-    this.hideGhost();
     this.renderer.setPreview(null);
     this.renderer.setDragPiece(null);
     this.setState('placed');
@@ -297,14 +207,21 @@ export class PolyfitInput {
   }
 
   handleGlobalDragEnd(e) {
-    // Only handle the pointer that started the drag (ignore other fingers)
-    if (this.dragging && this.dragging.pointerId !== null && e.pointerId !== this.dragging.pointerId) return;
-    if (this.pressingBoard && this.pressingBoard.pointerId !== null && e.pointerId !== this.pressingBoard.pointerId) return;
+    // Bank press: tap to rotate
+    if (this.pressingBank && !this.dragging) {
+      if (this.pressingBank.pointerId !== null && e.pointerId !== this.pressingBank.pointerId) return;
+      const pieceId = this.pressingBank.pieceId;
+      this.pressingBank = null;
+      this.rotatePiece(pieceId);
+      this.renderer.render();
+      return;
+    }
 
+    // Board press without drag: tap to unplace
     if (this.pressingBoard && !this.dragging) {
+      if (this.pressingBoard.pointerId !== null && e.pointerId !== this.pressingBoard.pointerId) return;
       const pieceId = this.pressingBoard.pieceId;
       this.pressingBoard = null;
-      // Tap on placed piece: unplace it so the player can reorient and re-place it.
       this.engine.removePiece(pieceId);
       this.onSelectPiece?.(pieceId);
       this.onChange?.();
@@ -313,24 +230,24 @@ export class PolyfitInput {
     }
 
     if (!this.dragging) return;
+    if (this.dragging.pointerId !== null && e.pointerId !== this.dragging.pointerId) return;
 
-    const { pieceId, source, moved } = this.dragging;
+    const { pieceId, moved } = this.dragging;
     const candidate = this.dragging.candidate;
 
-    if (source === 'bank' && !moved) {
-      this.rotatePiece(pieceId);
+    // Bank tap (drag started but didn't move enough) → rotate
+    if (this.dragging.source === 'bank' && !moved) {
       this.dragging = null;
-      this.hideGhost();
       this.renderer.setPreview(null);
       this.renderer.setDragPiece(null);
       this.setState('idle');
+      this.rotatePiece(pieceId);
       this.renderer.render();
       return;
     }
 
     if (candidate?.valid && this.engine.tryPlace(pieceId, candidate.x, candidate.y)) {
       this.dragging = null;
-      this.hideGhost();
       this.renderer.setPreview(null);
       this.renderer.setDragPiece(null);
       this.setState('placed');
@@ -341,7 +258,6 @@ export class PolyfitInput {
       return;
     }
 
-    // Show invalid-placement pulse before snap-back
     if (candidate !== null && !candidate?.valid) {
       this.renderer.pulseInvalidPiece(pieceId);
     }
@@ -365,13 +281,32 @@ export class PolyfitInput {
   }
 
   handleTapUp() {
-    // Board taps are handled in handleGlobalDragEnd via pressingBoard.
+    // Board and bank taps are handled via pressingBoard/pressingBank in handleGlobalDragEnd.
   }
 
   handleDown(e) {
     e.preventDefault();
     if (this.dragging) return;
 
+    const rect = this.canvas.getBoundingClientRect();
+    const localX = e.clientX - rect.left;
+    const localY = e.clientY - rect.top;
+
+    // Check bank area first (bank is below grid in canvas)
+    const bankPieceId = this.renderer.getBankPieceAt(localX, localY);
+    if (bankPieceId !== null) {
+      this.onSelectPiece?.(bankPieceId);
+      this.pressingBank = {
+        pieceId: bankPieceId,
+        pointerId: e.pointerId,
+        startClientX: e.clientX,
+        startClientY: e.clientY
+      };
+      this.renderer.render(); // update selected highlight
+      return;
+    }
+
+    // Check grid/board area
     const cell = this.renderer.cellAt(e.clientX, e.clientY);
     if (!cell) return;
     const [x, y] = cell;
