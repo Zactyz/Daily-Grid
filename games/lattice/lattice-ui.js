@@ -728,13 +728,13 @@ async function loadLeaderboardIntoModal() {
 
   const data = await response.json();
 
-  if (!data?.top10?.length) {
+  if (!data?.top3?.length) {
     els.leaderboardList.innerHTML = '<p class="text-zinc-500 text-center py-6 text-xs">No scores yet - be the first!</p>';
     return;
   }
 
-  els.leaderboardList.innerHTML = data.top10.map((entry, idx) => `
-    <div class="leaderboard-row flex items-center justify-between px-3 py-2.5 ${idx < data.top10.length - 1 ? 'border-b border-white/5' : ''}">
+  els.leaderboardList.innerHTML = data.top3.map((entry, idx) => `
+    <div class="leaderboard-row flex items-center justify-between px-3 py-2.5 ${idx < data.top3.length - 1 ? 'border-b border-white/5' : ''}">
       <div class="flex items-center gap-3">
         <span class="w-6 h-6 rounded-md ${entry.rank <= 3 ? 'bg-white/10 text-zinc-200' : 'bg-zinc-700/50 text-zinc-500'} text-xs font-bold flex items-center justify-center">${entry.rank}</span>
         <span class="font-mono text-sm tracking-wider ${entry.initials ? 'text-zinc-300' : 'text-zinc-600'}">${entry.initials || '---'}</span>

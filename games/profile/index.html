@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -95,6 +95,7 @@
     }
     .toggle input:checked ~ .toggle-track { background: rgba(167,139,250,0.35); border-color: rgba(167,139,250,0.5); }
     .toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(18px); background: #a78bfa; }
+    .toggle input:disabled ~ .toggle-track { opacity: 0.4; cursor: not-allowed; }
 
     /* Game row in stats */
     .game-stat-row {
@@ -417,9 +418,28 @@
     async function initPushToggle() {
       const toggle = document.getElementById('push-toggle');
       const statusText = document.getElementById('push-status-text');
+      const row = document.getElementById('push-toggle-wrap')?.closest('.stat-row');
+
+      // iOS Safari (non-standalone) does not support Web Push — hide the row
+      const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isStandalone = !!window.navigator.standalone;
+      if (isIos && !isStandalone) {
+        if (row) row.style.display = 'none';
+        return;
+      }
 
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        document.getElementById('push-toggle-wrap').closest('.stat-row').style.display = 'none';
+        if (row) row.style.display = 'none';
+        return;
+      }
+
+      // If the user has already blocked notifications, show a locked state with instructions
+      if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+        toggle.checked = false;
+        toggle.disabled = true;
+        statusText.textContent = isIos
+          ? 'Blocked — go to Settings > Daily Grid > Notifications to enable'
+          : 'Blocked — go to browser site settings to re-enable notifications';
         return;
       }
 
@@ -434,11 +454,20 @@
         if (toggle.checked) {
           const anonId = getAnonId();
           statusText.textContent = 'Requesting permission…';
+          toggle.disabled = true;
           const ok = await requestPushPermission(anonId, window.DG_VAPID_PUBLIC_KEY);
+          toggle.disabled = false;
           toggle.checked = ok;
-          statusText.textContent = ok
-            ? 'You will be notified when new puzzles are live'
-            : 'Notifications not granted — check your browser settings';
+          if (ok) {
+            statusText.textContent = 'You will be notified when new puzzles are live';
+          } else if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+            toggle.disabled = true;
+            statusText.textContent = isIos
+              ? 'Blocked — go to Settings > Daily Grid > Notifications to enable'
+              : 'Blocked — go to browser site settings to re-enable notifications';
+          } else {
+            statusText.textContent = 'Could not enable — try again later';
+          }
         } else {
           statusText.textContent = 'Unsubscribing…';
           await unsubscribePush();

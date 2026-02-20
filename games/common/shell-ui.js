@@ -23,12 +23,12 @@ export async function loadLeaderboard({
     const response = await fetch(`${api}?puzzleId=${encodeURIComponent(puzzleId)}`);
     if (!response.ok) throw new Error('Failed to load leaderboard');
     const data = await response.json();
-    if (!data.top10 || data.top10.length === 0) {
+    if (!data.top3 || data.top3.length === 0) {
       container.innerHTML = `<p class="text-zinc-500 text-center py-6 text-xs">${emptyText}</p>`;
       return;
     }
     const fmt = formatTimeFn || formatTime;
-    const topEntries = data.top10.slice(0, 3);
+    const topEntries = data.top3;
     const playerLabel = playerEntry?.initials
       ? playerEntry.initials
       : (preferYouLabel ? 'YOU' : '---');
