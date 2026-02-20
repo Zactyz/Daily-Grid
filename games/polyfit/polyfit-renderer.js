@@ -30,11 +30,15 @@ export class PolyfitRenderer {
   }
 
   animateRotation(pieceId, origin = null) {
+    const piece = this.engine.pieces[pieceId];
+    const numVariants = piece?.variants?.length ?? 4;
+    const angleRad = (2 * Math.PI) / numVariants;
     this.rotationAnim = {
       pieceId,
       start: performance.now(),
       duration: 170,
-      origin
+      origin,
+      angleRad
     };
   }
 
@@ -46,9 +50,11 @@ export class PolyfitRenderer {
       this.rotationAnim = null;
       return null;
     }
-    // Animate -90° → 0° so piece appears to spin into new orientation.
+    // Animate from -angleRad to 0 so piece appears to spin into new orientation.
+    // angleRad = 360°/numVariants (90° for 4 variants, 180° for 2 variants).
+    const { angleRad } = this.rotationAnim;
     return {
-      angle: (Math.PI / 2) * (t - 1),
+      angle: angleRad * (t - 1),
       origin: this.rotationAnim.origin
     };
   }

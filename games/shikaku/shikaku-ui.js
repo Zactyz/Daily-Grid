@@ -944,12 +944,7 @@ function init() {
 document.addEventListener('DOMContentLoaded', () => {
   init();
   const supportsPointer = 'PointerEvent' in window;
-  const prefersTouch = (() => {
-    if (!('ontouchstart' in window)) return false;
-    const ua = navigator.userAgent || '';
-    return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  })();
-  if (supportsPointer && !prefersTouch) {
+  if (supportsPointer) {
     els.grid?.addEventListener('pointerdown', handlePointerDown, { passive: false });
     window.addEventListener('pointerup', handlePointerUp);
     window.addEventListener('pointermove', handlePointerMove, { passive: false });
