@@ -37,10 +37,10 @@ html.dg-tab-bar-active body {
 
   z-index: 200;
 
-  /* Liquid Glass material */
-  background: rgba(8, 12, 26, 0.46);
-  backdrop-filter: blur(32px) saturate(200%) brightness(1.1);
-  -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.1);
+  /* Liquid Glass material — minimal tint, let content show through */
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
 
   /* All-rounded pill — the key iOS 26 floating shape */
   border-radius: 26px;
@@ -191,11 +191,6 @@ html.dg-tab-bar-active body {
   color: rgba(255, 255, 255, 0.9);
 }
 
-.dg-tab-bar__tab.active[data-tab="daily"]    .dg-tab-bar__label { color: #D4A650; }
-.dg-tab-bar__tab.active[data-tab="practice"] .dg-tab-bar__label { color: #93c5fd; }
-.dg-tab-bar__tab.active[data-tab="medals"]   .dg-tab-bar__label { color: #fde68a; }
-.dg-tab-bar__tab.active[data-tab="profile"]  .dg-tab-bar__label { color: #c4b5fd; }
-
 /* ─── Badge (unread count) ───────────────────────────────────────────────────── */
 .dg-tab-bar__badge {
   position: absolute;
@@ -224,6 +219,19 @@ html.dg-tab-bar-active body {
  */
 .dg-tab-bar-page-padding {
   padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ─── Desktop: hide tab bar, use games page only ───────────────────────────── */
+@media (min-width: 768px) {
+  .dg-tab-bar {
+    display: none !important;
+  }
+  html.dg-tab-bar-active body {
+    padding-top: 0;
+  }
+  .dg-tab-bar-page-padding {
+    padding-bottom: 0 !important;
+  }
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────────── */

@@ -56,7 +56,21 @@ const TABS = [
  * @param {number} [opts.profileMedalCount] - Number to show as badge on medals tab
  */
 export function mountTabBar(activeKey, opts = {}) {
-  if (document.getElementById('dg-tab-bar')) return;
+  // Always apply page padding (CSS media query removes it on desktop)
+  document.documentElement.classList.add('dg-tab-bar-active');
+  const main = document.querySelector('main, .tab-page-content, #page-content');
+  (main || document.body).classList.add('dg-tab-bar-page-padding');
+
+  const existing = document.getElementById('dg-tab-bar');
+  if (existing) {
+    // Bar already in HTML — just update active state (no layout jump)
+    document.querySelectorAll('.dg-tab-bar__tab').forEach(li => {
+      li.classList.toggle('active', li.dataset.tab === activeKey);
+      const a = li.querySelector('a');
+      if (a) a.setAttribute('aria-current', li.dataset.tab === activeKey ? 'page' : null);
+    });
+    return;
+  }
 
   const bar = document.createElement('nav');
   bar.id = 'dg-tab-bar';
@@ -87,11 +101,4 @@ export function mountTabBar(activeKey, opts = {}) {
 
   bar.appendChild(list);
   document.body.appendChild(bar);
-
-  // Pad the page so content doesn't sit under the bar.
-  // Use inline style (beats any Tailwind class such as pb-3).
-  document.documentElement.classList.add('dg-tab-bar-active');
-  const TAB_BAR_PAD = 'calc(84px + env(safe-area-inset-bottom, 0px))';
-  const main = document.querySelector('main, .tab-page-content, #page-content');
-  (main || document.body).style.paddingBottom = TAB_BAR_PAD;
 }
