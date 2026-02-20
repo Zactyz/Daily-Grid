@@ -36,11 +36,13 @@ export async function loadLeaderboard({
     topEntries.forEach((entry, idx) => {
       const rank = Number.isFinite(entry.rank) ? entry.rank : idx + 1;
       const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
-      // Match by rank AND timeMs to avoid marking the wrong row when players tie
+      // Match by rank AND timeMs to avoid marking the wrong row on a tie.
+      // Only fall back to rank-only matching when the player entry genuinely has no timeMs.
+      const playerHasTime = Number.isFinite(playerEntry?.timeMs);
       const isPlayer = playerEntry
         && Number.isFinite(playerEntry.rank)
         && playerEntry.rank === rank
-        && (!Number.isFinite(playerEntry.timeMs) || playerEntry.timeMs === entry.timeMs);
+        && (playerHasTime ? playerEntry.timeMs === entry.timeMs : true);
       const initials = isPlayer ? playerLabel : (entry.initials || '???');
       rows.push({
         type: 'entry',

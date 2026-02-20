@@ -14,7 +14,6 @@ const els = {
   gridSize: document.getElementById('grid-size'),
   puzzleDate: document.getElementById('puzzle-date'),
   tray: document.getElementById('piece-tray'),
-  rotate: document.getElementById('rotate-piece-btn'),
   showSolutionBtn: document.getElementById('show-solution-btn'),
   solutionActions: document.getElementById('solution-actions'),
   solutionRetryBtn: document.getElementById('solution-retry-btn'),
@@ -29,7 +28,7 @@ let completionMs = null;
 let selectedPiece = 0;
 let tick;
 let lastTs = performance.now();
-let rotatingTrayPiece = null;
+let rotatingPieceId = null;
 
 const stateKey = () => `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 const getPuzzleId = () => (currentMode === 'practice' ? `practice-${puzzleSeed}` : getPTDateYYYYMMDD());
@@ -80,7 +79,7 @@ function renderTray() {
 
     const liftedFromBank = draggingId === p.id && !p.placed;
     const showHole = p.placed || liftedFromBank;
-    if (rotatingTrayPiece === p.id) b.classList.add('rotating');
+    if (rotatingPieceId === p.id) b.classList.add('rotating');
 
     b.innerHTML = `<div class="tray-body-real ${showHole ? 'tray-hole' : ''}">${pieceShapeHTML(p, { empty: showHole })}</div>`;
 
@@ -89,7 +88,7 @@ function renderTray() {
         event.preventDefault();
         selectedPiece = p.id;
         renderer.setSelected(selectedPiece);
-        input.startTrayDrag(p.id, event.clientX, event.clientY, b.getBoundingClientRect(), event.pointerId);
+        input.startTrayDrag(p.id, event.clientX, event.clientY, event.pointerId);
         renderTray();
         renderer.render();
       });
@@ -175,6 +174,8 @@ function onInteract() {
 }
 
 function initPuzzle() {
+  input?.destroy();
+  rotatingPieceId = null;
   engine = new PolyfitEngine(puzzleId);
   renderer = new PolyfitRenderer(els.canvas, engine);
   renderer.setSelected(selectedPiece);
@@ -187,7 +188,15 @@ function initPuzzle() {
     },
     onStateChange: () => renderTray(),
     onChange: onInteract,
-    onInteract
+    onInteract,
+    onRotatePiece: (pieceId) => {
+      rotatingPieceId = pieceId;
+      renderTray();
+      setTimeout(() => {
+        rotatingPieceId = null;
+        renderTray();
+      }, 180);
+    }
   });
   load();
   setLabels();
@@ -284,26 +293,6 @@ function initShell() {
 document.addEventListener('DOMContentLoaded', () => {
   initPuzzle();
   initShell();
-
-  const rotateSelectedPiece = () => {
-    if (engine.isComplete) return;
-    rotatingTrayPiece = selectedPiece;
-    input.rotatePiece(selectedPiece);
-    renderTray();
-    renderer.render();
-    save();
-    setTimeout(() => {
-      rotatingTrayPiece = null;
-      renderTray();
-    }, 180);
-  };
-
-  els.rotate?.classList.remove('hidden');
-  els.rotate?.addEventListener('click', rotateSelectedPiece);
-
-  window.addEventListener('keydown', (event) => {
-    if (event.key.toLowerCase() === 'r' && !engine.isComplete) rotateSelectedPiece();
-  });
 
   els.showSolutionBtn?.addEventListener('click', showSolution);
   els.solutionRetryBtn?.addEventListener('click', () => resetGame({ resetTimer: true }));

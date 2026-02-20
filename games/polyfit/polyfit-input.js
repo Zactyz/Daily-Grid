@@ -13,22 +13,43 @@ export class PolyfitInput {
     this.onInteract = callbacks.onInteract;
     this.onSelectPiece = callbacks.onSelectPiece;
     this.onStateChange = callbacks.onStateChange;
+    this.onRotatePiece = callbacks.onRotatePiece;
 
     this.state = 'idle'; // idle | dragging | placed | returning
     this.dragging = null;
     this.pressingBoard = null;
     this.dragGhost = null;
 
-    canvas.addEventListener('pointermove', (e) => this.handleMove(e));
-    canvas.addEventListener('pointerleave', () => this.handlePointerLeave());
-    canvas.addEventListener('pointerdown', (e) => this.handleDown(e));
-    canvas.addEventListener('pointerup', () => this.handleTapUp());
+    // Store bound refs so destroy() can remove the exact same function references.
+    this._onMove         = (e) => this.handleMove(e);
+    this._onLeave        = () => this.handlePointerLeave();
+    this._onDown         = (e) => this.handleDown(e);
+    this._onTapUp        = () => this.handleTapUp();
+    this._onGlobalMove   = (e) => this.handleGlobalDragMove(e);
+    this._onGlobalUp     = (e) => this.handleGlobalDragEnd(e);
+    this._onGlobalCancel = (e) => this.handleGlobalDragEnd(e);
 
-    window.addEventListener('pointermove', (e) => this.handleGlobalDragMove(e));
-    window.addEventListener('pointerup', (e) => this.handleGlobalDragEnd(e));
+    canvas.addEventListener('pointermove',  this._onMove);
+    canvas.addEventListener('pointerleave', this._onLeave);
+    canvas.addEventListener('pointerdown',  this._onDown);
+    canvas.addEventListener('pointerup',    this._onTapUp);
+
+    window.addEventListener('pointermove',   this._onGlobalMove);
+    window.addEventListener('pointerup',     this._onGlobalUp);
     // pointercancel fires when OS interrupts the pointer (e.g. incoming call).
     // Treat it identically to pointerup so the drag state is always cleaned up.
-    window.addEventListener('pointercancel', (e) => this.handleGlobalDragEnd(e));
+    window.addEventListener('pointercancel', this._onGlobalCancel);
+  }
+
+  destroy() {
+    window.removeEventListener('pointermove',   this._onGlobalMove);
+    window.removeEventListener('pointerup',     this._onGlobalUp);
+    window.removeEventListener('pointercancel', this._onGlobalCancel);
+    this.canvas.removeEventListener('pointermove',  this._onMove);
+    this.canvas.removeEventListener('pointerleave', this._onLeave);
+    this.canvas.removeEventListener('pointerdown',  this._onDown);
+    this.canvas.removeEventListener('pointerup',    this._onTapUp);
+    if (this.dragGhost) { this.dragGhost.remove(); this.dragGhost = null; }
   }
 
   setEngine(engine) { this.engine = engine; }
@@ -109,10 +130,13 @@ export class PolyfitInput {
     this.dragGhost.style.transform = `translate(${Math.round(clientX - anchorX)}px, ${Math.round(clientY - anchorY)}px)`;
   }
 
-  computeTrayAnchor(pieceId, clientX, clientY, trayRect) {
+  // Computes the pointer's position relative to the piece shape center using pure
+  // geometry, with no DOM read. Avoids the zero-rect problem that occurs when the
+  // ghost element hasn't rendered yet at the time startTrayDrag is called.
+  computeTrayAnchor(pieceId) {
     const piece = this.engine.pieces[pieceId];
     const cells = piece?.variants[piece.variantIndex];
-    if (!piece || !cells || !trayRect) return null;
+    if (!piece || !cells) return null;
 
     const maxX = Math.max(...cells.map(([x]) => x));
     const maxY = Math.max(...cells.map(([, y]) => y));
@@ -123,16 +147,13 @@ export class PolyfitInput {
     const pieceWidth = cols * pieceCell + Math.max(0, cols - 1) * gap;
     const pieceHeight = rows * pieceCell + Math.max(0, rows - 1) * gap;
 
-    const left = trayRect.left + (trayRect.width - pieceWidth) / 2;
-    const top = trayRect.top + (trayRect.height - pieceHeight) / 2;
-
     return {
-      x: Math.max(0, Math.min(pieceWidth, clientX - left)),
-      y: Math.max(0, Math.min(pieceHeight, clientY - top))
+      x: (pieceWidth + gap) / 2,
+      y: (pieceHeight + gap) / 2
     };
   }
 
-  startTrayDrag(pieceId, clientX, clientY, trayRect = null, pointerId = null) {
+  startTrayDrag(pieceId, clientX, clientY, pointerId = null) {
     const piece = this.engine.pieces[pieceId];
     if (!piece || piece.placed) return;
 
@@ -145,27 +166,9 @@ export class PolyfitInput {
       lastValid: { source: 'bank' },
       moved: false,
       candidate: null,
-      anchorOffsetPx: this.computeTrayAnchor(pieceId, clientX, clientY, trayRect)
+      anchorOffsetPx: this.computeTrayAnchor(pieceId)
     };
 
-    this.showGhost(pieceId);
-    this.onSelectPiece?.(pieceId);
-    this.setState('dragging');
-    this.updateDragPreview(clientX, clientY);
-  }
-
-  startFloatingPiece(pieceId, clientX, clientY, anchorOffsetPx = null) {
-    this.dragging = {
-      pieceId,
-      source: 'floating',
-      pointerId: null,
-      startClientX: clientX,
-      startClientY: clientY,
-      lastValid: { source: 'bank' },
-      moved: true,
-      candidate: null,
-      anchorOffsetPx
-    };
     this.showGhost(pieceId);
     this.onSelectPiece?.(pieceId);
     this.setState('dragging');
@@ -204,48 +207,26 @@ export class PolyfitInput {
     this.updateDragPreview(clientX, clientY);
   }
 
+  // Only rotates unplaced pieces. Placed pieces are unplaced via board tap instead
+  // (see handleGlobalDragEnd), which removes the confusing floating-piece behavior.
   rotatePiece(pieceId) {
     const piece = this.engine.pieces[pieceId];
-    if (!piece) return false;
+    if (!piece || piece.placed) return false;
 
-    if (!piece.placed) {
-      this.engine.rotateSelected(pieceId);
-      this.renderer.animateRotation(pieceId);
-      if (this.dragging?.pieceId === pieceId) {
-        this.showGhost(pieceId);
-        this.updateDragPreview(this.dragging.lastClientX ?? this.dragging.startClientX, this.dragging.lastClientY ?? this.dragging.startClientY);
-      } else {
-        this.renderer.render();
-      }
-      this.onSelectPiece?.(pieceId);
-      this.onChange?.();
-      return true;
+    this.engine.rotateSelected(pieceId);
+    this.onRotatePiece?.(pieceId);
+    this.renderer.animateRotation(pieceId);
+    if (this.dragging?.pieceId === pieceId) {
+      this.showGhost(pieceId);
+      this.updateDragPreview(
+        this.dragging.lastClientX ?? this.dragging.startClientX,
+        this.dragging.lastClientY ?? this.dragging.startClientY
+      );
+    } else {
+      this.renderer.render();
     }
-
-    const original = { ...piece.placed };
-    this.engine.removePiece(pieceId);
-    piece.variantIndex = (piece.variantIndex + 1) % piece.variants.length;
-
-    const placed = this.engine.tryPlace(pieceId, original.x, original.y);
-    if (!placed) {
-      const rect = this.canvas.getBoundingClientRect();
-      const floatX = rect.left + rect.width / 2;
-      const floatY = rect.top + 28;
-      this.renderer.animateRotation(pieceId);
-      this.startFloatingPiece(pieceId, floatX, floatY, null);
-      this.onChange?.();
-      this.onInteract?.();
-      return false;
-    }
-
-    this.renderer.animateRotation(pieceId, {
-      x: this.renderer.offsetX + (original.x + 0.5) * this.renderer.cell,
-      y: this.renderer.offsetY + (original.y + 0.5) * this.renderer.cell
-    });
     this.onSelectPiece?.(pieceId);
-    this.renderer.render();
     this.onChange?.();
-    this.onInteract?.();
     return true;
   }
 
@@ -323,7 +304,11 @@ export class PolyfitInput {
     if (this.pressingBoard && !this.dragging) {
       const pieceId = this.pressingBoard.pieceId;
       this.pressingBoard = null;
-      this.rotatePiece(pieceId);
+      // Tap on placed piece: unplace it so the player can reorient and re-place it.
+      this.engine.removePiece(pieceId);
+      this.onSelectPiece?.(pieceId);
+      this.onChange?.();
+      this.renderer.render();
       return;
     }
 
@@ -356,22 +341,7 @@ export class PolyfitInput {
       return;
     }
 
-    // Bug fix: 'floating' pieces must snap back to tray on invalid drop.
-    // Previously, this branch returned early without clearing dragging or hiding the ghost,
-    // leaving the piece permanently lost and the game stuck.
-    if (source === 'floating') {
-      this.renderer.pulseInvalidPiece(pieceId);
-      this.dragging = null;
-      this.hideGhost();
-      this.renderer.setPreview(null);
-      this.renderer.setDragPiece(null);
-      this.setState('idle');
-      this.onChange?.();
-      this.renderer.render();
-      return;
-    }
-
-    // Show invalid-placement pulse before snap-back for board drags
+    // Show invalid-placement pulse before snap-back
     if (candidate !== null && !candidate?.valid) {
       this.renderer.pulseInvalidPiece(pieceId);
     }

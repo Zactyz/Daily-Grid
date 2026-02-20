@@ -55,7 +55,7 @@
     .tray-body-real.tray-hole{opacity:.35;filter:saturate(.6)}
     .accent-glow{text-shadow:0 0 30px rgba(245,158,11,.35);}
     .polyfit-drag-ghost{filter:drop-shadow(0 8px 16px rgba(0,0,0,.35));}
-    @keyframes pieceSpin{from{transform:rotate(0)}to{transform:rotate(90deg)}}
+    @keyframes pieceSpin{from{transform:rotate(-90deg)}to{transform:rotate(0)}}
     @media (max-width:899px){nav{display:none!important}main{padding-top:3.5rem!important}.mobile-app-bar{display:flex}}
   </style>
 </head>
@@ -86,13 +86,12 @@
 
     <div class="flex gap-3 mb-4 flex-wrap justify-center">
       <button id="leaderboard-btn" class="btn btn-secondary hidden">Leaderboard</button>
-      <button id="rotate-piece-btn" class="hidden btn btn-secondary"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14.9-3M4 16a8 8 0 0014.9 3"/></svg>Rotate Piece</button>
       <button id="pause-btn" class="btn btn-secondary"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/></svg>Pause</button>
       <button id="reset-btn" class="btn btn-secondary"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14.9-3M4 16a8 8 0 0014.9 3"/></svg>Reset</button>
       <button id="exit-replay-btn" class="hidden btn btn-secondary flex items-center justify-center w-10 h-10 p-0" title="Exit Replay"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
 
-    <details class="glass-strong rounded-xl w-full max-w-md"><summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white">How to Play</summary><div class="px-5 pb-5 pt-1"><ul class="text-zinc-400 space-y-2.5 text-sm"><li>Drag a piece from the bottom bank onto the board and release to snap it in.</li><li>Drag placed pieces directly to reposition them anywhere else.</li><li>Tap a piece (bank or board) to rotate it.</li><li>If a drop is invalid, the piece snaps back automatically.</li></ul></div></details>
+    <details class="glass-strong rounded-xl w-full max-w-md"><summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white">How to Play</summary><div class="px-5 pb-5 pt-1"><ul class="text-zinc-400 space-y-2.5 text-sm"><li>Drag a piece from the tray onto the board and release to snap it in.</li><li>Tap a piece in the tray to rotate it through its orientations.</li><li>Tap a placed piece on the board to pick it back up.</li><li>Drag placed pieces to reposition them anywhere else on the board.</li><li>If a drop is invalid, the piece snaps back automatically.</li></ul></div></details>
 
     <button id="show-solution-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>Show Solution</button>
     <div id="solution-actions" class="hidden w-full max-w-md mt-4 flex gap-3"><button id="solution-retry-btn" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14.9-3M4 16a8 8 0 0014.9 3"/></svg>Try Again</button><button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>Next Puzzle</button></div>
