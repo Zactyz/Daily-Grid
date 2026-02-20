@@ -1,75 +1,95 @@
 /*
  * Liquid Glass Tab Bar — Daily Grid Games
- * Inspired by Apple's Liquid Glass (iOS 26 / WWDC 2025).
+ * Inspired by Apple's iOS 26 Liquid Glass design language (WWDC 2025).
  *
- * Key properties that make it feel authentic:
- *  1. Strong blur + high saturation (blur(28px) saturate(200%)) — magnifies
- *     and slightly desaturates whatever is behind it, then boosts color.
- *  2. Very low tint opacity — almost fully transparent glass.
- *  3. Specular rim — a bright gradient line at the convex top edge, simulating
- *     light refracting off the curved glass bevel.
- *  4. Active pill — a second inner glass layer (double-depth), brighter border.
- *  5. Safe-area inset — adapts to iPhone notch / home indicator.
+ * Key design properties:
+ *  1. Floats above the home indicator with a visible gap (not wall-attached).
+ *  2. Horizontal insets — does NOT span the full screen width.
+ *  3. All four corners rounded (full pill-oid shape).
+ *  4. Visible glass border on all sides — the defining iOS 26 trait.
+ *  5. Downward-facing floating shadow (ambient depth).
+ *  6. Strong blur + saturation boost — background content shows through clearly.
+ *  7. Specular caustic line on the top arc (light refracting off curved glass).
+ *  8. Active tab pill — a double-depth inner glass layer.
+ *  9. Safe-area inset top applied to body to prevent status-bar overlap.
  */
+
+/* ─── Safe-area top — required when viewport-fit=cover is active ────────────── */
+/*
+ * viewport-fit=cover extends the viewport edge-to-edge behind the status bar.
+ * Without this rule, content starts at y=0 (under the status bar) and the user
+ * cannot scroll all the way to the top.
+ */
+html.dg-tab-bar-active body {
+  padding-top: env(safe-area-inset-top, 0px);
+}
 
 /* ─── Bar shell ─────────────────────────────────────────────────────────────── */
 .dg-tab-bar {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+
+  /* Float above the home indicator with a visible gap */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+
+  /* Horizontal insets — not edge-to-edge */
+  left: 12px;
+  right: 12px;
+
   z-index: 200;
 
-  /* Glass material */
-  background: rgba(6, 9, 18, 0.52);
-  backdrop-filter: blur(28px) saturate(200%) brightness(1.06);
-  -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.06);
+  /* Liquid Glass material */
+  background: rgba(8, 12, 26, 0.46);
+  backdrop-filter: blur(32px) saturate(200%) brightness(1.1);
+  -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.1);
 
-  /* Convex rim shape */
-  border-radius: 22px 22px 0 0;
+  /* All-rounded pill — the key iOS 26 floating shape */
+  border-radius: 26px;
 
-  /* Ambient shadow + inner-edge depth */
+  /* Visible glass border on every side (iOS 26 signature) */
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
+
+  /* Floating shadow downward + inner specular glow */
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.05),
-    0 -4px 32px rgba(0, 0, 0, 0.28);
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.06),
+    0 14px 44px rgba(0, 0, 0, 0.42),
+    0 3px 10px rgba(0, 0, 0, 0.24);
 
-  padding-top: 10px;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-top: 8px;
 }
 
-/* Specular caustic — bright gradient highlight along the convex top bevel */
+/* Specular caustic — bright gradient rim along the convex top arc */
 .dg-tab-bar::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 12%;
-  right: 12%;
+  left: 8%;
+  right: 8%;
   height: 1px;
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.22) 25%,
-    rgba(255, 255, 255, 0.38) 50%,
-    rgba(255, 255, 255, 0.22) 75%,
+    rgba(255, 255, 255, 0.28) 20%,
+    rgba(255, 255, 255, 0.52) 50%,
+    rgba(255, 255, 255, 0.28) 80%,
     transparent 100%
   );
   border-radius: 999px;
   pointer-events: none;
 }
 
-/* Subtle inner-top bloom that fades downward — convex lens depth */
+/* Subtle inner bloom from the top edge downward — convex lens depth */
 .dg-tab-bar::after {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 36px;
+  height: 32px;
   background: linear-gradient(to bottom,
-    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.055) 0%,
     transparent 100%
   );
-  border-radius: 22px 22px 0 0;
+  border-radius: 26px;
   pointer-events: none;
 }
 
@@ -78,7 +98,7 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 0 8px 10px;
+  padding: 0 8px 8px;
   margin: 0;
   list-style: none;
 }
@@ -107,7 +127,7 @@
   padding: 6px 4px 4px;
   text-decoration: none;
   position: relative;
-  border-radius: 14px;
+  border-radius: 16px;
   transition: opacity 0.15s ease;
 }
 
@@ -117,16 +137,16 @@
 
 /* ─── Active pill ────────────────────────────────────────────────────────────── */
 /*
- * The active pill is a second glass layer inside the bar.
- * It sits behind the icon/label and uses a lighter tint + its own specular.
+ * A second inner glass layer — lighter tint, own specular, brighter border.
+ * Creates the "double-depth" look characteristic of iOS 26 Liquid Glass.
  */
 .dg-tab-bar__tab.active a {
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.1);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -0.5px 0 rgba(0, 0, 0, 0.12),
-    0 1px 6px rgba(0, 0, 0, 0.18);
-  border: 0.5px solid rgba(255, 255, 255, 0.14);
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.1),
+    0 1px 6px rgba(0, 0, 0, 0.2);
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
 }
 
 /* ─── Icon ──────────────────────────────────────────────────────────────────── */
@@ -151,10 +171,10 @@
 }
 
 /* Per-tab accent colors when active */
-.dg-tab-bar__tab.active[data-tab="daily"] .dg-tab-bar__icon     { color: #D4A650; }
-.dg-tab-bar__tab.active[data-tab="practice"] .dg-tab-bar__icon  { color: #60a5fa; }
-.dg-tab-bar__tab.active[data-tab="medals"] .dg-tab-bar__icon    { color: #facc15; }
-.dg-tab-bar__tab.active[data-tab="profile"] .dg-tab-bar__icon   { color: #a78bfa; }
+.dg-tab-bar__tab.active[data-tab="daily"]    .dg-tab-bar__icon { color: #D4A650; }
+.dg-tab-bar__tab.active[data-tab="practice"] .dg-tab-bar__icon { color: #60a5fa; }
+.dg-tab-bar__tab.active[data-tab="medals"]   .dg-tab-bar__icon { color: #facc15; }
+.dg-tab-bar__tab.active[data-tab="profile"]  .dg-tab-bar__icon { color: #a78bfa; }
 
 /* ─── Label ──────────────────────────────────────────────────────────────────── */
 .dg-tab-bar__label {
@@ -193,13 +213,17 @@
   align-items: center;
   justify-content: center;
   padding: 0 4px;
-  border: 1.5px solid rgba(6, 9, 18, 0.8);
+  border: 1.5px solid rgba(8, 12, 26, 0.8);
   pointer-events: none;
 }
 
-/* ─── Padding for pages so content doesn't hide behind the bar ───────────────── */
+/* ─── Page padding (content clears the floating bar) ────────────────────────── */
+/*
+ * bar height (~64px) + floating gap (12px) + safe-area + breathing room (8px)
+ * = calc(84px + safe-area-inset-bottom)
+ */
 .dg-tab-bar-page-padding {
-  padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────────── */

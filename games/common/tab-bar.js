@@ -91,7 +91,7 @@ export function mountTabBar(activeKey, opts = {}) {
   // Pad the page so content doesn't sit under the bar.
   // Use inline style (beats any Tailwind class such as pb-3).
   document.documentElement.classList.add('dg-tab-bar-active');
-  const TAB_BAR_PAD = 'calc(76px + env(safe-area-inset-bottom, 0px))';
+  const TAB_BAR_PAD = 'calc(84px + env(safe-area-inset-bottom, 0px))';
   const main = document.querySelector('main, .tab-page-content, #page-content');
   (main || document.body).style.paddingBottom = TAB_BAR_PAD;
 }
