@@ -25,6 +25,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/shell.css">
     <link rel="stylesheet" href="/games/common/games-base.css">
+    <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
     :root {
       --brand-bg: #0b1b2a;
@@ -382,6 +383,71 @@
       setTimeout(start, 0);
     }
   }
+</script>
+<script>
+window.DG_TUTORIAL_STEPS = [
+  {
+    title: 'Island Dots',
+    desc: 'Each circle is an island. The number inside tells you exactly how many bridges must connect to it.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(232,180,122,0.18)' stroke='rgba(232,180,122,0.55)' stroke-width='2'>
+    <circle cx='60' cy='40' r='16'/><circle cx='140' cy='40' r='16'/>
+    <circle cx='60' cy='100' r='16'/><circle cx='140' cy='100' r='16'/>
+    <circle cx='100' cy='70' r='16'/>
+  </g>
+  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
+    <text x='60' y='40'>2</text><text x='140' y='40'>3</text>
+    <text x='60' y='100'>1</text><text x='140' y='100'>2</text>
+    <text x='100' y='70'>2</text>
+  </g>
+</svg>`
+  },
+  {
+    title: 'Build Bridges',
+    desc: 'Tap two islands to add a bridge between them. You can add a second bridge (double line) for strength. No bridges may cross.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <line x1='76' y1='38' x2='84' y2='38' stroke='rgba(232,180,122,0.5)' stroke-width='3' stroke-linecap='round'/>
+  <line x1='76' y1='42' x2='84' y2='42' stroke='rgba(232,180,122,0.5)' stroke-width='3' stroke-linecap='round'/>
+  <line x1='116' y1='40' x2='124' y2='40' stroke='rgba(232,180,122,0.5)' stroke-width='3' stroke-linecap='round'/>
+  <line x1='100' y1='56' x2='100' y2='84' stroke='rgba(232,180,122,0.5)' stroke-width='3' stroke-linecap='round'/>
+  <line x1='76' y1='100' x2='84' y2='100' stroke='rgba(232,180,122,0.35)' stroke-width='3' stroke-linecap='round' class='dg-demo-pulse'/>
+  <g fill='rgba(232,180,122,0.18)' stroke='rgba(232,180,122,0.55)' stroke-width='2'>
+    <circle cx='60' cy='40' r='16'/><circle cx='140' cy='40' r='16'/>
+    <circle cx='60' cy='100' r='16'/><circle cx='140' cy='100' r='16'/>
+    <circle cx='100' cy='70' r='16'/>
+  </g>
+  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
+    <text x='60' y='40'>2</text><text x='140' y='40'>3</text>
+    <text x='60' y='100'>1</text><text x='140' y='100'>2</text>
+    <text x='100' y='70'>2</text>
+  </g>
+</svg>`
+  },
+  {
+    title: 'All Connected',
+    desc: 'All islands must form one connected network. When every island has exactly its required number of bridges, you win!',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g stroke='rgba(232,180,122,0.55)' stroke-width='3' stroke-linecap='round'>
+    <line x1='76' y1='38' x2='84' y2='38'/><line x1='76' y1='42' x2='84' y2='42'/>
+    <line x1='116' y1='40' x2='124' y2='40'/>
+    <line x1='60' y1='56' x2='60' y2='84'/>
+    <line x1='100' y1='56' x2='100' y2='84'/>
+    <line x1='116' y1='100' x2='124' y2='100'/>
+    <line x1='140' y1='56' x2='140' y2='84'/>
+  </g>
+  <g fill='rgba(232,180,122,0.22)' stroke='#E8B47A' stroke-width='2'>
+    <circle cx='60' cy='40' r='16'/><circle cx='140' cy='40' r='16'/>
+    <circle cx='60' cy='100' r='16'/><circle cx='140' cy='100' r='16'/>
+    <circle cx='100' cy='70' r='16'/>
+  </g>
+  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
+    <text x='60' y='40'>2</text><text x='140' y='40'>3</text>
+    <text x='60' y='100'>1</text><text x='140' y='100'>2</text>
+    <text x='100' y='70'>2</text>
+  </g>
+</svg>`
+  }
+];
 </script>
 </body>
 </html>

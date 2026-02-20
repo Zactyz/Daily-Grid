@@ -25,6 +25,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/shell.css">
     <link rel="stylesheet" href="/games/common/games-base.css">
+    <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
     :root {
       --brand-bg: #1b140e;
@@ -398,6 +399,67 @@
       setTimeout(start, 0);
     }
   }
+</script>
+<script>
+window.DG_TUTORIAL_STEPS = [
+  {
+    title: 'Number Clues',
+    desc: 'Each number tells you the area of the rectangle that must contain it. A "4" needs a 1×4 or 2×2 rectangle.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.1)' stroke-width='1'>
+    <rect x='44' y='28' width='26' height='26' rx='4'/><rect x='73' y='28' width='26' height='26' rx='4'/>
+    <rect x='102' y='28' width='26' height='26' rx='4'/><rect x='131' y='28' width='26' height='26' rx='4'/>
+    <rect x='44' y='57' width='26' height='26' rx='4'/><rect x='73' y='57' width='26' height='26' rx='4'/>
+    <rect x='102' y='57' width='26' height='26' rx='4'/><rect x='131' y='57' width='26' height='26' rx='4'/>
+    <rect x='44' y='86' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
+    <rect x='102' y='86' width='26' height='26' rx='4'/><rect x='131' y='86' width='26' height='26' rx='4'/>
+  </g>
+  <g fill='rgba(201,163,107,0.22)' stroke='rgba(201,163,107,0.6)' stroke-width='1.5'>
+    <rect x='44' y='28' width='26' height='26' rx='4'/><rect x='102' y='57' width='26' height='26' rx='4'/>
+    <rect x='73' y='86' width='26' height='26' rx='4'/>
+  </g>
+  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#c9a36b'>
+    <text x='57' y='41'>4</text><text x='115' y='70'>2</text><text x='86' y='99'>2</text>
+  </g>
+</svg>`
+  },
+  {
+    title: 'Draw Rectangles',
+    desc: 'Drag to draw a rectangle around each clue number. The rectangle\'s area must exactly match the clue.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.1)' stroke-width='1'>
+    <rect x='44' y='28' width='26' height='26' rx='4'/><rect x='73' y='28' width='26' height='26' rx='4'/>
+    <rect x='102' y='28' width='26' height='26' rx='4'/><rect x='131' y='28' width='26' height='26' rx='4'/>
+    <rect x='44' y='57' width='26' height='26' rx='4'/><rect x='73' y='57' width='26' height='26' rx='4'/>
+    <rect x='102' y='57' width='26' height='26' rx='4'/><rect x='131' y='57' width='26' height='26' rx='4'/>
+    <rect x='44' y='86' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
+    <rect x='102' y='86' width='26' height='26' rx='4'/><rect x='131' y='86' width='26' height='26' rx='4'/>
+  </g>
+  <rect x='44' y='28' width='55' height='55' rx='6' fill='rgba(201,163,107,0.15)' stroke='#c9a36b' stroke-width='2' stroke-dasharray='4,3' class='dg-demo-pulse'/>
+  <g fill='rgba(201,163,107,0.22)' stroke='rgba(201,163,107,0.6)' stroke-width='1.5'>
+    <rect x='102' y='57' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
+  </g>
+  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#c9a36b'>
+    <text x='57' y='41'>4</text><text x='115' y='70'>2</text><text x='86' y='99'>2</text>
+  </g>
+</svg>`
+  },
+  {
+    title: 'Cover the Grid',
+    desc: 'Every cell must belong to exactly one rectangle. No overlaps, no gaps. Fill the entire grid!',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <rect x='44' y='28' width='55' height='55' rx='6' fill='rgba(201,163,107,0.15)' stroke='rgba(201,163,107,0.5)' stroke-width='1.5'/>
+  <rect x='102' y='28' width='55' height='26' rx='6' fill='rgba(201,163,107,0.12)' stroke='rgba(201,163,107,0.4)' stroke-width='1.5'/>
+  <rect x='102' y='57' width='26' height='55' rx='6' fill='rgba(201,163,107,0.18)' stroke='rgba(201,163,107,0.55)' stroke-width='1.5'/>
+  <rect x='44' y='86' width='26' height='26' rx='6' fill='rgba(201,163,107,0.12)' stroke='rgba(201,163,107,0.4)' stroke-width='1.5'/>
+  <rect x='131' y='57' width='26' height='55' rx='6' fill='rgba(201,163,107,0.1)' stroke='rgba(201,163,107,0.35)' stroke-width='1.5'/>
+  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#c9a36b'>
+    <text x='57' y='41'>4</text><text x='115' y='70'>2</text><text x='86' y='99'>2</text>
+  </g>
+  <text x='100' y='125' font-size='11' text-anchor='middle' fill='rgba(201,163,107,0.6)' font-family='system-ui,sans-serif'>Grid fully covered ✓</text>
+</svg>`
+  }
+];
 </script>
 </body>
 </html>

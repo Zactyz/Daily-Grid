@@ -25,6 +25,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/shell.css">
     <link rel="stylesheet" href="/games/common/games-base.css">
+    <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
     :root {
       --brand-bg: #070c12;
@@ -348,5 +349,62 @@
     }
   }
   </script>
+<script>
+window.DG_TUTORIAL_STEPS = [
+  {
+    title: 'Circuit Tiles',
+    desc: 'The board is filled with pipe tiles in different shapes. Power enters from the top and must reach all three exits.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <rect x='44' y='18' width='112' height='104' rx='8' fill='rgba(255,255,255,0.03)' stroke='rgba(255,255,255,0.1)' stroke-width='1'/>
+  <g stroke='rgba(255,228,77,0.55)' stroke-width='5' stroke-linecap='round' fill='none'>
+    <path d='M100,18 L100,40'/>
+    <line x1='82' y1='46' x2='100' y2='46'/><line x1='100' y1='46' x2='100' y2='64'/>
+    <line x1='100' y1='64' x2='118' y2='64'/><line x1='118' y1='64' x2='118' y2='82'/>
+    <line x1='82' y1='82' x2='118' y2='82'/>
+    <line x1='82' y1='64' x2='82' y2='100'/>
+    <line x1='118' y1='82' x2='118' y2='122'/><line x1='100' y1='100' x2='100' y2='122'/>
+  </g>
+  <circle cx='100' cy='18' r='6' fill='#ffe44d'/>
+  <g fill='rgba(255,228,77,0.2)' stroke='#ffe44d' stroke-width='1.5'>
+    <circle cx='82' cy='122' r='5'/><circle cx='100' cy='122' r='5'/><circle cx='118' cy='122' r='5'/>
+  </g>
+  <text x='60' y='125' font-size='8' fill='rgba(255,228,77,0.5)' font-family='system-ui,sans-serif'>exits</text>
+</svg>`
+  },
+  {
+    title: 'Tap to Rotate',
+    desc: 'Tap any tile to rotate it 90° clockwise. Route the power through all the pipes to reach every exit.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <rect x='70' y='30' width='60' height='60' rx='10' fill='rgba(255,228,77,0.08)' stroke='rgba(255,228,77,0.35)' stroke-width='1.5'/>
+  <g stroke='rgba(255,228,77,0.7)' stroke-width='6' stroke-linecap='round' fill='none' class='dg-demo-spin-cw'>
+    <line x1='100' y1='30' x2='100' y2='60'/>
+    <line x1='100' y1='60' x2='130' y2='60'/>
+  </g>
+  <path d='M142,55 A18,18 0 0,1 145,70' stroke='rgba(255,228,77,0.4)' stroke-width='2' fill='none' stroke-dasharray='3,2'/>
+  <path d='M145,70 L140,65 M145,70 L150,65' stroke='rgba(255,228,77,0.4)' stroke-width='1.5' stroke-linecap='round'/>
+  <text x='100' y='112' font-size='11' text-anchor='middle' fill='rgba(255,228,77,0.5)' font-family='system-ui,sans-serif'>tap to rotate 90°</text>
+</svg>`
+  },
+  {
+    title: 'Complete the Circuit',
+    desc: 'When all three exits are powered and the circuit is unbroken, the puzzle is solved. No dead ends!',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <rect x='44' y='14' width='112' height='108' rx='8' fill='rgba(255,255,255,0.03)' stroke='rgba(255,228,77,0.25)' stroke-width='1'/>
+  <g stroke='#ffe44d' stroke-width='5' stroke-linecap='round' fill='none' class='dg-demo-pulse'>
+    <path d='M100,14 L100,36'/>
+    <line x1='100' y1='36' x2='100' y2='54'/><line x1='100' y1='54' x2='82' y2='54'/>
+    <line x1='82' y1='54' x2='82' y2='72'/><line x1='82' y1='72' x2='118' y2='72'/>
+    <line x1='118' y1='72' x2='118' y2='54'/><line x1='118' y1='54' x2='118' y2='36'/>
+    <line x1='118' y1='36' x2='100' y2='36'/>
+    <line x1='82' y1='72' x2='82' y2='122'/>
+    <line x1='100' y1='72' x2='100' y2='122'/>
+    <line x1='118' y1='72' x2='118' y2='122'/>
+  </g>
+  <circle cx='100' cy='14' r='6' fill='#ffe44d'/>
+  <g fill='#ffe44d'><circle cx='82' cy='122' r='5'/><circle cx='100' cy='122' r='5'/><circle cx='118' cy='122' r='5'/></g>
+</svg>`
+  }
+];
+</script>
 </body>
 </html>

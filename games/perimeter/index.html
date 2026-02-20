@@ -25,6 +25,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/shell.css">
     <link rel="stylesheet" href="/games/common/games-base.css">
+    <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
     :root {
       --brand-bg: #0c1018;
@@ -340,5 +341,76 @@
     }
   }
   </script>
+<script>
+window.DG_TUTORIAL_STEPS = [
+  {
+    title: 'Clue Numbers',
+    desc: 'Numbers on the cells tell you how many of that cell\'s 4 sides must be part of the loop.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.1)' stroke-width='1'>
+    <rect x='40' y='20' width='36' height='36' rx='3'/><rect x='80' y='20' width='36' height='36' rx='3'/>
+    <rect x='120' y='20' width='36' height='36' rx='3'/>
+    <rect x='40' y='60' width='36' height='36' rx='3'/><rect x='80' y='60' width='36' height='36' rx='3'/>
+    <rect x='120' y='60' width='36' height='36' rx='3'/>
+    <rect x='40' y='100' width='36' height='36' rx='3'/><rect x='80' y='100' width='36' height='36' rx='3'/>
+    <rect x='120' y='100' width='36' height='36' rx='3'/>
+  </g>
+  <g font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#7da2ff'>
+    <text x='58' y='38'>3</text><text x='138' y='38'>2</text>
+    <text x='98' y='78'>1</text>
+    <text x='58' y='118'>2</text><text x='138' y='118'>0</text>
+  </g>
+  <text x='100' y='135' font-size='9' text-anchor='middle' fill='rgba(125,162,255,0.45)' font-family='system-ui,sans-serif'>sides of each cell in the loop</text>
+</svg>`
+  },
+  {
+    title: 'Draw the Loop',
+    desc: 'Tap an edge to draw it. Tap again to place an × (not part of loop). Build one continuous closed loop.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.08)' stroke-width='1'>
+    <rect x='44' y='20' width='36' height='36' rx='3'/><rect x='84' y='20' width='36' height='36' rx='3'/>
+    <rect x='124' y='20' width='36' height='36' rx='3'/>
+    <rect x='44' y='60' width='36' height='36' rx='3'/><rect x='84' y='60' width='36' height='36' rx='3'/>
+    <rect x='124' y='60' width='36' height='36' rx='3'/>
+  </g>
+  <g stroke='#7da2ff' stroke-width='3' stroke-linecap='round' fill='none'>
+    <line x1='44' y1='20' x2='80' y2='20'/><line x1='84' y1='20' x2='120' y2='20'/>
+    <line x1='124' y1='20' x2='160' y2='20'/>
+    <line x1='160' y1='20' x2='160' y2='56'/>
+    <line x1='160' y1='60' x2='160' y2='96'/>
+    <line x1='124' y1='96' x2='160' y2='96'/>
+  </g>
+  <g stroke='#7da2ff' stroke-width='3' stroke-linecap='round' fill='none' class='dg-demo-pulse'>
+    <line x1='44' y1='20' x2='44' y2='56'/>
+    <line x1='44' y1='60' x2='44' y2='96'/>
+    <line x1='44' y1='96' x2='80' y2='96'/>
+  </g>
+  <g font-size='13' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#7da2ff'>
+    <text x='62' y='38'>3</text><text x='142' y='38'>2</text><text x='142' y='78'>2</text>
+  </g>
+</svg>`
+  },
+  {
+    title: 'One Closed Loop',
+    desc: 'The loop must be one single unbroken path — no branches, no dead ends. Every dot must connect to exactly 0 or 2 lines.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.07)' stroke-width='1'>
+    <rect x='44' y='14' width='32' height='32' rx='3'/><rect x='80' y='14' width='32' height='32' rx='3'/>
+    <rect x='116' y='14' width='32' height='32' rx='3'/>
+    <rect x='44' y='50' width='32' height='32' rx='3'/><rect x='80' y='50' width='32' height='32' rx='3'/>
+    <rect x='116' y='50' width='32' height='32' rx='3'/>
+    <rect x='44' y='86' width='32' height='32' rx='3'/><rect x='80' y='86' width='32' height='32' rx='3'/>
+    <rect x='116' y='86' width='32' height='32' rx='3'/>
+  </g>
+  <polygon points='44,14 148,14 148,82 116,82 116,118 44,118' fill='none' stroke='#7da2ff' stroke-width='3' stroke-linejoin='round' class='dg-demo-pulse'/>
+  <g font-size='12' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#7da2ff'>
+    <text x='60' y='30'>3</text><text x='96' y='30'>2</text><text x='132' y='30'>2</text>
+    <text x='60' y='66'>2</text><text x='132' y='66'>2</text>
+    <text x='60' y='102'>2</text><text x='132' y='102'>1</text>
+  </g>
+</svg>`
+  }
+];
+</script>
 </body>
 </html>

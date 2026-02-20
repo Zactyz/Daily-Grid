@@ -5,6 +5,7 @@ import { recordStreak, getStreak, getMsUntilPTMidnight, formatCountdown } from '
 import { recordStats, showStatsModal } from './stats.js';
 import { getPTDateYYYYMMDD } from './utils.js';
 import { requestPushPermission, isPushSubscribed, hasPushOptIn } from './push.js';
+import { showTutorialModal } from './tutorial-modal.js';
 
 const RESET_ICON = `
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1113,20 +1114,43 @@ function shouldAllowDoubleTap(target) {
 
     init();
 
-    // First-time onboarding: auto-expand How to Play accordion on first visit per game
+    // First-time onboarding: show tutorial modal (or fall back to accordion)
     if (adapter.gameId) {
       const onboardKey = `dailygrid_onboarded_${adapter.gameId}`;
+
+      // Find the How to Play details element (used for fallback + help button)
+      const allDetails = document.querySelectorAll('details');
+      const howToPlay = Array.from(allDetails).find(d => {
+        const s = d.querySelector('summary');
+        return s && /how to play/i.test(s.textContent);
+      });
+
+      // Inject a "? How to Play" help button before the accordion so returning
+      // users can re-open the tutorial at any time.
+      if (howToPlay && window.DG_TUTORIAL_STEPS?.length) {
+        const helpBtn = document.createElement('button');
+        helpBtn.className = 'dg-tutorial-help-btn';
+        helpBtn.setAttribute('aria-label', 'How to Play tutorial');
+        helpBtn.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          How to Play`;
+        helpBtn.addEventListener('click', () => showTutorialModal(window.DG_TUTORIAL_STEPS));
+        howToPlay.insertAdjacentElement('beforebegin', helpBtn);
+      }
+
       if (!localStorage.getItem(onboardKey)) {
         localStorage.setItem(onboardKey, '1');
-        // Find the How to Play details element by summary text (not the first details,
-        // which on Logice is the Clues panel, not How to Play)
-        const allDetails = document.querySelectorAll('details');
-        const howToPlay = Array.from(allDetails).find(d => {
-          const s = d.querySelector('summary');
-          return s && /how to play/i.test(s.textContent);
-        });
-        if (howToPlay && !howToPlay.open) {
+        const steps = window.DG_TUTORIAL_STEPS;
+        if (steps?.length) {
           // Delay slightly so the start overlay is visible first
+          setTimeout(() => showTutorialModal(steps), 500);
+        } else if (howToPlay && !howToPlay.open) {
+          // Fallback: open the How to Play accordion for games without tutorial steps
           setTimeout(() => { howToPlay.open = true; }, 400);
         }
       }

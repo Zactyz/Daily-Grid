@@ -25,6 +25,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/games/common/shell.css">
     <link rel="stylesheet" href="/games/common/games-base.css">
+    <link rel="stylesheet" href="/games/common/tutorial-modal.css">
     <style>
         :root {
             --brand-bg: #0a0a0f;
@@ -735,5 +736,57 @@
                 .catch((err) => console.log('Service Worker registration failed:', err));
         }
     </script>
+<script>
+window.DG_TUTORIAL_STEPS = [
+  {
+    title: 'Colored Pairs',
+    desc: 'Each color has exactly two endpoints on the grid. Your job is to connect every matching pair.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.1)' stroke-width='1'>
+    <rect x='44' y='28' width='26' height='26' rx='4'/><rect x='73' y='28' width='26' height='26' rx='4'/>
+    <rect x='102' y='28' width='26' height='26' rx='4'/><rect x='131' y='28' width='26' height='26' rx='4'/>
+    <rect x='44' y='57' width='26' height='26' rx='4'/><rect x='73' y='57' width='26' height='26' rx='4'/>
+    <rect x='102' y='57' width='26' height='26' rx='4'/><rect x='131' y='57' width='26' height='26' rx='4'/>
+    <rect x='44' y='86' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
+    <rect x='102' y='86' width='26' height='26' rx='4'/><rect x='131' y='86' width='26' height='26' rx='4'/>
+  </g>
+  <circle cx='57' cy='41' r='9' fill='#f08080'/><circle cx='144' cy='99' r='9' fill='#f08080'/>
+  <circle cx='131' cy='41' r='9' fill='#60a5fa'/><circle cx='44' cy='99' r='9' fill='#60a5fa'/>
+  <circle cx='57' cy='99' r='9' fill='#a78bfa'/><circle cx='144' cy='57' r='9' fill='#a78bfa'/>
+</svg>`
+  },
+  {
+    title: 'Draw Paths',
+    desc: 'Drag from one dot to its matching color. Paths go horizontally or vertically — no diagonals, no crossing.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(255,255,255,0.04)' stroke='rgba(255,255,255,0.08)' stroke-width='1'>
+    <rect x='44' y='28' width='26' height='26' rx='4'/><rect x='73' y='28' width='26' height='26' rx='4'/>
+    <rect x='102' y='28' width='26' height='26' rx='4'/><rect x='131' y='28' width='26' height='26' rx='4'/>
+    <rect x='44' y='57' width='26' height='26' rx='4'/><rect x='73' y='57' width='26' height='26' rx='4'/>
+    <rect x='102' y='57' width='26' height='26' rx='4'/><rect x='131' y='57' width='26' height='26' rx='4'/>
+    <rect x='44' y='86' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
+    <rect x='102' y='86' width='26' height='26' rx='4'/><rect x='131' y='86' width='26' height='26' rx='4'/>
+  </g>
+  <polyline points='57,41 57,70 86,70 115,70 144,70 144,99' fill='none' stroke='#f08080' stroke-width='10' stroke-linecap='round' stroke-linejoin='round' opacity='0.5'/>
+  <polyline points='131,41 131,57' fill='none' stroke='#a78bfa' stroke-width='10' stroke-linecap='round' opacity='0.5' class='dg-demo-pulse'/>
+  <circle cx='57' cy='41' r='9' fill='#f08080'/><circle cx='144' cy='99' r='9' fill='#f08080'/>
+  <circle cx='131' cy='41' r='9' fill='#60a5fa'/><circle cx='44' cy='99' r='9' fill='#60a5fa'/>
+  <circle cx='57' cy='99' r='9' fill='#a78bfa'/><circle cx='144' cy='57' r='9' fill='#a78bfa'/>
+</svg>`
+  },
+  {
+    title: 'Fill Every Cell',
+    desc: 'The paths must cover every single cell on the board. No empty cells allowed — that\'s what makes it challenging!',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <polyline points='57,41 57,70 57,99' fill='none' stroke='#a78bfa' stroke-width='14' stroke-linecap='round' stroke-linejoin='round' opacity='0.45'/>
+  <polyline points='57,41 86,41 115,41 131,41 131,70 131,99 115,99 86,99 86,70 115,70 144,70 144,57 144,41' fill='none' stroke='#f08080' stroke-width='14' stroke-linecap='round' stroke-linejoin='round' opacity='0.45'/>
+  <polyline points='44,99 44,57 44,28 73,28 102,28 102,57 86,57 73,57' fill='none' stroke='#60a5fa' stroke-width='14' stroke-linecap='round' stroke-linejoin='round' opacity='0.45'/>
+  <circle cx='57' cy='41' r='9' fill='#f08080'/><circle cx='144' cy='41' r='9' fill='#f08080'/>
+  <circle cx='131' cy='28' r='9' fill='#60a5fa'/><circle cx='44' cy='99' r='9' fill='#60a5fa'/>
+  <circle cx='57' cy='99' r='9' fill='#a78bfa'/><circle cx='144' cy='70' r='9' fill='#a78bfa'/>
+</svg>`
+  }
+];
+</script>
 </body>
 </html>
