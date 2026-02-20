@@ -1199,7 +1199,7 @@ function shouldAllowDoubleTap(target) {
           }
           const ok = await requestPushPermission(anonId, window.DG_VAPID_PUBLIC_KEY);
           prompt.remove();
-          if (ok) showToast('You will be notified when new puzzles are live!', 'success');
+          if (ok) showToast('You will be notified when new puzzles are live!');
         });
         prompt.querySelector('#push-opt-in-no')?.addEventListener('click', () => {
           localStorage.setItem(PUSH_ASKED_KEY, '1');
