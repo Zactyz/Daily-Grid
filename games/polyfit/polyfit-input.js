@@ -14,6 +14,7 @@ export class PolyfitInput {
     this.state = 'idle'; // idle | dragging | placed | returning
     this.dragging = null;
     this.pressingBoard = null;
+    this.dragGhost = null;
 
     canvas.addEventListener('pointermove', (e) => this.handleMove(e));
     canvas.addEventListener('pointerleave', () => this.handlePointerLeave());
@@ -34,6 +35,72 @@ export class PolyfitInput {
 
   getDragPieceId() {
     return this.dragging?.pieceId ?? null;
+  }
+
+  ensureGhost() {
+    if (this.dragGhost) return this.dragGhost;
+    const ghost = document.createElement('div');
+    ghost.className = 'polyfit-drag-ghost';
+    ghost.style.position = 'fixed';
+    ghost.style.left = '0';
+    ghost.style.top = '0';
+    ghost.style.pointerEvents = 'none';
+    ghost.style.zIndex = '80';
+    ghost.style.opacity = '0';
+    ghost.style.transition = 'opacity .08s ease-out';
+    document.body.appendChild(ghost);
+    this.dragGhost = ghost;
+    return ghost;
+  }
+
+  buildGhostShape(pieceId) {
+    const piece = this.engine.pieces[pieceId];
+    const cells = piece?.variants[piece.variantIndex];
+    if (!piece || !cells) return;
+    const maxX = Math.max(...cells.map(([x]) => x));
+    const maxY = Math.max(...cells.map(([, y]) => y));
+    const dotSet = new Set(cells.map(([x, y]) => `${x},${y}`));
+    const cellPx = 22;
+
+    const wrap = this.ensureGhost();
+    wrap.style.display = 'grid';
+    wrap.style.gridTemplateColumns = `repeat(${maxX + 1}, ${cellPx}px)`;
+    wrap.style.gap = '2px';
+    wrap.innerHTML = '';
+
+    for (let y = 0; y <= maxY; y += 1) {
+      for (let x = 0; x <= maxX; x += 1) {
+        const dot = document.createElement('span');
+        dot.style.width = `${cellPx}px`;
+        dot.style.height = `${cellPx}px`;
+        dot.style.borderRadius = '4px';
+        if (dotSet.has(`${x},${y}`)) {
+          dot.style.background = piece.color;
+          dot.style.boxShadow = 'inset 0 0 0 1px rgba(0,0,0,.15)';
+        } else {
+          dot.style.background = 'transparent';
+        }
+        wrap.appendChild(dot);
+      }
+    }
+  }
+
+  showGhost(pieceId) {
+    this.buildGhostShape(pieceId);
+    this.ensureGhost().style.opacity = '0.96';
+  }
+
+  hideGhost() {
+    if (!this.dragGhost) return;
+    this.dragGhost.style.opacity = '0';
+  }
+
+  moveGhost(clientX, clientY, anchorOffsetPx = null) {
+    if (!this.dragGhost) return;
+    const rect = this.dragGhost.getBoundingClientRect();
+    const anchorX = anchorOffsetPx?.x ?? rect.width / 2;
+    const anchorY = anchorOffsetPx?.y ?? rect.height / 2;
+    this.dragGhost.style.transform = `translate(${Math.round(clientX - anchorX)}px, ${Math.round(clientY - anchorY)}px)`;
   }
 
   computeTrayAnchor(pieceId, clientX, clientY, trayRect) {
@@ -75,6 +142,25 @@ export class PolyfitInput {
       anchorOffsetPx: this.computeTrayAnchor(pieceId, clientX, clientY, trayRect)
     };
 
+    this.showGhost(pieceId);
+    this.onSelectPiece?.(pieceId);
+    this.setState('dragging');
+    this.updateDragPreview(clientX, clientY);
+  }
+
+  startFloatingPiece(pieceId, clientX, clientY, anchorOffsetPx = null) {
+    this.dragging = {
+      pieceId,
+      source: 'floating',
+      pointerId: null,
+      startClientX: clientX,
+      startClientY: clientY,
+      lastValid: { source: 'bank' },
+      moved: true,
+      candidate: null,
+      anchorOffsetPx
+    };
+    this.showGhost(pieceId);
     this.onSelectPiece?.(pieceId);
     this.setState('dragging');
     this.updateDragPreview(clientX, clientY);
@@ -106,6 +192,7 @@ export class PolyfitInput {
       anchorOffsetPx
     };
 
+    this.showGhost(pieceId);
     this.onSelectPiece?.(pieceId);
     this.setState('dragging');
     this.updateDragPreview(clientX, clientY);
@@ -117,7 +204,9 @@ export class PolyfitInput {
 
     if (!piece.placed) {
       this.engine.rotateSelected(pieceId);
+      this.renderer.animateRotation(pieceId);
       if (this.dragging?.pieceId === pieceId) {
+        this.showGhost(pieceId);
         this.updateDragPreview(this.dragging.lastClientX ?? this.dragging.startClientX, this.dragging.lastClientY ?? this.dragging.startClientY);
       } else {
         this.renderer.render();
@@ -133,14 +222,20 @@ export class PolyfitInput {
 
     const placed = this.engine.tryPlace(pieceId, original.x, original.y);
     if (!placed) {
-      piece.variantIndex = original.variantIndex;
-      this.engine.tryPlace(pieceId, original.x, original.y);
-      this.renderer.pulseInvalidPiece(pieceId);
-      this.renderer.render();
+      const rect = this.canvas.getBoundingClientRect();
+      const floatX = rect.left + rect.width / 2;
+      const floatY = rect.top + 28;
+      this.renderer.animateRotation(pieceId);
+      this.startFloatingPiece(pieceId, floatX, floatY, null);
       this.onChange?.();
+      this.onInteract?.();
       return false;
     }
 
+    this.renderer.animateRotation(pieceId, {
+      x: this.renderer.offsetX + (original.x + 0.5) * this.renderer.cell,
+      y: this.renderer.offsetY + (original.y + 0.5) * this.renderer.cell
+    });
     this.onSelectPiece?.(pieceId);
     this.renderer.render();
     this.onChange?.();
@@ -153,6 +248,7 @@ export class PolyfitInput {
 
     this.dragging.lastClientX = clientX;
     this.dragging.lastClientY = clientY;
+    this.moveGhost(clientX, clientY, this.dragging.anchorOffsetPx);
 
     const snapped = this.renderer.snapOriginForPointer(this.dragging.pieceId, clientX, clientY, this.dragging.anchorOffsetPx);
     if (!snapped) {
@@ -201,6 +297,7 @@ export class PolyfitInput {
     }
 
     this.dragging = null;
+    this.hideGhost();
     this.renderer.setPreview(null);
     this.renderer.setDragPiece(null);
     this.setState('placed');
@@ -225,6 +322,7 @@ export class PolyfitInput {
     if (source === 'bank' && !moved) {
       this.rotatePiece(pieceId);
       this.dragging = null;
+      this.hideGhost();
       this.renderer.setPreview(null);
       this.renderer.setDragPiece(null);
       this.setState('idle');
@@ -234,6 +332,7 @@ export class PolyfitInput {
 
     if (candidate?.valid && this.engine.tryPlace(pieceId, candidate.x, candidate.y)) {
       this.dragging = null;
+      this.hideGhost();
       this.renderer.setPreview(null);
       this.renderer.setDragPiece(null);
       this.setState('placed');
@@ -241,6 +340,12 @@ export class PolyfitInput {
       this.onInteract?.();
       this.renderer.render();
       this.setState('idle');
+      return;
+    }
+
+    if (source === 'floating') {
+      this.renderer.setPreview(null);
+      this.renderer.render();
       return;
     }
 

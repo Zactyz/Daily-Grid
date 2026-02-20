@@ -8,6 +8,7 @@ export class PolyfitRenderer {
     this.preview = null;
     this.dragPiece = null;
     this.invalidPiecePulse = null;
+    this.rotationAnim = null;
     this.padding = 18;
     this.resize();
   }
@@ -20,6 +21,29 @@ export class PolyfitRenderer {
 
   pulseInvalidPiece(pieceId) {
     this.invalidPiecePulse = { pieceId, until: performance.now() + 280 };
+  }
+
+  animateRotation(pieceId, origin = null) {
+    this.rotationAnim = {
+      pieceId,
+      start: performance.now(),
+      duration: 170,
+      origin
+    };
+  }
+
+  getRotationState(pieceId) {
+    if (!this.rotationAnim || this.rotationAnim.pieceId !== pieceId) return null;
+    const elapsed = performance.now() - this.rotationAnim.start;
+    const t = Math.min(1, elapsed / this.rotationAnim.duration);
+    if (t >= 1) {
+      this.rotationAnim = null;
+      return null;
+    }
+    return {
+      angle: (Math.PI / 2) * t,
+      origin: this.rotationAnim.origin
+    };
   }
 
   resize() {
@@ -119,6 +143,39 @@ export class PolyfitRenderer {
     });
   }
 
+  drawPieceCells(piece, cells, topLeftX, topLeftY, alpha = 1) {
+    const { ctx } = this;
+    const minX = Math.min(...cells.map(([x]) => x));
+    const minY = Math.min(...cells.map(([, y]) => y));
+    const maxX = Math.max(...cells.map(([x]) => x));
+    const maxY = Math.max(...cells.map(([, y]) => y));
+    const width = (maxX - minX + 1) * this.cell;
+    const height = (maxY - minY + 1) * this.cell;
+
+    const rotation = this.getRotationState(piece.id);
+    if (rotation) {
+      const origin = rotation.origin || { x: topLeftX + width / 2, y: topLeftY + height / 2 };
+      ctx.save();
+      ctx.translate(origin.x, origin.y);
+      ctx.rotate(rotation.angle);
+      ctx.translate(-origin.x, -origin.y);
+    }
+
+    ctx.globalAlpha = alpha;
+    cells.forEach(([dx, dy]) => {
+      const x = topLeftX + (dx - minX) * this.cell + 3;
+      const y = topLeftY + (dy - minY) * this.cell + 3;
+      ctx.fillStyle = piece.color;
+      ctx.fillRect(x, y, this.cell - 6, this.cell - 6);
+      ctx.strokeStyle = 'rgba(0,0,0,.2)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, this.cell - 7, this.cell - 7);
+    });
+    ctx.globalAlpha = 1;
+
+    if (rotation) ctx.restore();
+  }
+
   drawDraggingPiece() {
     if (!this.dragPiece) return;
     const { pieceId, clientX, clientY, anchorOffsetPx } = this.dragPiece;
@@ -126,6 +183,8 @@ export class PolyfitRenderer {
     if (!p) return;
 
     const rect = this.canvas.getBoundingClientRect();
+    if (clientX < rect.left - 24 || clientY < rect.top - 24 || clientX > rect.right + 24 || clientY > rect.bottom + 24) return;
+
     const b = this.pieceBoundsPx(pieceId);
     if (!b) return;
 
@@ -134,18 +193,7 @@ export class PolyfitRenderer {
     const topLeftX = clientX - rect.left - anchorX;
     const topLeftY = clientY - rect.top - anchorY;
 
-    const { ctx } = this;
-    ctx.globalAlpha = 0.94;
-    p.variants[p.variantIndex].forEach(([dx, dy]) => {
-      const x = topLeftX + (dx - b.minX) * this.cell + 3;
-      const y = topLeftY + (dy - b.minY) * this.cell + 3;
-      ctx.fillStyle = p.color;
-      ctx.fillRect(x, y, this.cell - 6, this.cell - 6);
-      ctx.strokeStyle = 'rgba(0,0,0,.2)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x + .5, y + .5, this.cell - 7, this.cell - 7);
-    });
-    ctx.globalAlpha = 1;
+    this.drawPieceCells(p, p.variants[p.variantIndex], topLeftX, topLeftY, 0.94);
   }
 
   drawFootprint() {
@@ -215,5 +263,7 @@ export class PolyfitRenderer {
     }
 
     this.drawDraggingPiece();
+
+    if (this.rotationAnim) requestAnimationFrame(() => this.render());
   }
 }

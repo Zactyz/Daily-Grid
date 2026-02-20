@@ -28,6 +28,7 @@ let completionMs = null;
 let selectedPiece = 0;
 let tick;
 let lastTs = performance.now();
+let rotatingTrayPiece = null;
 
 const stateKey = () => `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 const getPuzzleId = () => (currentMode === 'practice' ? `practice-${puzzleSeed}` : getPTDateYYYYMMDD());
@@ -72,12 +73,13 @@ function renderTray() {
   engine.pieces.forEach((p) => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'tray-piece-real w-full min-h-[74px] rounded-md border-0 bg-transparent p-1.5 flex flex-col justify-center items-center';
+    b.className = 'tray-piece-real w-full flex flex-col justify-center items-center';
     b.style.touchAction = 'none';
     b.dataset.pieceId = String(p.id);
 
     const liftedFromBank = draggingId === p.id && !p.placed;
     const showHole = p.placed || liftedFromBank;
+    if (rotatingTrayPiece === p.id) b.classList.add('rotating');
 
     b.innerHTML = `<div class="tray-body-real ${showHole ? 'tray-hole' : ''}">${pieceShapeHTML(p, { empty: showHole })}</div>`;
 
@@ -278,22 +280,24 @@ document.addEventListener('DOMContentLoaded', () => {
   initPuzzle();
   initShell();
 
-  els.rotate?.classList.remove('hidden');
-  els.rotate?.addEventListener('click', () => {
+  const rotateSelectedPiece = () => {
     if (engine.isComplete) return;
+    rotatingTrayPiece = selectedPiece;
     input.rotatePiece(selectedPiece);
     renderTray();
     renderer.render();
     save();
-  });
+    setTimeout(() => {
+      rotatingTrayPiece = null;
+      renderTray();
+    }, 180);
+  };
+
+  els.rotate?.classList.remove('hidden');
+  els.rotate?.addEventListener('click', rotateSelectedPiece);
 
   window.addEventListener('keydown', (event) => {
-    if (event.key.toLowerCase() === 'r' && !engine.isComplete) {
-      input.rotatePiece(selectedPiece);
-      renderTray();
-      renderer.render();
-      save();
-    }
+    if (event.key.toLowerCase() === 'r' && !engine.isComplete) rotateSelectedPiece();
   });
 
   els.showSolutionBtn?.addEventListener('click', showSolution);

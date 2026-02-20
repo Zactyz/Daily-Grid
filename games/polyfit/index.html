@@ -17,7 +17,7 @@
     body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 45% at 50% -15%,rgba(245,158,11,.11),transparent),radial-gradient(ellipse 55% 35% at 100% 100%,rgba(245,158,11,.06),transparent);pointer-events:none;z-index:-1;}
     .glass{background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border)}
     .glass-strong{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    .btn{padding:.625rem 1.2rem;border-radius:10px;font-weight:600;font-size:.875rem;transition:all .2s ease;display:flex;align-items:center;gap:.45rem}
+    .btn{padding:.625rem 1.2rem;border-radius:10px;font-weight:600;font-size:.875rem;transition:all .2s ease;display:flex;align-items:center;justify-content:center;gap:.45rem}
     .btn-primary{background:linear-gradient(135deg,var(--brand-accent),var(--brand-accent-dim));color:#1b1204}
     .btn-secondary{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#d4d4d8}
     .timer-display{background:linear-gradient(135deg,rgba(245,158,11,.14),rgba(245,158,11,.04));border:1px solid rgba(245,158,11,.24)}
@@ -37,9 +37,13 @@
     .shape-dot{width:var(--piece-cell-size,10px);height:var(--piece-cell-size,10px);border-radius:4px;background:transparent}
     .shape-dot.on{background:var(--piece);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
     .shape-dot.hole{background:rgba(255,255,255,.045);border:1px dashed rgba(255,255,255,.08)}
-    .tray-piece-real{transition:border-color .15s ease,background .15s ease}
-    .tray-body-real{min-height:58px;display:flex;align-items:center;justify-content:center;width:100%}
-    .tray-body-real.tray-hole{opacity:.9}
+    .tray-piece-real{transition:transform .16s ease,opacity .16s ease;border:0;background:transparent;padding:.35rem;min-height:76px}
+    .tray-piece-real:active{transform:scale(.98)}
+    .tray-piece-real.rotating .shape-grid-piece{animation:pieceSpin .17s linear}
+    .tray-body-real{min-height:64px;display:flex;align-items:center;justify-content:center;width:100%}
+    .tray-body-real.tray-hole{opacity:.35;filter:saturate(.6)}
+    .polyfit-drag-ghost{filter:drop-shadow(0 8px 16px rgba(0,0,0,.35));}
+    @keyframes pieceSpin{from{transform:rotate(0)}to{transform:rotate(90deg)}}
     details summary{list-style:none}.details-plus::after{content:'+';float:right;font-size:1.2rem;color:#71717a}details[open] .details-plus::after{transform:rotate(45deg)}
     @media (max-width:899px){nav{display:none!important}main{padding-top:3.5rem!important}.mobile-app-bar{display:flex}}
   </style>
@@ -69,16 +73,16 @@
 
     <div class="flex gap-3 mb-4 flex-wrap justify-center">
       <button id="leaderboard-btn" class="btn btn-secondary hidden">Leaderboard</button>
-      <button id="rotate-piece-btn" class="hidden btn btn-secondary">Rotate Piece</button>
-      <button id="pause-btn" class="btn btn-secondary">Pause</button>
-      <button id="reset-btn" class="btn btn-secondary">Reset</button>
+      <button id="rotate-piece-btn" class="hidden btn btn-secondary"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14.9-3M4 16a8 8 0 0014.9 3"/></svg>Rotate Piece</button>
+      <button id="pause-btn" class="btn btn-secondary"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/></svg>Pause</button>
+      <button id="reset-btn" class="btn btn-secondary"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14.9-3M4 16a8 8 0 0014.9 3"/></svg>Reset</button>
       <button id="exit-replay-btn" class="hidden btn btn-secondary flex items-center justify-center w-10 h-10 p-0" title="Exit Replay"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
 
     <details class="glass-strong rounded-xl w-full max-w-md"><summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white">How to Play</summary><div class="px-5 pb-5 pt-1"><ul class="text-zinc-400 space-y-2.5 text-sm"><li>Drag a piece from the bottom bank onto the board and release to snap it in.</li><li>Drag placed pieces directly to reposition them anywhere else.</li><li>Tap a piece (bank or board) to rotate it.</li><li>If a drop is invalid, the piece snaps back automatically.</li></ul></div></details>
 
-    <button id="show-solution-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors">Show Solution</button>
-    <div id="solution-actions" class="hidden w-full max-w-md mt-4 flex gap-3"><button id="solution-retry-btn" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors">Try Again</button><button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-colors">Next Level</button></div>
+    <button id="show-solution-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>Show Solution</button>
+    <div id="solution-actions" class="hidden w-full max-w-md mt-4 flex gap-3"><button id="solution-retry-btn" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14.9-3M4 16a8 8 0 0014.9 3"/></svg>Try Again</button><button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>Next Level</button></div>
 
     <button id="practice-mode-btn" class="w-full max-w-md mt-4 py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-medium hover:bg-white/5 hover:text-white transition-colors flex items-center justify-center gap-2 group"><span>Try Practice Levels</span><svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></button>
     <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-amber-500/20 text-amber-300 text-sm font-medium hover:bg-amber-500/10 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg><span>Back to Daily Puzzle</span></button>

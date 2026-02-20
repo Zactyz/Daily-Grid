@@ -194,6 +194,22 @@ export class ConduitRenderer {
     ctx.fill();
   }
 
+  _drawEntryFlowMarker(ctx, edgeX, edgeY, outerX, outerY, dir, color, isExit, size) {
+    if (isExit) {
+      this._drawArrow(ctx, outerX, outerY, dir, color, size);
+      return;
+    }
+
+    const inward = ({ N: 'S', S: 'N', E: 'W', W: 'E' }[dir]) || 'S';
+    const cx = (edgeX + outerX) * 0.5;
+    const cy = (edgeY + outerY) * 0.5;
+    const v = DIR_VEC[inward] || DIR_VEC.S;
+
+    const mirroredX = cx + v.x * (size * 0.52);
+    const mirroredY = cy + v.y * (size * 0.52);
+    this._drawArrow(ctx, mirroredX, mirroredY, inward, color, size);
+  }
+
   _drawEntries(ctx, t) {
     const descriptor = this.engine.getDescriptor();
     if (!descriptor.entryPoints) return;
@@ -235,9 +251,8 @@ export class ConduitRenderer {
       ctx.fill();
       ctx.restore();
 
-      // direction arrows OUTSIDE the cell
-      const arrowDir = isExit ? entry.dir : ({ N: 'S', S: 'N', E: 'W', W: 'E' }[entry.dir]);
-      this._drawArrow(ctx, outerX, outerY, arrowDir, color, Math.max(9, cellSize * 0.16));
+      // direction marker OUTSIDE the cell; source is a true mirrored counterpart of exits
+      this._drawEntryFlowMarker(ctx, edgeX, edgeY, outerX, outerY, entry.dir, color, isExit, Math.max(9, cellSize * 0.16));
 
     });
   }

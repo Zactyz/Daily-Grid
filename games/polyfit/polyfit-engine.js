@@ -43,6 +43,21 @@ function canPlace(board, size, targetMask, cells, ox, oy) {
   return true;
 }
 
+function placementsForPiece(board, size, targetMask, piece) {
+  const options = [];
+  for (let v = 0; v < piece.variants.length; v += 1) {
+    const cells = piece.variants[v];
+    const maxX = Math.max(...cells.map(([x]) => x));
+    const maxY = Math.max(...cells.map(([, y]) => y));
+    for (let y = 0; y <= size - maxY - 1; y += 1) {
+      for (let x = 0; x <= size - maxX - 1; x += 1) {
+        if (canPlace(board, size, targetMask, cells, x, y)) options.push({ x, y, variantIndex: v, cells });
+      }
+    }
+  }
+  return options;
+}
+
 function buildTargetMask(size, cellCount, rng) {
   const mask = new Array(size * size).fill(false);
   const startX = 1 + Math.floor(rng() * (size - 2));
@@ -169,32 +184,48 @@ export class PolyfitEngine {
       p.variantIndex = 0;
     });
 
-    const openCells = [];
-    this.targetMask.forEach((filled, idx) => {
-      if (filled) openCells.push([idx % this.size, Math.floor(idx / this.size)]);
-    });
+    const unplaced = this.pieces.map((p) => p.id);
+    const trySolve = () => {
+      if (!unplaced.length) return true;
 
-    for (const p of this.pieces) {
-      let placed = false;
-      for (const [ox, oy] of openCells) {
-        for (let v = 0; v < p.variants.length; v += 1) {
-          p.variantIndex = v;
-          const cells = p.variants[v];
-          if (!canPlace(this.board, this.size, this.targetMask, cells, ox, oy)) continue;
-          cells.forEach(([dx, dy]) => {
-            this.board[(oy + dy) * this.size + (ox + dx)] = p.id;
-          });
-          p.placed = { x: ox, y: oy, variantIndex: v };
-          placed = true;
-          break;
+      let bestIdx = -1;
+      let bestOptions = null;
+      for (let i = 0; i < unplaced.length; i += 1) {
+        const piece = this.pieces[unplaced[i]];
+        const options = placementsForPiece(this.board, this.size, this.targetMask, piece);
+        if (!options.length) return false;
+        if (!bestOptions || options.length < bestOptions.length) {
+          bestOptions = options;
+          bestIdx = i;
         }
-        if (placed) break;
       }
-      if (!placed) {
-        this.reset({ resetTimer: false });
-        this.solutionShown = true;
-        return false;
+
+      const pieceId = unplaced.splice(bestIdx, 1)[0];
+      const piece = this.pieces[pieceId];
+      for (const option of bestOptions) {
+        option.cells.forEach(([dx, dy]) => {
+          this.board[(option.y + dy) * this.size + (option.x + dx)] = pieceId;
+        });
+        piece.variantIndex = option.variantIndex;
+        piece.placed = { x: option.x, y: option.y, variantIndex: option.variantIndex };
+
+        if (trySolve()) return true;
+
+        option.cells.forEach(([dx, dy]) => {
+          this.board[(option.y + dy) * this.size + (option.x + dx)] = null;
+        });
+        piece.placed = null;
       }
+
+      unplaced.splice(bestIdx, 0, pieceId);
+      return false;
+    };
+
+    const solved = trySolve();
+    if (!solved) {
+      this.reset({ resetTimer: false });
+      this.solutionShown = true;
+      return false;
     }
 
     this.solutionShown = true;
