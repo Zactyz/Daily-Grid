@@ -503,28 +503,75 @@ window.DG_TUTORIAL_STEPS = [
   },
   {
     title: 'Tap to Cycle',
-    desc: 'Tap any cell to cycle through: blank → 0 → 1 → blank. Use hints if you get stuck.',
+    desc: 'Tap any cell to cycle: blank → 0 → 1 → blank. Use hints if you get stuck.',
     demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
-  <!-- Three cells showing the full cycle: blank, 0, 1 -->
-  <!-- Blank cell -->
-  <rect x='18' y='38' width='48' height='48' rx='8' fill='rgba(255,255,255,0.04)' stroke='rgba(255,255,255,0.15)' stroke-width='1.5'/>
-  <text x='42' y='62' font-size='10' font-weight='600' text-anchor='middle' dominant-baseline='central' fill='rgba(255,255,255,0.2)' font-family='system-ui,sans-serif'>blank</text>
-  <!-- Arrow 1→2 -->
-  <path d='M 72 62 L 82 62' stroke='rgba(255,255,255,0.25)' stroke-width='1.5' stroke-linecap='round'/>
-  <path d='M 80 58 L 84 62 L 80 66' stroke='rgba(255,255,255,0.25)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/>
-  <!-- 0 cell -->
-  <rect x='86' y='38' width='48' height='48' rx='8' fill='rgba(239,68,68,0.14)' stroke='rgba(239,68,68,0.45)' stroke-width='1.5'/>
-  <text x='110' y='64' font-size='26' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#ef4444'>0</text>
-  <!-- Arrow 2→3 -->
-  <path d='M 140 62 L 150 62' stroke='rgba(255,255,255,0.25)' stroke-width='1.5' stroke-linecap='round'/>
-  <path d='M 148 58 L 152 62 L 148 66' stroke='rgba(255,255,255,0.25)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/>
-  <!-- 1 cell (highlighted/active) -->
-  <rect x='154' y='38' width='48' height='48' rx='8' fill='rgba(16,185,129,0.18)' stroke='rgba(16,185,129,0.5)' stroke-width='2' class='dg-demo-blink'/>
-  <text x='178' y='64' font-size='26' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#10b981' class='dg-demo-blink'>1</text>
-  <!-- Wrap-around arrow back to blank -->
-  <path d='M 178 86 Q 178 108 110 108 Q 42 108 42 86' stroke='rgba(255,255,255,0.18)' stroke-width='1.5' stroke-linecap='round' fill='none' stroke-dasharray='3,3'/>
-  <path d='M 44 90 L 42 86 L 40 90' stroke='rgba(255,255,255,0.18)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/>
-  <text x='100' y='125' font-size='10' text-anchor='middle' fill='rgba(255,255,255,0.3)' font-family='system-ui,sans-serif'>tap to cycle → blank → 0 → 1 →</text>
+  <defs>
+    <style>
+      @keyframes dg-cycle-blank {
+        0%,28%  { opacity:1; transform:scale(1) }
+        8%      { opacity:1; transform:scale(0.82) }
+        33%,100%{ opacity:0; transform:scale(1) }
+      }
+      @keyframes dg-cycle-zero {
+        0%,33% { opacity:0 }
+        33%,61%{ opacity:1; transform:scale(1) }
+        41%    { opacity:1; transform:scale(0.82) }
+        66%,100%{opacity:0; transform:scale(1) }
+      }
+      @keyframes dg-cycle-one {
+        0%,66% { opacity:0 }
+        66%,94%{ opacity:1; transform:scale(1) }
+        74%    { opacity:1; transform:scale(0.82) }
+        100%   { opacity:0; transform:scale(1) }
+      }
+      .dg-cell-blank { animation:dg-cycle-blank 2.7s ease-in-out infinite; transform-origin:100px 64px }
+      .dg-cell-zero  { animation:dg-cycle-zero  2.7s ease-in-out infinite; transform-origin:100px 64px }
+      .dg-cell-one   { animation:dg-cycle-one   2.7s ease-in-out infinite; transform-origin:100px 64px }
+    </style>
+  </defs>
+  <!-- Blank state -->
+  <g class='dg-cell-blank'>
+    <rect x='76' y='40' width='48' height='48' rx='8' fill='rgba(255,255,255,0.04)' stroke='rgba(255,255,255,0.18)' stroke-width='1.5'/>
+  </g>
+  <!-- 0 state (blue) -->
+  <g class='dg-cell-zero'>
+    <rect x='76' y='40' width='48' height='48' rx='8' fill='rgba(96,165,250,0.18)' stroke='rgba(96,165,250,0.55)' stroke-width='1.5'/>
+    <text x='100' y='66' font-size='28' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#60a5fa' font-family='system-ui,sans-serif'>0</text>
+  </g>
+  <!-- 1 state (green) -->
+  <g class='dg-cell-one'>
+    <rect x='76' y='40' width='48' height='48' rx='8' fill='rgba(16,185,129,0.18)' stroke='rgba(16,185,129,0.55)' stroke-width='1.5'/>
+    <text x='100' y='66' font-size='28' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#10b981' font-family='system-ui,sans-serif'>1</text>
+  </g>
+  <text x='100' y='118' font-size='10' text-anchor='middle' fill='rgba(255,255,255,0.3)' font-family='system-ui,sans-serif'>tap to cycle: blank → 0 → 1 →</text>
+</svg>`
+  },
+  {
+    title: 'Special Cells',
+    desc: '= cells must have the same digit on both sides. × cells must be different. These clues help you deduce the solution.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <!-- Grid: 4 cols 2 rows -->
+  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.1)' stroke-width='1'>
+    <rect x='24' y='30' width='30' height='30' rx='4'/><rect x='58' y='30' width='30' height='30' rx='4'/>
+    <rect x='112' y='30' width='30' height='30' rx='4'/><rect x='146' y='30' width='30' height='30' rx='4'/>
+    <rect x='24' y='80' width='30' height='30' rx='4'/><rect x='58' y='80' width='30' height='30' rx='4'/>
+    <rect x='112' y='80' width='30' height='30' rx='4'/><rect x='146' y='80' width='30' height='30' rx='4'/>
+  </g>
+  <!-- = cell between col1 and col2 (top row) — same digit on both sides -->
+  <rect x='88' y='33' width='20' height='24' rx='4' fill='rgba(250,204,21,0.12)' stroke='rgba(250,204,21,0.4)' stroke-width='1'/>
+  <text x='98' y='45' font-size='12' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#fcd34d' font-family='system-ui,sans-serif'>=</text>
+  <!-- × cell between col1 and col2 (bottom row) — different digits -->
+  <rect x='88' y='83' width='20' height='24' rx='4' fill='rgba(248,113,113,0.12)' stroke='rgba(248,113,113,0.4)' stroke-width='1'/>
+  <text x='98' y='95' font-size='12' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#f87171' font-family='system-ui,sans-serif'>×</text>
+  <!-- Digit values (top row: 1 = 1) -->
+  <text x='39' y='45' font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#10b981'>1</text>
+  <text x='73' y='45' font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#10b981'>1</text>
+  <!-- Digit values (bottom row: 0 × 1) -->
+  <text x='39' y='95' font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#60a5fa'>0</text>
+  <text x='73' y='95' font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#10b981'>1</text>
+  <!-- Labels -->
+  <text x='98' y='15' font-size='9' font-weight='600' text-anchor='middle' fill='rgba(250,204,21,0.7)' font-family='system-ui,sans-serif'>= same digit</text>
+  <text x='98' y='126' font-size='9' font-weight='600' text-anchor='middle' fill='rgba(248,113,113,0.7)' font-family='system-ui,sans-serif'>× different digit</text>
 </svg>`
   }
 ];

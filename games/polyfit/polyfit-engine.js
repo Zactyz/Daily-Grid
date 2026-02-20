@@ -135,11 +135,13 @@ export class PolyfitEngine {
         placed: null
       }));
 
+      const totalCells = pieces.reduce((s, p) => s + p.variants[0].length, 0);
+      const targetMask = buildTargetMask(this.size, totalCells, rng);
+
       const board = new Array(this.size * this.size).fill(null);
-      const allOpen = new Array(this.size * this.size).fill(true);
       const remaining = pieces.map((p) => p.id);
 
-      if (solveBoard(board, this.size, allOpen, pieces, remaining, shuffle)) {
+      if (solveBoard(board, this.size, targetMask, pieces, remaining, shuffle)) {
         this.pieces = pieces;
         this.targetMask = board.map((v) => v !== null);
         this.targetCount = this.targetMask.filter(Boolean).length;

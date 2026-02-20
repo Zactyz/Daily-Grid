@@ -129,7 +129,7 @@
       window.location.replace('/games/');
     }
   </script>
-  <div class="max-w-lg mx-auto px-4 pt-safe">
+  <main class="max-w-lg mx-auto px-4 pt-safe">
 
     <!-- Header -->
     <header class="flex items-center justify-between py-5">
@@ -247,7 +247,7 @@
     <p class="text-center text-xs text-slate-700 pb-2" id="version-label"></p>
 
     <div class="pb-4"></div>
-  </div>
+  </main>
 
   <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation">
     <ul class="dg-tab-bar__list">
@@ -449,16 +449,18 @@
     }
 
     // ── Push notifications ────────────────────────────────────────────────────
-    async function initPushToggle() {
+    async function initPushToggle(vapidPublicKey) {
       const toggle = document.getElementById('push-toggle');
       const statusText = document.getElementById('push-status-text');
       const row = document.getElementById('push-toggle-wrap')?.closest('.stat-row');
 
-      // iOS Safari (non-standalone) does not support Web Push — hide the row
       const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
       const isStandalone = !!window.navigator.standalone;
+
+      // iOS Safari in browser (not installed): show info nudge instead of hiding
       if (isIos && !isStandalone) {
-        if (row) row.style.display = 'none';
+        if (toggle) { toggle.checked = false; toggle.disabled = true; }
+        if (statusText) statusText.textContent = 'Add to Home Screen to enable notifications';
         return;
       }
 
@@ -467,13 +469,13 @@
         return;
       }
 
-      // If the user has already blocked notifications, show a locked state with instructions
+      // If notifications are blocked, show a locked state with instructions
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
         toggle.checked = false;
         toggle.disabled = true;
         statusText.textContent = isIos
           ? 'Blocked — go to Settings > Daily Grid > Notifications to enable'
-          : 'Blocked — go to browser site settings to re-enable notifications';
+          : 'Blocked in browser settings — tap to learn how to re-enable';
         return;
       }
 
@@ -486,10 +488,15 @@
 
       toggle.addEventListener('change', async () => {
         if (toggle.checked) {
+          if (!vapidPublicKey) {
+            toggle.checked = false;
+            statusText.textContent = 'Not available right now — try again later';
+            return;
+          }
           const anonId = getAnonId();
           statusText.textContent = 'Requesting permission…';
           toggle.disabled = true;
-          const ok = await requestPushPermission(anonId, window.DG_VAPID_PUBLIC_KEY);
+          const ok = await requestPushPermission(anonId, vapidPublicKey);
           toggle.disabled = false;
           toggle.checked = ok;
           if (ok) {
@@ -498,7 +505,7 @@
             toggle.disabled = true;
             statusText.textContent = isIos
               ? 'Blocked — go to Settings > Daily Grid > Notifications to enable'
-              : 'Blocked — go to browser site settings to re-enable notifications';
+              : 'Blocked in browser settings — tap to learn how to re-enable';
           } else {
             statusText.textContent = 'Could not enable — try again later';
           }
@@ -519,14 +526,17 @@
     }
 
     // ── Init ──────────────────────────────────────────────────────────────────
-    // Load VAPID public key from server so push subscriptions can be created
-    fetch('/api/push/vapid-public-key').then(r => r.json()).then(d => {
-      if (d.publicKey) window.DG_VAPID_PUBLIC_KEY = d.publicKey;
-    }).catch(() => {});
-
     renderProfile();
     renderVersion();
-    initPushToggle();
+    // Load VAPID key first, then init the toggle so key is guaranteed available
+    let vapidKey = null;
+    try {
+      const r = await fetch('/api/push/vapid-public-key');
+      const d = await r.json();
+      vapidKey = d.publicKey || null;
+      if (vapidKey) window.DG_VAPID_PUBLIC_KEY = vapidKey;
+    } catch { /* no push key available */ }
+    initPushToggle(vapidKey);
   </script>
 </body>
 </html>

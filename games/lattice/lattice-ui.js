@@ -1247,7 +1247,9 @@ function wireUI() {
     const dataset = await loadDataset();
     engine = new LatticeEngine(dataset);
     wireUI();
-    await startDaily();
+    const _lp = new URLSearchParams(window.location.search);
+    const _wantsPractice = _lp.get('practice') === '1' || _lp.get('mode') === 'practice';
+    await (_wantsPractice ? startPractice() : startDaily());
   } catch (e) {
     console.error('[Logice] Failed to load puzzle:', e);
     if (els.board) {

@@ -30,9 +30,8 @@ export class PolyfitRenderer {
   }
 
   animateRotation(pieceId, origin = null) {
-    const piece = this.engine.pieces[pieceId];
-    const numVariants = piece?.variants?.length ?? 4;
-    const angleRad = (2 * Math.PI) / numVariants;
+    // Always animate 90deg so symmetric (2-variant) pieces don't flip too far visually.
+    const angleRad = Math.PI / 2;
     this.rotationAnim = {
       pieceId,
       start: performance.now(),

@@ -391,28 +391,37 @@ window.DG_TUTORIAL_STEPS = [
 </svg>`
   },
   {
-    title: 'One Closed Loop',
-    desc: 'The loop must be one single unbroken path — no branches, no dead ends. Every dot must connect to exactly 0 or 2 lines.',
+    title: 'Solved!',
+    desc: 'Every clue is satisfied — the loop visits exactly the right number of sides per cell. One continuous closed loop.',
     demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
-  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.07)' stroke-width='1'>
-    <rect x='44' y='14' width='32' height='32' rx='3'/><rect x='80' y='14' width='32' height='32' rx='3'/>
-    <rect x='116' y='14' width='32' height='32' rx='3'/>
-    <rect x='44' y='50' width='32' height='32' rx='3'/><rect x='80' y='50' width='32' height='32' rx='3'/>
-    <rect x='116' y='50' width='32' height='32' rx='3'/>
-    <rect x='44' y='86' width='32' height='32' rx='3'/><rect x='80' y='86' width='32' height='32' rx='3'/>
-    <rect x='116' y='86' width='32' height='32' rx='3'/>
+  <!-- 3×3 grid cells -->
+  <g fill='rgba(125,162,255,0.06)' stroke='rgba(255,255,255,0.07)' stroke-width='1'>
+    <rect x='44' y='12' width='32' height='32' rx='3'/><rect x='80' y='12' width='32' height='32' rx='3'/>
+    <rect x='116' y='12' width='32' height='32' rx='3'/>
+    <rect x='44' y='48' width='32' height='32' rx='3'/><rect x='80' y='48' width='32' height='32' rx='3'/>
+    <rect x='116' y='48' width='32' height='32' rx='3'/>
+    <rect x='44' y='84' width='32' height='32' rx='3'/><rect x='80' y='84' width='32' height='32' rx='3'/>
+    <rect x='116' y='84' width='32' height='32' rx='3'/>
   </g>
-  <!-- L-shaped loop polygon -->
-  <polygon points='44,14 148,14 148,82 116,82 116,118 44,118' fill='none' stroke='#7da2ff' stroke-width='3' stroke-linejoin='round' class='dg-demo-pulse'/>
-  <!-- Clue numbers matching the polygon edges for each cell:
-       (1,1)=2  (2,1)=1  (3,1)=2
-       (1,2)=1  (2,2)=0  (3,2)=2
-       (1,3)=2  (2,3)=2  (3,3)=1  -->
+  <!-- Completed loop: staircase shape.
+       Vertices: (44,12)→(148,12)→(148,116)→(116,116)→(116,80)→(44,80)→(44,12)
+       Verified clues (row,col): 2 1 2 / 2 1 1 / 0 1 3 -->
+  <polygon points='44,12 148,12 148,116 116,116 116,80 44,80' fill='rgba(125,162,255,0.04)' stroke='#7da2ff' stroke-width='3' stroke-linejoin='round' class='dg-demo-pulse'/>
+  <!-- Clue numbers -->
   <g font-size='12' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#7da2ff'>
-    <text x='60' y='30'>2</text><text x='96' y='30'>1</text><text x='132' y='30'>2</text>
-    <text x='60' y='66'>1</text><text x='132' y='66'>2</text>
-    <text x='60' y='102'>2</text><text x='96' y='102'>2</text><text x='132' y='102'>1</text>
+    <text x='60' y='28'>2</text>
+    <text x='96' y='28'>1</text>
+    <text x='132' y='28'>2</text>
+    <text x='60' y='64'>2</text>
+    <text x='96' y='64'>1</text>
+    <text x='132' y='64'>1</text>
+    <!-- (0,2)=0: omitted -->
+    <text x='96' y='100'>1</text>
+    <text x='132' y='100'>3</text>
   </g>
+  <!-- Solved checkmark -->
+  <circle cx='170' cy='125' r='10' fill='rgba(125,162,255,0.2)' stroke='#7da2ff' stroke-width='1.5'/>
+  <polyline points='165,125 169,129 175,121' fill='none' stroke='#7da2ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/>
 </svg>`
   }
 ];

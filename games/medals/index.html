@@ -142,7 +142,7 @@
       window.location.replace('/games/');
     }
   </script>
-  <div class="max-w-lg mx-auto px-4 pt-safe">
+  <main class="max-w-lg mx-auto px-4 pt-safe">
 
     <!-- Header -->
     <header class="flex items-center justify-between py-5">
@@ -189,7 +189,7 @@
     <!-- Today's leaderboard by game -->
     <section>
       <h2 class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Today's Top Solvers</h2>
-      <div id="leaderboard-list" class="flex flex-col gap-3">
+      <div id="leaderboard-list" class="flex flex-col gap-3" style="min-height:320px">
         <!-- Loading skeletons -->
         <div class="glass-card p-4">
           <div class="skel h-4 w-28 mb-3"></div>
@@ -210,7 +210,7 @@
     </section>
 
     <div class="pb-4"></div>
-  </div>
+  </main>
 
   <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation">
     <ul class="dg-tab-bar__list">

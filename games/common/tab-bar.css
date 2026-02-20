@@ -24,6 +24,11 @@ html.dg-tab-bar-active body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* Utility class: pad for status bar on a child element (use when body padding is insufficient) */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* ─── Bar shell ─────────────────────────────────────────────────────────────── */
 .dg-tab-bar {
   position: fixed;
@@ -170,11 +175,6 @@ html.dg-tab-bar-active body {
   transform: scale(1.05);
 }
 
-/* Per-tab accent colors when active */
-.dg-tab-bar__tab.active[data-tab="daily"]    .dg-tab-bar__icon { color: #D4A650; }
-.dg-tab-bar__tab.active[data-tab="practice"] .dg-tab-bar__icon { color: #60a5fa; }
-.dg-tab-bar__tab.active[data-tab="medals"]   .dg-tab-bar__icon { color: #facc15; }
-.dg-tab-bar__tab.active[data-tab="profile"]  .dg-tab-bar__icon { color: #a78bfa; }
 
 /* ─── Label ──────────────────────────────────────────────────────────────────── */
 .dg-tab-bar__label {

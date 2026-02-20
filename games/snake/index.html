@@ -701,43 +701,9 @@
             }
         }
 
-        // New function to handle mode switching and new levels
         window.startPracticeMode = () => init('practice');
         window.startDailyMode = () => init('daily');
 
-        const practiceParams = new URLSearchParams(window.location.search);
-        if (practiceParams.get('practice') === '1' || practiceParams.get('mode') === 'practice') {
-            window.startPracticeMode();
-        }
-
-        // Bind buttons
-        // Mode buttons handled by shared shell controller.
-        
-        // Update reset to handle "Next Level" from UI if we passed a callback?
-        // Actually SnakeUI handles the "Next Level" click by calling onReset()
-        // If we want onReset() to generate a NEW puzzle in practice mode when "Next Level" is clicked...
-        // The SnakeUI code I wrote calls onReset() when Next Level is clicked.
-        // So for practice mode, onReset needs to be smarter or we need a separate callback.
-        
-        // Let's re-read SnakeUI logic for Next Level button:
-        // this.elements.nextLevelBtn?.addEventListener('click', () => {
-        //   this.hideCompletionModal();
-        //   this.onReset(); 
-        // });
-        
-        // So in practice mode, "Next Level" calls reset().
-        // But the "Reset" button (top of screen) ALSO calls reset().
-        // This is a conflict. "Reset" button should clear board. "Next Level" should make new puzzle.
-        
-        // I need to update SnakeUI to take a separate onNextLevel callback or handle it differently.
-        // Or I can check a flag.
-        
-        // Let's fix this in the init function by passing a different callback for Next Level
-        // But SnakeUI only accepts onReset.
-        
-        // Quick fix: Update init to recreate UI with a custom object or method?
-        // Better: Update SnakeUI to accept onNextLevel callback.
-        
         function gameLoop() {
             const now = Date.now();
             const delta = now - lastTime;
@@ -753,7 +719,9 @@
             requestAnimationFrame(gameLoop);
         }
 
-        init();
+        const _snakeParams = new URLSearchParams(window.location.search);
+        const _snakeStartMode = (_snakeParams.get('practice') === '1' || _snakeParams.get('mode') === 'practice') ? 'practice' : 'daily';
+        init(_snakeStartMode);
         
         // Register service worker for PWA
         if ('serviceWorker' in navigator) {
@@ -831,6 +799,37 @@ window.DG_TUTORIAL_STEPS = [
     <text x='57' y='99'>4</text><text x='144' y='99'>5</text>
   </g>
   <circle cx='144' cy='99' r='8' fill='none' stroke='#f0c674' stroke-width='2' class='dg-demo-pulse'/>
+</svg>`
+  },
+  {
+    title: 'Watch for Walls',
+    desc: 'Some cells have walls on their edges — thick lines your path cannot cross. Plan around them to reach every cell.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <!-- 4×3 grid -->
+  <g fill='rgba(240,198,116,0.08)' stroke='rgba(255,255,255,0.08)' stroke-width='1'>
+    <rect x='32' y='20' width='30' height='30' rx='3'/><rect x='66' y='20' width='30' height='30' rx='3'/>
+    <rect x='100' y='20' width='30' height='30' rx='3'/><rect x='134' y='20' width='30' height='30' rx='3'/>
+    <rect x='32' y='54' width='30' height='30' rx='3'/><rect x='66' y='54' width='30' height='30' rx='3'/>
+    <rect x='100' y='54' width='30' height='30' rx='3'/><rect x='134' y='54' width='30' height='30' rx='3'/>
+    <rect x='32' y='88' width='30' height='30' rx='3'/><rect x='66' y='88' width='30' height='30' rx='3'/>
+    <rect x='100' y='88' width='30' height='30' rx='3'/><rect x='134' y='88' width='30' height='30' rx='3'/>
+  </g>
+  <!-- Path going around walls -->
+  <polyline points='47,35 81,35 115,35 149,35 149,69 149,103 115,103 81,103 81,69 47,69 47,103' fill='none' stroke='rgba(240,198,116,0.5)' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/>
+  <!-- Wall: thick line on bottom edge of cell (2,1) blocking direct path -->
+  <line x1='66' y1='84' x2='96' y2='84' stroke='rgba(248,113,113,0.9)' stroke-width='4' stroke-linecap='round'/>
+  <!-- Wall: thick line on right edge of cell (1,2) -->
+  <line x1='96' y1='54' x2='96' y2='84' stroke='rgba(248,113,113,0.9)' stroke-width='4' stroke-linecap='round'/>
+  <!-- Number cells -->
+  <g fill='rgba(240,198,116,0.22)' stroke='rgba(240,198,116,0.6)' stroke-width='1.5'>
+    <rect x='32' y='20' width='30' height='30' rx='3'/>
+    <rect x='32' y='88' width='30' height='30' rx='3'/>
+  </g>
+  <g font-size='12' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#f0c674'>
+    <text x='47' y='35'>1</text>
+    <text x='47' y='103'>2</text>
+  </g>
+  <text x='100' y='132' font-size='9' text-anchor='middle' fill='rgba(248,113,113,0.6)' font-family='system-ui,sans-serif'>walls block the path — route around them</text>
 </svg>`
   }
 ];

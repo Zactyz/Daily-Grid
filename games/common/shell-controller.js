@@ -337,7 +337,7 @@ function shouldAllowDoubleTap(target) {
     }
 
     if (elements.pauseOverlay) {
-      if (adapter.isPaused() && !adapter.isComplete()) elements.pauseOverlay.classList.remove('hidden');
+      if (adapter.isPaused() && !adapter.isComplete() && !adapter.isSolutionShown?.()) elements.pauseOverlay.classList.remove('hidden');
       else elements.pauseOverlay.classList.add('hidden');
     }
   }

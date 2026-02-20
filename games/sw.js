@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'dg-games-v3';
+const CACHE_VERSION = 'dg-games-v4';
 const CORE_ASSETS = [
   '/games/',
   '/games/index.html',
@@ -20,6 +20,14 @@ const CORE_ASSETS = [
   '/games/assets/dg-games-180.png'
 ];
 
+// Hub pages that must always be served as text/html (no-extension URL → index.html).
+const HTML_PAGES = [
+  '/games/',
+  '/games/practice/',
+  '/games/medals/',
+  '/games/profile/',
+];
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION)
@@ -36,6 +44,20 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/**
+ * Wrap a cached Response to guarantee Content-Type: text/html.
+ * iOS Safari PWA will download the page as a file if this header is absent
+ * or incorrect in the cached entry.
+ */
+function ensureHtmlContentType(response) {
+  if (!response) return response;
+  const ct = response.headers.get('content-type') || '';
+  if (ct.includes('text/html')) return response;
+  const headers = new Headers(response.headers);
+  headers.set('content-type', 'text/html; charset=utf-8');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
@@ -43,6 +65,33 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (!url.pathname.startsWith('/games/')) return;
 
+  const isHtmlPage = HTML_PAGES.includes(url.pathname);
+
+  // Navigation requests for known hub pages: serve cached HTML, enforcing
+  // Content-Type so iOS Safari never misidentifies them as file downloads.
+  if (request.mode === 'navigate' || isHtmlPage) {
+    event.respondWith((async () => {
+      // Try exact URL match first, then the /index.html variant.
+      let cached = await caches.match(request);
+      if (!cached && url.pathname.endsWith('/')) {
+        cached = await caches.match(url.pathname + 'index.html');
+      }
+      if (cached) return ensureHtmlContentType(cached);
+
+      try {
+        const response = await fetch(request);
+        const cache = await caches.open(CACHE_VERSION);
+        cache.put(request, response.clone());
+        return ensureHtmlContentType(response);
+      } catch {
+        const fallback = await caches.match('/games/index.html');
+        return ensureHtmlContentType(fallback);
+      }
+    })());
+    return;
+  }
+
+  // All other GET requests (assets, API, etc.) — cache-first.
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
