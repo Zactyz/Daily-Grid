@@ -414,12 +414,19 @@ window.DG_TUTORIAL_STEPS = [
     <rect x='44' y='86' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
     <rect x='102' y='86' width='26' height='26' rx='4'/><rect x='131' y='86' width='26' height='26' rx='4'/>
   </g>
+  <!-- Highlight all 5 clue cells -->
   <g fill='rgba(201,163,107,0.22)' stroke='rgba(201,163,107,0.6)' stroke-width='1.5'>
-    <rect x='44' y='28' width='26' height='26' rx='4'/><rect x='102' y='57' width='26' height='26' rx='4'/>
+    <rect x='44' y='28' width='26' height='26' rx='4'/>
+    <rect x='102' y='28' width='26' height='26' rx='4'/>
+    <rect x='102' y='57' width='26' height='26' rx='4'/>
     <rect x='73' y='86' width='26' height='26' rx='4'/>
+    <rect x='131' y='57' width='26' height='26' rx='4'/>
   </g>
+  <!-- All 5 clue numbers -->
   <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#c9a36b'>
-    <text x='57' y='41'>4</text><text x='115' y='70'>2</text><text x='86' y='99'>2</text>
+    <text x='57' y='41'>4</text><text x='115' y='41'>2</text>
+    <text x='115' y='70'>2</text>
+    <text x='86' y='99'>2</text><text x='144' y='70'>2</text>
   </g>
 </svg>`
   },
@@ -435,12 +442,19 @@ window.DG_TUTORIAL_STEPS = [
     <rect x='44' y='86' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
     <rect x='102' y='86' width='26' height='26' rx='4'/><rect x='131' y='86' width='26' height='26' rx='4'/>
   </g>
+  <!-- 2×2 rectangle being drawn around clue "4" -->
   <rect x='44' y='28' width='55' height='55' rx='6' fill='rgba(201,163,107,0.15)' stroke='#c9a36b' stroke-width='2' stroke-dasharray='4,3' class='dg-demo-pulse'/>
-  <g fill='rgba(201,163,107,0.22)' stroke='rgba(201,163,107,0.6)' stroke-width='1.5'>
-    <rect x='102' y='57' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
+  <!-- Remaining clue cells still highlighted -->
+  <g fill='rgba(201,163,107,0.18)' stroke='rgba(201,163,107,0.5)' stroke-width='1.5'>
+    <rect x='102' y='28' width='26' height='26' rx='4'/>
+    <rect x='102' y='57' width='26' height='26' rx='4'/>
+    <rect x='73' y='86' width='26' height='26' rx='4'/>
+    <rect x='131' y='57' width='26' height='26' rx='4'/>
   </g>
   <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#c9a36b'>
-    <text x='57' y='41'>4</text><text x='115' y='70'>2</text><text x='86' y='99'>2</text>
+    <text x='57' y='41'>4</text><text x='115' y='41'>2</text>
+    <text x='115' y='70'>2</text>
+    <text x='86' y='99'>2</text><text x='144' y='70'>2</text>
   </g>
 </svg>`
   },
@@ -448,13 +462,21 @@ window.DG_TUTORIAL_STEPS = [
     title: 'Cover the Grid',
     desc: 'Every cell must belong to exactly one rectangle. No overlaps, no gaps. Fill the entire grid!',
     demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
-  <rect x='44' y='28' width='55' height='55' rx='6' fill='rgba(201,163,107,0.15)' stroke='rgba(201,163,107,0.5)' stroke-width='1.5'/>
-  <rect x='102' y='28' width='55' height='26' rx='6' fill='rgba(201,163,107,0.12)' stroke='rgba(201,163,107,0.4)' stroke-width='1.5'/>
-  <rect x='102' y='57' width='26' height='55' rx='6' fill='rgba(201,163,107,0.18)' stroke='rgba(201,163,107,0.55)' stroke-width='1.5'/>
-  <rect x='44' y='86' width='26' height='26' rx='6' fill='rgba(201,163,107,0.12)' stroke='rgba(201,163,107,0.4)' stroke-width='1.5'/>
-  <rect x='131' y='57' width='26' height='55' rx='6' fill='rgba(201,163,107,0.1)' stroke='rgba(201,163,107,0.35)' stroke-width='1.5'/>
+  <!-- Rect A: 2×2 covering (1,1)(2,1)(1,2)(2,2) = area 4 -->
+  <rect x='44' y='28' width='55' height='55' rx='5' fill='rgba(201,163,107,0.15)' stroke='rgba(201,163,107,0.5)' stroke-width='1.5'/>
+  <!-- Rect B: 2×1 covering (3,1)(4,1) = area 2 -->
+  <rect x='102' y='28' width='55' height='26' rx='5' fill='rgba(201,163,107,0.12)' stroke='rgba(201,163,107,0.42)' stroke-width='1.5'/>
+  <!-- Rect C: 1×2 covering (3,2)(3,3) = area 2 -->
+  <rect x='102' y='57' width='26' height='55' rx='5' fill='rgba(201,163,107,0.18)' stroke='rgba(201,163,107,0.52)' stroke-width='1.5'/>
+  <!-- Rect D: 2×1 covering (1,3)(2,3) = area 2 -->
+  <rect x='44' y='86' width='55' height='26' rx='5' fill='rgba(201,163,107,0.13)' stroke='rgba(201,163,107,0.44)' stroke-width='1.5'/>
+  <!-- Rect E: 1×2 covering (4,2)(4,3) = area 2 -->
+  <rect x='131' y='57' width='26' height='55' rx='5' fill='rgba(201,163,107,0.10)' stroke='rgba(201,163,107,0.38)' stroke-width='1.5'/>
+  <!-- All 5 clue numbers at original clue cell centers -->
   <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#c9a36b'>
-    <text x='57' y='41'>4</text><text x='115' y='70'>2</text><text x='86' y='99'>2</text>
+    <text x='57' y='41'>4</text><text x='115' y='41'>2</text>
+    <text x='115' y='70'>2</text>
+    <text x='86' y='99'>2</text><text x='144' y='70'>2</text>
   </g>
   <text x='100' y='125' font-size='11' text-anchor='middle' fill='rgba(201,163,107,0.6)' font-family='system-ui,sans-serif'>Grid fully covered ✓</text>
 </svg>`

@@ -38,9 +38,9 @@ html.dg-tab-bar-active body {
   z-index: 200;
 
   /* Liquid Glass material — minimal tint, let content show through */
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
 
   /* All-rounded pill — the key iOS 26 floating shape */
   border-radius: 26px;
@@ -68,9 +68,9 @@ html.dg-tab-bar-active body {
   height: 1px;
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.28) 20%,
-    rgba(255, 255, 255, 0.52) 50%,
-    rgba(255, 255, 255, 0.28) 80%,
+    rgba(255, 255, 255, 0.32) 20%,
+    rgba(255, 255, 255, 0.62) 50%,
+    rgba(255, 255, 255, 0.32) 80%,
     transparent 100%
   );
   border-radius: 999px;

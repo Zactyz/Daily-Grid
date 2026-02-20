@@ -1125,22 +1125,21 @@ function shouldAllowDoubleTap(target) {
         return s && /how to play/i.test(s.textContent);
       });
 
-      // Inject a "? How to Play" help button before the accordion so returning
-      // users can re-open the tutorial at any time.
+      // Inject a "Show Tutorial" button at the bottom of the How to Play accordion
+      // so returning users can re-open the tutorial at any time.
       if (howToPlay && window.DG_TUTORIAL_STEPS?.length) {
         const helpBtn = document.createElement('button');
-        helpBtn.className = 'dg-tutorial-help-btn';
-        helpBtn.setAttribute('aria-label', 'How to Play tutorial');
+        helpBtn.className = 'dg-tutorial-help-btn dg-tutorial-help-btn--inline';
+        helpBtn.setAttribute('aria-label', 'Show tutorial walkthrough');
         helpBtn.innerHTML = `
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
+            <polygon points="10,8 16,12 10,16"/>
           </svg>
-          How to Play`;
+          Show Tutorial`;
         helpBtn.addEventListener('click', () => showTutorialModal(window.DG_TUTORIAL_STEPS));
-        howToPlay.insertAdjacentElement('beforebegin', helpBtn);
+        howToPlay.insertAdjacentElement('beforeend', helpBtn);
       }
 
       if (!localStorage.getItem(onboardKey)) {

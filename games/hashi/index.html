@@ -390,61 +390,60 @@ window.DG_TUTORIAL_STEPS = [
     title: 'Island Dots',
     desc: 'Each circle is an island. The number inside tells you exactly how many bridges must connect to it.',
     demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <!-- 4 corner islands: A(2) top-left, B(3) top-right, C(1) bottom-left, D(2) bottom-right -->
   <g fill='rgba(232,180,122,0.18)' stroke='rgba(232,180,122,0.55)' stroke-width='2'>
-    <circle cx='60' cy='40' r='16'/><circle cx='140' cy='40' r='16'/>
-    <circle cx='60' cy='100' r='16'/><circle cx='140' cy='100' r='16'/>
-    <circle cx='100' cy='70' r='16'/>
+    <circle cx='55' cy='35' r='16'/><circle cx='145' cy='35' r='16'/>
+    <circle cx='55' cy='105' r='16'/><circle cx='145' cy='105' r='16'/>
   </g>
-  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
-    <text x='60' y='40'>2</text><text x='140' y='40'>3</text>
-    <text x='60' y='100'>1</text><text x='140' y='100'>2</text>
-    <text x='100' y='70'>2</text>
+  <g font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
+    <text x='55' y='35'>2</text><text x='145' y='35'>3</text>
+    <text x='55' y='105'>1</text><text x='145' y='105'>2</text>
   </g>
+  <text x='100' y='128' font-size='10' text-anchor='middle' fill='rgba(232,180,122,0.45)' font-family='system-ui,sans-serif'>tap two islands to add a bridge</text>
 </svg>`
   },
   {
     title: 'Build Bridges',
-    desc: 'Tap two islands to add a bridge between them. You can add a second bridge (double line) for strength. No bridges may cross.',
+    desc: 'Tap two islands to add a bridge. Tap again for a second parallel bridge. Bridges must be horizontal or vertical — no crossing.',
     demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
-  <line x1='76' y1='38' x2='84' y2='38' stroke='rgba(232,180,122,0.5)' stroke-width='3' stroke-linecap='round'/>
-  <line x1='76' y1='42' x2='84' y2='42' stroke='rgba(232,180,122,0.5)' stroke-width='3' stroke-linecap='round'/>
-  <line x1='116' y1='40' x2='124' y2='40' stroke='rgba(232,180,122,0.5)' stroke-width='3' stroke-linecap='round'/>
-  <line x1='100' y1='56' x2='100' y2='84' stroke='rgba(232,180,122,0.5)' stroke-width='3' stroke-linecap='round'/>
-  <line x1='76' y1='100' x2='84' y2='100' stroke='rgba(232,180,122,0.35)' stroke-width='3' stroke-linecap='round' class='dg-demo-pulse'/>
+  <!-- Bridge A-B: single horizontal line connecting (55,35)-(145,35) -->
+  <line x1='71' y1='35' x2='129' y2='35' stroke='rgba(232,180,122,0.6)' stroke-width='3' stroke-linecap='round'/>
+  <!-- Bridge B-D: first of two vertical lines at x=145 -->
+  <line x1='145' y1='51' x2='145' y2='89' stroke='rgba(232,180,122,0.6)' stroke-width='3' stroke-linecap='round'/>
+  <!-- Bridge B-D: second being added (pulsing) -->
+  <line x1='141' y1='51' x2='141' y2='89' stroke='rgba(232,180,122,0.4)' stroke-width='3' stroke-linecap='round' class='dg-demo-pulse'/>
+  <!-- Islands on top -->
   <g fill='rgba(232,180,122,0.18)' stroke='rgba(232,180,122,0.55)' stroke-width='2'>
-    <circle cx='60' cy='40' r='16'/><circle cx='140' cy='40' r='16'/>
-    <circle cx='60' cy='100' r='16'/><circle cx='140' cy='100' r='16'/>
-    <circle cx='100' cy='70' r='16'/>
+    <circle cx='55' cy='35' r='16'/><circle cx='145' cy='35' r='16'/>
+    <circle cx='55' cy='105' r='16'/><circle cx='145' cy='105' r='16'/>
   </g>
-  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
-    <text x='60' y='40'>2</text><text x='140' y='40'>3</text>
-    <text x='60' y='100'>1</text><text x='140' y='100'>2</text>
-    <text x='100' y='70'>2</text>
+  <g font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
+    <text x='55' y='35'>2</text><text x='145' y='35'>3</text>
+    <text x='55' y='105'>1</text><text x='145' y='105'>2</text>
   </g>
 </svg>`
   },
   {
     title: 'All Connected',
-    desc: 'All islands must form one connected network. When every island has exactly its required number of bridges, you win!',
+    desc: 'All islands must form one connected network. When every island has exactly its bridge count, you win!',
     demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
-  <g stroke='rgba(232,180,122,0.55)' stroke-width='3' stroke-linecap='round'>
-    <line x1='76' y1='38' x2='84' y2='38'/><line x1='76' y1='42' x2='84' y2='42'/>
-    <line x1='116' y1='40' x2='124' y2='40'/>
-    <line x1='60' y1='56' x2='60' y2='84'/>
-    <line x1='100' y1='56' x2='100' y2='84'/>
-    <line x1='116' y1='100' x2='124' y2='100'/>
-    <line x1='140' y1='56' x2='140' y2='84'/>
-  </g>
+  <!-- A-B single bridge (horizontal, y=35) -->
+  <line x1='71' y1='35' x2='129' y2='35' stroke='rgba(232,180,122,0.65)' stroke-width='3' stroke-linecap='round'/>
+  <!-- A-C single bridge (vertical, x=55) -->
+  <line x1='55' y1='51' x2='55' y2='89' stroke='rgba(232,180,122,0.65)' stroke-width='3' stroke-linecap='round'/>
+  <!-- B-D double bridge (vertical, x=142 and x=148) -->
+  <line x1='142' y1='51' x2='142' y2='89' stroke='rgba(232,180,122,0.65)' stroke-width='3' stroke-linecap='round'/>
+  <line x1='148' y1='51' x2='148' y2='89' stroke='rgba(232,180,122,0.65)' stroke-width='3' stroke-linecap='round'/>
+  <!-- Islands with highlighted borders for solved state -->
   <g fill='rgba(232,180,122,0.22)' stroke='#E8B47A' stroke-width='2'>
-    <circle cx='60' cy='40' r='16'/><circle cx='140' cy='40' r='16'/>
-    <circle cx='60' cy='100' r='16'/><circle cx='140' cy='100' r='16'/>
-    <circle cx='100' cy='70' r='16'/>
+    <circle cx='55' cy='35' r='16'/><circle cx='145' cy='35' r='16'/>
+    <circle cx='55' cy='105' r='16'/><circle cx='145' cy='105' r='16'/>
   </g>
-  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
-    <text x='60' y='40'>2</text><text x='140' y='40'>3</text>
-    <text x='60' y='100'>1</text><text x='140' y='100'>2</text>
-    <text x='100' y='70'>2</text>
+  <g font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
+    <text x='55' y='35'>2</text><text x='145' y='35'>3</text>
+    <text x='55' y='105'>1</text><text x='145' y='105'>2</text>
   </g>
+  <circle cx='100' cy='70' r='6' fill='none' stroke='rgba(232,180,122,0.4)' stroke-width='2' class='dg-demo-pulse'/>
 </svg>`
   }
 ];
