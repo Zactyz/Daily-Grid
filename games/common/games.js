@@ -23,7 +23,7 @@ const GAME_META = [
   },
   {
     id: 'lattice',
-    name: 'Lattice',
+    name: 'Logice',
     path: '/games/lattice/',
     logo: '/games/lattice/lattice-logo.png?v=2',
     submittedKeyPrefix: 'dailygrid_lattice_submitted_',

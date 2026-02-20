@@ -58,23 +58,22 @@ function getPTYesterdayYYYYMMDD() {
 function getPTOffsetMs() {
   const now = new Date();
   const year = now.getUTCFullYear();
-  // Second Sunday in March (month 3 = March, 1-indexed)
-  const dstStart = getNthSundayOfMonth(year, 3, 2);
-  // First Sunday in November (month 11 = November, 1-indexed)
-  const dstEnd = getNthSundayOfMonth(year, 11, 1);
+  // Second Sunday in March: 2 AM PST = 10 UTC
+  const dstStart = getNthSundayOfMonth(year, 3, 2, 10);
+  // First Sunday in November: 2 AM PDT = 9 UTC
+  const dstEnd = getNthSundayOfMonth(year, 11, 1, 9);
   const isPDT = now >= dstStart && now < dstEnd;
   return isPDT ? -7 * 3600 * 1000 : -8 * 3600 * 1000;
 }
 
-function getNthSundayOfMonth(year, month, n) {
-  // month: 1-12
+function getNthSundayOfMonth(year, month, n, utcHour = 10) {
+  // month: 1-12. utcHour: 2 AM local in Pacific (10 UTC for PST, 9 UTC for PDT).
   const d = new Date(Date.UTC(year, month - 1, 1));
   // Move to first Sunday
   d.setUTCDate(1 + ((7 - d.getUTCDay()) % 7));
   // Move to nth Sunday
   d.setUTCDate(d.getUTCDate() + (n - 1) * 7);
-  // 2 AM local = 10:00 UTC (approximate)
-  d.setUTCHours(10, 0, 0, 0);
+  d.setUTCHours(utcHour, 0, 0, 0);
   return d;
 }
 

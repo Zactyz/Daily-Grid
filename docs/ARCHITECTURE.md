@@ -228,7 +228,7 @@ The `wrangler.toml` binds the D1 database as `DB` in all Workers functions.
 |------|--------|--------------|
 | Snake | `games/snake/` | Client-side seeded generation |
 | Pathways | `games/pathways/` | Client-side seeded generation |
-| Lattice | `games/lattice/` | Fetches `./data/categories.csv` |
+| Logice | `games/lattice/` | Fetches `./data/categories.csv` |
 | Bits | `games/bits/` | Client-side seeded generation |
 | Bridgeworks | `games/hashi/` | Client-side seeded generation |
 | Conduit | `games/conduit/` | Client-side generation |

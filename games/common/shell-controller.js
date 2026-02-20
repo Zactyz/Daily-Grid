@@ -1113,7 +1113,7 @@ function shouldAllowDoubleTap(target) {
       if (!localStorage.getItem(onboardKey)) {
         localStorage.setItem(onboardKey, '1');
         // Find the How to Play details element by summary text (not the first details,
-        // which on Lattice is the Clues panel, not How to Play)
+        // which on Logice is the Clues panel, not How to Play)
         const allDetails = document.querySelectorAll('details');
         const howToPlay = Array.from(allDetails).find(d => {
           const s = d.querySelector('summary');

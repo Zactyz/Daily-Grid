@@ -1194,7 +1194,7 @@ function wireUI() {
     disableShellTimer: false,
     disableReplay: true,
     getShareFile: () => buildShareCard({
-      gameName: 'Lattice',
+      gameName: 'Logice',
       logoPath: '/games/lattice/lattice-logo.png?v=2',
       accent: '#7dd3fc',
       accentSoft: 'rgba(125, 211, 252, 0.12)',
@@ -1249,7 +1249,7 @@ function wireUI() {
     wireUI();
     await startDaily();
   } catch (e) {
-    console.error('[Lattice] Failed to load puzzle:', e);
+    console.error('[Logice] Failed to load puzzle:', e);
     if (els.board) {
       els.board.innerHTML = `
         <div class="flex flex-col items-center justify-center py-8 gap-3 text-center">
