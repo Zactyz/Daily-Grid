@@ -194,3 +194,17 @@ CREATE INDEX IF NOT EXISTS idx_polyfit_puzzle_created
 
 CREATE INDEX IF NOT EXISTS idx_polyfit_puzzle_anon
   ON polyfit_scores(puzzle_id, anon_id);
+
+-- Push notification subscriptions
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  anon_id    TEXT NOT NULL,
+  endpoint   TEXT NOT NULL UNIQUE,
+  p256dh     TEXT NOT NULL,
+  auth       TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_sub_anon
+  ON push_subscriptions(anon_id);

@@ -23,6 +23,7 @@
   <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-games.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/games/common/tab-bar.css">
   <style>
     :root {
       --brand-bg: #020617;
@@ -174,7 +175,7 @@
     }
 
     .ios-banner-bottom {
-      bottom: env(safe-area-inset-bottom, 0px);
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
       z-index: 70;
     }
 
@@ -182,7 +183,7 @@
       position: fixed;
       left: 50%;
       transform: translateX(-50%);
-      bottom: env(safe-area-inset-bottom, 0px);
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
       z-index: 70;
       display: none;
     }
@@ -722,6 +723,9 @@
         navigator.serviceWorker.register('/games/sw.js');
       });
     }
+
+    // Mount liquid glass tab bar (Daily tab active)
+    import('/games/common/tab-bar.js').then(({ mountTabBar }) => mountTabBar('daily'));
   </script>
 </body>
 </html>

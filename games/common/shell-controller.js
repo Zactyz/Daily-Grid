@@ -4,6 +4,7 @@ import { loadLeaderboard, submitScore, claimInitials, updateNextGamePromo } from
 import { recordStreak, getStreak, getMsUntilPTMidnight, formatCountdown } from './streak.js';
 import { recordStats, showStatsModal } from './stats.js';
 import { getPTDateYYYYMMDD } from './utils.js';
+import { requestPushPermission, isPushSubscribed, hasPushOptIn } from './push.js';
 
 const RESET_ICON = `
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -697,6 +698,11 @@ function shouldAllowDoubleTap(target) {
     }
 
     elements.completionModal.classList.remove('hidden');
+
+    // Show push opt-in prompt after first daily completion (only once, only if not already asked)
+    if (adapter.getMode() === 'daily') {
+      schedulePushOptIn(elements.completionModal);
+    }
   }
 
   function hideCompletionModal() {
@@ -1124,6 +1130,82 @@ function shouldAllowDoubleTap(target) {
           setTimeout(() => { howToPlay.open = true; }, 400);
         }
       }
+    }
+
+    // ── Push opt-in prompt ────────────────────────────────────────────────────
+    /**
+     * Show a gentle push notification prompt inside the completion modal.
+     * Only shown once (keyed by PUSH_ASKED_KEY in localStorage), and only if
+     * the browser supports push and the user has not already subscribed.
+     */
+    const PUSH_ASKED_KEY = 'dailygrid_push_asked';
+    async function schedulePushOptIn(modal) {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      if (localStorage.getItem(PUSH_ASKED_KEY)) return;
+      const already = await isPushSubscribed();
+      if (already) return;
+
+      // Wait 2 s so the leaderboard has time to load first
+      setTimeout(async () => {
+        if (!modal || modal.classList.contains('hidden')) return;
+
+        // Inject a subtle prompt row into the modal
+        const existing = modal.querySelector('#push-opt-in-prompt');
+        if (existing) return;
+
+        const prompt = document.createElement('div');
+        prompt.id = 'push-opt-in-prompt';
+        prompt.style.cssText = `
+          margin: 12px 0 0;
+          padding: 12px 14px;
+          border-radius: 12px;
+          background: rgba(167,139,250,0.08);
+          border: 1px solid rgba(167,139,250,0.18);
+          display: flex; align-items: center; gap: 10px;
+        `;
+        prompt.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <p style="flex:1;font-size:12px;color:rgba(255,255,255,0.65);line-height:1.4">
+            Get notified when tomorrow's puzzles are live.
+          </p>
+          <button id="push-opt-in-yes" style="
+            background:rgba(167,139,250,0.18);border:1px solid rgba(167,139,250,0.3);
+            color:#c4b5fd;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;
+          ">Enable</button>
+          <button id="push-opt-in-no" style="
+            background:none;border:none;color:rgba(255,255,255,0.3);
+            font-size:18px;cursor:pointer;line-height:1;padding:2px 4px;
+          " aria-label="Dismiss">×</button>
+        `;
+        // Append inside the modal's inner card (first child div), or directly to modal
+        const inner = modal.querySelector('#completion-modal > div, .glass-strong, .modal-inner');
+        (inner || modal).appendChild(prompt);
+
+        prompt.querySelector('#push-opt-in-yes')?.addEventListener('click', async () => {
+          const anonId = adapter.getAnonId?.() || localStorage.getItem('dailygrid_anon_id');
+          localStorage.setItem(PUSH_ASKED_KEY, '1');
+          const btn = prompt.querySelector('#push-opt-in-yes');
+          if (btn) btn.textContent = '…';
+          // Fetch VAPID key if not already loaded
+          if (!window.DG_VAPID_PUBLIC_KEY) {
+            try {
+              const r = await fetch('/api/push/vapid-public-key');
+              const d = await r.json();
+              if (d.publicKey) window.DG_VAPID_PUBLIC_KEY = d.publicKey;
+            } catch { /* push will gracefully fail if key unavailable */ }
+          }
+          const ok = await requestPushPermission(anonId, window.DG_VAPID_PUBLIC_KEY);
+          prompt.remove();
+          if (ok) showToast('You will be notified when new puzzles are live!', 'success');
+        });
+        prompt.querySelector('#push-opt-in-no')?.addEventListener('click', () => {
+          localStorage.setItem(PUSH_ASKED_KEY, '1');
+          prompt.remove();
+        });
+      }, 2000);
     }
 
     // Auto-reload when PT date changes so the new puzzle loads for users with
