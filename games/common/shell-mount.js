@@ -1,4 +1,5 @@
 const REQUIRED_IDS = [
+  'timer',
   'pause-btn',
   'reset-btn',
   'leaderboard-btn',

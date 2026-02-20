@@ -189,7 +189,9 @@ export class PolyfitEngine {
   rotateSelected(pieceId) {
     const p = this.pieces[pieceId];
     if (!p || p.placed) return;
-    p.variantIndex = (p.variantIndex + 1) % p.variants.length;
+    // Variants are stored in CCW screen order due to the [y,-x] rotation formula.
+    // Cycling backwards through them produces a consistent CW visual rotation.
+    p.variantIndex = (p.variantIndex + p.variants.length - 1) % p.variants.length;
   }
 
   removePiece(pieceId) {
