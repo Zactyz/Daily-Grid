@@ -9,9 +9,16 @@ To enable push notifications on preview URLs, add the same 4 secrets to the **Pr
 1. Create an API token: https://dash.cloudflare.com/profile/api-tokens  
    Use "Edit Cloudflare Workers" template or create custom with "Cloudflare Pages" Edit.
 
-2. Run:
+2. Run (replace `your_token` with your actual API token):
+
+   **Bash / Git Bash / WSL:**
    ```bash
    CLOUDFLARE_ACCOUNT_ID=58f16335caa705944e98b17f67605842 CLOUDFLARE_API_TOKEN=your_token npm run push:preview-secrets
+   ```
+
+   **PowerShell:**
+   ```powershell
+   $env:CLOUDFLARE_ACCOUNT_ID="58f16335caa705944e98b17f67605842"; $env:CLOUDFLARE_API_TOKEN="your_token"; npm run push:preview-secrets
    ```
 
    Values are read from `.dev.vars`. Use the same keys as Production for consistency.

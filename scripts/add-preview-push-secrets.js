@@ -54,13 +54,12 @@ for (const k of required) {
   }
 }
 
-// Cloudflare API: Create or update environment variables
-// https://developers.cloudflare.com/api/operations/pages-project-create-or-update-an-environment-variable
-// Body: { environment: "preview", env_vars: { KEY: { type: "secret", value: "..." }, ... } }
+// Cloudflare API matches wrangler pages secret put format:
+// type: "secret_text", wrangler_config_hash required
 
 const envVars = {};
 for (const k of required) {
-  envVars[k] = { type: 'secret', value: devVars[k] };
+  envVars[k] = { type: 'secret_text', value: devVars[k] };
 }
 
 async function run() {
@@ -79,19 +78,18 @@ async function run() {
     process.exit(1);
   }
 
-  // Cloudflare Pages uses deployment_configs.production and deployment_configs.preview
+  // Match wrangler pages secret put: only send preview with env_vars + wrangler_config_hash
   const configs = project.deployment_configs || {};
   const previewConfig = configs.preview || { env_vars: {} };
-  const previewEnvVars = { ...(previewConfig.env_vars || {}) };
-
-  for (const [k, v] of Object.entries(envVars)) {
-    previewEnvVars[k] = v;
-  }
+  const previewEnvVars = { ...(previewConfig.env_vars || {}), ...envVars };
+  const wranglerConfigHash = previewConfig.wrangler_config_hash || null;
 
   const patchBody = {
     deployment_configs: {
-      ...configs,
-      preview: { ...previewConfig, env_vars: previewEnvVars },
+      preview: {
+        env_vars: previewEnvVars,
+        wrangler_config_hash: wranglerConfigHash,
+      },
     },
   };
 
