@@ -1,14 +1,21 @@
 import { getStreak } from './streak.js';
-import { formatTime } from './utils.js';
+import { formatTime, getPTDateYYYYMMDD } from './utils.js';
 
 const STATS_KEY = (gameId) => `dailygrid_${gameId}_stats`;
 
 /**
  * Record a completion for stats tracking.
- * Call only on daily completions.
+ * Idempotent: only records once per PT calendar day (safe to call on every modal show).
  */
 export function recordStats(gameId, timeMs) {
+  const today = getPTDateYYYYMMDD();
   const data = getStats(gameId);
+
+  if (data.lastRecordedDate === today) {
+    return data; // already recorded for today
+  }
+
+  data.lastRecordedDate = today;
   data.totalCompleted = (data.totalCompleted || 0) + 1;
 
   // Rolling average: store sum and count separately for precision

@@ -93,10 +93,13 @@ export function getMsUntilPTMidnight() {
   const ptOffset = getPTOffsetMs();
   const ptMs = now.getTime() + ptOffset;
   const ptDate = new Date(ptMs);
-  // Next midnight PT
-  const midnight = new Date(ptMs);
-  midnight.setUTCHours(24, 0, 0, 0);
-  return midnight.getTime() - ptDate.getTime();
+  // Build next midnight explicitly using Date.UTC so day+1 overflow is unambiguous
+  const nextMidnight = Date.UTC(
+    ptDate.getUTCFullYear(),
+    ptDate.getUTCMonth(),
+    ptDate.getUTCDate() + 1   // Date.UTC handles month/year rollover automatically
+  );
+  return nextMidnight - ptMs;
 }
 
 /**

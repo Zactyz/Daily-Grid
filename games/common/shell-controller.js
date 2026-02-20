@@ -3,6 +3,7 @@ import { getGameMeta, recordGameCompletion } from './games.js';
 import { loadLeaderboard, submitScore, claimInitials, updateNextGamePromo } from './shell-ui.js';
 import { recordStreak, getStreak, getMsUntilPTMidnight, formatCountdown } from './streak.js';
 import { recordStats, showStatsModal } from './stats.js';
+import { getPTDateYYYYMMDD } from './utils.js';
 
 const RESET_ICON = `
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1126,6 +1127,19 @@ function shouldAllowDoubleTap(target) {
         }
       }
     }
+
+    // Auto-reload when PT date changes so the new puzzle loads for users with
+    // the page open across midnight (e.g. overnight, or across timezone boundaries).
+    const loadedPTDate = getPTDateYYYYMMDD();
+    const msToPTMidnight = getMsUntilPTMidnight();
+    // Reload ~2 seconds after PT midnight to let the new puzzle propagate
+    setTimeout(() => window.location.reload(), msToPTMidnight + 2000);
+    // Also reload when the user returns to the tab on a different PT day
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && getPTDateYYYYMMDD() !== loadedPTDate) {
+        window.location.reload();
+      }
+    });
 
     return {
     update,
