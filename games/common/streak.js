@@ -65,10 +65,10 @@ function getPTYesterdayYYYYMMDD() {
 function getPTOffsetMs() {
   const now = new Date();
   const year = now.getUTCFullYear();
-  // Second Sunday in March
-  const dstStart = getNthSundayOfMonth(year, 2, 2); // March, 2nd Sunday
-  // First Sunday in November
-  const dstEnd = getNthSundayOfMonth(year, 10, 1); // November, 1st Sunday
+  // Second Sunday in March (month 3 = March, 1-indexed)
+  const dstStart = getNthSundayOfMonth(year, 3, 2);
+  // First Sunday in November (month 11 = November, 1-indexed)
+  const dstEnd = getNthSundayOfMonth(year, 11, 1);
   const isPDT = now >= dstStart && now < dstEnd;
   return isPDT ? -7 * 3600 * 1000 : -8 * 3600 * 1000;
 }

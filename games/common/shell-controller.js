@@ -522,8 +522,6 @@ function shouldAllowDoubleTap(target) {
           msg = 'First to solve today!';
         } else if (rank === 1) {
           msg = 'You\u2019re #1 on today\u2019s leaderboard!';
-        } else if (total > 1 && rank === total) {
-          msg = 'You finished today\u2019s puzzle!';
         } else {
           const topPct = Math.max(1, Math.round(100 - (data.percentile ?? 0)));
           msg = `You finished in the top ${topPct}% of solvers!`;
