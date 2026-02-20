@@ -7,7 +7,8 @@
     "dev": "wrangler pages dev . --d1 DB=daily-grid-db --kv PUZZLE_CACHE",
     "deploy": "wrangler pages deploy .",
     "db:init": "wrangler d1 execute daily-grid-db --file=./scripts/init-db.sql",
-    "db:init:local": "wrangler d1 execute daily-grid-db --local --file=./scripts/init-db.sql"
+    "db:init:local": "wrangler d1 execute daily-grid-db --local --file=./scripts/init-db.sql",
+    "push:preview-secrets": "node scripts/add-preview-push-secrets.js"
   },
   "devDependencies": {
     "wrangler": "^3.0.0"
