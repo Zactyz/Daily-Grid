@@ -1,102 +1,21 @@
-// POST /api/conduit/complete - Submit completion time
-
-import { getPTDateYYYYMMDD, validateUUID, validateEnv } from '../../_shared/snake-utils-server.js';
+// POST /api/conduit/complete
+import { handleOptions, methodNotAllowed, jsonOk, jsonError, internalError, validateEnv } from '../../_shared/api-helpers.js';
+import { validatePuzzleId, validateTimeMs, validateUUID } from '../../_shared/validation-helpers.js';
+import { submitAndRank } from '../../_shared/complete-helpers.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
-
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  }
-
+  if (request.method === 'OPTIONS') return handleOptions();
+  if (request.method !== 'POST') return methodNotAllowed('POST');
   try {
     validateEnv(env);
-
-    const body = await request.json();
-    const { puzzleId, anonId, timeMs, hintsUsed = 0 } = body;
-
-    if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(puzzleId)) {
-      return new Response(JSON.stringify({ error: 'Invalid puzzle ID format' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (!validateUUID(anonId)) {
-      return new Response(JSON.stringify({ error: 'Invalid anon ID' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (timeMs < 3000 || timeMs > 3600000) {
-      return new Response(JSON.stringify({ error: 'Invalid time' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const existingScore = await env.DB.prepare(`
-      SELECT time_ms FROM conduit_scores
-      WHERE puzzle_id = ?1 AND anon_id = ?2
-    `).bind(puzzleId, anonId).first();
-
-    let userTime = timeMs;
-
-    if (existingScore) {
-      userTime = existingScore.time_ms;
-    } else {
-      await env.DB.prepare(`
-        INSERT INTO conduit_scores (puzzle_id, anon_id, time_ms, hints_used)
-        VALUES (?1, ?2, ?3, ?4)
-      `).bind(puzzleId, anonId, timeMs, hintsUsed).run();
-    }
-
-    const fasterCountResult = await env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM conduit_scores
-      WHERE puzzle_id = ?1 AND time_ms < ?2
-    `).bind(puzzleId, userTime).first();
-
-    const totalResult = await env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM conduit_scores
-      WHERE puzzle_id = ?1
-    `).bind(puzzleId).first();
-
-    const fasterCount = fasterCountResult?.count || 0;
-    const total = totalResult?.count || 1;
-    const rank = fasterCount + 1;
-    const percentile = Math.floor(((total - rank) / Math.max(total, 1)) * 100);
-
-    return new Response(JSON.stringify({
-      success: true,
-      rank,
-      percentile,
-      total
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-
-  } catch (error) {
-    console.error('Conduit complete API error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    const { puzzleId, anonId, timeMs, hintsUsed = 0 } = await request.json();
+    if (!validatePuzzleId(puzzleId)) return jsonError('Invalid puzzle ID format');
+    if (!validateUUID(anonId)) return jsonError('Invalid anon ID');
+    if (!validateTimeMs(timeMs)) return jsonError('Invalid time');
+    const result = await submitAndRank(env.DB, 'conduit_scores', puzzleId, anonId, timeMs, hintsUsed);
+    return jsonOk({ success: true, ...result });
+  } catch (err) {
+    return internalError(err, 'Conduit complete');
   }
 }

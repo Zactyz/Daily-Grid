@@ -256,8 +256,8 @@ function initState() {
   updatePracticeControls();
 }
 
-async function loadDescriptor() {
-  descriptor = await fetchDescriptor(puzzleId);
+function loadDescriptor() {
+  descriptor = fetchDescriptor(puzzleId);
   engine = new ConduitEngine(descriptor);
   if (!renderer) {
     renderer = new ConduitRenderer(els.canvas, engine);
@@ -274,9 +274,11 @@ async function loadDescriptor() {
   }
 }
 
-function resetPracticePuzzle() {
-  puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
-  puzzleId = getPuzzleIdForMode('practice');
+function resetPracticePuzzle({ newPuzzle = true } = {}) {
+  if (newPuzzle) {
+    puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+    puzzleId = getPuzzleIdForMode('practice');
+  }
   moveCount = 0;
   baseElapsed = 0;
   startTimestamp = 0;
@@ -285,11 +287,10 @@ function resetPracticePuzzle() {
   isComplete = false;
   completionMs = null;
   solutionShown = false;
-  loadDescriptor().then(() => {
-    updateProgress();
-    updatePracticeControls();
-    shell?.update();
-  });
+  loadDescriptor();
+  updateProgress();
+  updatePracticeControls();
+  shell?.update();
 }
 
 function switchMode(mode) {
@@ -303,12 +304,11 @@ function switchMode(mode) {
   }
   puzzleId = getPuzzleIdForMode(mode);
   moveCount = 0;
-  loadDescriptor().then(() => {
-    initState();
-    updateProgress();
-    updatePracticeControls();
-    shell?.update();
-  });
+  loadDescriptor();
+  initState();
+  updateProgress();
+  updatePracticeControls();
+  shell?.update();
 }
 
 function ensureTicker() {
@@ -382,7 +382,7 @@ async function buildShareImage() {
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
     gameName: 'Conduit',
-    logoPath: '/games/conduit/conduit-logo.svg',
+    logoPath: '/games/conduit/conduit-logo.png',
     accent: '#ffe44d',
     accentSoft: 'rgba(255, 228, 77, 0.16)',
     backgroundStart: '#070c12',
@@ -394,10 +394,10 @@ async function buildShareImage() {
   });
 }
 
-async function init() {
+function init() {
   puzzleSeed = getPTDateYYYYMMDD();
   puzzleId = getPuzzleIdForMode(currentMode);
-  await loadDescriptor();
+  loadDescriptor();
   initState();
   updateProgress();
   initShell();
@@ -411,8 +411,9 @@ async function init() {
   });
 
   els.showSolutionBtn?.addEventListener('click', () => showSolution());
-  els.solutionRetryBtn?.addEventListener('click', () => resetPracticePuzzle());
-  els.solutionNextBtn?.addEventListener('click', () => resetPracticePuzzle());
+  // Try Again resets the same puzzle; Next Puzzle generates a new one
+  els.solutionRetryBtn?.addEventListener('click', () => resetPracticePuzzle({ newPuzzle: false }));
+  els.solutionNextBtn?.addEventListener('click', () => resetPracticePuzzle({ newPuzzle: true }));
 }
 
 document.addEventListener('DOMContentLoaded', () => {

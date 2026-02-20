@@ -345,7 +345,7 @@ async function buildShareImage() {
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
     gameName: 'Perimeter',
-    logoPath: '/games/perimeter/perimeter-logo.svg',
+    logoPath: '/games/perimeter/perimeter-logo.png',
     accent: '#7da2ff',
     accentSoft: 'rgba(125, 162, 255, 0.12)',
     backgroundStart: '#0c1018',

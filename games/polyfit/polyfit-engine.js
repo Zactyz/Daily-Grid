@@ -58,35 +58,37 @@ function placementsForPiece(board, size, targetMask, piece) {
   return options;
 }
 
-function buildTargetMask(size, cellCount, rng) {
-  const mask = new Array(size * size).fill(false);
-  const startX = 1 + Math.floor(rng() * (size - 2));
-  const startY = 1 + Math.floor(rng() * (size - 2));
-  const frontier = [[startX, startY]];
-  mask[startY * size + startX] = true;
-  let filled = 1;
+// Backtracking solver used for both generation and revealSolution.
+// shuffleFn is optional; pass it during generation for randomness.
+function solveBoard(board, size, targetMask, pieces, remaining, shuffleFn) {
+  if (!remaining.length) return true;
 
-  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-  while (filled < cellCount && frontier.length) {
-    const base = frontier[Math.floor(rng() * frontier.length)];
-    const shuffled = dirs.slice().sort(() => rng() - 0.5);
-    let added = false;
-    for (const [dx, dy] of shuffled) {
-      const x = base[0] + dx;
-      const y = base[1] + dy;
-      if (x < 0 || y < 0 || x >= size || y >= size) continue;
-      const idx = y * size + x;
-      if (mask[idx]) continue;
-      mask[idx] = true;
-      frontier.push([x, y]);
-      filled += 1;
-      added = true;
-      break;
-    }
-    if (!added) frontier.splice(frontier.indexOf(base), 1);
+  let bestIdx = -1;
+  let bestOpts = null;
+  for (let i = 0; i < remaining.length; i += 1) {
+    const opts = placementsForPiece(board, size, targetMask, pieces[remaining[i]]);
+    if (!opts.length) return false;
+    if (!bestOpts || opts.length < bestOpts.length) { bestOpts = opts; bestIdx = i; }
   }
 
-  return mask;
+  if (shuffleFn) shuffleFn(bestOpts);
+
+  const id = remaining.splice(bestIdx, 1)[0];
+  const piece = pieces[id];
+
+  for (const opt of bestOpts) {
+    opt.cells.forEach(([dx, dy]) => { board[(opt.y + dy) * size + (opt.x + dx)] = id; });
+    piece.variantIndex = opt.variantIndex;
+    piece.placed = { x: opt.x, y: opt.y, variantIndex: opt.variantIndex };
+
+    if (solveBoard(board, size, targetMask, pieces, remaining, shuffleFn)) return true;
+
+    opt.cells.forEach(([dx, dy]) => { board[(opt.y + dy) * size + (opt.x + dx)] = null; });
+    piece.placed = null;
+  }
+
+  remaining.splice(bestIdx, 0, id);
+  return false;
 }
 
 export class PolyfitEngine {
@@ -100,6 +102,7 @@ export class PolyfitEngine {
     this.isComplete = false;
     this.hintsUsed = 0;
     this.solutionShown = false;
+    this._solution = null;
     this.generate(seedKey);
   }
 
@@ -109,23 +112,61 @@ export class PolyfitEngine {
 
   generate(seedKey) {
     const difficultyHash = hashString(`polyfit:difficulty:${seedKey}`);
-    this.pieceCount = 4 + (difficultyHash % 4); // 4..7 inclusive
+    this.pieceCount = 4 + (difficultyHash % 4);
+    this._solution = null;
 
-    const rng = createSeededRandom(hashString(`polyfit:${seedKey}`));
-    this.pieces = Array.from({ length: this.pieceCount }).map((_, i) => {
-      const base = SHAPES[Math.floor(rng() * SHAPES.length)];
-      const opts = variants(base);
-      return {
+    // Solution-first generation: place pieces on a blank board, derive targetMask from result.
+    // Retry with different random sequences until placement succeeds (always fast in practice).
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const rng = createSeededRandom(hashString(`polyfit:${seedKey}:gen${attempt}`));
+
+      const shuffle = (arr) => {
+        for (let i = arr.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(rng() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+      };
+
+      const pieces = Array.from({ length: this.pieceCount }, (_, i) => ({
         id: i,
         color: COLORS[i % COLORS.length],
-        variants: opts,
+        variants: variants(SHAPES[Math.floor(rng() * SHAPES.length)]),
         variantIndex: 0,
         placed: null
-      };
-    });
+      }));
 
+      const board = new Array(this.size * this.size).fill(null);
+      const allOpen = new Array(this.size * this.size).fill(true);
+      const remaining = pieces.map((p) => p.id);
+
+      if (solveBoard(board, this.size, allOpen, pieces, remaining, shuffle)) {
+        this.pieces = pieces;
+        this.targetMask = board.map((v) => v !== null);
+        this.targetCount = this.targetMask.filter(Boolean).length;
+        // Cache solution so revealSolution is instant and always correct
+        this._solution = {
+          board: [...board],
+          placements: pieces.map((p) => (p.placed ? { ...p.placed } : null))
+        };
+        // Reset all pieces to unplaced for the player
+        pieces.forEach((p) => { p.placed = null; p.variantIndex = 0; });
+        this.board = new Array(this.size * this.size).fill(null);
+        return;
+      }
+    }
+
+    // Emergency fallback — statistically unreachable with 40 attempts.
+    // Falls back to the original random-generation approach without solvability guarantee.
+    const rng = createSeededRandom(hashString(`polyfit:${seedKey}:fallback`));
+    this.pieces = Array.from({ length: this.pieceCount }, (_, i) => ({
+      id: i,
+      color: COLORS[i % COLORS.length],
+      variants: variants(SHAPES[Math.floor(rng() * SHAPES.length)]),
+      variantIndex: 0,
+      placed: null
+    }));
     this.board = new Array(this.size * this.size).fill(null);
-    this.targetCount = this.pieces.reduce((sum, p) => sum + p.variants[0].length, 0);
+    this.targetCount = this.pieces.reduce((s, p) => s + p.variants[0].length, 0);
     this.targetMask = buildTargetMask(this.size, this.targetCount, rng);
   }
 
@@ -142,6 +183,7 @@ export class PolyfitEngine {
     this.isPaused = false;
     this.isComplete = false;
     this.solutionShown = false;
+    // _solution is intentionally preserved across resets
   }
 
   rotateSelected(pieceId) {
@@ -184,44 +226,24 @@ export class PolyfitEngine {
       p.variantIndex = 0;
     });
 
-    const unplaced = this.pieces.map((p) => p.id);
-    const trySolve = () => {
-      if (!unplaced.length) return true;
-
-      let bestIdx = -1;
-      let bestOptions = null;
-      for (let i = 0; i < unplaced.length; i += 1) {
-        const piece = this.pieces[unplaced[i]];
-        const options = placementsForPiece(this.board, this.size, this.targetMask, piece);
-        if (!options.length) return false;
-        if (!bestOptions || options.length < bestOptions.length) {
-          bestOptions = options;
-          bestIdx = i;
+    // Fast path: use the cached solution from generation (same session)
+    if (this._solution) {
+      this._solution.board.forEach((v, i) => { this.board[i] = v; });
+      this._solution.placements.forEach((sol, i) => {
+        if (sol) {
+          this.pieces[i].placed = { ...sol };
+          this.pieces[i].variantIndex = sol.variantIndex;
         }
-      }
+      });
+      this.solutionShown = true;
+      this.isComplete = false;
+      this.isPaused = true;
+      return true;
+    }
 
-      const pieceId = unplaced.splice(bestIdx, 1)[0];
-      const piece = this.pieces[pieceId];
-      for (const option of bestOptions) {
-        option.cells.forEach(([dx, dy]) => {
-          this.board[(option.y + dy) * this.size + (option.x + dx)] = pieceId;
-        });
-        piece.variantIndex = option.variantIndex;
-        piece.placed = { x: option.x, y: option.y, variantIndex: option.variantIndex };
-
-        if (trySolve()) return true;
-
-        option.cells.forEach(([dx, dy]) => {
-          this.board[(option.y + dy) * this.size + (option.x + dx)] = null;
-        });
-        piece.placed = null;
-      }
-
-      unplaced.splice(bestIdx, 0, pieceId);
-      return false;
-    };
-
-    const solved = trySolve();
+    // Re-solve after page reload (solution-first guarantees this always succeeds)
+    const remaining = this.pieces.map((p) => p.id);
+    const solved = solveBoard(this.board, this.size, this.targetMask, this.pieces, remaining, null);
     if (!solved) {
       this.reset({ resetTimer: false });
       this.solutionShown = true;
@@ -250,4 +272,35 @@ export class PolyfitEngine {
   getFillCount() { return this.board.filter((v) => v !== null).length; }
   getTargetCount() { return this.targetCount; }
   getGridLabel() { return `${this.size}x${this.size} • ${this.pieceCount} pieces`; }
+}
+
+function buildTargetMask(size, cellCount, rng) {
+  const mask = new Array(size * size).fill(false);
+  const startX = 1 + Math.floor(rng() * (size - 2));
+  const startY = 1 + Math.floor(rng() * (size - 2));
+  const frontier = [[startX, startY]];
+  mask[startY * size + startX] = true;
+  let filled = 1;
+
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  while (filled < cellCount && frontier.length) {
+    const base = frontier[Math.floor(rng() * frontier.length)];
+    const shuffled = dirs.slice().sort(() => rng() - 0.5);
+    let added = false;
+    for (const [dx, dy] of shuffled) {
+      const x = base[0] + dx;
+      const y = base[1] + dy;
+      if (x < 0 || y < 0 || x >= size || y >= size) continue;
+      const idx = y * size + x;
+      if (mask[idx]) continue;
+      mask[idx] = true;
+      frontier.push([x, y]);
+      filled += 1;
+      added = true;
+      break;
+    }
+    if (!added) frontier.splice(frontier.indexOf(base), 1);
+  }
+
+  return mask;
 }

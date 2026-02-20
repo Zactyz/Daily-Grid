@@ -1,4 +1,7 @@
-const DRAG_THRESHOLD = 6;
+// Separate drag thresholds: tray pieces benefit from a larger threshold to avoid
+// accidental drags when the user intends to tap-to-rotate.
+const BOARD_DRAG_THRESHOLD = 4;
+const TRAY_DRAG_THRESHOLD = 8;
 
 export class PolyfitInput {
   constructor(canvas, engine, renderer, callbacks = {}) {
@@ -23,6 +26,9 @@ export class PolyfitInput {
 
     window.addEventListener('pointermove', (e) => this.handleGlobalDragMove(e));
     window.addEventListener('pointerup', (e) => this.handleGlobalDragEnd(e));
+    // pointercancel fires when OS interrupts the pointer (e.g. incoming call).
+    // Treat it identically to pointerup so the drag state is always cleaned up.
+    window.addEventListener('pointercancel', (e) => this.handleGlobalDragEnd(e));
   }
 
   setEngine(engine) { this.engine = engine; }
@@ -126,14 +132,14 @@ export class PolyfitInput {
     };
   }
 
-  startTrayDrag(pieceId, clientX, clientY, trayRect = null) {
+  startTrayDrag(pieceId, clientX, clientY, trayRect = null, pointerId = null) {
     const piece = this.engine.pieces[pieceId];
     if (!piece || piece.placed) return;
 
     this.dragging = {
       pieceId,
       source: 'bank',
-      pointerId: null,
+      pointerId,
       startClientX: clientX,
       startClientY: clientY,
       lastValid: { source: 'bank' },
@@ -270,17 +276,20 @@ export class PolyfitInput {
     if (this.pressingBoard && !this.dragging) {
       const dx = Math.abs(e.clientX - this.pressingBoard.startClientX);
       const dy = Math.abs(e.clientY - this.pressingBoard.startClientY);
-      if (dx + dy > DRAG_THRESHOLD) {
+      if (dx + dy > BOARD_DRAG_THRESHOLD) {
         this.startBoardDrag(this.pressingBoard.pieceId, this.pressingBoard.startClientX, this.pressingBoard.startClientY, this.pressingBoard.pointerId);
         this.pressingBoard = null;
       }
     }
 
     if (!this.dragging) return;
+    // Only track the pointer that started the drag
+    if (this.dragging.pointerId !== null && e.pointerId !== this.dragging.pointerId) return;
 
+    const threshold = this.dragging.source === 'bank' ? TRAY_DRAG_THRESHOLD : BOARD_DRAG_THRESHOLD;
     const dx = Math.abs(e.clientX - this.dragging.startClientX);
     const dy = Math.abs(e.clientY - this.dragging.startClientY);
-    if (dx + dy > DRAG_THRESHOLD) this.dragging.moved = true;
+    if (dx + dy > threshold) this.dragging.moved = true;
 
     this.updateDragPreview(e.clientX, e.clientY);
   }
@@ -306,7 +315,11 @@ export class PolyfitInput {
     this.setState('idle');
   }
 
-  handleGlobalDragEnd() {
+  handleGlobalDragEnd(e) {
+    // Only handle the pointer that started the drag (ignore other fingers)
+    if (this.dragging && this.dragging.pointerId !== null && e.pointerId !== this.dragging.pointerId) return;
+    if (this.pressingBoard && this.pressingBoard.pointerId !== null && e.pointerId !== this.pressingBoard.pointerId) return;
+
     if (this.pressingBoard && !this.dragging) {
       const pieceId = this.pressingBoard.pieceId;
       this.pressingBoard = null;
@@ -343,10 +356,24 @@ export class PolyfitInput {
       return;
     }
 
+    // Bug fix: 'floating' pieces must snap back to tray on invalid drop.
+    // Previously, this branch returned early without clearing dragging or hiding the ghost,
+    // leaving the piece permanently lost and the game stuck.
     if (source === 'floating') {
+      this.renderer.pulseInvalidPiece(pieceId);
+      this.dragging = null;
+      this.hideGhost();
       this.renderer.setPreview(null);
+      this.renderer.setDragPiece(null);
+      this.setState('idle');
+      this.onChange?.();
       this.renderer.render();
       return;
+    }
+
+    // Show invalid-placement pulse before snap-back for board drags
+    if (candidate !== null && !candidate?.valid) {
+      this.renderer.pulseInvalidPiece(pieceId);
     }
 
     this.finishDragWithSnapBack(pieceId);

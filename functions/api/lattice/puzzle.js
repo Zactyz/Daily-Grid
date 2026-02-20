@@ -1,4 +1,4 @@
-// GET /api/pathways/puzzle - Get today's puzzle (cached in KV)
+// GET /api/lattice/puzzle - Get today's puzzle (cached in KV)
 
 import { getPTDateYYYYMMDD } from '../../_shared/snake-utils-server.js';
 

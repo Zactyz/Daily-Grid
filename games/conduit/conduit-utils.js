@@ -90,24 +90,10 @@ function edgePick(edge, width, height, rng, avoid = new Set()) {
   return pool[Math.floor(rng() * pool.length)];
 }
 
-export async function fetchDescriptor(puzzleId) {
+// Conduit puzzles are generated deterministically client-side from the puzzle ID.
+// No server API handler exists for conduit/puzzle, so we use client-side generation directly.
+export function fetchDescriptor(puzzleId) {
   const id = puzzleId || getPTDateYYYYMMDD();
-  try {
-    const resp = await fetch(`/api/conduit/puzzle?puzzleId=${id}`);
-    if (resp.ok) {
-      const data = await resp.json();
-      const hasValidGrid = Number.isInteger(data?.width) && Number.isInteger(data?.height) && data.height === data.width;
-      const inRange = hasValidGrid && data.width >= GRID_MIN && data.width <= GRID_MAX;
-      const hasCells = Array.isArray(data?.solutionCells) && data.solutionCells.length === data.width * data.height;
-      const hasEntries = Array.isArray(data?.entryPoints) && data.entryPoints.length >= 2;
-
-      if (inRange && hasCells && hasEntries) {
-        return data;
-      }
-    }
-  } catch (error) {
-    console.warn('Conduit puzzle fetch failed, falling back to mock descriptor', error);
-  }
   return generateMockDescriptor(id);
 }
 

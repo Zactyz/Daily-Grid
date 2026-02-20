@@ -9,7 +9,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/games/perimeter/perimeter-logo.svg",
+      "src": "/games/perimeter/perimeter-logo.png",
       "sizes": "64x64",
       "type": "image/svg+xml",
       "purpose": "any maskable"

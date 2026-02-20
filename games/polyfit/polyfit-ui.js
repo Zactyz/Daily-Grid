@@ -6,7 +6,8 @@ import { PolyfitEngine } from './polyfit-engine.js';
 import { PolyfitRenderer } from './polyfit-renderer.js';
 import { PolyfitInput } from './polyfit-input.js';
 
-const STATE_PREFIX = 'dailygrid_polyfit_state_';
+// v2 prefix invalidates old saves from before the engine overhaul
+const STATE_PREFIX = 'dailygrid_polyfit_state_v2_';
 const els = {
   canvas: document.getElementById('polyfit-canvas'),
   progress: document.getElementById('progress-text'),
@@ -41,9 +42,9 @@ function setLabels() {
 function updateProgress() {
   const placed = engine.pieces.filter((p) => p.placed).length;
   const remaining = engine.pieces.length - placed;
-  const filled = engine.getFillCount();
-  const target = engine.getTargetCount();
-  els.progress.textContent = `Goal: fill the amber footprint • Placed ${placed}/${engine.pieces.length} • Remaining ${remaining} • Cells ${filled}/${target}`;
+  els.progress.textContent = remaining === 0
+    ? `All ${engine.pieces.length} pieces placed — fill the amber footprint!`
+    : `${placed} of ${engine.pieces.length} pieces placed • ${remaining} remaining`;
 }
 
 function pieceShapeHTML(piece, { empty = false } = {}) {
@@ -85,9 +86,10 @@ function renderTray() {
 
     if (!showHole) {
       b.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
         selectedPiece = p.id;
         renderer.setSelected(selectedPiece);
-        input.startTrayDrag(p.id, event.clientX, event.clientY, b.getBoundingClientRect());
+        input.startTrayDrag(p.id, event.clientX, event.clientY, b.getBoundingClientRect(), event.pointerId);
         renderTray();
         renderer.render();
       });
@@ -205,6 +207,9 @@ function switchMode(mode) {
   initPuzzle();
 }
 
+window.startPracticeMode = () => switchMode('practice');
+window.startDailyMode = () => switchMode('daily');
+
 function resetGame({ resetTimer = true } = {}) {
   engine.reset({ resetTimer });
   completionMs = null;
@@ -258,7 +263,7 @@ function initShell() {
     getShareMeta: () => ({ gameName: 'Polyfit', shareUrl: 'https://dailygrid.app/games/polyfit/', gridLabel: engine.getGridLabel(), accent: '#f59e0b' }),
     getShareFile: () => buildShareCard({
       gameName: 'Polyfit',
-      logoPath: '/games/polyfit/polyfit-logo.svg',
+      logoPath: '/games/polyfit/polyfit-logo.png',
       accent: '#f59e0b',
       accentSoft: 'rgba(245,158,11,.12)',
       backgroundStart: '#120f1a',

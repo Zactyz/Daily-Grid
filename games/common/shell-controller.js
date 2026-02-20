@@ -1,6 +1,8 @@
 import { buildShareText, formatDateForShare, shareWithFallback, showShareFeedback } from './share.js';
 import { getGameMeta, recordGameCompletion } from './games.js';
 import { loadLeaderboard, submitScore, claimInitials, updateNextGamePromo } from './shell-ui.js';
+import { recordStreak, getStreak, getMsUntilPTMidnight, formatCountdown } from './streak.js';
+import { recordStats, showStatsModal } from './stats.js';
 
 const RESET_ICON = `
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -512,8 +514,19 @@ function shouldAllowDoubleTap(target) {
       }
 
       if (elements.percentileMsg) {
-        const topPct = Math.max(1, Math.round(100 - (data.percentile ?? 0)));
-        const msg = `You finished in the top ${topPct}% of solvers!`;
+        const rank = data.rank;
+        const total = data.total ?? 0;
+        let msg;
+        if (rank === 1 && total === 1) {
+          msg = 'First to solve today!';
+        } else if (rank === 1) {
+          msg = 'You\u2019re #1 on today\u2019s leaderboard!';
+        } else if (total > 1 && rank === total) {
+          msg = 'You finished today\u2019s puzzle!';
+        } else {
+          const topPct = Math.max(1, Math.round(100 - (data.percentile ?? 0)));
+          msg = `You finished in the top ${topPct}% of solvers!`;
+        }
         elements.percentileMsg.textContent = msg;
         elements.percentileMsg.classList.remove('hidden');
       }
@@ -550,8 +563,78 @@ function shouldAllowDoubleTap(target) {
       elements.claimInitialsForm?.classList.add('hidden');
       await loadLeaderboardIntoModal();
     } catch (error) {
-      alert(error.message || 'Failed to save initials. Please try again.');
+      showToast(error.message || 'Failed to save initials. Please try again.');
     }
+  }
+
+  let countdownInterval = null;
+
+  function injectStreakDisplay(modal, streak) {
+    if (!modal) return;
+    let el = modal.querySelector('#streak-display');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'streak-display';
+      el.className = 'flex items-center justify-center gap-1.5 text-sm font-medium mb-4';
+      // Insert after the timer-display block
+      const timerDisplay = modal.querySelector('.timer-display');
+      if (timerDisplay) timerDisplay.after(el);
+      else modal.querySelector('[id="percentile-msg"]')?.before(el);
+    }
+    if (streak.current >= 2) {
+      const best = streak.current === streak.best && streak.best > 1 ? ' — new best!' : '';
+      el.innerHTML = `
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#f97316">
+          <path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-6-6-8-6-14z"/>
+        </svg>
+        <span style="color:#f97316">${streak.current}-day streak${best}</span>
+      `;
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  }
+
+  function injectStatsButton(modal, gameId, gameName) {
+    if (!modal) return;
+    if (modal.querySelector('#stats-modal-btn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'stats-modal-btn';
+    btn.textContent = 'View Stats';
+    btn.style.cssText = `
+      display: block; width: 100%; margin-top: .5rem; padding: .5rem;
+      background: none; border: 1px solid rgba(255,255,255,.08);
+      border-radius: .6rem; color: #71717a; font-size: .75rem; font-weight: 600;
+      cursor: pointer; transition: all .15s ease;
+    `;
+    btn.addEventListener('mouseenter', () => { btn.style.borderColor = 'rgba(255,255,255,.16)'; btn.style.color = '#a1a1aa'; });
+    btn.addEventListener('mouseleave', () => { btn.style.borderColor = 'rgba(255,255,255,.08)'; btn.style.color = '#71717a'; });
+    btn.addEventListener('click', () => showStatsModal(gameId, gameName));
+    const buttonsArea = modal.querySelector('.flex.flex-col.gap-3');
+    if (buttonsArea) buttonsArea.after(btn);
+  }
+
+  function injectCountdownDisplay(modal) {
+    if (!modal) return;
+    let el = modal.querySelector('#next-puzzle-countdown');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'next-puzzle-countdown';
+      el.className = 'text-center text-xs text-zinc-500 mb-4';
+      // Insert before leaderboard title or before close button area
+      const lbTitle = modal.querySelector('#leaderboard-title');
+      if (lbTitle) lbTitle.before(el);
+      else modal.querySelector('.flex.flex-col.gap-3')?.before(el);
+    }
+
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    const update = () => {
+      const ms = getMsUntilPTMidnight();
+      el.textContent = `Next puzzle in: ${formatCountdown(ms)}`;
+    };
+    update();
+    countdownInterval = setInterval(update, 60_000);
   }
 
   function showCompletionModal({ force = false } = {}) {
@@ -578,6 +661,13 @@ function shouldAllowDoubleTap(target) {
       const dailySubtitle = adapter.getDailyModalSubtitle?.() || `Great job on today's ${gameName}`;
       if (elements.modalTitle) elements.modalTitle.textContent = dailyTitle;
       if (elements.modalSubtitle) elements.modalSubtitle.textContent = dailySubtitle;
+
+      // Streak and stats tracking
+      const streakData = recordStreak(adapter.gameId);
+      recordStats(adapter.gameId, completionMs ?? adapter.getElapsedMs());
+      injectStreakDisplay(elements.completionModal, streakData);
+      injectCountdownDisplay(elements.completionModal);
+      injectStatsButton(elements.completionModal, adapter.gameId, meta?.name || adapter.gameId);
 
       elements.shareBtn?.classList.remove('hidden');
       elements.leaderboardTitle?.classList.remove('hidden');
@@ -611,6 +701,7 @@ function shouldAllowDoubleTap(target) {
   }
 
   function hideCompletionModal() {
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
     elements.completionModal?.classList.add('hidden');
     const entry = getPlayerEntry();
     if (entry && !entry.initials) {
@@ -1016,6 +1107,25 @@ function shouldAllowDoubleTap(target) {
   }
 
     init();
+
+    // First-time onboarding: auto-expand How to Play accordion on first visit per game
+    if (adapter.gameId) {
+      const onboardKey = `dailygrid_onboarded_${adapter.gameId}`;
+      if (!localStorage.getItem(onboardKey)) {
+        localStorage.setItem(onboardKey, '1');
+        // Find the How to Play details element by summary text (not the first details,
+        // which on Lattice is the Clues panel, not How to Play)
+        const allDetails = document.querySelectorAll('details');
+        const howToPlay = Array.from(allDetails).find(d => {
+          const s = d.querySelector('summary');
+          return s && /how to play/i.test(s.textContent);
+        });
+        if (howToPlay && !howToPlay.open) {
+          // Delay slightly so the start overlay is visible first
+          setTimeout(() => { howToPlay.open = true; }, 400);
+        }
+      }
+    }
 
     return {
     update,

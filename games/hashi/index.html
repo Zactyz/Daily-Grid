@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -14,6 +14,9 @@
   <meta name="twitter:title" content="Bridgeworks — Daily Grid">
   <meta name="twitter:description" content="Bridgeworks — a calm bridges puzzle from Daily Grid.">
   <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-bridgeworks.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bridgeworks">
   <link rel="manifest" href="/games/hashi/manifest.json">
   <link rel="icon" type="image/jpeg" href="/games/hashi/hashi-logo.jpg">
   <link rel="apple-touch-icon" href="/games/hashi/hashi-logo.jpg">
@@ -21,6 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/shell.css">
+    <link rel="stylesheet" href="/games/common/games-base.css">
   <style>
     :root {
       --brand-bg: #0b1b2a;
@@ -28,18 +32,11 @@
       --brand-accent-dim: #C99863;
       --water-accent: #6aa7d9;
       --water-accent-dim: #3d7fb4;
-      --glass-bg: rgba(255, 255, 255, 0.02);
-      --glass-border: rgba(255, 255, 255, 0.06);
     }
 
-    * { -webkit-tap-highlight-color: transparent; }
-
     body {
-      font-family: 'Space Grotesk', sans-serif;
       background: var(--brand-bg);
       color: #f8f4ef;
-      overflow-x: hidden;
-      overflow-y: auto;
     }
 
     body::before {
@@ -54,55 +51,6 @@
       z-index: -1;
     }
 
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-      z-index: -1;
-    }
-
-    h1, h2, h3 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .mono { font-family: 'JetBrains Mono', monospace; }
-
-    .glass {
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
-    }
-
-    .glass-strong {
-      background: rgba(255, 255, 255, 0.04);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow:
-        0 4px 24px -4px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    }
-
-    .btn {
-      padding: 0.625rem 1.25rem;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.875rem;
-      letter-spacing: 0.01em;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-    }
-
     .btn-primary {
       background: linear-gradient(135deg, var(--water-accent), var(--water-accent-dim));
       color: #0b1724;
@@ -110,20 +58,7 @@
     }
 
     .btn-primary:hover {
-      transform: translateY(-1px);
       box-shadow: 0 4px 20px rgba(106, 167, 217, 0.45);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #a1a1aa;
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.15);
-      color: #e8e8ed;
     }
 
     .timer-display {
@@ -131,13 +66,8 @@
       border: 1px solid rgba(106, 167, 217, 0.35);
     }
 
-    .stat-card {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .accent-text { color: var(--brand-accent); }
     .accent-glow { text-shadow: 0 0 30px rgba(232, 180, 122, 0.4); }
+
     .wood-title {
       background-image:
         repeating-linear-gradient(-15deg,
@@ -170,61 +100,10 @@
       font-size: 0.8rem;
     }
 
-    .modal-backdrop {
-      background: rgba(8, 6, 5, 0.9);
-      backdrop-filter: blur(8px);
-    }
-
     #leaderboard-list {
       background: rgba(0, 0, 0, 0.2);
       border-radius: 0.75rem;
       overflow: hidden;
-    }
-
-    .leaderboard-row { transition: background 0.15s ease; }
-    .leaderboard-row:hover { background: rgba(255, 255, 255, 0.03); }
-
-    details summary { list-style: none; }
-    details summary::-webkit-details-marker { display: none; }
-    details summary::marker { content: ''; }
-    summary.details-plus::after {
-      content: '+';
-      float: right;
-      font-weight: 300;
-      font-size: 1.25rem;
-      color: #71717a;
-      transition: transform 0.2s ease;
-    }
-    details[open] summary.details-plus::after { transform: rotate(45deg); }
-
-    .mobile-app-bar {
-      display: none;
-      position: fixed;
-      top: 0.75rem;
-      left: 0.75rem;
-      z-index: 80;
-      pointer-events: none;
-    }
-
-    .mobile-app-bar a {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      background: rgba(8, 10, 12, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #f8f4ef;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(12px);
-      pointer-events: auto;
-    }
-
-    @media (max-width: 899px) {
-      nav { display: none !important; }
-  main { padding-top: 3.5rem !important; padding-bottom: 1.5rem !important; }
-      .mobile-app-bar { display: flex; }
     }
   </style>
 </head>

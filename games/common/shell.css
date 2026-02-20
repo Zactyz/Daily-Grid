@@ -283,4 +283,11 @@ textarea,
   .shell-confetti-piece {
     animation: none;
   }
+  /* Modal, toast, and general UI transitions */
+  .shell-modal {
+    transition: none;
+  }
+  .shell-btn {
+    transition: none;
+  }
 }

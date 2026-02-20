@@ -1249,7 +1249,13 @@ function wireUI() {
     wireUI();
     await startDaily();
   } catch (e) {
-    console.error(e);
-    if (els.board) els.board.innerHTML = `<div class="text-sm text-red-300">${String(e)}</div>`;
+    console.error('[Lattice] Failed to load puzzle:', e);
+    if (els.board) {
+      els.board.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-8 gap-3 text-center">
+          <p class="text-sm text-red-300/80">Failed to load today's puzzle.</p>
+          <button onclick="window.location.reload()" class="btn btn-secondary text-xs px-4 py-2">Try Again</button>
+        </div>`;
+    }
   }
 })();

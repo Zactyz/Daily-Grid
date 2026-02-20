@@ -77,3 +77,20 @@ export function normalizeWall(a, b) {
   const s2 = `${bx},${by}`;
   return (s1 < s2) ? `${s1}-${s2}` : `${s2}-${s1}`;
 }
+
+/**
+ * Reads ?practice=1 or ?mode=practice from the URL and calls
+ * window.startPracticeMode() once the game has initialized.
+ * Games must expose window.startPracticeMode before calling this.
+ */
+export function initPracticeFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('practice') === '1' || params.get('mode') === 'practice') {
+    const start = () => window.startPracticeMode?.();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(start, 0), { once: true });
+    } else {
+      setTimeout(start, 0);
+    }
+  }
+}

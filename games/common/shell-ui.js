@@ -36,7 +36,11 @@ export async function loadLeaderboard({
     topEntries.forEach((entry, idx) => {
       const rank = Number.isFinite(entry.rank) ? entry.rank : idx + 1;
       const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
-      const isPlayer = playerEntry && Number.isFinite(playerEntry.rank) && playerEntry.rank === rank;
+      // Match by rank AND timeMs to avoid marking the wrong row when players tie
+      const isPlayer = playerEntry
+        && Number.isFinite(playerEntry.rank)
+        && playerEntry.rank === rank
+        && (!Number.isFinite(playerEntry.timeMs) || playerEntry.timeMs === entry.timeMs);
       const initials = isPlayer ? playerLabel : (entry.initials || '???');
       rows.push({
         type: 'entry',

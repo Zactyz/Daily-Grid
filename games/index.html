@@ -131,6 +131,20 @@
       text-underline-offset: 3px;
     }
 
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #f97316;
+      background: rgba(249,115,22,.12);
+      border: 1px solid rgba(249,115,22,.25);
+      border-radius: 999px;
+      padding: 1px 6px;
+      letter-spacing: .01em;
+    }
+
     .ios-banner {
       border: 1px solid rgba(15, 23, 42, 0.08);
       background: rgba(255, 255, 255, 0.92);
@@ -317,7 +331,7 @@
         </a>
         <a href="/games/conduit/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="conduit">
           <div class="relative">
-            <img src="/games/conduit/conduit-logo.svg" alt="Conduit" class="w-12 h-12 rounded-xl">
+            <img src="/games/conduit/conduit-logo.png" alt="Conduit" class="w-12 h-12 rounded-xl">
             <span class="complete-mark hidden">✓</span>
           </div>
           <div class="flex-1">
@@ -333,7 +347,7 @@
         </a>
         <a href="/games/polyfit/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="polyfit">
           <div class="relative">
-            <img src="/games/polyfit/polyfit-logo.svg" alt="Polyfit" class="w-12 h-12 rounded-xl">
+            <img src="/games/polyfit/polyfit-logo.png" alt="Polyfit" class="w-12 h-12 rounded-xl">
             <span class="complete-mark hidden">✓</span>
           </div>
           <div class="flex-1">
@@ -349,7 +363,7 @@
         </a>
         <a href="/games/perimeter/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="perimeter">
           <div class="relative">
-            <img src="/games/perimeter/perimeter-logo.svg" alt="Perimeter" class="w-12 h-12 rounded-xl">
+            <img src="/games/perimeter/perimeter-logo.png" alt="Perimeter" class="w-12 h-12 rounded-xl">
             <span class="complete-mark hidden">✓</span>
           </div>
           <div class="flex-1">
@@ -398,13 +412,13 @@
       </header>
 
       <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-        <a href="/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-16 h-16 rounded-2xl mb-6 shadow-lg">
-          <h2 class="text-2xl font-bold mb-2">Daily Grid</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">The original. Fill the grid with perfect logic.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <a href="https://apps.apple.com/app/daily-grid/id6740065931" target="_blank" rel="noopener" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start" style="border-color:rgba(148,163,184,.15)">
+          <img src="/Images/web%20icon.png" alt="Daily Grid App" class="w-16 h-16 rounded-2xl mb-6 shadow-lg">
+          <h2 class="text-2xl font-bold mb-2">Get the App</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Take your daily puzzles on the go. Available free on iOS.</p>
+          <span class="mt-auto text-slate-400 font-semibold text-sm flex items-center gap-2">
+            Download on App Store
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </span>
         </a>
 
@@ -469,7 +483,7 @@
         </a>
 
         <a href="/games/conduit/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/conduit/conduit-logo.svg" alt="Conduit" class="w-16 h-16 rounded-2xl mb-6">
+          <img src="/games/conduit/conduit-logo.png" alt="Conduit" class="w-16 h-16 rounded-2xl mb-6">
           <h2 class="text-2xl font-bold mb-2">Conduit</h2>
           <p class="text-slate-400 text-sm leading-relaxed mb-6">Route the current and light every circuit.</p>
           <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
@@ -479,7 +493,7 @@
         </a>
 
         <a href="/games/polyfit/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/polyfit/polyfit-logo.svg" alt="Polyfit" class="w-16 h-16 rounded-2xl mb-6">
+          <img src="/games/polyfit/polyfit-logo.png" alt="Polyfit" class="w-16 h-16 rounded-2xl mb-6">
           <h2 class="text-2xl font-bold mb-2">Polyfit</h2>
           <p class="text-slate-400 text-sm leading-relaxed mb-6">Fit every polyomino piece into a tight box.</p>
           <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
@@ -488,7 +502,7 @@
           </span>
         </a>
         <a href="/games/perimeter/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/perimeter/perimeter-logo.svg" alt="Perimeter" class="w-16 h-16 rounded-2xl mb-6">
+          <img src="/games/perimeter/perimeter-logo.png" alt="Perimeter" class="w-16 h-16 rounded-2xl mb-6">
           <h2 class="text-2xl font-bold mb-2">Perimeter</h2>
           <p class="text-slate-400 text-sm leading-relaxed mb-6">Lock the loop with clean, deliberate logic.</p>
           <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
@@ -576,10 +590,20 @@
       bits: { name: 'Bits', path: '/games/bits/', logo: '/games/bits/bitsnew-logo.jpg' },
       hashi: { name: 'Bridgeworks', path: '/games/hashi/', logo: '/games/hashi/hashi-logo.jpg' },
       shikaku: { name: 'Parcel', path: '/games/shikaku/', logo: '/games/shikaku/shikaku-logo.jpg' },
-      conduit: { name: 'Conduit', path: '/games/conduit/', logo: '/games/conduit/conduit-logo.svg' },
-      perimeter: { name: 'Perimeter', path: '/games/perimeter/', logo: '/games/perimeter/perimeter-logo.svg' },
-      polyfit: { name: 'Polyfit', path: '/games/polyfit/', logo: '/games/polyfit/polyfit-logo.svg' }
+      conduit: { name: 'Conduit', path: '/games/conduit/', logo: '/games/conduit/conduit-logo.png' },
+      perimeter: { name: 'Perimeter', path: '/games/perimeter/', logo: '/games/perimeter/perimeter-logo.png' },
+      polyfit: { name: 'Polyfit', path: '/games/polyfit/', logo: '/games/polyfit/polyfit-logo.png' }
     };
+
+    function getStreakData(gameId) {
+      try {
+        const raw = localStorage.getItem(`dailygrid_${gameId}_streak`);
+        if (raw) return JSON.parse(raw);
+      } catch { /* ignore */ }
+      return { current: 0 };
+    }
+
+    const FLAME_SVG = `<svg width="10" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-6-6-8-6-14z"/></svg>`;
 
     function getPTDateYYYYMMDD(now = new Date()) {
       const dtf = new Intl.DateTimeFormat('en-CA', {
@@ -630,6 +654,21 @@
         if (meta) {
           card.href = completed ? `${meta.path}?leaderboard=1` : meta.path;
         }
+        // Streak badge
+        const streak = getStreakData(id);
+        let badgeEl = card.querySelector('.streak-badge');
+        if (streak.current >= 2) {
+          if (!badgeEl) {
+            badgeEl = document.createElement('span');
+            badgeEl.className = 'streak-badge';
+            const labelEl = card.querySelector('.play-label');
+            if (labelEl) labelEl.before(badgeEl);
+          }
+          badgeEl.innerHTML = `${FLAME_SVG} ${streak.current}`;
+        } else if (badgeEl) {
+          badgeEl.remove();
+        }
+
         if (completed) {
           card.classList.add('complete');
           if (check) check.classList.remove('hidden');

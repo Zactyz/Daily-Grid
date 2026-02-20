@@ -9,7 +9,7 @@
   "theme_color": "#120f1a",
   "icons": [
     {
-      "src": "/games/polyfit/polyfit-logo.svg",
+      "src": "/games/polyfit/polyfit-logo.png",
       "sizes": "192x192",
       "type": "image/svg+xml"
     }
