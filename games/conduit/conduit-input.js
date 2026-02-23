@@ -5,7 +5,7 @@ export class ConduitInput {
     this.renderer = renderer;
     this.onChange = onChange;
 
-    this.canvas.style.touchAction = 'manipulation';
+    this.canvas.style.touchAction = 'none';
     this._down = this._handleDown.bind(this);
 
     this.canvas.addEventListener('pointerdown', this._down);
@@ -13,6 +13,10 @@ export class ConduitInput {
 
   setEngine(engine) { this.engine = engine; }
   setRenderer(renderer) { this.renderer = renderer; }
+
+  updateTouchBehavior(isComplete) {
+    this.canvas.style.touchAction = isComplete ? 'auto' : 'none';
+  }
 
   destroy() {
     this.canvas.removeEventListener('pointerdown', this._down);

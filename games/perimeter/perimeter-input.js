@@ -26,6 +26,10 @@ export class PerimeterInput {
   setEngine(engine) { this.engine = engine; }
   setRenderer(renderer) { this.renderer = renderer; }
 
+  updateTouchBehavior(isComplete) {
+    this.canvas.style.touchAction = isComplete ? 'auto' : 'none';
+  }
+
   _setEdge(edge, state, dedupe = true) {
     if (!edge) return false;
     const [a, b] = edge;

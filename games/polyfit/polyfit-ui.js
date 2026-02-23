@@ -112,6 +112,7 @@ function onInteract() {
   if (!engine.timerStarted) engine.startTimer();
   if (engine.isPaused && !engine.isComplete && !engine.solutionShown) engine.resume();
   if (engine.isComplete) completionMs = completionMs ?? engine.timeMs;
+  input?.updateTouchBehavior(engine.isComplete);
   updateProgress();
   updateSolutionUI();
   renderer.render();
@@ -136,6 +137,7 @@ function initPuzzle() {
     onInteract
   });
   load();
+  input.updateTouchBehavior(engine.isComplete);
   setLabels();
   updateProgress();
   updateSolutionUI();
@@ -158,6 +160,7 @@ window.startDailyMode = () => switchMode('daily');
 function resetGame({ resetTimer = true } = {}) {
   engine.reset({ resetTimer });
   completionMs = null;
+  input?.updateTouchBehavior(false);
   updateProgress();
   updateSolutionUI();
   renderer.render();

@@ -118,6 +118,7 @@ function resetPuzzle({ resetTimer }) {
 
   completionMs = null;
   solutionShown = false;
+  input?.updateTouchBehavior(false);
   updateProgress();
   updatePracticeControls();
   renderer?.render();
@@ -129,6 +130,7 @@ function completeIfSolved() {
   if (!engine) return;
   if (!engine.isComplete) return;
   completionMs = completionMs ?? engine.timeMs;
+  input?.updateTouchBehavior(true);
   updatePracticeControls();
   saveProgress();
   shell?.update();
@@ -214,6 +216,7 @@ function initState() {
   solutionShown = false;
   renderer?.render();
   updatePracticeControls();
+  input?.updateTouchBehavior(engine?.isComplete ?? false);
 }
 
 function loadPuzzle() {

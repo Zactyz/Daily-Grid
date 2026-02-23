@@ -14,6 +14,8 @@ export class PolyfitInput {
     this.onSelectPiece = callbacks.onSelectPiece;
     this.onStateChange = callbacks.onStateChange;
 
+    this.canvas.style.touchAction = 'none';
+
     this.state = 'idle'; // idle | dragging | placed | returning
     this.dragging = null;
     this.pressingBoard = null;
@@ -53,6 +55,10 @@ export class PolyfitInput {
 
   setEngine(engine) { this.engine = engine; }
   setRenderer(renderer) { this.renderer = renderer; }
+
+  updateTouchBehavior(isComplete) {
+    this.canvas.style.touchAction = isComplete ? 'auto' : 'none';
+  }
 
   setState(next) {
     this.state = next;

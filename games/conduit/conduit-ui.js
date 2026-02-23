@@ -143,6 +143,7 @@ function resetPuzzle({ resetTimer }) {
   isComplete = false;
   completionMs = null;
   solutionShown = false;
+  input?.updateTouchBehavior(false);
 
   if (resetTimer) {
     baseElapsed = 0;
@@ -180,6 +181,7 @@ function completePuzzle() {
   baseElapsed = completionMs;
   isPaused = true;
   timerStarted = true;
+  input?.updateTouchBehavior(true);
   updatePracticeControls();
   saveProgress();
   shell?.update();
@@ -254,6 +256,7 @@ function initState() {
   solutionShown = false;
   renderer?.render();
   updatePracticeControls();
+  input?.updateTouchBehavior(isComplete);
 }
 
 function loadDescriptor() {
