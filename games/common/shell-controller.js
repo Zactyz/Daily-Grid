@@ -33,7 +33,6 @@ let touchGuardInitialized = false;
 function shouldAllowDoubleTap(target) {
   if (!target) return false;
   if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return true;
-  if (target.closest('#game-container') || target.closest('.game-touch')) return true;
   return false;
 }
 
