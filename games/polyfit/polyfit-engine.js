@@ -263,7 +263,10 @@ export class PolyfitEngine {
   startTimer() { if (!this.isComplete) { this.timerStarted = true; this.isPaused = false; } }
   pause() { if (this.timerStarted && !this.isComplete) this.isPaused = true; }
   resume() { if (this.timerStarted && !this.isComplete) this.isPaused = false; }
-  updateTime(delta) { if (this.timerStarted && !this.isPaused && !this.isComplete) this.timeMs += delta; }
+  updateTime(delta) {
+    if (!this.timerStarted || this.isPaused || this.isComplete) return;
+    if (delta > 0) this.timeMs += delta;
+  }
 
   syncStatus() {
     const allPlaced = this.pieces.every((p) => !!p.placed);

@@ -27,6 +27,7 @@ let completionMs = null;
 let selectedPiece = 0;
 let tick;
 let lastTs = performance.now();
+let lastSaveTs = 0;
 
 const stateKey = () => `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 const getPuzzleId = () => (currentMode === 'practice' ? `practice-${puzzleSeed}` : getPTDateYYYYMMDD());
@@ -235,9 +236,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const now = performance.now();
     engine.updateTime(now - lastTs);
     lastTs = now;
+    if (currentMode === 'daily' && engine.timerStarted && !engine.isPaused && !engine.isComplete) {
+      if (now - lastSaveTs >= 2000) {
+        lastSaveTs = now;
+        save();
+      }
+    }
     shell?.update();
   }, 200);
 
   window.addEventListener('resize', () => { renderer.resize(); renderer.render(); });
   window.addEventListener('beforeunload', save);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') save();
+  });
 });

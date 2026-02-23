@@ -263,6 +263,18 @@ export class PolyfitInput {
       return;
     }
 
+    // Dropped off the board entirely (bank area) while piece came from board:
+    // piece was already removed in startBoardDrag, so just leave it unplaced (return to bank).
+    if (candidate === null && this.dragging.source === 'board') {
+      this.dragging = null;
+      this.renderer.setPreview(null);
+      this.renderer.setDragPiece(null);
+      this.setState('idle');
+      this.onChange?.();
+      this.renderer.render();
+      return;
+    }
+
     if (candidate !== null && !candidate?.valid) {
       this.renderer.pulseInvalidPiece(pieceId);
     }

@@ -78,5 +78,7 @@ export class PerimeterInput {
   handlePointerUp() {
     this.dragging = false;
     this.changed.clear();
+    this.renderer.setHoverEdge(null);
+    this.renderer.render();
   }
 }
