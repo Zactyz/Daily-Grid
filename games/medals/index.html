@@ -148,7 +148,16 @@
     <header class="flex items-center justify-between py-5">
       <div>
         <h1 class="text-xl font-bold tracking-tight">Medals</h1>
-        <p class="text-xs text-slate-400 mt-0.5" id="puzzle-date-label">Today's top solvers</p>
+        <!-- Date navigator -->
+        <div class="flex items-center gap-1 mt-1">
+          <button id="date-prev-btn" aria-label="Previous day" class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span id="puzzle-date-label" class="text-xs text-slate-300 font-medium px-1 min-w-[120px] text-center">Today</span>
+          <button id="date-next-btn" aria-label="Next day" class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
       </div>
       <!-- Trophy icon -->
       <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(250,204,21,0.1);border:1px solid rgba(250,204,21,0.2)">
@@ -186,9 +195,9 @@
       <!-- TODO (Tier 2 — user accounts): show global rank and username here once auth is added -->
     </section>
 
-    <!-- Today's leaderboard by game -->
+    <!-- Leaderboard by game -->
     <section>
-      <h2 class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Today's Top Solvers</h2>
+      <h2 id="leaderboard-heading" class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Today's Top Solvers</h2>
       <div id="leaderboard-list" class="flex flex-col gap-3" style="min-height:320px">
         <!-- Loading skeletons -->
         <div class="glass-card p-4">
@@ -364,34 +373,87 @@
       }).join('');
     }
 
-    // ── Init ──────────────────────────────────────────────────────────────────
-    async function init() {
-      const today = getPTDateYYYYMMDD();
+    // ── Date navigation ───────────────────────────────────────────────────────
+    const today = getPTDateYYYYMMDD();
+    let currentDate = today;
 
-      // Format the date nicely for the header
-      const dateLabel = new Date(today + 'T12:00:00').toLocaleDateString('en-US', {
-        weekday: 'long', month: 'long', day: 'numeric'
+    function offsetDate(dateStr, days) {
+      const d = new Date(dateStr + 'T12:00:00');
+      d.setDate(d.getDate() + days);
+      return getPTDateYYYYMMDD(d);
+    }
+
+    function formatDateLabel(dateStr) {
+      if (dateStr === today) return 'Today';
+      const yesterday = offsetDate(today, -1);
+      if (dateStr === yesterday) return 'Yesterday';
+      return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric'
       });
-      const el = document.getElementById('puzzle-date-label');
-      if (el) el.textContent = dateLabel;
+    }
 
-      // Render personal medals immediately from localStorage
-      renderPersonalMedals();
+    function updateDateUI() {
+      const isToday = currentDate === today;
+      const label = document.getElementById('puzzle-date-label');
+      const nextBtn = document.getElementById('date-next-btn');
+      const heading = document.getElementById('leaderboard-heading');
+      if (label) label.textContent = formatDateLabel(currentDate);
+      if (nextBtn) {
+        nextBtn.disabled = isToday;
+        nextBtn.style.opacity = isToday ? '0.3' : '1';
+        nextBtn.style.pointerEvents = isToday ? 'none' : '';
+      }
+      if (heading) heading.textContent = isToday ? "Today's Top Solvers" : `Top Solvers — ${formatDateLabel(currentDate)}`;
+    }
 
-      // Fetch today's global top 3 per game
+    // ── Init ──────────────────────────────────────────────────────────────────
+    async function loadLeaderboard(dateStr) {
+      const container = document.getElementById('leaderboard-list');
+      container.innerHTML = `
+        <div class="glass-card p-4">
+          <div class="skel h-4 w-28 mb-3"></div>
+          <div class="flex flex-col gap-2">
+            <div class="skel h-9 w-full"></div><div class="skel h-9 w-full"></div><div class="skel h-9 w-5/6"></div>
+          </div>
+        </div>
+        <div class="glass-card p-4">
+          <div class="skel h-4 w-24 mb-3"></div>
+          <div class="flex flex-col gap-2">
+            <div class="skel h-9 w-full"></div><div class="skel h-9 w-full"></div>
+          </div>
+        </div>`;
       try {
-        const res = await fetch(`/api/medals/leaderboard?puzzleId=${today}`);
+        const res = await fetch(`/api/medals/leaderboard?puzzleId=${dateStr}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         renderLeaderboard(data.games || []);
       } catch (err) {
         console.warn('[Medals] Failed to load leaderboard:', err);
-        document.getElementById('leaderboard-list').innerHTML = `
+        container.innerHTML = `
           <div class="glass-card p-6 text-center empty-state">
-            <p class="text-sm text-slate-400">Could not load today's leaderboard.</p>
+            <p class="text-sm text-slate-400">Could not load leaderboard.</p>
             <button onclick="window.location.reload()" class="mt-3 text-xs px-4 py-2 rounded-lg" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">Try Again</button>
           </div>`;
       }
+    }
+
+    async function init() {
+      renderPersonalMedals();
+      updateDateUI();
+      await loadLeaderboard(currentDate);
+
+      document.getElementById('date-prev-btn')?.addEventListener('click', async () => {
+        currentDate = offsetDate(currentDate, -1);
+        updateDateUI();
+        await loadLeaderboard(currentDate);
+      });
+
+      document.getElementById('date-next-btn')?.addEventListener('click', async () => {
+        if (currentDate >= today) return;
+        currentDate = offsetDate(currentDate, 1);
+        updateDateUI();
+        await loadLeaderboard(currentDate);
+      });
     }
 
     init();

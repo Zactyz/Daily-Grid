@@ -187,8 +187,11 @@
         #game-container.prestart #undo-btn { pointer-events: none; }
 
         /* grid cells */
+        #game-container { touch-action: manipulation; }
+        #board { touch-action: manipulation; }
         .grid-cell {
             user-select: none;
+            touch-action: manipulation;
             width: 58px;
             height: 58px;
             min-width: 58px;
