@@ -154,34 +154,38 @@ h1, h2, h3 {
 .mobile-app-bar {
   display: none;
   position: fixed;
-  top: 0.75rem;
-  left: 0.75rem;
+  /* Sit just below the status bar on viewport-fit=cover devices */
+  top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+  left: 0.5rem;
   z-index: 80;
-  pointer-events: none;
 }
 
+/* Plain arrow — no circle or glass background */
 .mobile-app-bar a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: rgba(8, 10, 12, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #f8f4ef;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(12px);
-  pointer-events: auto;
+  /* 44×44 touch target, no visual chrome */
+  width: 44px;
+  height: 44px;
+  color: rgba(255, 255, 255, 0.8);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-app-bar a:active {
+  color: rgba(255, 255, 255, 1);
 }
 
 @media (max-width: 899px) {
   nav { display: none !important; }
   .mobile-app-bar { display: flex; }
-  /* Top: clear the floating back-button bar.
+  /* Top: clear the floating back-button + safe area.
    * Bottom: clear the fixed tab bar + iOS home indicator.
    * The !important is needed because game pages may have inline padding. */
-  main { padding-top: 3.5rem !important; padding-bottom: var(--dg-bottom-clear, 88px) !important; }
+  main {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 3.25rem) !important;
+    padding-bottom: var(--dg-bottom-clear, 88px) !important;
+  }
 }
 
 /* ─── How to Play Accordion ───────────────────────────────────────── */

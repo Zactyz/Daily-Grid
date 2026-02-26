@@ -123,13 +123,6 @@
       margin-bottom: 10px;
     }
 
-    /* Inline "Open Settings" link inside push status text */
-    .push-settings-link {
-      background: none; border: none; padding: 0; margin: 0;
-      color: #a78bfa; font-size: inherit; font-family: inherit;
-      text-decoration: underline; text-underline-offset: 2px;
-      cursor: pointer;
-    }
     .app-header { font-family: 'Space Grotesk', sans-serif; }
   </style>
 </head>
@@ -402,17 +395,6 @@
     }
 
     // ── Push notifications ────────────────────────────────────────────────────
-    // The app name shown in iOS Settings → Notifications
-    const IOS_APP_NAME = 'Daily Grid Games';
-
-    // Opens iOS Settings app (best-effort; works from installed PWA)
-    function openIosSettings() { window.location.href = 'app-settings:'; }
-
-    // Returns an inline "Open Settings" button for status messages
-    function settingsLink(label = 'Open Settings') {
-      return `<button class="push-settings-link" onclick="(function(){window.location.href='app-settings:';})()">${label}</button>`;
-    }
-
     async function initPushToggle(vapidPublicKey) {
       const toggle = document.getElementById('push-toggle');
       const statusText = document.getElementById('push-status-text');
@@ -421,7 +403,7 @@
       const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
       const isStandalone = !!window.navigator.standalone;
 
-      // iOS Safari in browser (not installed): show info nudge instead of hiding
+      // iOS Safari in browser (not installed): nudge to add to Home Screen
       if (isIos && !isStandalone) {
         if (toggle) { toggle.checked = false; toggle.disabled = true; }
         if (statusText) statusText.textContent = 'Add to Home Screen to enable notifications';
@@ -433,22 +415,21 @@
         return;
       }
 
-      // Notification.permission is the reliable source of truth.
-      // 'denied' means the user has explicitly blocked at the OS/browser level.
+      // 'denied' = user blocked at OS/browser level — nothing we can do programmatically
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
         toggle.checked = false;
         toggle.disabled = true;
-        statusText.innerHTML = isIos
-          ? `Blocked — ${settingsLink()} → Notifications → ${IOS_APP_NAME}`
+        statusText.textContent = isIos
+          ? 'Blocked — Settings → Notifications → Daily Grid Games'
           : 'Blocked in browser settings — clear site permissions to re-enable';
         return;
       }
 
-      // Sync toggle state with actual subscription
+      // Sync toggle with actual subscription state
       const subscribed = await isPushSubscribed();
       toggle.checked = subscribed;
       statusText.textContent = subscribed
-        ? 'You\'ll be notified when new puzzles are live'
+        ? "You'll be notified when new puzzles are live"
         : 'Get notified when new puzzles are live';
 
       toggle.addEventListener('change', async () => {
@@ -463,31 +444,36 @@
           toggle.disabled = true;
           const result = await requestPushPermission(anonId, vapidPublicKey);
           toggle.disabled = false;
-          toggle.checked = result.ok;
+
           if (result.ok) {
-            statusText.textContent = 'You\'ll be notified when new puzzles are live';
+            toggle.checked = true;
+            statusText.textContent = "You'll be notified when new puzzles are live";
           } else if (result.reason === 'denied' || Notification.permission === 'denied') {
+            toggle.checked = false;
             toggle.disabled = true;
-            statusText.innerHTML = isIos
-              ? `Blocked — ${settingsLink()} → Notifications → ${IOS_APP_NAME}`
+            statusText.textContent = isIos
+              ? 'Blocked — Settings → Notifications → Daily Grid Games'
               : 'Blocked in browser settings — clear site permissions to re-enable';
           } else if (result.reason === 'dismissed') {
+            toggle.checked = false;
             statusText.textContent = 'Tap the toggle to try again';
+          } else if (Notification.permission === 'granted') {
+            // OS permission is on — server sync failed but the user DID enable it.
+            // Keep toggle ON so the UI matches the OS state; retry will happen on
+            // the next toggle cycle.
+            toggle.checked = true;
+            localStorage.setItem('dailygrid_push_opted_in', 'true');
+            statusText.textContent = "Enabled — if reminders don't arrive, toggle off and on";
           } else {
-            // Could not subscribe (e.g. temporary iOS rate-limit from before soft-opt-out fix).
-            // Opening Settings lets users reset their notification state.
-            statusText.innerHTML = isIos
-              ? `Could not enable — ${settingsLink()} → Notifications → ${IOS_APP_NAME} → toggle off &amp; on`
-              : 'Could not subscribe — open browser settings and re-allow notifications';
+            toggle.checked = false;
+            statusText.textContent = 'Could not enable — tap to try again';
           }
         } else {
-          // Soft opt-out: server removal only, browser subscription preserved
-          // so re-enabling is instant without another iOS permission prompt.
+          // Soft opt-out: remove from server only, keep browser subscription alive
+          // so re-enabling is instant (avoids iOS rate-limit on re-subscribe).
           statusText.textContent = 'Turning off…';
           await unsubscribePush();
-          statusText.innerHTML = isIos
-            ? `Off — ${settingsLink('Open Settings')} to fully block`
-            : 'Notifications off';
+          statusText.textContent = 'Daily reminders off';
         }
       });
     }

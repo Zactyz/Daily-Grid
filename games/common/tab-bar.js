@@ -36,9 +36,8 @@ const TABS = [
     label: 'Medals',
     href: '/games/medals/',
     icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor">
-      <rect x="2" y="12" width="6" height="9.5" rx="1.5"/>
-      <rect x="9" y="7" width="6" height="14.5" rx="1.5"/>
-      <rect x="16" y="15" width="6" height="6.5" rx="1.5"/>
+      <rect x="10.5" y="2" width="3" height="4.5" rx="0.75"/>
+      <circle cx="12" cy="15" r="7"/>
     </svg>`,
   },
   {

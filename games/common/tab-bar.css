@@ -14,6 +14,11 @@
  *  9. Safe-area inset top applied to body to prevent status-bar overlap.
  */
 
+/* ─── Smooth cross-document page transitions (Chrome 126+, Safari 18+) ─────── */
+@view-transition {
+  navigation: auto;
+}
+
 /* ─── Safe-area top — required when viewport-fit=cover is active ────────────── */
 /*
  * viewport-fit=cover extends the viewport edge-to-edge behind the status bar.
@@ -22,6 +27,19 @@
  */
 html.dg-tab-bar-active body {
   padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ─── Pre-JS bottom padding ─────────────────────────────────────────────────── */
+/*
+ * Reserve the tab-bar clearance before JS loads and injects the bar or adds
+ * the .dg-tab-bar-page-padding class. Without this the page layout shifts
+ * downward when JS runs, causing the visible "jump" on navigation.
+ * Applies to any <main> on a hub page at mobile widths.
+ */
+@media (max-width: 899px) {
+  main {
+    padding-bottom: var(--dg-bottom-clear, calc(80px + env(safe-area-inset-bottom, 0px)));
+  }
 }
 
 /* Utility class: pad for status bar on a child element (use when body padding is insufficient) */
