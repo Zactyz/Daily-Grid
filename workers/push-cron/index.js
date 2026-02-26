@@ -5,8 +5,9 @@
  * to trigger push notifications.
  *
  * Cron schedules (wrangler.toml):
- *   "0 8 * * *"  → daily puzzle notification  (08:00 UTC = midnight PST)
- *   "59 3 * * *" → streak reminder             (03:59 UTC = 7:59 PM PST)
+ *   "0 8 * * *"  → daily puzzle notification   (08:00 UTC = midnight PST)
+ *   "59 3 * * *" → streak reminder              (03:59 UTC = 7:59 PM PST)
+ *   "0 18 * * 0" → weekly win-back reminder     (18:00 UTC Sunday)
  *
  * Required secrets (set via: wrangler secret put <NAME>):
  *   PUSH_SECRET  — shared secret that authorises the POST request
@@ -14,8 +15,9 @@
 
 export default {
   async scheduled(event, env, ctx) {
-    const isStreak = event.cron === '59 3 * * *';
-    const type = isStreak ? 'streak' : 'daily';
+    let type = 'daily';
+    if (event.cron === '59 3 * * *') type = 'streak';
+    if (event.cron === '0 18 * * 0') type = 'winback';
 
     const url = `${env.SITE_URL}/api/push/send`;
 
