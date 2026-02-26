@@ -34,7 +34,7 @@ html.dg-tab-bar-active body {
   position: fixed;
 
   /* Float above the home indicator with a visible gap */
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
 
   /* Horizontal insets — not edge-to-edge */
   left: 12px;
@@ -183,7 +183,8 @@ html.dg-tab-bar-active body {
   letter-spacing: 0.02em;
   line-height: 1;
   transition: color 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+  /* Use the shared UI font stack (Space Grotesk loads on all game pages) */
+  font-family: var(--dg-font-ui, 'Space Grotesk', 'Inter', -apple-system, sans-serif);
   color: rgba(200, 210, 230, 0.45);
 }
 
@@ -214,15 +215,16 @@ html.dg-tab-bar-active body {
 
 /* ─── Page padding (content clears the floating bar) ────────────────────────── */
 /*
- * bar height (~64px) + floating gap (12px) + safe-area + breathing room (8px)
- * = calc(84px + safe-area-inset-bottom)
+ * Uses --dg-bottom-clear from design-tokens.css.
+ * Also aliased as .tab-bar-clear in design-tokens.css — use either.
+ * Equivalent to: calc(64px + env(safe-area-inset-bottom, 0px) + 0.75rem)
  */
 .dg-tab-bar-page-padding {
-  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: var(--dg-bottom-clear, calc(80px + env(safe-area-inset-bottom, 0px))) !important;
 }
 
-/* ─── Desktop: hide tab bar, use games page only ───────────────────────────── */
-@media (min-width: 768px) {
+/* ─── Desktop: hide tab bar (≥ 900px matches games-base.css nav breakpoint) ─── */
+@media (min-width: 900px) {
   .dg-tab-bar {
     display: none !important;
   }
@@ -230,7 +232,7 @@ html.dg-tab-bar-active body {
     padding-top: 0;
   }
   .dg-tab-bar-page-padding {
-    padding-bottom: 0 !important;
+    padding-bottom: 2rem !important;
   }
 }
 

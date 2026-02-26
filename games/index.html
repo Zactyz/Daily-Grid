@@ -23,21 +23,22 @@
   <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-games.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
   <style>
     :root {
-      --brand-bg: #020617;
-      --brand-gold: #D4A650;
+      --brand-bg: var(--dg-bg);
+      --brand-gold: var(--dg-gold);
     }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: var(--dg-font-ui);
       background-color: var(--brand-bg);
-      color: #F8FAFC;
+      color: var(--dg-text);
     }
 
     h1, h2 {
-      font-family: 'Merriweather', serif;
+      font-family: var(--dg-font-heading);
     }
 
     .glass {

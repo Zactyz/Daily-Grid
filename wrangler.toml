@@ -13,3 +13,11 @@ database_id = "ca6a0759-26c7-439e-8a41-ba99959ce15b"
 [[kv_namespaces]]
 binding = "PUZZLE_CACHE"
 id = "4645c8c9221849fbb7933b51bcc46a6d"
+
+# Cron triggers for push notifications
+# - Daily puzzle notification:  08:00 UTC = midnight PST / 1 AM PDT
+# - Streak reminder:            03:59 UTC = 7:59 PM PST / 8:59 PM PDT
+# NOTE: If these don't fire automatically for Pages, also configure them in the
+# Cloudflare Dashboard → Pages → [project] → Settings → Functions → Cron Triggers
+[triggers]
+crons = ["0 8 * * *", "59 3 * * *"]

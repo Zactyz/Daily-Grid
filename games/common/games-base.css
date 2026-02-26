@@ -1,14 +1,22 @@
-/* games-base.css — shared design tokens and base styles for all 9 games.
+/* games-base.css — shared base styles for all 9 game pages.
+ * Design tokens are defined in design-tokens.css (imported first).
  * Each game's <style> block only needs to define :root overrides and
- * game-specific rules. */
+ * game-specific rules.
+ *
+ * Load order in each game HTML:
+ *   1. design-tokens.css  ← central variables
+ *   2. shell.css          ← shell layout
+ *   3. games-base.css     ← this file
+ *   4. tutorial-modal.css ← tutorial overlay
+ */
 
-/* ─── Default Tokens ──────────────────────────────────────────────── */
+/* ─── Default Tokens (game-page scope) ────────────────────────────── */
 :root {
-  --brand-bg: #0a0a0f;
-  --brand-accent: #888888;
-  --brand-accent-dim: #666666;
-  --glass-bg: rgba(255, 255, 255, 0.02);
-  --glass-border: rgba(255, 255, 255, 0.06);
+  --brand-bg:         var(--dg-bg-game);              /* #0a0a0f */
+  --brand-accent:     var(--brand-accent, #888888);   /* overridden per-game */
+  --brand-accent-dim: var(--brand-accent-dim, #666666);
+  --glass-bg:         var(--dg-bg-surface);           /* rgba(255,255,255,0.03) */
+  --glass-border:     var(--dg-border);               /* rgba(255,255,255,0.08) */
 }
 
 /* ─── Base Reset ──────────────────────────────────────────────────── */
@@ -17,9 +25,9 @@
 }
 
 body {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--dg-font-ui);
   background: var(--brand-bg);
-  color: #e8e8ed;
+  color: var(--dg-text);
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -39,13 +47,13 @@ body::after {
 
 /* ─── Typography ──────────────────────────────────────────────────── */
 h1, h2, h3 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--dg-font-heading);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--dg-font-mono);
 }
 
 /* ─── Glass Surfaces ──────────────────────────────────────────────── */
@@ -69,7 +77,8 @@ h1, h2, h3 {
 /* ─── Buttons ─────────────────────────────────────────────────────── */
 .btn {
   padding: 0.625rem 1.25rem;
-  border-radius: 10px;
+  min-height: 44px;                               /* iOS touch target minimum */
+  border-radius: var(--dg-radius-md);             /* 12px */
   font-weight: 600;
   font-size: 0.875rem;
   letter-spacing: 0.01em;
@@ -77,11 +86,15 @@ h1, h2, h3 {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-dim));
-  color: #0a0a0f;
+  color: var(--dg-bg-game);                       /* dark text on colored button */
+  box-shadow: var(--dg-shadow-btn);
 }
 
 .btn-primary:hover {
@@ -93,15 +106,15 @@ h1, h2, h3 {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #a1a1aa;
+  background: var(--dg-bg-surface);
+  border: 1px solid var(--dg-border-1);
+  color: var(--dg-text-2);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #e8e8ed;
+  background: var(--dg-bg-surface-1);
+  border-color: var(--dg-border-2);
+  color: var(--dg-text);
 }
 
 /* ─── Shared Components ───────────────────────────────────────────── */
@@ -165,7 +178,10 @@ h1, h2, h3 {
 @media (max-width: 899px) {
   nav { display: none !important; }
   .mobile-app-bar { display: flex; }
-  main { padding-top: 3.5rem !important; padding-bottom: 1.5rem !important; }
+  /* Top: clear the floating back-button bar.
+   * Bottom: clear the fixed tab bar + iOS home indicator.
+   * The !important is needed because game pages may have inline padding. */
+  main { padding-top: 3.5rem !important; padding-bottom: var(--dg-bottom-clear, 88px) !important; }
 }
 
 /* ─── How to Play Accordion ───────────────────────────────────────── */

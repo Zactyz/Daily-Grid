@@ -14,7 +14,7 @@ export async function onRequest(context) {
     validateEnv(env);
 
     const body = await request.json();
-    const { endpoint, p256dh, auth, anonId } = body;
+    const { endpoint, p256dh, auth, anonId, timezone } = body;
 
     if (!endpoint || typeof endpoint !== 'string' || !endpoint.startsWith('https://')) {
       return jsonError('Invalid endpoint');
@@ -23,16 +23,21 @@ export async function onRequest(context) {
     if (!auth || typeof auth !== 'string') return jsonError('Missing auth');
     if (!validateUUID(anonId)) return jsonError('Invalid anon ID');
 
+    // Accept a timezone string from the client for future timezone-aware notifications.
+    // Validate loosely: must be a non-empty string (IANA timezone, e.g. "America/New_York").
+    const tz = typeof timezone === 'string' && timezone.length > 0 ? timezone : 'America/Los_Angeles';
+
     // Upsert subscription (update keys if endpoint already exists)
     await env.DB.prepare(`
-      INSERT INTO push_subscriptions (anon_id, endpoint, p256dh, auth)
-      VALUES (?1, ?2, ?3, ?4)
+      INSERT INTO push_subscriptions (anon_id, endpoint, p256dh, auth, timezone)
+      VALUES (?1, ?2, ?3, ?4, ?5)
       ON CONFLICT(endpoint) DO UPDATE SET
-        anon_id = excluded.anon_id,
-        p256dh  = excluded.p256dh,
-        auth    = excluded.auth,
+        anon_id    = excluded.anon_id,
+        p256dh     = excluded.p256dh,
+        auth       = excluded.auth,
+        timezone   = excluded.timezone,
         updated_at = datetime('now')
-    `).bind(anonId, endpoint, p256dh, auth).run();
+    `).bind(anonId, endpoint, p256dh, auth, tz).run();
 
     return jsonOk({ success: true });
   } catch (err) {

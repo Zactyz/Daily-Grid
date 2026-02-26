@@ -12,39 +12,42 @@ const TABS = [
     key: 'daily',
     label: 'Daily',
     href: '/games/',
-    icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="3" width="7" height="7" rx="1.5"/>
-      <rect x="14" y="3" width="7" height="7" rx="1.5"/>
-      <rect x="3" y="14" width="7" height="7" rx="1.5"/>
-      <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+    icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/>
+      <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/>
+      <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/>
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/>
     </svg>`,
   },
   {
     key: 'practice',
     label: 'Practice',
     href: '/games/practice/',
-    icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 3v4M12 17v4M3 12h4M17 12h4"/>
-      <circle cx="12" cy="12" r="4"/>
+    icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="2" y="7" width="3.5" height="10" rx="1.75"/>
+      <rect x="5.5" y="10" width="1.5" height="4" rx="0.75"/>
+      <rect x="7" y="11" width="10" height="2" rx="1"/>
+      <rect x="17" y="10" width="1.5" height="4" rx="0.75"/>
+      <rect x="18.5" y="7" width="3.5" height="10" rx="1.75"/>
     </svg>`,
   },
   {
     key: 'medals',
     label: 'Medals',
     href: '/games/medals/',
-    icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M8 21h8M12 21v-4"/>
-      <circle cx="12" cy="11" r="5"/>
-      <path d="M7.5 3l1.5 4h6l1.5-4"/>
+    icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="2" y="12" width="6" height="9.5" rx="1.5"/>
+      <rect x="9" y="7" width="6" height="14.5" rx="1.5"/>
+      <rect x="16" y="15" width="6" height="6.5" rx="1.5"/>
     </svg>`,
   },
   {
     key: 'profile',
     label: 'Profile',
     href: '/games/profile/',
-    icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="8" r="4"/>
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+    icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="12" cy="7.5" r="3.5"/>
+      <path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"/>
     </svg>`,
   },
 ];

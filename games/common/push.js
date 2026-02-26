@@ -10,7 +10,7 @@
  * NOTE: Push notifications require HTTPS and iOS 16.4+ for PWA home-screen installs.
  */
 
-const PUSH_OPT_IN_KEY   = 'dailygrid_push_opted_in';
+const PUSH_OPT_IN_KEY   = 'dailygrid_push_opted_in';  // 'true' | 'false' | absent
 const PUSH_ENDPOINT_KEY = 'dailygrid_push_endpoint';
 
 /** Resolves navigator.serviceWorker.ready with a timeout to avoid hanging. */
@@ -37,10 +37,17 @@ export async function ensureSwRegistered() {
 }
 
 /**
- * Returns true if the browser supports push and the user has an active subscription.
+ * Returns true if the browser supports push, the user has an active subscription,
+ * and has not explicitly opted out.
+ *
+ * iOS Safari sometimes keeps returning a subscription from getSubscription() even
+ * after unsubscribe() is called. Checking the explicit opt-out flag in localStorage
+ * prevents the toggle from snapping back to "on" after the user turns it off.
  */
 export async function isPushSubscribed() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+  // If the user explicitly opted out, report as unsubscribed regardless of browser state.
+  if (localStorage.getItem(PUSH_OPT_IN_KEY) === 'false') return false;
   try {
     const reg = await swReady();
     const sub = await reg.pushManager.getSubscription();
@@ -74,14 +81,18 @@ export async function requestPushPermission(anonId, vapidPublicKey) {
     await ensureSwRegistered();
     const reg = await swReady();
 
-    // Remove any stale subscription first
-    const existing = await reg.pushManager.getSubscription();
-    if (existing) await existing.unsubscribe();
-
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-    });
+    // Do NOT proactively unsubscribe before subscribing.
+    // On iOS Safari, calling unsubscribe() then immediately subscribe() triggers a
+    // rate-limit: the browser returns "could not subscribe / try again later".
+    // Instead, reuse an existing valid subscription if present, or create a new one
+    // if none exists (which is the case right after the user toggles off).
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      });
+    }
 
     const subJson = sub.toJSON();
     const body = {
@@ -89,6 +100,7 @@ export async function requestPushPermission(anonId, vapidPublicKey) {
       p256dh:   subJson.keys?.p256dh,
       auth:     subJson.keys?.auth,
       anonId,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
 
     const res = await fetch('/api/push/subscribe', {
@@ -127,7 +139,10 @@ export async function unsubscribePush() {
       });
       await sub.unsubscribe();
     }
-    localStorage.removeItem(PUSH_OPT_IN_KEY);
+    // Set to 'false' (not just remove) so isPushSubscribed() correctly reports
+    // unsubscribed even if iOS Safari still returns the subscription from
+    // getSubscription() for a brief period after unsubscribe().
+    localStorage.setItem(PUSH_OPT_IN_KEY, 'false');
     localStorage.removeItem(PUSH_ENDPOINT_KEY);
     return true;
   } catch {

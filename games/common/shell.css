@@ -1,9 +1,14 @@
+/* shell.css depends on design-tokens.css being loaded first.
+ * Load order: design-tokens.css → shell.css → games-base.css */
+
 :root {
-  --shell-glass: rgba(255, 255, 255, 0.02);
-  --shell-glass-strong: rgba(255, 255, 255, 0.04);
-  --shell-border: rgba(255, 255, 255, 0.08);
-  --shell-border-strong: rgba(255, 255, 255, 0.12);
-  --shell-text-muted: rgba(255, 255, 255, 0.6);
+  /* Aliases that map shell vars to the central design tokens.
+   * Kept for backwards compatibility — prefer --dg-* in new code. */
+  --shell-glass:        var(--dg-bg-surface);
+  --shell-glass-strong: var(--dg-bg-surface-1);
+  --shell-border:       var(--dg-border);
+  --shell-border-strong:var(--dg-border-1);
+  --shell-text-muted:   var(--dg-text-2);
 }
 
 html,
@@ -45,7 +50,13 @@ textarea,
 .shell-page {
   max-width: 960px;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 1.5rem 1rem var(--dg-bottom-clear, 88px);
+}
+
+@media (min-width: 900px) {
+  .shell-page {
+    padding-bottom: 3rem;
+  }
 }
 
 .game-touch {
@@ -89,11 +100,12 @@ textarea,
 
 .shell-stat-card {
   background: rgba(0, 0, 0, 0.5);
-  border-radius: 20px;
+  border-radius: var(--dg-radius-lg);             /* 16px — consistent with cards */
   padding: 0.85rem 1rem;
   text-align: center;
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.35);
   border: 1px solid var(--shell-border);
+  min-height: 44px;
 }
 
 .shell-stat-card small {
@@ -149,11 +161,12 @@ textarea,
 }
 
 .shell-btn {
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--dg-radius-md);             /* 12px */
+  border: 1px solid var(--dg-border-1);
   padding: 0.75rem 1.25rem;
-  background: rgba(255, 255, 255, 0.04);
-  color: #f0fff8;
+  min-height: 44px;                               /* iOS touch target minimum */
+  background: var(--dg-bg-surface);
+  color: var(--dg-text);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.15em;
@@ -164,9 +177,16 @@ textarea,
   gap: 0.5rem;
 }
 
+.shell-btn:hover {
+  background: var(--dg-bg-surface-1);
+  border-color: var(--dg-border-2);
+}
+
 .shell-btn.primary {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
-  color: #0b0f1a;
+  /* Use the game's brand accent, not a near-invisible white gradient */
+  background: linear-gradient(135deg, var(--brand-accent, rgba(255,255,255,0.18)), var(--brand-accent-dim, rgba(255,255,255,0.08)));
+  color: var(--dg-bg-game);                       /* dark text on colored button */
+  border-color: transparent;
 }
 
 .shell-modal {
@@ -194,17 +214,9 @@ textarea,
   letter-spacing: 0.02em;
 }
 
-.leaderboard-name.rank-1 {
-  color: #f6d27f;
-}
-
-.leaderboard-name.rank-2 {
-  color: #cbd5e1;
-}
-
-.leaderboard-name.rank-3 {
-  color: #d6a16a;
-}
+.leaderboard-name.rank-1 { color: var(--dg-rank-1); }
+.leaderboard-name.rank-2 { color: var(--dg-rank-2); }
+.leaderboard-name.rank-3 { color: var(--dg-rank-3); }
 
 .leaderboard-ellipsis {
   justify-content: center;

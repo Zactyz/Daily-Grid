@@ -194,7 +194,7 @@ function initShell() {
     pause: () => { engine.pause(); save(); },
     resume: () => { engine.resume(); save(); },
     startGame: () => { engine.startTimer(); save(); },
-    resetGame: () => resetGame({ resetTimer: true }),
+    resetGame: () => resetGame({ resetTimer: false }),
     startReplay: () => {},
     exitReplay: () => {},
     onResetUI: () => {},

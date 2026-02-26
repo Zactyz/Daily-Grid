@@ -202,9 +202,14 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   endpoint   TEXT NOT NULL UNIQUE,
   p256dh     TEXT NOT NULL,
   auth       TEXT NOT NULL,
+  timezone   TEXT NOT NULL DEFAULT 'America/Los_Angeles',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_push_sub_anon
   ON push_subscriptions(anon_id);
+
+-- Migration for existing databases (safe to run on fresh installs — ADD COLUMN IF NOT EXISTS
+-- is not supported in SQLite/D1, so run this separately on existing DBs):
+--   npx wrangler d1 execute daily-grid-db --remote --command "ALTER TABLE push_subscriptions ADD COLUMN timezone TEXT NOT NULL DEFAULT 'America/Los_Angeles'"

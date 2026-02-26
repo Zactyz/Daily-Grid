@@ -14,13 +14,14 @@
   <link rel="icon" type="image/png" href="/Images/web%20icon.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
   <style>
-    :root { --brand-gold: #D4A650; }
+    :root { --brand-gold: var(--dg-gold); }
     body {
-      font-family: 'Inter', sans-serif;
-      background: #020617;
-      color: #F8FAFC;
+      font-family: var(--dg-font-ui);
+      background: var(--dg-bg);
+      color: var(--dg-text);
       min-height: 100dvh;
       overflow-x: hidden;
     }
@@ -32,7 +33,7 @@
         radial-gradient(ellipse 60% 40% at 0% 100%, rgba(35,60,120,0.18) 0%, transparent 70%);
       z-index: -1; pointer-events: none;
     }
-    h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+    h1, h2, h3 { font-family: var(--dg-font-heading); }
 
     /* Glass card */
     .glass-card {

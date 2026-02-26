@@ -158,18 +158,15 @@ export async function encryptPayload(payloadStr, p256dhB64u, authB64u) {
   return { ciphertext, salt, serverPublicKey: serverPubRaw };
 }
 
+// RFC 8291 §3.3: info_key = "WebPush: info\0" || ua_public (65 bytes) || as_public (65 bytes)
+// No length prefixes, no extra marker bytes — total = 14 + 65 + 65 = 144 bytes.
 function buildInfo(prefix, clientKey, serverKey) {
   const enc = new TextEncoder();
   const p = enc.encode(prefix + '\0');
-  const out = new Uint8Array(p.length + 1 + 2 + clientKey.length + 2 + serverKey.length);
+  const out = new Uint8Array(p.length + clientKey.length + serverKey.length);
   let o = 0;
   out.set(p, o); o += p.length;
-  out[o++] = 0x41; // uncompressed point marker for P-256
-  out[o++] = (clientKey.length >> 8) & 0xff;
-  out[o++] = clientKey.length & 0xff;
   out.set(clientKey, o); o += clientKey.length;
-  out[o++] = (serverKey.length >> 8) & 0xff;
-  out[o++] = serverKey.length & 0xff;
   out.set(serverKey, o);
   return out;
 }

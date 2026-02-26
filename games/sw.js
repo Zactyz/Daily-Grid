@@ -123,7 +123,8 @@ self.addEventListener('push', (event) => {
     body:    data.body  || "Today's puzzles are live! Come solve them.",
     icon:    data.icon  || '/games/assets/dg-games-192.png',
     badge:   data.badge || '/games/assets/dg-games-192.png',
-    tag:     'daily-grid-daily',       // replace existing notification of same type
+    // Use tag from payload so daily and streak notifications don't replace each other.
+    tag:     data.tag   || 'daily-grid-daily',
     renotify: false,
     data: { url: data.url || '/games/' },
     actions: [
