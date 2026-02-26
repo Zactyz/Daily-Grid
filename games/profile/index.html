@@ -510,10 +510,11 @@
           } else if (result.reason === 'dismissed') {
             statusText.textContent = 'Tap the toggle to try again';
           } else {
-            // Likely an iOS rate-limit after a recent permission prompt.
-            // Since unsubscribe is now soft (server-only), re-enabling should
-            // succeed by reusing the existing browser subscription.
-            statusText.textContent = 'Could not enable — close and reopen the app, then try again';
+            // iOS rate-limits subscribe() after a recent unsubscribe().
+            // Direct user to OS Settings to reset the notification state.
+            statusText.textContent = isIos
+              ? 'To re-enable: Settings → Notifications → Daily Grid → toggle off, then on'
+              : 'Could not subscribe — open browser settings and re-allow notifications';
           }
         } else {
           // Soft opt-out: server removal only, browser subscription preserved
