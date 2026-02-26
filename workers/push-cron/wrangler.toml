@@ -3,7 +3,7 @@ main = "index.js"
 compatibility_date = "2026-01-01"
 
 [triggers]
-crons = ["0 8 * * *", "59 3 * * *", "0 18 * * 0"]
+crons = ["0 8 * * *", "59 3 * * *", "0 18 * * SUN"]
 
 # Secrets — set via CLI (do NOT put real values here):
 #   npx wrangler secret put PUSH_SECRET

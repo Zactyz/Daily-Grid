@@ -17,7 +17,7 @@ export default {
   async scheduled(event, env, ctx) {
     let type = 'daily';
     if (event.cron === '59 3 * * *') type = 'streak';
-    if (event.cron === '0 18 * * 0') type = 'winback';
+    if (event.cron === '0 18 * * SUN') type = 'winback';
 
     const url = `${env.SITE_URL}/api/push/send`;
 
