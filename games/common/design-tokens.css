@@ -1,0 +1,99 @@
+/**
+ * design-tokens.css — Daily Grid Design System Tokens
+ *
+ * Central source of truth for all CSS custom properties.
+ * Import this FIRST, before games-base.css and shell.css.
+ *
+ * Individual game pages override --brand-accent / --brand-accent-dim
+ * and --brand-bg in their own <style> block. Everything else is shared.
+ *
+ * See docs/DESIGN-SYSTEM.md for full documentation.
+ */
+
+:root {
+  /* ═══ Backgrounds ═══════════════════════════════════════════ */
+  --dg-bg:            #020617;                      /* Hub, Medals, Profile, Practice */
+  --dg-bg-game:       #0a0a0f;                      /* Game page body */
+  --dg-bg-surface:    rgba(255, 255, 255, 0.03);    /* Card / panel */
+  --dg-bg-surface-1:  rgba(255, 255, 255, 0.05);    /* Elevated surface */
+  --dg-bg-input:      rgba(255, 255, 255, 0.06);    /* Input, toggle track */
+
+  /* ═══ Text ══════════════════════════════════════════════════ */
+  --dg-text:          #f8fafc;                       /* Primary */
+  --dg-text-2:        rgba(248, 250, 252, 0.65);     /* Secondary */
+  --dg-text-3:        rgba(248, 250, 252, 0.40);     /* Muted / hint */
+
+  /* ═══ Borders ═══════════════════════════════════════════════ */
+  --dg-border:        rgba(255, 255, 255, 0.08);     /* Default */
+  --dg-border-1:      rgba(255, 255, 255, 0.12);     /* Emphasized */
+  --dg-border-2:      rgba(255, 255, 255, 0.18);     /* Active / highlight */
+
+  /* ═══ Brand Gold ════════════════════════════════════════════ */
+  --dg-gold:          #D4A650;
+  --dg-gold-light:    #E5C37E;
+
+  /* ═══ Status ════════════════════════════════════════════════ */
+  --dg-green:         #22c55e;
+  --dg-red:           #ef4444;
+  --dg-orange:        #f97316;
+
+  /* ═══ Leaderboard Ranks ════════════════════════════════════ */
+  --dg-rank-1:        #f6d27f;
+  --dg-rank-2:        #cbd5e1;
+  --dg-rank-3:        #d6a16a;
+
+  /* ═══ Typography ════════════════════════════════════════════ */
+  --dg-font-ui:       'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --dg-font-heading:  'Space Grotesk', 'Inter', sans-serif;
+  --dg-font-marketing:'Merriweather', serif;          /* Landing page hero only */
+  --dg-font-mono:     'JetBrains Mono', 'Courier New', monospace;
+
+  /* ═══ Border Radius ═════════════════════════════════════════ */
+  --dg-radius-sm:     8px;
+  --dg-radius-md:     12px;
+  --dg-radius-lg:     16px;
+  --dg-radius-xl:     24px;
+  --dg-radius-full:   9999px;
+
+  /* ═══ Shadows ═══════════════════════════════════════════════ */
+  --dg-shadow-card:   0 4px 24px -4px rgba(0, 0, 0, 0.35);
+  --dg-shadow-modal:  0 20px 60px -8px rgba(0, 0, 0, 0.60);
+  --dg-shadow-btn:    0 2px 12px rgba(0, 0, 0, 0.25);
+
+  /* ═══ Blur ══════════════════════════════════════════════════ */
+  --dg-blur-sm:       blur(12px);
+  --dg-blur-md:       blur(20px);
+  --dg-blur-lg:       blur(28px);
+
+  /* ═══ Tab Bar / Safe Area (keep in sync with tab-bar.css) ═══ */
+  /*
+   * --dg-tab-bar-h: physical height of the floating tab bar.
+   * --dg-bottom-clear: total clearance needed at the bottom of any
+   *   scrollable page that carries the tab bar, so the last line of
+   *   content is never hidden behind the bar or the iOS home indicator.
+   *
+   * Usage: apply the `.tab-bar-clear` utility class (defined below)
+   *        to the outermost scrollable container on every tab-bar page.
+   */
+  --dg-tab-bar-h:     64px;
+  --dg-bottom-clear:  calc(var(--dg-tab-bar-h) + env(safe-area-inset-bottom, 0px) + 0.75rem);
+
+  /* ═══ Per-game Accent Defaults ══════════════════════════════ */
+  /* Each game's <style> block overrides these two variables.   */
+  --brand-accent:     #888888;
+  --brand-accent-dim: #666666;
+}
+
+/* ─── Tab Bar Bottom Clearance Utility ─────────────────────────
+ * Add class="tab-bar-clear" to the outermost scrollable element
+ * on any page that mounts tab-bar.js.
+ */
+.tab-bar-clear {
+  padding-bottom: var(--dg-bottom-clear) !important;
+}
+
+@media (min-width: 900px) {
+  .tab-bar-clear {
+    padding-bottom: 2rem !important;
+  }
+}

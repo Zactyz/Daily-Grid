@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /.wrangler/
+
+Sitemap: https://dailygrid.app/sitemap.xml

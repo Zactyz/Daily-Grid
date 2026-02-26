@@ -13,3 +13,8 @@ database_id = "ca6a0759-26c7-439e-8a41-ba99959ce15b"
 [[kv_namespaces]]
 binding = "PUZZLE_CACHE"
 id = "4645c8c9221849fbb7933b51bcc46a6d"
+
+# Cron triggers for push notifications are NOT supported in wrangler.toml for Pages.
+# Configure them in the Cloudflare Dashboard:
+#   Pages → [project] → Settings → Functions → Cron Triggers
+# Add: "0 8 * * *" (daily) and "59 3 * * *" (streak reminder)

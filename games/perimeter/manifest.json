@@ -1,0 +1,21 @@
+{
+  "name": "Perimeter by Daily Grid",
+  "short_name": "Perimeter",
+  "description": "Trace one continuous loop that matches every perimeter clue.",
+  "start_url": "/games/perimeter/",
+  "display": "standalone",
+  "background_color": "#0c1018",
+  "theme_color": "#0c1018",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/games/perimeter/perimeter-logo.png",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "puzzle"],
+  "lang": "en",
+  "dir": "ltr"
+}

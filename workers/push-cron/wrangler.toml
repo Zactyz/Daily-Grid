@@ -1,0 +1,12 @@
+name = "daily-grid-push-cron"
+main = "index.js"
+compatibility_date = "2026-01-01"
+
+[triggers]
+crons = ["0 8 * * *", "59 3 * * *"]
+
+# Secrets — set via CLI (do NOT put real values here):
+#   npx wrangler secret put PUSH_SECRET
+#   npx wrangler secret put SITE_URL
+#
+# SITE_URL should be: https://daily-grid.pages.dev  (or your custom domain)

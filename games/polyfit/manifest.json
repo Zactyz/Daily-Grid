@@ -1,0 +1,17 @@
+{
+  "name": "Polyfit by Daily Grid",
+  "short_name": "Polyfit",
+  "description": "Fit every polyomino into the box.",
+  "start_url": "/games/polyfit/",
+  "scope": "/games/polyfit/",
+  "display": "standalone",
+  "background_color": "#120f1a",
+  "theme_color": "#120f1a",
+  "icons": [
+    {
+      "src": "/games/polyfit/polyfit-logo.png",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

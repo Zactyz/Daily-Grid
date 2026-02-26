@@ -451,7 +451,7 @@ function getEdgeAtPoint(clientX, clientY) {
   const scaleY = els.canvas.height / rect.height;
   const x = (clientX - rect.left) * scaleX;
   const y = (clientY - rect.top) * scaleY;
-  const threshold = 14;
+  const threshold = 22;
 
   for (const edge of visibilityEdges) {
     const a = islandMap.get(edge.a);

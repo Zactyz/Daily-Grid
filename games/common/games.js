@@ -1,7 +1,8 @@
-const GAME_META = [
+export const GAME_META = [
   {
     id: 'snake',
     name: 'Snake',
+    tagline: 'Practice the number path.',
     path: '/games/snake/',
     logo: '/games/snake/snake-logo.png',
     submittedKeyPrefix: 'dailygrid_submitted_',
@@ -13,6 +14,7 @@ const GAME_META = [
   {
     id: 'pathways',
     name: 'Pathways',
+    tagline: 'Practice color routes.',
     path: '/games/pathways/',
     logo: '/games/pathways/pathways-logo.png',
     submittedKeyPrefix: 'dailygrid_pathways_submitted_',
@@ -23,7 +25,8 @@ const GAME_META = [
   },
   {
     id: 'lattice',
-    name: 'Lattice',
+    name: 'Logice',
+    tagline: 'Practice logic grids.',
     path: '/games/lattice/',
     logo: '/games/lattice/lattice-logo.png?v=2',
     submittedKeyPrefix: 'dailygrid_lattice_submitted_',
@@ -35,6 +38,7 @@ const GAME_META = [
   {
     id: 'bits',
     name: 'Bits',
+    tagline: 'Practice binary logic.',
     path: '/games/bits/',
     logo: '/games/bits/bitsnew-logo.jpg',
     submittedKeyPrefix: 'dailygrid_bits_submitted_',
@@ -45,6 +49,7 @@ const GAME_META = [
   {
     id: 'hashi',
     name: 'Bridgeworks',
+    tagline: 'Practice island links.',
     path: '/games/hashi/',
     logo: '/games/hashi/hashi-logo.jpg',
     submittedKeyPrefix: 'dailygrid_hashi_submitted_',
@@ -55,12 +60,46 @@ const GAME_META = [
   {
     id: 'shikaku',
     name: 'Parcel',
+    tagline: 'Practice rectangle packing.',
     path: '/games/shikaku/',
     logo: '/games/shikaku/shikaku-logo.jpg',
     submittedKeyPrefix: 'dailygrid_shikaku_submitted_',
     completedKeyPrefix: 'dailygrid_shikaku_completed_',
     theme: { bg: 'bg-amber-300/15', border: 'border-amber-300/30', text: 'text-amber-200' },
     shareUrl: 'https://dailygrid.app/games/shikaku/'
+  },
+  {
+    id: 'conduit',
+    name: 'Conduit',
+    tagline: 'Practice routing the current.',
+    path: '/games/conduit/',
+    logo: '/games/conduit/conduit-logo.png',
+    submittedKeyPrefix: 'dailygrid_conduit_submitted_',
+    completedKeyPrefix: 'dailygrid_conduit_completed_',
+    theme: { bg: 'bg-cyan-500/10', border: 'border-cyan-400/30', text: 'text-cyan-300' },
+    shareUrl: 'https://dailygrid.app/games/conduit/'
+  },
+  {
+    id: 'perimeter',
+    name: 'Perimeter',
+    tagline: 'Practice loop constraints.',
+    path: '/games/perimeter/',
+    logo: '/games/perimeter/perimeter-logo.png',
+    submittedKeyPrefix: 'dailygrid_perimeter_submitted_',
+    completedKeyPrefix: 'dailygrid_perimeter_completed_',
+    theme: { bg: 'bg-indigo-500/10', border: 'border-indigo-400/30', text: 'text-indigo-300' },
+    shareUrl: 'https://dailygrid.app/games/perimeter/'
+  },
+  {
+    id: 'polyfit',
+    name: 'Polyfit',
+    tagline: 'Practice shape packing.',
+    path: '/games/polyfit/',
+    logo: '/games/polyfit/polyfit-logo.png',
+    submittedKeyPrefix: 'dailygrid_polyfit_submitted_',
+    completedKeyPrefix: 'dailygrid_polyfit_completed_',
+    theme: { bg: 'bg-amber-500/10', border: 'border-amber-400/30', text: 'text-amber-300' },
+    shareUrl: 'https://dailygrid.app/games/polyfit/'
   }
 ];
 

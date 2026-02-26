@@ -84,7 +84,7 @@ When adding a new game, update these shared locations so it appears everywhere:
   - Submitted: `${submittedKeyPrefix}${YYYY-MM-DD}` (daily only)
   - Completed: `${completedKeyPrefix}${YYYY-MM-DD}` (daily only)
 - Provide `getCompletionPayload()` and `getAnonId()` in the adapter.
-- Leaderboard display is capped at Top 5. If the player ranks below Top 5, the UI shows an ellipsis row and their rank.
+- Leaderboard display is capped at **Top 3**. If the player ranks below Top 3, the UI shows an ellipsis row and their rank.
 - The shell stores the player’s local leaderboard entry under `dailygrid_${gameId}_leaderboard_${puzzleId}` to support this.
 
 ## 10) Sharing previews (social/iMessage)
@@ -101,11 +101,13 @@ When adding a new game, update these shared locations so it appears everywhere:
 - Avoid extra scrolling space on mobile (see recent padding fixes).
 - Disable unwanted text selection/zoom in interactive areas (`touch-action: manipulation`, `user-select: none`).
 - Add `celebrate-target` to the main game board element so the completion pulse animation can run before the modal.
+- Completion celebration now uses **two full pulses** plus a confetti burst (game accent color) that can overlap the win modal.
 
 ## 12) Consistency rules
 - Timer display is owned by the shell.
 - Mode badges and buttons are owned by the shell.
 - Completion modal copy is standardized in the shell.
+- Percentile text uses: “You finished in the top X% of solvers!”
 - Use the shell template IDs exactly as written.
 
 ## 13) When in doubt

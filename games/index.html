@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,20 +23,22 @@
   <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-games.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/games/common/design-tokens.css">
+  <link rel="stylesheet" href="/games/common/tab-bar.css">
   <style>
     :root {
-      --brand-bg: #020617;
-      --brand-gold: #D4A650;
+      --brand-bg: var(--dg-bg);
+      --brand-gold: var(--dg-gold);
     }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: var(--dg-font-ui);
       background-color: var(--brand-bg);
-      color: #F8FAFC;
+      color: var(--dg-text);
     }
 
     h1, h2 {
-      font-family: 'Merriweather', serif;
+      font-family: var(--dg-font-heading);
     }
 
     .glass {
@@ -131,6 +133,20 @@
       text-underline-offset: 3px;
     }
 
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #f97316;
+      background: rgba(249,115,22,.12);
+      border: 1px solid rgba(249,115,22,.25);
+      border-radius: 999px;
+      padding: 1px 6px;
+      letter-spacing: .01em;
+    }
+
     .ios-banner {
       border: 1px solid rgba(15, 23, 42, 0.08);
       background: rgba(255, 255, 255, 0.92);
@@ -160,7 +176,7 @@
     }
 
     .ios-banner-bottom {
-      bottom: env(safe-area-inset-bottom, 0px);
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
       z-index: 70;
     }
 
@@ -168,7 +184,7 @@
       position: fixed;
       left: 50%;
       transform: translateX(-50%);
-      bottom: env(safe-area-inset-bottom, 0px);
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
       z-index: 70;
       display: none;
     }
@@ -253,11 +269,11 @@
         </a>
         <a href="/games/lattice/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="lattice">
           <div class="relative">
-            <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-12 h-12 rounded-xl">
+            <img src="/games/lattice/lattice-logo.png?v=2" alt="Logice" class="w-12 h-12 rounded-xl">
             <span class="complete-mark hidden">✓</span>
           </div>
           <div class="flex-1">
-            <p class="font-semibold">Lattice</p>
+            <p class="font-semibold">Logice</p>
             <p class="text-xs text-slate-400">Logic deductions with clues.</p>
           </div>
           <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
@@ -315,6 +331,54 @@
             </svg>
           </span>
         </a>
+        <a href="/games/conduit/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="conduit">
+          <div class="relative">
+            <img src="/games/conduit/conduit-logo.png" alt="Conduit" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Conduit</p>
+            <p class="text-xs text-slate-400">Route the charge through every circuit.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
+        <a href="/games/polyfit/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="polyfit">
+          <div class="relative">
+            <img src="/games/polyfit/polyfit-logo.png" alt="Polyfit" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Polyfit</p>
+            <p class="text-xs text-slate-400">Pack every piece into the amber footprint.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
+        <a href="/games/perimeter/" class="app-card rounded-2xl p-4 flex items-center gap-3" data-game-id="perimeter">
+          <div class="relative">
+            <img src="/games/perimeter/perimeter-logo.png" alt="Perimeter" class="w-12 h-12 rounded-xl">
+            <span class="complete-mark hidden">✓</span>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold">Perimeter</p>
+            <p class="text-xs text-slate-400">Lock the loop with tight logic.</p>
+          </div>
+          <span class="play-label text-amber-400 text-sm font-semibold inline-flex items-center gap-1.5 pr-2">
+            <span class="play-text">Play</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </a>
       </div>
     </section>
 
@@ -350,13 +414,13 @@
       </header>
 
       <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-        <a href="/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-16 h-16 rounded-2xl mb-6 shadow-lg">
-          <h2 class="text-2xl font-bold mb-2">Daily Grid</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">The original. Fill the grid with perfect logic.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <a href="https://apps.apple.com/us/app/daily-grid/id6757233848" target="_blank" rel="noopener" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start" style="border-color:rgba(148,163,184,.15)">
+          <img src="/Images/web%20icon.png" alt="Daily Grid App" class="w-16 h-16 rounded-2xl mb-6 shadow-lg">
+          <h2 class="text-2xl font-bold mb-2">Get the App</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Take your daily puzzles on the go. Available free on iOS.</p>
+          <span class="mt-auto text-slate-400 font-semibold text-sm flex items-center gap-2">
+            Download on App Store
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </span>
         </a>
 
@@ -381,8 +445,8 @@
         </a>
 
         <a href="/games/lattice/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/lattice/lattice-logo.png?v=2" alt="Lattice" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Lattice</h2>
+          <img src="/games/lattice/lattice-logo.png?v=2" alt="Logice" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Logice</h2>
           <p class="text-slate-400 text-sm leading-relaxed mb-6">A daily logic grid puzzle powered by clues and deduction.</p>
           <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
             Play Today's Puzzle
@@ -414,6 +478,35 @@
           <img src="/games/shikaku/shikaku-logo.jpg" alt="Parcel" class="w-16 h-16 rounded-2xl mb-6">
           <h2 class="text-2xl font-bold mb-2">Parcel</h2>
           <p class="text-slate-400 text-sm leading-relaxed mb-6">Divide the grid into perfect rectangles that match every clue.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+
+        <a href="/games/conduit/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/conduit/conduit-logo.png" alt="Conduit" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Conduit</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Route the current and light every circuit.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+
+        <a href="/games/polyfit/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/polyfit/polyfit-logo.png" alt="Polyfit" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Polyfit</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Drag and rotate pieces to fill the amber footprint exactly.</p>
+          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
+            Play Today's Puzzle
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+        <a href="/games/perimeter/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
+          <img src="/games/perimeter/perimeter-logo.png" alt="Perimeter" class="w-16 h-16 rounded-2xl mb-6">
+          <h2 class="text-2xl font-bold mb-2">Perimeter</h2>
+          <p class="text-slate-400 text-sm leading-relaxed mb-6">Lock the loop with clean, deliberate logic.</p>
           <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
             Play Today's Puzzle
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -467,65 +560,34 @@
     <button id="ios-banner-close" class="text-slate-500 text-base">✕</button>
   </div>
 
-  <script>
+  <script type="module">
+    import { getPTDateYYYYMMDD } from '/games/common/utils.js';
+    import { GAME_META as GAME_META_LIST } from '/games/common/games.js';
+    import { mountTabBar } from '/games/common/tab-bar.js';
 
-    const completedPrefixes = {
-      snake: 'dailygrid_completed_',
-      pathways: 'dailygrid_pathways_completed_',
-      lattice: 'dailygrid_lattice_completed_',
-      bits: 'dailygrid_bits_completed_',
-      hashi: 'dailygrid_hashi_completed_',
-      shikaku: 'dailygrid_shikaku_completed_'
-    };
-    const submittedPrefixes = {
-      snake: 'dailygrid_submitted_',
-      pathways: 'dailygrid_pathways_submitted_',
-      lattice: 'dailygrid_lattice_submitted_',
-      bits: 'dailygrid_bits_submitted_',
-      hashi: 'dailygrid_hashi_submitted_',
-      shikaku: 'dailygrid_shikaku_submitted_'
-    };
+    // Build id-keyed lookup from canonical GAME_META array
+    const gameMeta = Object.fromEntries(GAME_META_LIST.map(g => [g.id, g]));
 
-    const gameMeta = {
-      snake: { name: 'Snake', path: '/games/snake/', logo: '/games/snake/snake-logo.png' },
-      pathways: { name: 'Pathways', path: '/games/pathways/', logo: '/games/pathways/pathways-logo.png' },
-      lattice: { name: 'Lattice', path: '/games/lattice/', logo: '/games/lattice/lattice-logo.png?v=2' },
-      bits: { name: 'Bits', path: '/games/bits/', logo: '/games/bits/bitsnew-logo.jpg' },
-      hashi: { name: 'Bridgeworks', path: '/games/hashi/', logo: '/games/hashi/hashi-logo.jpg' },
-      shikaku: { name: 'Parcel', path: '/games/shikaku/', logo: '/games/shikaku/shikaku-logo.jpg' }
-    };
-
-    function getPTDateYYYYMMDD(now = new Date()) {
-      const dtf = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Los_Angeles',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      const parts = dtf.formatToParts(now);
-      const y = parts.find(p => p.type === 'year')?.value;
-      const m = parts.find(p => p.type === 'month')?.value;
-      const d = parts.find(p => p.type === 'day')?.value;
-      return `${y}-${m}-${d}`;
+    function getStreakData(gameId) {
+      try {
+        const raw = localStorage.getItem(`dailygrid_${gameId}_streak`);
+        if (raw) return JSON.parse(raw);
+      } catch { /* ignore */ }
+      return { current: 0 };
     }
+
+    const FLAME_SVG = `<svg width="10" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-6-6-8-6-14z"/></svg>`;
 
     function isCompletedToday(id) {
       const puzzleId = getPTDateYYYYMMDD();
-      const completedPrefix = completedPrefixes[id];
-      if (completedPrefix) {
-        try {
-          if (localStorage.getItem(`${completedPrefix}${puzzleId}`) === 'true') return true;
-        } catch {
-          // ignore
-        }
-      }
-      const submittedPrefix = submittedPrefixes[id];
-      if (!submittedPrefix) return false;
+      const g = gameMeta[id];
+      if (!g) return false;
       try {
-        return localStorage.getItem(`${submittedPrefix}${puzzleId}`) === 'true';
-      } catch {
-        return false;
-      }
+        if (g.completedKeyPrefix && localStorage.getItem(`${g.completedKeyPrefix}${puzzleId}`) === 'true') return true;
+      } catch { /* ignore */ }
+      try {
+        return localStorage.getItem(`${g.submittedKeyPrefix}${puzzleId}`) === 'true';
+      } catch { return false; }
     }
 
     function updateCards() {
@@ -544,6 +606,21 @@
         if (meta) {
           card.href = completed ? `${meta.path}?leaderboard=1` : meta.path;
         }
+        // Streak badge
+        const streak = getStreakData(id);
+        let badgeEl = card.querySelector('.streak-badge');
+        if (streak.current >= 2) {
+          if (!badgeEl) {
+            badgeEl = document.createElement('span');
+            badgeEl.className = 'streak-badge';
+            const labelEl = card.querySelector('.play-label');
+            if (labelEl) labelEl.before(badgeEl);
+          }
+          badgeEl.innerHTML = `${FLAME_SVG} ${streak.current}`;
+        } else if (badgeEl) {
+          badgeEl.remove();
+        }
+
         if (completed) {
           card.classList.add('complete');
           if (check) check.classList.remove('hidden');
@@ -564,7 +641,7 @@
 
       const allCompleteMsg = document.getElementById('all-complete-message');
       if (allCompleteMsg) {
-        if (completedCount === Object.keys(submittedPrefixes).length) {
+        if (completedCount === GAME_META_LIST.length) {
           allCompleteMsg.classList.remove('hidden');
         } else {
           allCompleteMsg.classList.add('hidden');
@@ -585,18 +662,22 @@
     });
 
     updateCards();
-    window.addEventListener('pageshow', () => {
-      updateCards();
-    });
+    window.addEventListener('pageshow', () => { updateCards(); });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') updateCards();
     });
 
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/games/sw.js');
-      });
+      window.addEventListener('load', () => { navigator.serviceWorker.register('/games/sw.js'); });
     }
+
+    mountTabBar('daily');
   </script>
+  <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation"><ul class="dg-tab-bar__list">
+    <li class="dg-tab-bar__tab active" data-tab="daily"><a href="/games/" aria-label="Daily" aria-current="page"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg><span class="dg-tab-bar__label">Daily</span></a></li>
+    <li class="dg-tab-bar__tab" data-tab="practice"><a href="/games/practice/" aria-label="Practice"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="3.5" height="10" rx="1.75"/><rect x="5.5" y="10" width="1.5" height="4" rx="0.75"/><rect x="7" y="11" width="10" height="2" rx="1"/><rect x="17" y="10" width="1.5" height="4" rx="0.75"/><rect x="18.5" y="7" width="3.5" height="10" rx="1.75"/></svg><span class="dg-tab-bar__label">Practice</span></a></li>
+    <li class="dg-tab-bar__tab" data-tab="medals"><a href="/games/medals/" aria-label="Medals"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="10.5" y="2" width="3" height="4.5" rx="0.75"/><circle cx="12" cy="15" r="7"/></svg><span class="dg-tab-bar__label">Medals</span></a></li>
+    <li class="dg-tab-bar__tab" data-tab="profile"><a href="/games/profile/" aria-label="Profile"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.5" r="3.5"/><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"/></svg><span class="dg-tab-bar__label">Profile</span></a></li>
+  </ul></nav>
 </body>
 </html>

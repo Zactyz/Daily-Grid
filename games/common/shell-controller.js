@@ -1,6 +1,11 @@
 import { buildShareText, formatDateForShare, shareWithFallback, showShareFeedback } from './share.js';
 import { getGameMeta, recordGameCompletion } from './games.js';
 import { loadLeaderboard, submitScore, claimInitials, updateNextGamePromo } from './shell-ui.js';
+import { recordStreak, getStreak, getMsUntilPTMidnight, formatCountdown } from './streak.js';
+import { recordStats, showStatsModal } from './stats.js';
+import { getPTDateYYYYMMDD } from './utils.js';
+import { requestPushPermission, isPushSubscribed, hasPushOptIn } from './push.js';
+import { showTutorialModal } from './tutorial-modal.js';
 
 const RESET_ICON = `
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,7 +33,6 @@ let touchGuardInitialized = false;
 function shouldAllowDoubleTap(target) {
   if (!target) return false;
   if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return true;
-  if (target.closest('#game-container') || target.closest('.game-touch')) return true;
   return false;
 }
 
@@ -332,7 +336,7 @@ function shouldAllowDoubleTap(target) {
     }
 
     if (elements.pauseOverlay) {
-      if (adapter.isPaused() && !adapter.isComplete()) elements.pauseOverlay.classList.remove('hidden');
+      if (adapter.isPaused() && !adapter.isComplete() && !adapter.isSolutionShown?.()) elements.pauseOverlay.classList.remove('hidden');
       else elements.pauseOverlay.classList.add('hidden');
     }
   }
@@ -512,8 +516,17 @@ function shouldAllowDoubleTap(target) {
       }
 
       if (elements.percentileMsg) {
-        const topPct = Math.max(1, Math.round(100 - (data.percentile ?? 0)));
-        const msg = `You finished in the top ${topPct}% of solvers!`;
+        const rank = data.rank;
+        const total = data.total ?? 0;
+        let msg;
+        if (rank === 1 && total === 1) {
+          msg = 'First to solve today!';
+        } else if (rank === 1) {
+          msg = 'You\u2019re #1 on today\u2019s leaderboard!';
+        } else {
+          const topPct = Math.max(1, Math.round(100 - (data.percentile ?? 0)));
+          msg = `You finished in the top ${topPct}% of solvers!`;
+        }
         elements.percentileMsg.textContent = msg;
         elements.percentileMsg.classList.remove('hidden');
       }
@@ -550,8 +563,78 @@ function shouldAllowDoubleTap(target) {
       elements.claimInitialsForm?.classList.add('hidden');
       await loadLeaderboardIntoModal();
     } catch (error) {
-      alert(error.message || 'Failed to save initials. Please try again.');
+      showToast(error.message || 'Failed to save initials. Please try again.');
     }
+  }
+
+  let countdownInterval = null;
+
+  function injectStreakDisplay(modal, streak) {
+    if (!modal) return;
+    let el = modal.querySelector('#streak-display');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'streak-display';
+      el.className = 'flex items-center justify-center gap-1.5 text-sm font-medium mb-4';
+      // Insert after the timer-display block
+      const timerDisplay = modal.querySelector('.timer-display');
+      if (timerDisplay) timerDisplay.after(el);
+      else modal.querySelector('[id="percentile-msg"]')?.before(el);
+    }
+    if (streak.current >= 2) {
+      const best = streak.current === streak.best && streak.best > 1 ? ' — new best!' : '';
+      el.innerHTML = `
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#f97316">
+          <path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-6-6-8-6-14z"/>
+        </svg>
+        <span style="color:#f97316">${streak.current}-day streak${best}</span>
+      `;
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  }
+
+  function injectStatsButton(modal, gameId, gameName) {
+    if (!modal) return;
+    if (modal.querySelector('#stats-modal-btn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'stats-modal-btn';
+    btn.textContent = 'View Stats';
+    btn.style.cssText = `
+      display: block; width: 100%; margin-top: .5rem; padding: .5rem;
+      background: none; border: 1px solid rgba(255,255,255,.08);
+      border-radius: .6rem; color: #71717a; font-size: .75rem; font-weight: 600;
+      cursor: pointer; transition: all .15s ease;
+    `;
+    btn.addEventListener('mouseenter', () => { btn.style.borderColor = 'rgba(255,255,255,.16)'; btn.style.color = '#a1a1aa'; });
+    btn.addEventListener('mouseleave', () => { btn.style.borderColor = 'rgba(255,255,255,.08)'; btn.style.color = '#71717a'; });
+    btn.addEventListener('click', () => showStatsModal(gameId, gameName));
+    const buttonsArea = modal.querySelector('.flex.flex-col.gap-3');
+    if (buttonsArea) buttonsArea.after(btn);
+  }
+
+  function injectCountdownDisplay(modal) {
+    if (!modal) return;
+    let el = modal.querySelector('#next-puzzle-countdown');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'next-puzzle-countdown';
+      el.className = 'text-center text-xs text-zinc-500 mb-4';
+      // Insert before leaderboard title or before close button area
+      const lbTitle = modal.querySelector('#leaderboard-title');
+      if (lbTitle) lbTitle.before(el);
+      else modal.querySelector('.flex.flex-col.gap-3')?.before(el);
+    }
+
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    const update = () => {
+      const ms = getMsUntilPTMidnight();
+      el.textContent = `Next puzzle in: ${formatCountdown(ms)}`;
+    };
+    update();
+    countdownInterval = setInterval(update, 60_000);
   }
 
   function showCompletionModal({ force = false } = {}) {
@@ -578,6 +661,13 @@ function shouldAllowDoubleTap(target) {
       const dailySubtitle = adapter.getDailyModalSubtitle?.() || `Great job on today's ${gameName}`;
       if (elements.modalTitle) elements.modalTitle.textContent = dailyTitle;
       if (elements.modalSubtitle) elements.modalSubtitle.textContent = dailySubtitle;
+
+      // Streak and stats tracking
+      const streakData = recordStreak(adapter.gameId);
+      recordStats(adapter.gameId, completionMs ?? adapter.getElapsedMs());
+      injectStreakDisplay(elements.completionModal, streakData);
+      injectCountdownDisplay(elements.completionModal);
+      injectStatsButton(elements.completionModal, adapter.gameId, meta?.name || adapter.gameId);
 
       elements.shareBtn?.classList.remove('hidden');
       elements.leaderboardTitle?.classList.remove('hidden');
@@ -608,9 +698,15 @@ function shouldAllowDoubleTap(target) {
     }
 
     elements.completionModal.classList.remove('hidden');
+
+    // Show push opt-in prompt after first daily completion (only once, only if not already asked)
+    if (adapter.getMode() === 'daily') {
+      schedulePushOptIn(elements.completionModal);
+    }
   }
 
   function hideCompletionModal() {
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
     elements.completionModal?.classList.add('hidden');
     const entry = getPlayerEntry();
     if (entry && !entry.initials) {
@@ -1016,6 +1112,136 @@ function shouldAllowDoubleTap(target) {
   }
 
     init();
+
+    // First-time onboarding: show tutorial modal (or fall back to accordion)
+    if (adapter.gameId) {
+      const onboardKey = `dailygrid_onboarded_${adapter.gameId}`;
+
+      // Find the How to Play details element (used for fallback + help button)
+      const allDetails = document.querySelectorAll('details');
+      const howToPlay = Array.from(allDetails).find(d => {
+        const s = d.querySelector('summary');
+        return s && /how to play/i.test(s.textContent);
+      });
+
+      // Inject a "Show Tutorial" button at the bottom of the How to Play accordion
+      // so returning users can re-open the tutorial at any time.
+      if (howToPlay && window.DG_TUTORIAL_STEPS?.length) {
+        const helpBtn = document.createElement('button');
+        helpBtn.className = 'dg-tutorial-help-btn dg-tutorial-help-btn--inline';
+        helpBtn.setAttribute('aria-label', 'Show tutorial walkthrough');
+        helpBtn.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="10,8 16,12 10,16"/>
+          </svg>
+          Show Tutorial`;
+        helpBtn.addEventListener('click', () => showTutorialModal(window.DG_TUTORIAL_STEPS));
+        howToPlay.insertAdjacentElement('beforeend', helpBtn);
+      }
+
+      if (!localStorage.getItem(onboardKey)) {
+        localStorage.setItem(onboardKey, '1');
+        const steps = window.DG_TUTORIAL_STEPS;
+        if (steps?.length) {
+          // Delay slightly so the start overlay is visible first
+          setTimeout(() => showTutorialModal(steps), 500);
+        } else if (howToPlay && !howToPlay.open) {
+          // Fallback: open the How to Play accordion for games without tutorial steps
+          setTimeout(() => { howToPlay.open = true; }, 400);
+        }
+      }
+    }
+
+    // ── Push opt-in prompt ────────────────────────────────────────────────────
+    /**
+     * Show a gentle push notification prompt inside the completion modal.
+     * Only shown once (keyed by PUSH_ASKED_KEY in localStorage), and only if
+     * the browser supports push and the user has not already subscribed.
+     */
+    const PUSH_ASKED_KEY = 'dailygrid_push_asked';
+    async function schedulePushOptIn(modal) {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      if (localStorage.getItem(PUSH_ASKED_KEY)) return;
+      const already = await isPushSubscribed();
+      if (already) return;
+
+      // Wait 2 s so the leaderboard has time to load first
+      setTimeout(async () => {
+        if (!modal || modal.classList.contains('hidden')) return;
+
+        // Inject a subtle prompt row into the modal
+        const existing = modal.querySelector('#push-opt-in-prompt');
+        if (existing) return;
+
+        const prompt = document.createElement('div');
+        prompt.id = 'push-opt-in-prompt';
+        prompt.style.cssText = `
+          margin: 12px 0 0;
+          padding: 12px 14px;
+          border-radius: 12px;
+          background: rgba(167,139,250,0.08);
+          border: 1px solid rgba(167,139,250,0.18);
+          display: flex; align-items: center; gap: 10px;
+        `;
+        prompt.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <p style="flex:1;font-size:12px;color:rgba(255,255,255,0.65);line-height:1.4">
+            Get notified when tomorrow's puzzles are live.
+          </p>
+          <button id="push-opt-in-yes" style="
+            background:rgba(167,139,250,0.18);border:1px solid rgba(167,139,250,0.3);
+            color:#c4b5fd;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;
+          ">Enable</button>
+          <button id="push-opt-in-no" style="
+            background:none;border:none;color:rgba(255,255,255,0.3);
+            font-size:18px;cursor:pointer;line-height:1;padding:2px 4px;
+          " aria-label="Dismiss">×</button>
+        `;
+        // Append inside the modal's inner card (first child div), or directly to modal
+        const inner = modal.querySelector('#completion-modal > div, .glass-strong, .modal-inner');
+        (inner || modal).appendChild(prompt);
+
+        prompt.querySelector('#push-opt-in-yes')?.addEventListener('click', async () => {
+          const anonId = adapter.getAnonId?.() || localStorage.getItem('dailygrid_anon_id');
+          localStorage.setItem(PUSH_ASKED_KEY, '1');
+          const btn = prompt.querySelector('#push-opt-in-yes');
+          if (btn) btn.textContent = '…';
+          // Fetch VAPID key if not already loaded
+          if (!window.DG_VAPID_PUBLIC_KEY) {
+            try {
+              const r = await fetch('/api/push/vapid-public-key');
+              const d = await r.json();
+              if (d.publicKey) window.DG_VAPID_PUBLIC_KEY = d.publicKey;
+            } catch { /* push will gracefully fail if key unavailable */ }
+          }
+          const result = await requestPushPermission(anonId, window.DG_VAPID_PUBLIC_KEY);
+          prompt.remove();
+          if (result?.ok) showToast('You will be notified when new puzzles are live!');
+        });
+        prompt.querySelector('#push-opt-in-no')?.addEventListener('click', () => {
+          localStorage.setItem(PUSH_ASKED_KEY, '1');
+          prompt.remove();
+        });
+      }, 2000);
+    }
+
+    // Auto-reload when PT date changes so the new puzzle loads for users with
+    // the page open across midnight (e.g. overnight, or across timezone boundaries).
+    const loadedPTDate = getPTDateYYYYMMDD();
+    const msToPTMidnight = getMsUntilPTMidnight();
+    // Reload ~2 seconds after PT midnight to let the new puzzle propagate
+    setTimeout(() => window.location.reload(), msToPTMidnight + 2000);
+    // Also reload when the user returns to the tab on a different PT day
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && getPTDateYYYYMMDD() !== loadedPTDate) {
+        window.location.reload();
+      }
+    });
 
     return {
     update,

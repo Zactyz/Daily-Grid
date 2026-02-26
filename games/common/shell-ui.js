@@ -23,12 +23,12 @@ export async function loadLeaderboard({
     const response = await fetch(`${api}?puzzleId=${encodeURIComponent(puzzleId)}`);
     if (!response.ok) throw new Error('Failed to load leaderboard');
     const data = await response.json();
-    if (!data.top10 || data.top10.length === 0) {
+    if (!data.top3 || data.top3.length === 0) {
       container.innerHTML = `<p class="text-zinc-500 text-center py-6 text-xs">${emptyText}</p>`;
       return;
     }
     const fmt = formatTimeFn || formatTime;
-    const topEntries = data.top10.slice(0, 3);
+    const topEntries = data.top3;
     const playerLabel = playerEntry?.initials
       ? playerEntry.initials
       : (preferYouLabel ? 'YOU' : '---');
@@ -36,7 +36,13 @@ export async function loadLeaderboard({
     topEntries.forEach((entry, idx) => {
       const rank = Number.isFinite(entry.rank) ? entry.rank : idx + 1;
       const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
-      const isPlayer = playerEntry && Number.isFinite(playerEntry.rank) && playerEntry.rank === rank;
+      // Match by rank AND timeMs to avoid marking the wrong row on a tie.
+      // When player has no valid timeMs, do not highlight (avoids wrong row on ties).
+      const playerHasTime = Number.isFinite(playerEntry?.timeMs);
+      const isPlayer = playerEntry
+        && Number.isFinite(playerEntry.rank)
+        && playerEntry.rank === rank
+        && (playerHasTime ? playerEntry.timeMs === entry.timeMs : false);
       const initials = isPlayer ? playerLabel : (entry.initials || '???');
       rows.push({
         type: 'entry',

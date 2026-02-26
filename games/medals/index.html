@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1120">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Medals — Daily Grid">
+  <title>Medals — Daily Grid Games</title>
+  <meta name="description" content="Today's top puzzle solvers across all Daily Grid games.">
+  <link rel="manifest" href="/games/manifest.json">
+  <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
+  <link rel="icon" type="image/png" href="/Images/web%20icon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/games/common/design-tokens.css">
+  <link rel="stylesheet" href="/games/common/tab-bar.css">
+  <style>
+    :root {
+      --brand-bg: var(--dg-bg);
+      --brand-gold: var(--dg-gold);
+    }
+    body {
+      font-family: var(--dg-font-ui);
+      background-color: var(--brand-bg);
+      color: var(--dg-text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% -5%, rgba(212,166,80,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 0% 100%, rgba(35,60,120,0.2) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 30% at 100% 0%, rgba(120,85,20,0.12) 0%, transparent 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+    h1, h2 { font-family: var(--dg-font-heading); }
+
+    /* Glass card */
+    .glass-card {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+      pointer-events: none;
+    }
+
+    /* Medal rank colors */
+    .rank-gold   { color: #facc15; }
+    .rank-silver { color: #cbd5e1; }
+    .rank-bronze { color: #fb923c; }
+
+    .rank-badge {
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    .rank-badge.gold   { background: rgba(250,204,21,0.15);  border: 1px solid rgba(250,204,21,0.3); }
+    .rank-badge.silver { background: rgba(203,213,225,0.10); border: 1px solid rgba(203,213,225,0.25); }
+    .rank-badge.bronze { background: rgba(251,146,60,0.12);  border: 1px solid rgba(251,146,60,0.3); }
+
+    /* Your entry highlight */
+    .is-you {
+      background: rgba(212,166,80,0.06);
+      border-color: rgba(212,166,80,0.2) !important;
+    }
+    .you-chip {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+      color: #D4A650; background: rgba(212,166,80,0.12);
+      border: 1px solid rgba(212,166,80,0.25);
+      border-radius: 999px; padding: 1px 6px;
+      text-transform: uppercase;
+    }
+
+    /* Game logo placeholder */
+    .game-logo {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* Loading skeleton */
+    .skel {
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: skel-wave 1.4s ease infinite;
+      border-radius: 6px;
+    }
+    @keyframes skel-wave { 0%,100%{background-position:200% 0} 50%{background-position:0 0} }
+
+    /* Empty state */
+    .empty-state { opacity: 0.5; }
+
+    /* Your personal medals board */
+    .personal-medal {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .personal-medal:last-child { border-bottom: none; }
+
+    /* Tab selector for All-time vs Today */
+    .tab-pill {
+      display: flex;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .tab-pill button {
+      flex: 1; padding: 6px 14px; border-radius: 7px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.18s ease; border: none;
+      color: rgba(255,255,255,0.45); background: transparent;
+    }
+    .tab-pill button.active {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.9);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.18);
+    }
+    .app-header { font-family: 'Space Grotesk', sans-serif; }
+  </style>
+</head>
+<body>
+  <script src="/games/common/desktop-redirect.js"></script>
+  <main class="max-w-lg mx-auto px-4 pt-6">
+
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-4 app-header">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(250,204,21,0.12);border:1px solid rgba(250,204,21,0.2)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#facc15">
+          <rect x="10.5" y="2" width="3" height="4.5" rx="0.75"/>
+          <circle cx="12" cy="15" r="7"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.3em] text-slate-400">Daily Grid</p>
+        <h1 class="text-2xl font-semibold text-amber-200">Medals</h1>
+      </div>
+    </div>
+    <!-- Date navigator -->
+    <div class="flex items-center gap-1 mb-5">
+      <button id="date-prev-btn" aria-label="Previous day" class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span id="puzzle-date-label" class="text-xs text-slate-300 font-medium px-1 min-w-[120px] text-center">Today</span>
+      <button id="date-next-btn" aria-label="Next day" class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+
+    <!-- Your medals summary -->
+    <section class="glass-card mb-5 p-4" id="your-medals-section">
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Your Medals</h2>
+      <div id="your-medals-row" class="flex gap-5">
+        <!-- Populated by JS from localStorage leaderboard entries -->
+        <div class="flex flex-col items-center gap-1">
+          <span class="text-2xl font-bold rank-gold" id="your-gold">0</span>
+          <span class="text-xs text-slate-400">Gold</span>
+        </div>
+        <div class="flex flex-col items-center gap-1">
+          <span class="text-2xl font-bold rank-silver" id="your-silver">0</span>
+          <span class="text-xs text-slate-400">Silver</span>
+        </div>
+        <div class="flex flex-col items-center gap-1">
+          <span class="text-2xl font-bold rank-bronze" id="your-bronze">0</span>
+          <span class="text-xs text-slate-400">Bronze</span>
+        </div>
+        <div class="flex-1"></div>
+        <div class="flex flex-col items-center gap-1">
+          <span class="text-2xl font-bold text-slate-200" id="your-top10">0</span>
+          <span class="text-xs text-slate-400">Top 10</span>
+        </div>
+      </div>
+      <!-- TODO (Tier 2 — user accounts): show global rank and username here once auth is added -->
+    </section>
+
+    <!-- Leaderboard by game -->
+    <section>
+      <h2 id="leaderboard-heading" class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Today's Top Solvers</h2>
+      <div id="leaderboard-list" class="flex flex-col gap-3" style="min-height:320px">
+        <!-- Loading skeletons -->
+        <div class="glass-card p-4">
+          <div class="skel h-4 w-28 mb-3"></div>
+          <div class="flex flex-col gap-2">
+            <div class="skel h-9 w-full"></div>
+            <div class="skel h-9 w-full"></div>
+            <div class="skel h-9 w-5/6"></div>
+          </div>
+        </div>
+        <div class="glass-card p-4">
+          <div class="skel h-4 w-24 mb-3"></div>
+          <div class="flex flex-col gap-2">
+            <div class="skel h-9 w-full"></div>
+            <div class="skel h-9 w-full"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="pb-4"></div>
+  </main>
+
+  <script type="module">
+    import { mountTabBar } from '/games/common/tab-bar.js';
+    import { getPTDateYYYYMMDD, getAnonId, formatTimeShort as formatTime } from '/games/common/utils.js';
+    import { GAME_META as GAME_META_LIST } from '/games/common/games.js';
+
+    mountTabBar('medals');
+
+    // Build id-keyed lookup from canonical GAME_META array
+    const GAME_META = Object.fromEntries(GAME_META_LIST.map(g => [g.id, g]));
+
+    const RANK_META = [
+      { cls: 'gold',   label: '🥇' },
+      { cls: 'silver', label: '🥈' },
+      { cls: 'bronze', label: '🥉' },
+    ];
+
+    // ── Personal medals from localStorage ────────────────────────────────────
+    function countPersonalMedals() {
+      const counts = { gold: 0, silver: 0, bronze: 0, top10: 0 };
+      for (const gameId of Object.keys(GAME_META)) {
+        // Scan all leaderboard entries for this game
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!key?.startsWith(`dailygrid_${gameId}_leaderboard_`)) continue;
+          try {
+            const entry = JSON.parse(localStorage.getItem(key));
+            const rank = entry?.rank;
+            if (!rank) continue;
+            if (rank === 1) counts.gold++;
+            else if (rank === 2) counts.silver++;
+            else if (rank === 3) counts.bronze++;
+            if (rank <= 10) counts.top10++;
+          } catch { /* ignore */ }
+        }
+      }
+      return counts;
+    }
+
+    function renderPersonalMedals() {
+      const c = countPersonalMedals();
+      document.getElementById('your-gold').textContent   = c.gold;
+      document.getElementById('your-silver').textContent = c.silver;
+      document.getElementById('your-bronze').textContent = c.bronze;
+      document.getElementById('your-top10').textContent  = c.top10;
+    }
+
+    // ── Leaderboard from API ──────────────────────────────────────────────────
+    function renderLeaderboard(games) {
+      const anonId = getAnonId();
+      const container = document.getElementById('leaderboard-list');
+
+      if (!games || games.length === 0) {
+        container.innerHTML = `
+          <div class="glass-card p-6 text-center empty-state">
+            <svg class="mx-auto mb-3 opacity-40" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="11" r="5"/><path d="M8 21h8M12 21v-4M7.5 3l1.5 4h6l1.5-4"/>
+            </svg>
+            <p class="text-sm text-slate-400">No scores yet today.</p>
+            <p class="text-xs text-slate-500 mt-1">Be the first to solve a puzzle!</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = games.map(({ id, name, entries }) => {
+        const meta = GAME_META[id] || {};
+        const rows = entries.map((e) => {
+          const isYou = anonId && e.anonId === anonId;
+          const rm = RANK_META[e.rank - 1];
+          const rankClass = rm ? rm.cls : '';
+          const rankLabel = e.rank <= 3 ? rm.label : `#${e.rank}`;
+          return `
+            <div class="flex items-center gap-3 py-2 px-3 rounded-xl ${isYou ? 'is-you' : ''}" style="border: 1px solid transparent">
+              <span class="rank-badge ${rankClass}">${rankLabel}</span>
+              <span class="flex-1 text-sm font-medium">${e.initials || '—'}</span>
+              ${isYou ? '<span class="you-chip">You</span>' : ''}
+              <span class="text-sm font-mono text-slate-300">${formatTime(e.timeMs)}</span>
+            </div>`;
+        }).join('');
+
+        return `
+          <div class="glass-card">
+            <a href="${meta.path || '#'}" class="flex items-center gap-3 p-4 pb-2" style="text-decoration:none">
+              <img src="${meta.logo || ''}" alt="${name}" class="game-logo" onerror="this.style.display='none'">
+              <div>
+                <h3 class="font-semibold text-sm">${name}</h3>
+                <p class="text-xs text-slate-400">${entries.length} solver${entries.length !== 1 ? 's' : ''} today</p>
+              </div>
+              <svg class="ml-auto text-slate-600" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+            <div class="px-3 pb-3">${rows}</div>
+          </div>`;
+      }).join('');
+    }
+
+    // ── Date navigation ───────────────────────────────────────────────────────
+    const today = getPTDateYYYYMMDD();
+    let currentDate = today;
+
+    function offsetDate(dateStr, days) {
+      const d = new Date(dateStr + 'T12:00:00');
+      d.setDate(d.getDate() + days);
+      return getPTDateYYYYMMDD(d);
+    }
+
+    function formatDateLabel(dateStr) {
+      if (dateStr === today) return 'Today';
+      const yesterday = offsetDate(today, -1);
+      if (dateStr === yesterday) return 'Yesterday';
+      return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric'
+      });
+    }
+
+    function updateDateUI() {
+      const isToday = currentDate === today;
+      const label = document.getElementById('puzzle-date-label');
+      const nextBtn = document.getElementById('date-next-btn');
+      const heading = document.getElementById('leaderboard-heading');
+      if (label) label.textContent = formatDateLabel(currentDate);
+      if (nextBtn) {
+        nextBtn.disabled = isToday;
+        nextBtn.style.opacity = isToday ? '0.3' : '1';
+        nextBtn.style.pointerEvents = isToday ? 'none' : '';
+      }
+      if (heading) heading.textContent = isToday ? "Today's Top Solvers" : `Top Solvers — ${formatDateLabel(currentDate)}`;
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    async function loadLeaderboard(dateStr) {
+      const container = document.getElementById('leaderboard-list');
+      container.innerHTML = `
+        <div class="glass-card p-4">
+          <div class="skel h-4 w-28 mb-3"></div>
+          <div class="flex flex-col gap-2">
+            <div class="skel h-9 w-full"></div><div class="skel h-9 w-full"></div><div class="skel h-9 w-5/6"></div>
+          </div>
+        </div>
+        <div class="glass-card p-4">
+          <div class="skel h-4 w-24 mb-3"></div>
+          <div class="flex flex-col gap-2">
+            <div class="skel h-9 w-full"></div><div class="skel h-9 w-full"></div>
+          </div>
+        </div>`;
+      try {
+        const res = await fetch(`/api/medals/leaderboard?puzzleId=${dateStr}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        renderLeaderboard(data.games || []);
+      } catch (err) {
+        console.warn('[Medals] Failed to load leaderboard:', err);
+        container.innerHTML = `
+          <div class="glass-card p-6 text-center empty-state">
+            <p class="text-sm text-slate-400">Could not load leaderboard.</p>
+            <button onclick="window.location.reload()" class="mt-3 text-xs px-4 py-2 rounded-lg" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">Try Again</button>
+          </div>`;
+      }
+    }
+
+    async function init() {
+      renderPersonalMedals();
+      updateDateUI();
+      await loadLeaderboard(currentDate);
+
+      document.getElementById('date-prev-btn')?.addEventListener('click', async () => {
+        currentDate = offsetDate(currentDate, -1);
+        updateDateUI();
+        await loadLeaderboard(currentDate);
+      });
+
+      document.getElementById('date-next-btn')?.addEventListener('click', async () => {
+        if (currentDate >= today) return;
+        currentDate = offsetDate(currentDate, 1);
+        updateDateUI();
+        await loadLeaderboard(currentDate);
+      });
+    }
+
+    init();
+  </script>
+  <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation"><ul class="dg-tab-bar__list">
+    <li class="dg-tab-bar__tab" data-tab="daily"><a href="/games/" aria-label="Daily"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg><span class="dg-tab-bar__label">Daily</span></a></li>
+    <li class="dg-tab-bar__tab" data-tab="practice"><a href="/games/practice/" aria-label="Practice"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="3.5" height="10" rx="1.75"/><rect x="5.5" y="10" width="1.5" height="4" rx="0.75"/><rect x="7" y="11" width="10" height="2" rx="1"/><rect x="17" y="10" width="1.5" height="4" rx="0.75"/><rect x="18.5" y="7" width="3.5" height="10" rx="1.75"/></svg><span class="dg-tab-bar__label">Practice</span></a></li>
+    <li class="dg-tab-bar__tab active" data-tab="medals"><a href="/games/medals/" aria-label="Medals" aria-current="page"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="10.5" y="2" width="3" height="4.5" rx="0.75"/><circle cx="12" cy="15" r="7"/></svg><span class="dg-tab-bar__label">Medals</span></a></li>
+    <li class="dg-tab-bar__tab" data-tab="profile"><a href="/games/profile/" aria-label="Profile"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.5" r="3.5"/><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"/></svg><span class="dg-tab-bar__label">Profile</span></a></li>
+  </ul></nav>
+</body>
+</html>

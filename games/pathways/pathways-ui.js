@@ -163,7 +163,7 @@ export class PathwaysUI {
       case 'bridge':
         hintText = plural
           ? `${count} bridges: Two paths may cross at each`
-          : 'Bridge: Two paths may cross here';
+          : 'Bridge: Two paths may use this square';
         hintClass = 'bg-sky-500/15 border-sky-500/25 text-sky-300';
         break;
       case 'checkpoint':

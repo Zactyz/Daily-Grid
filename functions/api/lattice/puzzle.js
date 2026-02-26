@@ -1,4 +1,4 @@
-// GET /api/pathways/puzzle - Get today's puzzle (cached in KV)
+// GET /api/lattice/puzzle - Get today's puzzle (cached in KV)
 
 import { getPTDateYYYYMMDD } from '../../_shared/snake-utils-server.js';
 
@@ -28,7 +28,7 @@ export async function onRequest(context) {
 
   try {
     const today = getPTDateYYYYMMDD();
-    const cacheKey = `pathways_puzzle:${today}`;
+    const cacheKey = `lattice_puzzle:${today}`;
     
     // Try to get from KV cache first
     if (env.PUZZLE_CACHE) {
