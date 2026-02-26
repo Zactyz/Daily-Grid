@@ -260,7 +260,7 @@
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { requestPushPermission, unsubscribePush, isPushSubscribed, ensureSwRegistered } from '/games/common/push.js';
-    import { getPTDateYYYYMMDD, getAnonId, formatTimeShort as formatTime } from '/games/common/utils.js';
+    import { getPTDateYYYYMMDD, getAnonId, getOrCreateAnonId, formatTimeShort as formatTime } from '/games/common/utils.js';
     import { GAME_META } from '/games/common/games.js';
 
     mountTabBar('profile');
@@ -439,7 +439,7 @@
             statusText.textContent = 'Notifications unavailable — server not configured';
             return;
           }
-          const anonId = getAnonId();
+          const anonId = getOrCreateAnonId();
           statusText.textContent = 'Setting up…';
           toggle.disabled = true;
           const result = await requestPushPermission(anonId, vapidPublicKey);
