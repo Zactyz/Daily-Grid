@@ -92,22 +92,38 @@
 
     <div class="app-section-title mb-3">Choose A Game</div>
     <div id="practice-game-list" class="grid gap-3"></div>
+    <!--
+      Cards injected synchronously so Tailwind CDN sees all classes on its
+      initial DOM scan (DOMContentLoaded) — prevents the deferred-module
+      "growing into place" flash that occurs when classes appear after load.
+    -->
+    <script>!function(){var g=[
+      {n:'Snake',       t:'Practice the number path.',       l:'/games/snake/snake-logo.png',         p:'/games/snake/'},
+      {n:'Pathways',    t:'Practice color routes.',          l:'/games/pathways/pathways-logo.png',   p:'/games/pathways/'},
+      {n:'Logice',      t:'Practice logic grids.',           l:'/games/lattice/lattice-logo.png?v=2', p:'/games/lattice/'},
+      {n:'Bits',        t:'Practice binary logic.',          l:'/games/bits/bitsnew-logo.jpg',        p:'/games/bits/'},
+      {n:'Bridgeworks', t:'Practice island links.',          l:'/games/hashi/hashi-logo.jpg',         p:'/games/hashi/'},
+      {n:'Parcel',      t:'Practice rectangle packing.',     l:'/games/shikaku/shikaku-logo.jpg',     p:'/games/shikaku/'},
+      {n:'Conduit',     t:'Practice routing the current.',   l:'/games/conduit/conduit-logo.png',     p:'/games/conduit/'},
+      {n:'Perimeter',   t:'Practice loop constraints.',      l:'/games/perimeter/perimeter-logo.png', p:'/games/perimeter/'},
+      {n:'Polyfit',     t:'Practice shape packing.',         l:'/games/polyfit/polyfit-logo.png',     p:'/games/polyfit/'}
+    ];document.getElementById('practice-game-list').innerHTML=g.map(function(x){
+      return '<a href="'+x.p+'?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">'
+        +'<img src="'+x.l+'" alt="'+x.n+'" class="w-12 h-12 rounded-xl">'
+        +'<div class="flex-1"><p class="font-semibold">'+x.n+'</p>'
+        +'<p class="text-xs text-slate-400">'+x.t+'</p></div>'
+        +'<span class="text-amber-300 text-sm font-semibold">Practice \u2192</span></a>';
+    }).join('');}();</script>
   </main>
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
-    import { GAME_META } from '/games/common/games.js';
-
     mountTabBar('practice');
-
-    document.getElementById('practice-game-list').innerHTML = GAME_META.map(({ id, name, tagline, logo, path }) => `
-      <a href="${path}?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="${logo}" alt="${name}" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">${name}</p>
-          <p class="text-xs text-slate-400">${tagline || ''}</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>`).join('');
   </script>
+  <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation"><ul class="dg-tab-bar__list">
+    <li class="dg-tab-bar__tab" data-tab="daily"><a href="/games/" aria-label="Daily"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg><span class="dg-tab-bar__label">Daily</span></a></li>
+    <li class="dg-tab-bar__tab active" data-tab="practice"><a href="/games/practice/" aria-label="Practice" aria-current="page"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="3.5" height="10" rx="1.75"/><rect x="5.5" y="10" width="1.5" height="4" rx="0.75"/><rect x="7" y="11" width="10" height="2" rx="1"/><rect x="17" y="10" width="1.5" height="4" rx="0.75"/><rect x="18.5" y="7" width="3.5" height="10" rx="1.75"/></svg><span class="dg-tab-bar__label">Practice</span></a></li>
+    <li class="dg-tab-bar__tab" data-tab="medals"><a href="/games/medals/" aria-label="Medals"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="10.5" y="2" width="3" height="4.5" rx="0.75"/><circle cx="12" cy="15" r="7"/></svg><span class="dg-tab-bar__label">Medals</span></a></li>
+    <li class="dg-tab-bar__tab" data-tab="profile"><a href="/games/profile/" aria-label="Profile"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.5" r="3.5"/><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"/></svg><span class="dg-tab-bar__label">Profile</span></a></li>
+  </ul></nav>
 </body>
 </html>

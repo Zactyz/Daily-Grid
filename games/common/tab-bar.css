@@ -14,28 +14,6 @@
  *  9. Safe-area inset top applied to body to prevent status-bar overlap.
  */
 
-/* ─── Smooth cross-document page transitions (Chrome 126+, Safari 18+) ─────── */
-/*
- * navigation: auto triggers browser-native slide animations which animate
- * individual elements and is too jarring. Use an explicit 120ms crossfade
- * instead — quick enough to feel instant, smooth enough to avoid hard cuts.
- */
-@view-transition {
-  navigation: auto;
-}
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 120ms;
-  animation-timing-function: ease;
-}
-::view-transition-old(root) {
-  animation-name: dg-vt-fade-out;
-}
-::view-transition-new(root) {
-  animation-name: dg-vt-fade-in;
-}
-@keyframes dg-vt-fade-out { to   { opacity: 0; } }
-@keyframes dg-vt-fade-in  { from { opacity: 0; } }
 
 /* ─── Safe-area top — applied unconditionally so content never shifts ─────── */
 /*
