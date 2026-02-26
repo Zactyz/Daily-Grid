@@ -42,6 +42,27 @@ function getPTDateDaysAgo(daysAgo) {
   return getPTDateYYYYMMDD(new Date(Date.now() - (daysAgo * 24 * 60 * 60 * 1000)));
 }
 
+async function recordPushRun(env, runType, source, result = {}) {
+  try {
+    const details = JSON.stringify(result);
+    await env.DB.prepare(
+      `INSERT INTO push_runs (run_type, source, sent, failed, expired, skipped, eligible, details)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+    ).bind(
+      runType,
+      source,
+      result.sent || 0,
+      result.failed || 0,
+      result.expired || 0,
+      result.skipped || 0,
+      result.eligible || 0,
+      details
+    ).run();
+  } catch (err) {
+    console.error('[recordPushRun] Failed to write telemetry:', err.message);
+  }
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   if (request.method === 'OPTIONS') return handleOptions();
@@ -66,15 +87,18 @@ export async function onRequest(context) {
 
     if (type === 'streak') {
       const result = await triggerStreakReminder(env);
+      await recordPushRun(env, 'streak', 'manual', result);
       return jsonOk(result);
     }
 
     if (type === 'winback') {
       const result = await triggerWinback(env);
+      await recordPushRun(env, 'winback', 'manual', result);
       return jsonOk(result);
     }
 
     const result = await triggerPush(env);
+    await recordPushRun(env, 'daily', 'manual', result);
     return jsonOk(result);
   } catch (err) {
     return internalError(err, 'Push send');
@@ -87,10 +111,22 @@ export async function onRequest(context) {
 export async function scheduled(event, env, ctx) {
   // "59 3 * * *" = 03:59 UTC = 7:59 PM PST / 8:59 PM PDT  → streak reminder
   // "0 8 * * *"  = 08:00 UTC = midnight PST / 1 AM PDT     → daily notification
+  // "0 18 * * SUN" = weekly win-back reminder
   if (event.cron === '59 3 * * *') {
-    ctx.waitUntil(triggerStreakReminder(env));
+    ctx.waitUntil((async () => {
+      const result = await triggerStreakReminder(env);
+      await recordPushRun(env, 'streak', 'cron', result);
+    })());
+  } else if (event.cron === '0 18 * * SUN') {
+    ctx.waitUntil((async () => {
+      const result = await triggerWinback(env);
+      await recordPushRun(env, 'winback', 'cron', result);
+    })());
   } else {
-    ctx.waitUntil(triggerPush(env));
+    ctx.waitUntil((async () => {
+      const result = await triggerPush(env);
+      await recordPushRun(env, 'daily', 'cron', result);
+    })());
   }
 }
 

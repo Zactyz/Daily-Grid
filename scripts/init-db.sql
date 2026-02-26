@@ -211,7 +211,26 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 CREATE INDEX IF NOT EXISTS idx_push_sub_anon
   ON push_subscriptions(anon_id);
 
+-- Push run telemetry (one row per send run)
+CREATE TABLE IF NOT EXISTS push_runs (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  run_type   TEXT NOT NULL, -- daily | streak | winback
+  source     TEXT NOT NULL, -- cron | manual
+  sent       INTEGER NOT NULL DEFAULT 0,
+  failed     INTEGER NOT NULL DEFAULT 0,
+  expired    INTEGER NOT NULL DEFAULT 0,
+  skipped    INTEGER NOT NULL DEFAULT 0,
+  eligible   INTEGER NOT NULL DEFAULT 0,
+  details    TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_runs_type_created
+  ON push_runs(run_type, created_at DESC);
+
 -- Migrations for existing databases (safe to run on fresh installs — ADD COLUMN IF NOT EXISTS
 -- is not supported in SQLite/D1, so run this separately on existing DBs):
 --   npx wrangler d1 execute daily-grid-db --remote --command "ALTER TABLE push_subscriptions ADD COLUMN timezone TEXT NOT NULL DEFAULT 'America/Los_Angeles'"
 --   npx wrangler d1 execute daily-grid-db --remote --command "ALTER TABLE push_subscriptions ADD COLUMN winback_last_sent_at DATETIME"
+--   npx wrangler d1 execute daily-grid-db --remote --command "CREATE TABLE push_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, run_type TEXT NOT NULL, source TEXT NOT NULL, sent INTEGER NOT NULL DEFAULT 0, failed INTEGER NOT NULL DEFAULT 0, expired INTEGER NOT NULL DEFAULT 0, skipped INTEGER NOT NULL DEFAULT 0, eligible INTEGER NOT NULL DEFAULT 0, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
+--   npx wrangler d1 execute daily-grid-db --remote --command "CREATE INDEX idx_push_runs_type_created ON push_runs(run_type, created_at DESC)"
