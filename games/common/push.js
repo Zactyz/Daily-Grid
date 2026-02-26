@@ -125,23 +125,29 @@ export async function requestPushPermission(anonId, vapidPublicKey) {
 }
 
 /**
- * Unsubscribe from push notifications.
+ * Soft opt-out from push notifications.
+ *
+ * Removes the subscriber from the server list and sets the local opt-out flag,
+ * but intentionally does NOT call sub.unsubscribe() on the browser.
+ *
+ * Why: on iOS Safari, calling browser unsubscribe() then immediately subscribe()
+ * triggers a system-level rate-limit ("could not subscribe / try again later")
+ * that can last hours. Keeping the browser subscription alive means re-enabling
+ * is instant — we just re-register the existing subscription with the server.
+ * The user can fully revoke via iOS Settings > [App] > Notifications if needed.
  */
 export async function unsubscribePush() {
   try {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
     if (sub) {
+      // Remove from server only — do not call sub.unsubscribe() on the browser
       await fetch('/api/push/unsubscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ endpoint: sub.endpoint }),
       });
-      await sub.unsubscribe();
     }
-    // Set to 'false' (not just remove) so isPushSubscribed() correctly reports
-    // unsubscribed even if iOS Safari still returns the subscription from
-    // getSubscription() for a brief period after unsubscribe().
     localStorage.setItem(PUSH_OPT_IN_KEY, 'false');
     localStorage.removeItem(PUSH_ENDPOINT_KEY);
     return true;

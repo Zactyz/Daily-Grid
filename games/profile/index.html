@@ -495,7 +495,7 @@
             return;
           }
           const anonId = getAnonId();
-          statusText.textContent = 'Requesting permission…';
+          statusText.textContent = 'Setting up…';
           toggle.disabled = true;
           const result = await requestPushPermission(anonId, vapidPublicKey);
           toggle.disabled = false;
@@ -505,17 +505,24 @@
           } else if (result.reason === 'denied' || Notification.permission === 'denied') {
             toggle.disabled = true;
             statusText.textContent = isIos
-              ? 'Blocked — Settings > Daily Grid > Notifications to re-enable'
+              ? 'Blocked — go to Settings > Notifications > Daily Grid to re-enable'
               : 'Blocked in browser settings — clear site permissions to re-enable';
           } else if (result.reason === 'dismissed') {
-            statusText.textContent = 'Permission dismissed — tap toggle to try again';
+            statusText.textContent = 'Tap the toggle to try again';
           } else {
-            statusText.textContent = 'Could not subscribe — try again later';
+            // Likely an iOS rate-limit after a recent permission prompt.
+            // Since unsubscribe is now soft (server-only), re-enabling should
+            // succeed by reusing the existing browser subscription.
+            statusText.textContent = 'Could not enable — close and reopen the app, then try again';
           }
         } else {
-          statusText.textContent = 'Unsubscribing…';
+          // Soft opt-out: server removal only, browser subscription preserved
+          // so re-enabling is instant without another iOS permission prompt.
+          statusText.textContent = 'Turning off…';
           await unsubscribePush();
-          statusText.textContent = 'Get notified when new puzzles are live';
+          statusText.textContent = isIos
+            ? 'Off — to fully block, go to Settings > Notifications > Daily Grid'
+            : 'Notifications off';
         }
       });
     }
