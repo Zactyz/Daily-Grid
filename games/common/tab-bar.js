@@ -64,14 +64,27 @@ export function mountTabBar(activeKey, opts = {}) {
   const main = document.querySelector('main, .tab-page-content, #page-content');
   (main || document.body).classList.add('dg-tab-bar-page-padding');
 
+  function buildListHTML() {
+    return TABS.map(({ key, label, href, icon }) => {
+      const isActive = key === activeKey;
+      const badge = (key === 'medals' && opts.profileMedalCount)
+        ? `<span class="dg-tab-bar__badge">${opts.profileMedalCount}</span>`
+        : '';
+      return `<li class="dg-tab-bar__tab${isActive ? ' active' : ''}" data-tab="${key}">
+        <a href="${href}" aria-label="${label}"${isActive ? ' aria-current="page"' : ''}>
+          ${badge}${icon}
+          <span class="dg-tab-bar__label">${label}</span>
+        </a>
+      </li>`;
+    }).join('');
+  }
+
   const existing = document.getElementById('dg-tab-bar');
   if (existing) {
-    // Bar already in HTML — just update active state (no layout jump)
-    document.querySelectorAll('.dg-tab-bar__tab').forEach(li => {
-      li.classList.toggle('active', li.dataset.tab === activeKey);
-      const a = li.querySelector('a');
-      if (a) a.setAttribute('aria-current', li.dataset.tab === activeKey ? 'page' : null);
-    });
+    // Always replace the list so icons stay in sync with tab-bar.js,
+    // even when the bar was pre-rendered as static HTML in the page.
+    const list = existing.querySelector('.dg-tab-bar__list');
+    if (list) list.innerHTML = buildListHTML();
     return;
   }
 
@@ -79,29 +92,6 @@ export function mountTabBar(activeKey, opts = {}) {
   bar.id = 'dg-tab-bar';
   bar.className = 'dg-tab-bar';
   bar.setAttribute('aria-label', 'Main navigation');
-
-  const list = document.createElement('ul');
-  list.className = 'dg-tab-bar__list';
-
-  TABS.forEach(({ key, label, href, icon }) => {
-    const li = document.createElement('li');
-    li.className = `dg-tab-bar__tab${key === activeKey ? ' active' : ''}`;
-    li.dataset.tab = key;
-
-    const badge = (key === 'medals' && opts.profileMedalCount)
-      ? `<span class="dg-tab-bar__badge">${opts.profileMedalCount}</span>`
-      : '';
-
-    li.innerHTML = `
-      <a href="${href}" aria-label="${label}" ${key === activeKey ? 'aria-current="page"' : ''}>
-        ${badge}
-        ${icon}
-        <span class="dg-tab-bar__label">${label}</span>
-      </a>`;
-
-    list.appendChild(li);
-  });
-
-  bar.appendChild(list);
+  bar.innerHTML = `<ul class="dg-tab-bar__list">${buildListHTML()}</ul>`;
   document.body.appendChild(bar);
 }

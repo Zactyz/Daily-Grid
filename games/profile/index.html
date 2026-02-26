@@ -122,6 +122,15 @@
       color: rgba(255,255,255,0.35);
       margin-bottom: 10px;
     }
+
+    /* Inline "Open Settings" link inside push status text */
+    .push-settings-link {
+      background: none; border: none; padding: 0; margin: 0;
+      color: #a78bfa; font-size: inherit; font-family: inherit;
+      text-decoration: underline; text-underline-offset: 2px;
+      cursor: pointer;
+    }
+    .app-header { font-family: 'Space Grotesk', sans-serif; }
   </style>
 </head>
 <body>
@@ -133,10 +142,19 @@
   <main class="max-w-lg mx-auto px-4 pt-safe">
 
     <!-- Header -->
-    <header class="flex items-center justify-between py-5">
-      <h1 class="text-xl font-bold tracking-tight">Profile</h1>
-      <!-- TODO (Tier 2 — user accounts): settings gear or edit button once auth is added -->
-    </header>
+    <div class="flex items-center gap-3 mb-6 app-header">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.3em] text-slate-400">Daily Grid</p>
+        <h1 class="text-2xl font-semibold text-amber-200">Profile</h1>
+      </div>
+    </div>
+    <!-- TODO (Tier 2 — user accounts): settings gear or edit button once auth is added -->
 
     <!-- Identity card -->
     <section class="glass-card p-5 mb-4 flex items-center gap-4">
@@ -450,6 +468,17 @@
     }
 
     // ── Push notifications ────────────────────────────────────────────────────
+    // The app name shown in iOS Settings → Notifications
+    const IOS_APP_NAME = 'Daily Grid Games';
+
+    // Opens iOS Settings app (best-effort; works from installed PWA)
+    function openIosSettings() { window.location.href = 'app-settings:'; }
+
+    // Returns an inline "Open Settings" button for status messages
+    function settingsLink(label = 'Open Settings') {
+      return `<button class="push-settings-link" onclick="(function(){window.location.href='app-settings:';})()">${label}</button>`;
+    }
+
     async function initPushToggle(vapidPublicKey) {
       const toggle = document.getElementById('push-toggle');
       const statusText = document.getElementById('push-status-text');
@@ -470,13 +499,14 @@
         return;
       }
 
-      // If notifications are blocked, show a locked state with instructions
+      // Notification.permission is the reliable source of truth.
+      // 'denied' means the user has explicitly blocked at the OS/browser level.
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
         toggle.checked = false;
         toggle.disabled = true;
-        statusText.textContent = isIos
-          ? 'Blocked — go to Settings > Daily Grid > Notifications to enable'
-          : 'Blocked in browser settings — tap to learn how to re-enable';
+        statusText.innerHTML = isIos
+          ? `Blocked — ${settingsLink()} → Notifications → ${IOS_APP_NAME}`
+          : 'Blocked in browser settings — clear site permissions to re-enable';
         return;
       }
 
@@ -484,7 +514,7 @@
       const subscribed = await isPushSubscribed();
       toggle.checked = subscribed;
       statusText.textContent = subscribed
-        ? 'You will be notified when new puzzles are live'
+        ? 'You\'ll be notified when new puzzles are live'
         : 'Get notified when new puzzles are live';
 
       toggle.addEventListener('change', async () => {
@@ -501,19 +531,19 @@
           toggle.disabled = false;
           toggle.checked = result.ok;
           if (result.ok) {
-            statusText.textContent = 'You will be notified when new puzzles are live';
+            statusText.textContent = 'You\'ll be notified when new puzzles are live';
           } else if (result.reason === 'denied' || Notification.permission === 'denied') {
             toggle.disabled = true;
-            statusText.textContent = isIos
-              ? 'Blocked — go to Settings > Notifications > Daily Grid to re-enable'
+            statusText.innerHTML = isIos
+              ? `Blocked — ${settingsLink()} → Notifications → ${IOS_APP_NAME}`
               : 'Blocked in browser settings — clear site permissions to re-enable';
           } else if (result.reason === 'dismissed') {
             statusText.textContent = 'Tap the toggle to try again';
           } else {
-            // iOS rate-limits subscribe() after a recent unsubscribe().
-            // Direct user to OS Settings to reset the notification state.
-            statusText.textContent = isIos
-              ? 'To re-enable: Settings → Notifications → Daily Grid → toggle off, then on'
+            // Could not subscribe (e.g. temporary iOS rate-limit from before soft-opt-out fix).
+            // Opening Settings lets users reset their notification state.
+            statusText.innerHTML = isIos
+              ? `Could not enable — ${settingsLink()} → Notifications → ${IOS_APP_NAME} → toggle off &amp; on`
               : 'Could not subscribe — open browser settings and re-allow notifications';
           }
         } else {
@@ -521,8 +551,8 @@
           // so re-enabling is instant without another iOS permission prompt.
           statusText.textContent = 'Turning off…';
           await unsubscribePush();
-          statusText.textContent = isIos
-            ? 'Off — to fully block, go to Settings > Notifications > Daily Grid'
+          statusText.innerHTML = isIos
+            ? `Off — ${settingsLink('Open Settings')} to fully block`
             : 'Notifications off';
         }
       });
