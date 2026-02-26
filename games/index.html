@@ -560,71 +560,13 @@
     <button id="ios-banner-close" class="text-slate-500 text-base">✕</button>
   </div>
 
-  <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation">
-    <ul class="dg-tab-bar__list">
-      <li class="dg-tab-bar__tab active" data-tab="daily">
-        <a href="/games/" aria-label="Daily" aria-current="page">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-          <span class="dg-tab-bar__label">Daily</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab" data-tab="practice">
-        <a href="/games/practice/" aria-label="Practice">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>
-          <span class="dg-tab-bar__label">Practice</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab" data-tab="medals">
-        <a href="/games/medals/" aria-label="Medals">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 21v-4"/><circle cx="12" cy="11" r="5"/><path d="M7.5 3l1.5 4h6l1.5-4"/></svg>
-          <span class="dg-tab-bar__label">Medals</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab" data-tab="profile">
-        <a href="/games/profile/" aria-label="Profile">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          <span class="dg-tab-bar__label">Profile</span>
-        </a>
-      </li>
-    </ul>
-  </nav>
+  <script type="module">
+    import { getPTDateYYYYMMDD } from '/games/common/utils.js';
+    import { GAME_META as GAME_META_LIST } from '/games/common/games.js';
+    import { mountTabBar } from '/games/common/tab-bar.js';
 
-  <script>
-
-    const completedPrefixes = {
-      snake: 'dailygrid_completed_',
-      pathways: 'dailygrid_pathways_completed_',
-      lattice: 'dailygrid_lattice_completed_',
-      bits: 'dailygrid_bits_completed_',
-      hashi: 'dailygrid_hashi_completed_',
-      shikaku: 'dailygrid_shikaku_completed_',
-      conduit: 'dailygrid_conduit_completed_',
-      perimeter: 'dailygrid_perimeter_completed_',
-      polyfit: 'dailygrid_polyfit_completed_'
-    };
-    const submittedPrefixes = {
-      snake: 'dailygrid_submitted_',
-      pathways: 'dailygrid_pathways_submitted_',
-      lattice: 'dailygrid_lattice_submitted_',
-      bits: 'dailygrid_bits_submitted_',
-      hashi: 'dailygrid_hashi_submitted_',
-      shikaku: 'dailygrid_shikaku_submitted_',
-      conduit: 'dailygrid_conduit_submitted_',
-      perimeter: 'dailygrid_perimeter_submitted_',
-      polyfit: 'dailygrid_polyfit_submitted_'
-    };
-
-    const gameMeta = {
-      snake: { name: 'Snake', path: '/games/snake/', logo: '/games/snake/snake-logo.png' },
-      pathways: { name: 'Pathways', path: '/games/pathways/', logo: '/games/pathways/pathways-logo.png' },
-      lattice: { name: 'Logice', path: '/games/lattice/', logo: '/games/lattice/lattice-logo.png?v=2' },
-      bits: { name: 'Bits', path: '/games/bits/', logo: '/games/bits/bitsnew-logo.jpg' },
-      hashi: { name: 'Bridgeworks', path: '/games/hashi/', logo: '/games/hashi/hashi-logo.jpg' },
-      shikaku: { name: 'Parcel', path: '/games/shikaku/', logo: '/games/shikaku/shikaku-logo.jpg' },
-      conduit: { name: 'Conduit', path: '/games/conduit/', logo: '/games/conduit/conduit-logo.png' },
-      perimeter: { name: 'Perimeter', path: '/games/perimeter/', logo: '/games/perimeter/perimeter-logo.png' },
-      polyfit: { name: 'Polyfit', path: '/games/polyfit/', logo: '/games/polyfit/polyfit-logo.png' }
-    };
+    // Build id-keyed lookup from canonical GAME_META array
+    const gameMeta = Object.fromEntries(GAME_META_LIST.map(g => [g.id, g]));
 
     function getStreakData(gameId) {
       try {
@@ -636,37 +578,16 @@
 
     const FLAME_SVG = `<svg width="10" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-6-6-8-6-14z"/></svg>`;
 
-    function getPTDateYYYYMMDD(now = new Date()) {
-      const dtf = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Los_Angeles',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      const parts = dtf.formatToParts(now);
-      const y = parts.find(p => p.type === 'year')?.value;
-      const m = parts.find(p => p.type === 'month')?.value;
-      const d = parts.find(p => p.type === 'day')?.value;
-      return `${y}-${m}-${d}`;
-    }
-
     function isCompletedToday(id) {
       const puzzleId = getPTDateYYYYMMDD();
-      const completedPrefix = completedPrefixes[id];
-      if (completedPrefix) {
-        try {
-          if (localStorage.getItem(`${completedPrefix}${puzzleId}`) === 'true') return true;
-        } catch {
-          // ignore
-        }
-      }
-      const submittedPrefix = submittedPrefixes[id];
-      if (!submittedPrefix) return false;
+      const g = gameMeta[id];
+      if (!g) return false;
       try {
-        return localStorage.getItem(`${submittedPrefix}${puzzleId}`) === 'true';
-      } catch {
-        return false;
-      }
+        if (g.completedKeyPrefix && localStorage.getItem(`${g.completedKeyPrefix}${puzzleId}`) === 'true') return true;
+      } catch { /* ignore */ }
+      try {
+        return localStorage.getItem(`${g.submittedKeyPrefix}${puzzleId}`) === 'true';
+      } catch { return false; }
     }
 
     function updateCards() {
@@ -720,7 +641,7 @@
 
       const allCompleteMsg = document.getElementById('all-complete-message');
       if (allCompleteMsg) {
-        if (completedCount === Object.keys(submittedPrefixes).length) {
+        if (completedCount === GAME_META_LIST.length) {
           allCompleteMsg.classList.remove('hidden');
         } else {
           allCompleteMsg.classList.add('hidden');
@@ -741,21 +662,16 @@
     });
 
     updateCards();
-    window.addEventListener('pageshow', () => {
-      updateCards();
-    });
+    window.addEventListener('pageshow', () => { updateCards(); });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') updateCards();
     });
 
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/games/sw.js');
-      });
+      window.addEventListener('load', () => { navigator.serviceWorker.register('/games/sw.js'); });
     }
 
-    // Mount liquid glass tab bar (Daily tab active)
-    import('/games/common/tab-bar.js').then(({ mountTabBar }) => mountTabBar('daily'));
+    mountTabBar('daily');
   </script>
 </body>
 </html>

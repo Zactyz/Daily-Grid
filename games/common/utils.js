@@ -26,6 +26,11 @@ export function generateUUID() {
   });
 }
 
+/** Read-only version — never creates an ID; returns null if not set. */
+export function getAnonId() {
+  try { return localStorage.getItem('dailygrid_anon_id'); } catch { return null; }
+}
+
 export function getOrCreateAnonId() {
   const key = 'dailygrid_anon_id';
   let anonId = localStorage.getItem(key);
@@ -47,6 +52,19 @@ export function formatTime(ms) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Like formatTime but returns '—' for invalid values and
+ * shows "Xs" (e.g. "45s") for sub-minute times. Used by hub/leaderboard pages.
+ */
+export function formatTimeShort(ms) {
+  if (!ms || ms <= 0) return '—';
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  if (m > 0) return `${m}:${String(sec).padStart(2, '0')}`;
+  return `${sec}s`;
 }
 
 export function createSeededRandom(seed) {
@@ -76,6 +94,17 @@ export function normalizeWall(a, b) {
   const s1 = `${ax},${ay}`;
   const s2 = `${bx},${by}`;
   return (s1 < s2) ? `${s1}-${s2}` : `${s2}-${s1}`;
+}
+
+/**
+ * Redirect to /games/ if the viewport is at least minWidth px wide.
+ * Must be called synchronously (before first paint) to avoid FOUC.
+ * Hub-only pages (medals, profile, practice) call this to skip mobile-only UI.
+ */
+export function redirectOnDesktop(minWidth = 768) {
+  if (window.matchMedia(`(min-width: ${minWidth}px)`).matches) {
+    window.location.replace('/games/');
+  }
 }
 
 /**

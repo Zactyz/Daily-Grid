@@ -134,11 +134,7 @@
   </style>
 </head>
 <body>
-  <script>
-    if (window.matchMedia('(min-width: 768px)').matches) {
-      window.location.replace('/games/');
-    }
-  </script>
+  <script src="/games/common/desktop-redirect.js"></script>
   <main class="max-w-lg mx-auto px-4 pt-safe">
 
     <!-- Header -->
@@ -268,75 +264,13 @@
     <div class="pb-4"></div>
   </main>
 
-  <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation">
-    <ul class="dg-tab-bar__list">
-      <li class="dg-tab-bar__tab" data-tab="daily">
-        <a href="/games/" aria-label="Daily">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-          <span class="dg-tab-bar__label">Daily</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab" data-tab="practice">
-        <a href="/games/practice/" aria-label="Practice">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>
-          <span class="dg-tab-bar__label">Practice</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab" data-tab="medals">
-        <a href="/games/medals/" aria-label="Medals">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 21v-4"/><circle cx="12" cy="11" r="5"/><path d="M7.5 3l1.5 4h6l1.5-4"/></svg>
-          <span class="dg-tab-bar__label">Medals</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab active" data-tab="profile">
-        <a href="/games/profile/" aria-label="Profile" aria-current="page">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          <span class="dg-tab-bar__label">Profile</span>
-        </a>
-      </li>
-    </ul>
-  </nav>
-
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { requestPushPermission, unsubscribePush, isPushSubscribed, ensureSwRegistered } from '/games/common/push.js';
+    import { getPTDateYYYYMMDD, getAnonId, formatTimeShort as formatTime } from '/games/common/utils.js';
+    import { GAME_META } from '/games/common/games.js';
 
     mountTabBar('profile');
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
-    function getPTDateYYYYMMDD(now = new Date()) {
-      const dtf = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Los_Angeles',
-        year: 'numeric', month: '2-digit', day: '2-digit'
-      });
-      const parts = dtf.formatToParts(now);
-      return `${parts.find(p=>p.type==='year').value}-${parts.find(p=>p.type==='month').value}-${parts.find(p=>p.type==='day').value}`;
-    }
-
-    function formatTime(ms) {
-      if (!ms || ms <= 0) return '—';
-      const s = Math.floor(ms / 1000);
-      const m = Math.floor(s / 60);
-      const sec = s % 60;
-      if (m > 0) return `${m}:${String(sec).padStart(2,'0')}`;
-      return `${sec}s`;
-    }
-
-    function getAnonId() {
-      try { return localStorage.getItem('dailygrid_anon_id'); } catch { return null; }
-    }
-
-    const GAME_META = [
-      { id: 'bits',      name: 'Bits',        logo: '/games/bits/bitsnew-logo.jpg' },
-      { id: 'hashi',     name: 'Bridgeworks', logo: '/games/hashi/hashi-logo.jpg' },
-      { id: 'snake',     name: 'Snake',       logo: '/games/snake/snake-logo.png' },
-      { id: 'shikaku',   name: 'Parcel',      logo: '/games/shikaku/shikaku-logo.jpg' },
-      { id: 'pathways',  name: 'Pathways',    logo: '/games/pathways/pathways-logo.png' },
-      { id: 'lattice',   name: 'Logice',      logo: '/games/lattice/lattice-logo.png?v=2' },
-      { id: 'conduit',   name: 'Conduit',     logo: '/games/conduit/conduit-logo.png' },
-      { id: 'perimeter', name: 'Perimeter',   logo: '/games/perimeter/perimeter-logo.png' },
-      { id: 'polyfit',   name: 'Polyfit',     logo: '/games/polyfit/polyfit-logo.png' },
-    ];
 
     // ── Load stats from localStorage ─────────────────────────────────────────
     function loadStats() {

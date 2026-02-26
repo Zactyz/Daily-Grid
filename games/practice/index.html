@@ -75,11 +75,7 @@
   </style>
 </head>
 <body class="min-h-screen">
-  <script>
-    if (window.matchMedia('(min-width: 768px)').matches) {
-      window.location.replace('/games/');
-    }
-  </script>
+  <script src="/games/common/desktop-redirect.js"></script>
   <main class="max-w-lg mx-auto px-4 pt-6 pb-3">
     <!-- Header -->
     <div class="flex items-center gap-3 mb-6 app-header">
@@ -95,112 +91,23 @@
     </div>
 
     <div class="app-section-title mb-3">Choose A Game</div>
-    <div class="grid gap-3">
-      <a href="/games/snake/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="/games/snake/snake-logo.png" alt="Snake" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">Snake</p>
-          <p class="text-xs text-slate-400">Practice the number path.</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>
-      <a href="/games/pathways/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="/games/pathways/pathways-logo.png" alt="Pathways" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">Pathways</p>
-          <p class="text-xs text-slate-400">Practice color routes.</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>
-      <a href="/games/lattice/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="/games/lattice/lattice-logo.png?v=2" alt="Logice" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">Logice</p>
-          <p class="text-xs text-slate-400">Practice logic grids.</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>
-      <a href="/games/bits/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="/games/bits/bitsnew-logo.jpg" alt="Bits" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">Bits</p>
-          <p class="text-xs text-slate-400">Practice binary logic.</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>
-      <a href="/games/hashi/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="/games/hashi/hashi-logo.jpg" alt="Bridgeworks" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">Bridgeworks</p>
-          <p class="text-xs text-slate-400">Practice island links.</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>
-      <a href="/games/shikaku/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="/games/shikaku/shikaku-logo.jpg" alt="Parcel" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">Parcel</p>
-          <p class="text-xs text-slate-400">Practice rectangle packing.</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>
-      <a href="/games/conduit/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="/games/conduit/conduit-logo.png" alt="Conduit" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">Conduit</p>
-          <p class="text-xs text-slate-400">Practice routing the current.</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>
-      <a href="/games/perimeter/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="/games/perimeter/perimeter-logo.png" alt="Perimeter" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">Perimeter</p>
-          <p class="text-xs text-slate-400">Practice loop constraints.</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>
-      <a href="/games/polyfit/?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
-        <img src="/games/polyfit/polyfit-logo.png" alt="Polyfit" class="w-12 h-12 rounded-xl">
-        <div class="flex-1">
-          <p class="font-semibold">Polyfit</p>
-          <p class="text-xs text-slate-400">Practice shape packing.</p>
-        </div>
-        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
-      </a>
-    </div>
+    <div id="practice-game-list" class="grid gap-3"></div>
   </main>
-  <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation">
-    <ul class="dg-tab-bar__list">
-      <li class="dg-tab-bar__tab" data-tab="daily">
-        <a href="/games/" aria-label="Daily">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-          <span class="dg-tab-bar__label">Daily</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab active" data-tab="practice">
-        <a href="/games/practice/" aria-label="Practice" aria-current="page">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>
-          <span class="dg-tab-bar__label">Practice</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab" data-tab="medals">
-        <a href="/games/medals/" aria-label="Medals">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 21v-4"/><circle cx="12" cy="11" r="5"/><path d="M7.5 3l1.5 4h6l1.5-4"/></svg>
-          <span class="dg-tab-bar__label">Medals</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab" data-tab="profile">
-        <a href="/games/profile/" aria-label="Profile">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          <span class="dg-tab-bar__label">Profile</span>
-        </a>
-      </li>
-    </ul>
-  </nav>
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
+    import { GAME_META } from '/games/common/games.js';
+
     mountTabBar('practice');
+
+    document.getElementById('practice-game-list').innerHTML = GAME_META.map(({ id, name, tagline, logo, path }) => `
+      <a href="${path}?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">
+        <img src="${logo}" alt="${name}" class="w-12 h-12 rounded-xl">
+        <div class="flex-1">
+          <p class="font-semibold">${name}</p>
+          <p class="text-xs text-slate-400">${tagline || ''}</p>
+        </div>
+        <span class="text-amber-300 text-sm font-semibold">Practice →</span>
+      </a>`).join('');
   </script>
 </body>
 </html>

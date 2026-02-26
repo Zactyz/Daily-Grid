@@ -1,7 +1,8 @@
-const GAME_META = [
+export const GAME_META = [
   {
     id: 'snake',
     name: 'Snake',
+    tagline: 'Practice the number path.',
     path: '/games/snake/',
     logo: '/games/snake/snake-logo.png',
     submittedKeyPrefix: 'dailygrid_submitted_',
@@ -13,6 +14,7 @@ const GAME_META = [
   {
     id: 'pathways',
     name: 'Pathways',
+    tagline: 'Practice color routes.',
     path: '/games/pathways/',
     logo: '/games/pathways/pathways-logo.png',
     submittedKeyPrefix: 'dailygrid_pathways_submitted_',
@@ -24,6 +26,7 @@ const GAME_META = [
   {
     id: 'lattice',
     name: 'Logice',
+    tagline: 'Practice logic grids.',
     path: '/games/lattice/',
     logo: '/games/lattice/lattice-logo.png?v=2',
     submittedKeyPrefix: 'dailygrid_lattice_submitted_',
@@ -35,6 +38,7 @@ const GAME_META = [
   {
     id: 'bits',
     name: 'Bits',
+    tagline: 'Practice binary logic.',
     path: '/games/bits/',
     logo: '/games/bits/bitsnew-logo.jpg',
     submittedKeyPrefix: 'dailygrid_bits_submitted_',
@@ -45,6 +49,7 @@ const GAME_META = [
   {
     id: 'hashi',
     name: 'Bridgeworks',
+    tagline: 'Practice island links.',
     path: '/games/hashi/',
     logo: '/games/hashi/hashi-logo.jpg',
     submittedKeyPrefix: 'dailygrid_hashi_submitted_',
@@ -55,6 +60,7 @@ const GAME_META = [
   {
     id: 'shikaku',
     name: 'Parcel',
+    tagline: 'Practice rectangle packing.',
     path: '/games/shikaku/',
     logo: '/games/shikaku/shikaku-logo.jpg',
     submittedKeyPrefix: 'dailygrid_shikaku_submitted_',
@@ -65,6 +71,7 @@ const GAME_META = [
   {
     id: 'conduit',
     name: 'Conduit',
+    tagline: 'Practice routing the current.',
     path: '/games/conduit/',
     logo: '/games/conduit/conduit-logo.png',
     submittedKeyPrefix: 'dailygrid_conduit_submitted_',
@@ -75,6 +82,7 @@ const GAME_META = [
   {
     id: 'perimeter',
     name: 'Perimeter',
+    tagline: 'Practice loop constraints.',
     path: '/games/perimeter/',
     logo: '/games/perimeter/perimeter-logo.png',
     submittedKeyPrefix: 'dailygrid_perimeter_submitted_',
@@ -85,6 +93,7 @@ const GAME_META = [
   {
     id: 'polyfit',
     name: 'Polyfit',
+    tagline: 'Practice shape packing.',
     path: '/games/polyfit/',
     logo: '/games/polyfit/polyfit-logo.png',
     submittedKeyPrefix: 'dailygrid_polyfit_submitted_',

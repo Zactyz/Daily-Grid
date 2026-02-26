@@ -139,11 +139,7 @@
   </style>
 </head>
 <body>
-  <script>
-    if (window.matchMedia('(min-width: 768px)').matches) {
-      window.location.replace('/games/');
-    }
-  </script>
+  <script src="/games/common/desktop-redirect.js"></script>
   <main class="max-w-lg mx-auto px-4 pt-safe">
 
     <!-- Header -->
@@ -223,69 +219,15 @@
     <div class="pb-4"></div>
   </main>
 
-  <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation">
-    <ul class="dg-tab-bar__list">
-      <li class="dg-tab-bar__tab" data-tab="daily">
-        <a href="/games/" aria-label="Daily">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-          <span class="dg-tab-bar__label">Daily</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab" data-tab="practice">
-        <a href="/games/practice/" aria-label="Practice">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>
-          <span class="dg-tab-bar__label">Practice</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab active" data-tab="medals">
-        <a href="/games/medals/" aria-label="Medals" aria-current="page">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 21v-4"/><circle cx="12" cy="11" r="5"/><path d="M7.5 3l1.5 4h6l1.5-4"/></svg>
-          <span class="dg-tab-bar__label">Medals</span>
-        </a>
-      </li>
-      <li class="dg-tab-bar__tab" data-tab="profile">
-        <a href="/games/profile/" aria-label="Profile">
-          <svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          <span class="dg-tab-bar__label">Profile</span>
-        </a>
-      </li>
-    </ul>
-  </nav>
-
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
+    import { getPTDateYYYYMMDD, getAnonId, formatTimeShort as formatTime } from '/games/common/utils.js';
+    import { GAME_META as GAME_META_LIST } from '/games/common/games.js';
+
     mountTabBar('medals');
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-    function getPTDateYYYYMMDD(now = new Date()) {
-      const dtf = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Los_Angeles',
-        year: 'numeric', month: '2-digit', day: '2-digit'
-      });
-      const parts = dtf.formatToParts(now);
-      return `${parts.find(p=>p.type==='year').value}-${parts.find(p=>p.type==='month').value}-${parts.find(p=>p.type==='day').value}`;
-    }
-
-    function formatTime(ms) {
-      if (!ms || ms <= 0) return '—';
-      const s = Math.floor(ms / 1000);
-      const m = Math.floor(s / 60);
-      const sec = s % 60;
-      if (m > 0) return `${m}:${String(sec).padStart(2,'0')}`;
-      return `${sec}s`;
-    }
-
-    const GAME_META = {
-      bits:      { name: 'Bits',        logo: '/games/bits/bitsnew-logo.jpg',       path: '/games/bits/' },
-      hashi:     { name: 'Bridgeworks', logo: '/games/hashi/hashi-logo.jpg',        path: '/games/hashi/' },
-      snake:     { name: 'Snake',       logo: '/games/snake/snake-logo.png',        path: '/games/snake/' },
-      shikaku:   { name: 'Parcel',      logo: '/games/shikaku/shikaku-logo.jpg',    path: '/games/shikaku/' },
-      pathways:  { name: 'Pathways',    logo: '/games/pathways/pathways-logo.png',  path: '/games/pathways/' },
-      lattice:   { name: 'Logice',      logo: '/games/lattice/lattice-logo.png?v=2',path: '/games/lattice/' },
-      conduit:   { name: 'Conduit',     logo: '/games/conduit/conduit-logo.png',    path: '/games/conduit/' },
-      perimeter: { name: 'Perimeter',   logo: '/games/perimeter/perimeter-logo.png',path: '/games/perimeter/' },
-      polyfit:   { name: 'Polyfit',     logo: '/games/polyfit/polyfit-logo.png',    path: '/games/polyfit/' },
-    };
+    // Build id-keyed lookup from canonical GAME_META array
+    const GAME_META = Object.fromEntries(GAME_META_LIST.map(g => [g.id, g]));
 
     const RANK_META = [
       { cls: 'gold',   label: '🥇' },
@@ -324,10 +266,6 @@
     }
 
     // ── Leaderboard from API ──────────────────────────────────────────────────
-    function getAnonId() {
-      try { return localStorage.getItem('dailygrid_anon_id'); } catch { return null; }
-    }
-
     function renderLeaderboard(games) {
       const anonId = getAnonId();
       const container = document.getElementById('leaderboard-list');
