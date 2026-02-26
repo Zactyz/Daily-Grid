@@ -15,18 +15,40 @@
  */
 
 /* ─── Smooth cross-document page transitions (Chrome 126+, Safari 18+) ─────── */
+/*
+ * navigation: auto triggers browser-native slide animations which animate
+ * individual elements and is too jarring. Use an explicit 120ms crossfade
+ * instead — quick enough to feel instant, smooth enough to avoid hard cuts.
+ */
 @view-transition {
   navigation: auto;
 }
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 120ms;
+  animation-timing-function: ease;
+}
+::view-transition-old(root) {
+  animation-name: dg-vt-fade-out;
+}
+::view-transition-new(root) {
+  animation-name: dg-vt-fade-in;
+}
+@keyframes dg-vt-fade-out { to   { opacity: 0; } }
+@keyframes dg-vt-fade-in  { from { opacity: 0; } }
 
-/* ─── Safe-area top — required when viewport-fit=cover is active ────────────── */
+/* ─── Safe-area top — applied unconditionally so content never shifts ─────── */
 /*
  * viewport-fit=cover extends the viewport edge-to-edge behind the status bar.
- * Without this rule, content starts at y=0 (under the status bar) and the user
- * cannot scroll all the way to the top.
+ * Previously this was gated on the JS-added .dg-tab-bar-active class, which
+ * caused a visible layout shift (~44px) after the module loaded.
+ * Applying it unconditionally at mobile widths eliminates the jump entirely.
+ * (tab-bar.css is only loaded on hub pages, not game pages — safe to do here.)
  */
-html.dg-tab-bar-active body {
-  padding-top: env(safe-area-inset-top, 0px);
+@media (max-width: 899px) {
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 /* ─── Pre-JS bottom padding ─────────────────────────────────────────────────── */
