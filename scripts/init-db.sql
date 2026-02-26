@@ -197,19 +197,21 @@ CREATE INDEX IF NOT EXISTS idx_polyfit_puzzle_anon
 
 -- Push notification subscriptions
 CREATE TABLE IF NOT EXISTS push_subscriptions (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  anon_id    TEXT NOT NULL,
-  endpoint   TEXT NOT NULL UNIQUE,
-  p256dh     TEXT NOT NULL,
-  auth       TEXT NOT NULL,
-  timezone   TEXT NOT NULL DEFAULT 'America/Los_Angeles',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+  anon_id              TEXT NOT NULL,
+  endpoint             TEXT NOT NULL UNIQUE,
+  p256dh               TEXT NOT NULL,
+  auth                 TEXT NOT NULL,
+  timezone             TEXT NOT NULL DEFAULT 'America/Los_Angeles',
+  winback_last_sent_at DATETIME,
+  created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at           DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_push_sub_anon
   ON push_subscriptions(anon_id);
 
--- Migration for existing databases (safe to run on fresh installs — ADD COLUMN IF NOT EXISTS
+-- Migrations for existing databases (safe to run on fresh installs — ADD COLUMN IF NOT EXISTS
 -- is not supported in SQLite/D1, so run this separately on existing DBs):
 --   npx wrangler d1 execute daily-grid-db --remote --command "ALTER TABLE push_subscriptions ADD COLUMN timezone TEXT NOT NULL DEFAULT 'America/Los_Angeles'"
+--   npx wrangler d1 execute daily-grid-db --remote --command "ALTER TABLE push_subscriptions ADD COLUMN winback_last_sent_at DATETIME"

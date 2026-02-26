@@ -28,13 +28,18 @@ const GAME_TABLES = [
   'hashi_scores', 'shikaku_scores', 'conduit_scores', 'perimeter_scores', 'polyfit_scores',
 ];
 
-/** Returns today's date in YYYY-MM-DD format in America/Los_Angeles time. */
-function getPTDateYYYYMMDD() {
+/** Returns date in YYYY-MM-DD format in America/Los_Angeles time. */
+function getPTDateYYYYMMDD(date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Los_Angeles',
     year: 'numeric', month: '2-digit', day: '2-digit',
-  }).formatToParts(new Date());
+  }).formatToParts(date);
   return `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}-${parts.find(p => p.type === 'day').value}`;
+}
+
+/** Returns YYYY-MM-DD for N days ago in PT. */
+function getPTDateDaysAgo(daysAgo) {
+  return getPTDateYYYYMMDD(new Date(Date.now() - (daysAgo * 24 * 60 * 60 * 1000)));
 }
 
 export async function onRequest(context) {
@@ -61,6 +66,11 @@ export async function onRequest(context) {
 
     if (type === 'streak') {
       const result = await triggerStreakReminder(env);
+      return jsonOk(result);
+    }
+
+    if (type === 'winback') {
+      const result = await triggerWinback(env);
       return jsonOk(result);
     }
 
@@ -235,5 +245,121 @@ async function triggerStreakReminder(env) {
   } catch (err) {
     console.error('[triggerStreakReminder] Fatal error:', err);
     return { sent: 0, failed: 0, expired: 0, skipped: 0, error: err.message };
+  }
+}
+
+// ─── Win-back reminder (inactive users) ─────────────────────────────────────
+
+/**
+ * Sends a gentle reminder to users who have played before but not recently.
+ * Defaults:
+ *   - inactiveDays: users whose last play date is >= 3 days ago
+ *   - cooldownDays: max 1 win-back message every 7 days per subscriber
+ */
+async function triggerWinback(env, { inactiveDays = 3, cooldownDays = 7 } = {}) {
+  try {
+    if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY || !env.VAPID_SUBJECT) {
+      console.error('[triggerWinback] VAPID secrets not configured');
+      return { sent: 0, failed: 0, expired: 0, skipped: 0, eligible: 0 };
+    }
+
+    const cutoffDate = getPTDateDaysAgo(inactiveDays);
+
+    // Build a map anon_id -> last played puzzle date (YYYY-MM-DD).
+    const unionSql = GAME_TABLES.map(t => `SELECT anon_id, puzzle_id FROM ${t}`).join(' UNION ALL ');
+    const lastPlayedResult = await env.DB.prepare(
+      `SELECT anon_id, MAX(puzzle_id) AS last_played
+       FROM (${unionSql})
+       GROUP BY anon_id`
+    ).all();
+
+    const lastPlayedByAnon = new Map((lastPlayedResult.results || []).map(r => [r.anon_id, r.last_played]));
+
+    const vapid = {
+      publicKey:  env.VAPID_PUBLIC_KEY,
+      privateKey: env.VAPID_PRIVATE_KEY,
+      subject:    env.VAPID_SUBJECT,
+    };
+
+    const notification = {
+      title: 'Daily Grid',
+      body:  'New puzzles are waiting whenever you are. Ready for a quick round? 🧩',
+      icon:  '/games/assets/dg-games-192.png',
+      badge: '/games/assets/dg-games-192.png',
+      tag:   'daily-grid-winback',
+      url:   '/games/',
+    };
+
+    let sent = 0, failed = 0, expired = 0, skipped = 0, eligible = 0, offset = 0;
+
+    while (true) {
+      const result = await env.DB.prepare(
+        `SELECT endpoint, p256dh, auth, anon_id, winback_last_sent_at
+         FROM push_subscriptions
+         LIMIT ?1 OFFSET ?2`
+      ).bind(BATCH_SIZE, offset).all();
+
+      const rows = result.results || [];
+      if (rows.length === 0) break;
+
+      await Promise.all(rows.map(async (row) => {
+        const lastPlayed = lastPlayedByAnon.get(row.anon_id);
+
+        // Must have played before and be inactive for at least N days.
+        if (!lastPlayed || lastPlayed > cutoffDate) {
+          skipped++;
+          return;
+        }
+
+        // Cooldown: max 1 win-back push every cooldownDays per subscriber.
+        if (row.winback_last_sent_at) {
+          const cool = await env.DB.prepare(
+            `SELECT CASE WHEN julianday('now') - julianday(?1) >= ?2 THEN 1 ELSE 0 END AS ready`
+          ).bind(row.winback_last_sent_at, cooldownDays).first();
+          if (!cool?.ready) {
+            skipped++;
+            return;
+          }
+        }
+
+        eligible++;
+
+        try {
+          const status = await sendPushNotification(
+            { endpoint: row.endpoint, p256dh: row.p256dh, auth: row.auth },
+            notification, vapid
+          );
+          if (status === 201 || status === 200) {
+            sent++;
+            await env.DB.prepare(
+              `UPDATE push_subscriptions
+               SET winback_last_sent_at = CURRENT_TIMESTAMP,
+                   updated_at = CURRENT_TIMESTAMP
+               WHERE endpoint = ?1`
+            ).bind(row.endpoint).run();
+          } else if (status === 410 || status === 404) {
+            expired++;
+            await env.DB.prepare(`DELETE FROM push_subscriptions WHERE endpoint = ?1`)
+              .bind(row.endpoint).run()
+              .catch(e => console.error('[triggerWinback] Delete failed:', e));
+          } else {
+            failed++;
+            console.warn(`[triggerWinback] Unexpected status ${status}`);
+          }
+        } catch (err) {
+          failed++;
+          console.error('[triggerWinback] Send error:', err.message);
+        }
+      }));
+
+      offset += BATCH_SIZE;
+      if (rows.length < BATCH_SIZE) break;
+    }
+
+    console.log(`[triggerWinback] done — sent=${sent} failed=${failed} expired=${expired} skipped=${skipped} eligible=${eligible} cutoff=${cutoffDate}`);
+    return { sent, failed, expired, skipped, eligible, cutoffDate, inactiveDays, cooldownDays };
+  } catch (err) {
+    console.error('[triggerWinback] Fatal error:', err);
+    return { sent: 0, failed: 0, expired: 0, skipped: 0, eligible: 0, error: err.message };
   }
 }
