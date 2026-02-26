@@ -154,9 +154,10 @@ h1, h2, h3 {
 .mobile-app-bar {
   display: none;
   position: fixed;
-  /* Sit just below the status bar on viewport-fit=cover devices */
-  top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
-  left: 0.5rem;
+  /* env(safe-area-inset-top) keeps the button clear of the status bar.
+   * The extra 0.25rem gives a small visual gap above the button. */
+  top: calc(env(safe-area-inset-top, 0px) + 0.25rem);
+  left: 0.25rem;
   z-index: 80;
 }
 
@@ -179,11 +180,15 @@ h1, h2, h3 {
 @media (max-width: 899px) {
   nav { display: none !important; }
   .mobile-app-bar { display: flex; }
-  /* Top: clear the floating back-button + safe area.
-   * Bottom: clear the fixed tab bar + iOS home indicator.
-   * The !important is needed because game pages may have inline padding. */
+
+  /* Apply safe-area offset to body so content never renders under the status
+   * bar. The back button is position:fixed and floats over content, so main
+   * only needs a small top gap — matching the look of the hub tab pages. */
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
   main {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 3.25rem) !important;
+    padding-top: 1rem !important;
     padding-bottom: var(--dg-bottom-clear, 88px) !important;
   }
 }
