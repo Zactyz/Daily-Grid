@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'dg-games-v7';
+const CACHE_VERSION = 'dg-games-v8';
 const CORE_ASSETS = [
   '/games/',
   '/games/index.html',
