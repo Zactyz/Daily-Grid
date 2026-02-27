@@ -6,6 +6,7 @@ import { recordStats, showStatsModal } from './stats.js';
 import { getPTDateYYYYMMDD } from './utils.js';
 import { requestPushPermission, isPushSubscribed, hasPushOptIn } from './push.js';
 import { showTutorialModal } from './tutorial-modal.js';
+import { maybeShowAnnouncementModal } from './announcements.js';
 
 const RESET_ICON = `
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1153,6 +1154,15 @@ function shouldAllowDoubleTap(target) {
         }
       }
     }
+
+    // App-only announcements (once per message id, per browser profile)
+    // Delay slightly so first-render overlays/tutorial can settle.
+    setTimeout(() => {
+      maybeShowAnnouncementModal({
+        gameId: adapter.gameId,
+        mode: adapter.getMode?.()
+      });
+    }, 900);
 
     // ── Push opt-in prompt ────────────────────────────────────────────────────
     /**
