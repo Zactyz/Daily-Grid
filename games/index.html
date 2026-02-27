@@ -564,6 +564,7 @@
     import { getPTDateYYYYMMDD } from '/games/common/utils.js';
     import { GAME_META as GAME_META_LIST } from '/games/common/games.js';
     import { mountTabBar } from '/games/common/tab-bar.js';
+    import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
 
     // Build id-keyed lookup from canonical GAME_META array
     const gameMeta = Object.fromEntries(GAME_META_LIST.map(g => [g.id, g]));
@@ -672,6 +673,7 @@
     }
 
     mountTabBar('daily');
+    setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'daily' }), 500);
   </script>
   <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation"><ul class="dg-tab-bar__list">
     <li class="dg-tab-bar__tab active" data-tab="daily"><a href="/games/" aria-label="Daily" aria-current="page"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg><span class="dg-tab-bar__label">Daily</span></a></li>

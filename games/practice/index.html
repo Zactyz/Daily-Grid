@@ -117,7 +117,9 @@
   </main>
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
+    import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
     mountTabBar('practice');
+    setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'practice' }), 500);
   </script>
   <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation"><ul class="dg-tab-bar__list">
     <li class="dg-tab-bar__tab" data-tab="daily"><a href="/games/" aria-label="Daily"><svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg><span class="dg-tab-bar__label">Daily</span></a></li>

@@ -220,10 +220,12 @@
 
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
+    import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
     import { getPTDateYYYYMMDD, getAnonId, formatTimeShort as formatTime } from '/games/common/utils.js';
     import { GAME_META as GAME_META_LIST } from '/games/common/games.js';
 
     mountTabBar('medals');
+    setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'medals' }), 500);
 
     // Build id-keyed lookup from canonical GAME_META array
     const GAME_META = Object.fromEntries(GAME_META_LIST.map(g => [g.id, g]));
