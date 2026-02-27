@@ -1,4 +1,6 @@
 const STORAGE_PREFIX = 'dailygrid_announcement_seen_';
+const LAUNCH_COUNT_KEY = 'dailygrid_pwa_launch_count';
+const LAUNCH_COUNT_SESSION_KEY = 'dailygrid_pwa_launch_count_recorded';
 
 /**
  * "What's New" campaigns.
@@ -11,11 +13,35 @@ const STORAGE_PREFIX = 'dailygrid_announcement_seen_';
  */
 const ANNOUNCEMENT_CAMPAIGNS = [
   {
+    id: '2026-03-welcome-tour-v1',
+    title: 'Welcome to Daily Grid',
+    pwaOnly: true,
+    startsAt: '2026-02-27T00:00:00Z',
+    priority: 200,
+    minLaunchCount: 1,
+    maxLaunchCount: 2,
+    steps: [
+      {
+        title: 'Welcome 👋',
+        body: 'Daily Grid is your home for quick daily logic puzzles. Each game has one daily challenge and unlimited practice mode.'
+      },
+      {
+        title: 'How the games work',
+        body: 'Solve today\'s puzzle to track streaks and earn medals. Practice mode lets you warm up without affecting your daily stats.'
+      },
+      {
+        title: 'Make it part of your routine',
+        body: 'Open once a day, solve a few favorites, and watch your streak and medal collection grow over time.'
+      }
+    ]
+  },
+  {
     id: '2026-03-whats-new-tour-v1',
     title: "What's New",
     pwaOnly: true,
     startsAt: '2026-02-27T00:00:00Z',
     priority: 100,
+    minLaunchCount: 3,
     steps: [
       {
         title: '3 new game modes',
@@ -55,6 +81,23 @@ function isSeen(id) {
   }
 }
 
+function getAndRecordLaunchCount() {
+  try {
+    // Record only once per tab/app session to avoid counting refresh loops.
+    if (!sessionStorage.getItem(LAUNCH_COUNT_SESSION_KEY)) {
+      const current = Number(localStorage.getItem(LAUNCH_COUNT_KEY) || '0');
+      const next = Number.isFinite(current) ? current + 1 : 1;
+      localStorage.setItem(LAUNCH_COUNT_KEY, String(next));
+      sessionStorage.setItem(LAUNCH_COUNT_SESSION_KEY, '1');
+      return next;
+    }
+    const existing = Number(localStorage.getItem(LAUNCH_COUNT_KEY) || '1');
+    return Number.isFinite(existing) && existing > 0 ? existing : 1;
+  } catch {
+    return 1;
+  }
+}
+
 function markSeen(id) {
   try {
     localStorage.setItem(`${STORAGE_PREFIX}${id}`, '1');
@@ -72,11 +115,20 @@ function isActiveNow(item, nowMs) {
 function pickCampaign(context = {}) {
   const nowMs = Date.now();
   const inPwa = isStandalonePWA();
+  const launchCount = getAndRecordLaunchCount();
 
   const candidates = ANNOUNCEMENT_CAMPAIGNS
     .filter((item) => item && item.id && Array.isArray(item.steps) && item.steps.length > 0)
     .filter((item) => isActiveNow(item, nowMs))
     .filter((item) => !item.pwaOnly || inPwa)
+    .filter((item) => {
+      if (!Number.isFinite(item.minLaunchCount)) return true;
+      return launchCount >= item.minLaunchCount;
+    })
+    .filter((item) => {
+      if (!Number.isFinite(item.maxLaunchCount)) return true;
+      return launchCount <= item.maxLaunchCount;
+    })
     .filter((item) => {
       if (!Array.isArray(item.gameIds) || item.gameIds.length === 0) return true;
       return item.gameIds.includes(context.gameId);
