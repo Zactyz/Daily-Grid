@@ -107,7 +107,7 @@
       {n:'Conduit',     t:'Practice routing the current.',   l:'/games/conduit/conduit-logo.png',     p:'/games/conduit/'},
       {n:'Perimeter',   t:'Practice loop constraints.',      l:'/games/perimeter/perimeter-logo.png', p:'/games/perimeter/'},
       {n:'Polyfit',     t:'Practice shape packing.',         l:'/games/polyfit/polyfit-logo.png',     p:'/games/polyfit/'}
-    ];document.getElementById('practice-game-list').innerHTML=g.map(function(x){
+    ];g.sort(function(a,b){return a.n.localeCompare(b.n);});document.getElementById('practice-game-list').innerHTML=g.map(function(x){
       return '<a href="'+x.p+'?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">'
         +'<img src="'+x.l+'" alt="'+x.n+'" class="w-12 h-12 rounded-xl">'
         +'<div class="flex-1"><p class="font-semibold">'+x.n+'</p>'

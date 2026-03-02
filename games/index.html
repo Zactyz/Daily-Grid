@@ -595,7 +595,12 @@
       const dailyList = document.getElementById('daily-list');
       const completedList = document.getElementById('completed-list');
       const completedSection = document.getElementById('completed-section');
-      const cards = Array.from(document.querySelectorAll('#daily-list a.app-card[data-game-id], #completed-list a.app-card[data-game-id]'));
+      const cards = Array.from(document.querySelectorAll('#daily-list a.app-card[data-game-id], #completed-list a.app-card[data-game-id]'))
+        .sort((a, b) => {
+          const aName = gameMeta[a.dataset.gameId]?.name || '';
+          const bName = gameMeta[b.dataset.gameId]?.name || '';
+          return aName.localeCompare(bName);
+        });
       let completedCount = 0;
       cards.forEach((card) => {
         const id = card.dataset.gameId;

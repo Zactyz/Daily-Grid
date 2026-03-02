@@ -267,6 +267,14 @@
     }
 
     // ── Leaderboard from API ──────────────────────────────────────────────────
+    const GAME_NAME_ORDER = GAME_META_LIST
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .reduce((acc, game, idx) => {
+        acc[game.id] = idx;
+        return acc;
+      }, {});
+
     function renderLeaderboard(games) {
       const anonId = getAnonId();
       const container = document.getElementById('leaderboard-list');
@@ -283,7 +291,14 @@
         return;
       }
 
-      container.innerHTML = games.map(({ id, name, entries, totalSolvers }) => {
+      const sortedGames = [...games].sort((a, b) => {
+        const aCount = a.totalSolvers ?? a.entries?.length ?? 0;
+        const bCount = b.totalSolvers ?? b.entries?.length ?? 0;
+        if (bCount !== aCount) return bCount - aCount;
+        return (GAME_NAME_ORDER[a.id] ?? Number.MAX_SAFE_INTEGER) - (GAME_NAME_ORDER[b.id] ?? Number.MAX_SAFE_INTEGER);
+      });
+
+      container.innerHTML = sortedGames.map(({ id, name, entries, totalSolvers }) => {
         const meta = GAME_META[id] || {};
         const rows = entries.map((e) => {
           const isYou = anonId && e.anonId === anonId;
