@@ -1,6 +1,5 @@
 // GET /api/medals/leaderboard?puzzleId=YYYY-MM-DD
-// Returns the top 3 players per game for a given day, plus a global medals count
-// for each anon_id (across all time).
+// Returns the top 3 players per game for a given day, plus total solver count per game.
 
 import { handleOptions, methodNotAllowed, jsonOk, jsonError, internalError, validateEnv } from '../../_shared/api-helpers.js';
 import { validatePuzzleId } from '../../_shared/validation-helpers.js';
@@ -30,29 +29,41 @@ export async function onRequest(context) {
     const puzzleId = url.searchParams.get('puzzleId');
     if (!validatePuzzleId(puzzleId)) return jsonError('Invalid or missing puzzleId');
 
-    // Fetch top 3 per game in parallel
+    // Fetch top 3 per game + total solver count in parallel
     const gameResults = await Promise.all(
       GAME_TABLES.map(async ({ id, table, name }) => {
         try {
-          const result = await env.DB.prepare(
-            `SELECT time_ms, initials, anon_id
-             FROM ${table}
-             WHERE puzzle_id = ?1
-             ORDER BY time_ms ASC
-             LIMIT 3`
-          ).bind(puzzleId).all();
+          const [topResult, countResult] = await Promise.all([
+            env.DB.prepare(
+              `SELECT time_ms, initials, anon_id
+               FROM ${table}
+               WHERE puzzle_id = ?1
+               ORDER BY time_ms ASC
+               LIMIT 3`
+            ).bind(puzzleId).all(),
+            env.DB.prepare(
+              `SELECT COUNT(*) AS total
+               FROM ${table}
+               WHERE puzzle_id = ?1`
+            ).bind(puzzleId).first()
+          ]);
 
-          const entries = (result.results || []).map((row, idx) => ({
+          const entries = (topResult.results || []).map((row, idx) => ({
             rank: idx + 1,
             timeMs: row.time_ms,
             initials: row.initials || null,
             anonId: row.anon_id,
           }));
 
-          return { id, name, entries };
+          return {
+            id,
+            name,
+            entries,
+            totalSolvers: Number(countResult?.total || 0)
+          };
         } catch {
           // Table may not exist yet — return empty
-          return { id, name, entries: [] };
+          return { id, name, entries: [], totalSolvers: 0 };
         }
       })
     );

@@ -283,7 +283,7 @@
         return;
       }
 
-      container.innerHTML = games.map(({ id, name, entries }) => {
+      container.innerHTML = games.map(({ id, name, entries, totalSolvers }) => {
         const meta = GAME_META[id] || {};
         const rows = entries.map((e) => {
           const isYou = anonId && e.anonId === anonId;
@@ -305,7 +305,7 @@
               <img src="${meta.logo || ''}" alt="${name}" class="game-logo" onerror="this.style.display='none'">
               <div>
                 <h3 class="font-semibold text-sm">${name}</h3>
-                <p class="text-xs text-slate-400">${entries.length} solver${entries.length !== 1 ? 's' : ''} today</p>
+                <p class="text-xs text-slate-400">${totalSolvers ?? entries.length} solver${(totalSolvers ?? entries.length) !== 1 ? 's' : ''} today</p>
               </div>
               <svg class="ml-auto text-slate-600" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
             </a>

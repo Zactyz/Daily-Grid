@@ -37,25 +37,56 @@ function shouldAllowDoubleTap(target) {
   return false;
 }
 
-  function initTouchGuards() {
+function initTouchGuards() {
   if (touchGuardInitialized || typeof window === 'undefined') return;
   touchGuardInitialized = true;
-  let lastTouchEnd = 0;
 
-  document.addEventListener('touchend', (event) => {
+  let lastTouchTime = 0;
+  let lastTouchX = 0;
+  let lastTouchY = 0;
+  const DOUBLE_TAP_MS = 320;
+  const DOUBLE_TAP_RADIUS = 28;
+
+  document.documentElement.style.overscrollBehaviorY = 'none';
+
+  document.addEventListener('touchstart', (event) => {
     const target = event.target;
     if (shouldAllowDoubleTap(target)) return;
+    const touch = event.changedTouches?.[0];
+    if (!touch) return;
+
     const now = Date.now();
-    if (now - lastTouchEnd <= 300) {
+    const dx = touch.clientX - lastTouchX;
+    const dy = touch.clientY - lastTouchY;
+    const isRapidDoubleTap = (now - lastTouchTime) <= DOUBLE_TAP_MS
+      && (dx * dx + dy * dy) <= (DOUBLE_TAP_RADIUS * DOUBLE_TAP_RADIUS);
+
+    if (isRapidDoubleTap) {
       event.preventDefault();
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      if (window.scrollY > maxScroll) {
+        window.scrollTo(0, maxScroll);
+      }
     }
-    lastTouchEnd = now;
+
+    lastTouchTime = now;
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+  }, { passive: false, capture: true });
+
+  document.addEventListener('touchend', (event) => {
+    if (shouldAllowDoubleTap(event.target)) return;
+    if (event.touches?.length) return;
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    if (window.scrollY > maxScroll) {
+      window.scrollTo(0, maxScroll);
+    }
   }, { passive: false });
 
   document.addEventListener('gesturestart', (event) => {
     event.preventDefault();
   }, { passive: false });
-  }
+}
 
   function defaultElements() {
   return {

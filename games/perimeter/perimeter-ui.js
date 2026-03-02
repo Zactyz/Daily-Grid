@@ -108,13 +108,7 @@ function resumeTimer() {
 
 function resetPuzzle({ resetTimer }) {
   if (!engine) return;
-  engine.reset();
-
-  if (resetTimer) {
-    engine.timeMs = 0;
-    engine.timerStarted = false;
-    engine.isPaused = false;
-  }
+  engine.reset({ resetTimer });
 
   completionMs = null;
   solutionShown = false;

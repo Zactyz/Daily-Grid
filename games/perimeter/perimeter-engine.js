@@ -214,11 +214,13 @@ export class PerimeterEngine {
     this.syncStatus();
   }
 
-  reset() {
+  reset({ resetTimer = true } = {}) {
     this.edgeStates.clear();
-    this.timeMs = 0;
-    this.timerStarted = false;
-    this.isPaused = false;
+    if (resetTimer) {
+      this.timeMs = 0;
+      this.timerStarted = false;
+      this.isPaused = false;
+    }
     this.isComplete = false;
     this.syncStatus();
   }
