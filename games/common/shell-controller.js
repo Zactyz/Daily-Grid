@@ -34,6 +34,9 @@ let touchGuardInitialized = false;
 function shouldAllowDoubleTap(target) {
   if (!target) return false;
   if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return true;
+  // Polyfit piece bank lives inside this canvas; let its own pointer handling
+  // own rapid taps so the global double-tap guard doesn't nudge page scroll.
+  if (target.closest?.('#polyfit-canvas')) return true;
   return false;
 }
 
