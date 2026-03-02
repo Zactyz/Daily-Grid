@@ -50,6 +50,32 @@ function initTouchGuards() {
   const DOUBLE_TAP_MS = 320;
   const DOUBLE_TAP_RADIUS = 28;
 
+  // Polyfit-specific: lock page scroll while touching the canvas so rapid
+  // bank taps/rotations never nudge viewport in either direction in PWA/iOS.
+  let polyfitTouchLockY = null;
+  const polyfitCanvas = document.getElementById('polyfit-canvas');
+  if (polyfitCanvas) {
+    const lockPolyfitScroll = (event) => {
+      if (polyfitTouchLockY == null) polyfitTouchLockY = window.scrollY;
+      event.preventDefault();
+      if (window.scrollY !== polyfitTouchLockY) {
+        window.scrollTo(0, polyfitTouchLockY);
+      }
+    };
+
+    polyfitCanvas.addEventListener('touchstart', lockPolyfitScroll, { passive: false, capture: true });
+    polyfitCanvas.addEventListener('touchmove', lockPolyfitScroll, { passive: false, capture: true });
+    polyfitCanvas.addEventListener('touchend', () => {
+      if (polyfitTouchLockY != null && window.scrollY !== polyfitTouchLockY) {
+        window.scrollTo(0, polyfitTouchLockY);
+      }
+      polyfitTouchLockY = null;
+    }, { passive: false, capture: true });
+    polyfitCanvas.addEventListener('touchcancel', () => {
+      polyfitTouchLockY = null;
+    }, { passive: false, capture: true });
+  }
+
   document.documentElement.style.overscrollBehaviorY = 'none';
 
   document.addEventListener('touchstart', (event) => {
