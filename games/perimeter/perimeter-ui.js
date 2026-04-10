@@ -187,13 +187,21 @@ function saveProgress() {
 
 function applySavedState(saved) {
   if (!engine || !saved) return;
-  engine.edgeStates = new Map(saved.edges || []);
+  const edges = Array.isArray(saved.edges) ? saved.edges : [];
+  engine.edgeStates = new Map(edges);
   engine.timeMs = saved.timeMs ?? 0;
   engine.timerStarted = saved.timerStarted ?? false;
   engine.isPaused = saved.isPaused ?? false;
   engine.isComplete = saved.isComplete ?? false;
   completionMs = saved.completionMs ?? null;
   engine.syncStatus();
+
+  // Guard against stale/corrupt pause snapshots that have no board progress.
+  // This avoids landing on an empty "Paused" overlay after revisit.
+  if (!engine.isComplete && engine.getLineEdges().length === 0) {
+    engine.isPaused = false;
+    engine.timerStarted = false;
+  }
 }
 
 function initState() {

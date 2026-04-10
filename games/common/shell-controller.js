@@ -345,7 +345,11 @@ function initTouchGuards() {
       const hasLocalLeaderboardEntry = !!loadLocalLeaderboardEntry();
       const hasCompletionEvidence = hasSubmittedScore || completedFlag || hasLocalLeaderboardEntry;
       if (hasCompletionEvidence) {
-        completionMs = adapter.getCompletionMs?.() ?? completionMs;
+        const localEntry = loadLocalLeaderboardEntry();
+        const localTimeMs = Number(localEntry?.timeMs);
+        const adapterMs = adapter.getCompletionMs?.();
+        completionMs = Number.isFinite(adapterMs) ? adapterMs
+          : (Number.isFinite(localTimeMs) ? localTimeMs : completionMs);
         shouldShowCompletedRevisitModal = true;
         if (!completedFlag) saveCompletedState();
       }
