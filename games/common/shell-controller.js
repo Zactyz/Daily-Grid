@@ -339,7 +339,7 @@ function initTouchGuards() {
     }
 
     if (mode === 'daily' && hasSubmittedScore && !adapter.isComplete() && !isInReplayMode) {
-      if (adapter.loadCompletedState?.()) {
+      if (loadCompletedState()) {
         completionMs = adapter.getCompletionMs?.() ?? completionMs;
         modalShown = true;
       }
@@ -441,7 +441,7 @@ function initTouchGuards() {
 
   function updateResetButton() {
     if (!elements.resetBtn) return;
-    if (adapter.isSolutionShown?.()) {
+    if (adapter.isSolutionShown?.() || (adapter.hideResetWhenComplete && adapter.isComplete())) {
       elements.resetBtn.classList.add('hidden');
       return;
     }
@@ -460,7 +460,9 @@ function initTouchGuards() {
       return;
     }
 
-    if (adapter.isComplete()) elements.leaderboardBtn.classList.remove('hidden');
+    const hasCompletedHistory = hasSubmittedScore && loadCompletedState();
+    const canOpen = adapter.isComplete() || (adapter.allowLeaderboardWhenIncomplete && hasCompletedHistory);
+    if (canOpen) elements.leaderboardBtn.classList.remove('hidden');
     else elements.leaderboardBtn.classList.add('hidden');
   }
 

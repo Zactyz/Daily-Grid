@@ -219,8 +219,8 @@ export class PerimeterEngine {
     if (resetTimer) {
       this.timeMs = 0;
       this.timerStarted = false;
-      this.isPaused = false;
     }
+    this.isPaused = false;
     this.isComplete = false;
     this.syncStatus();
   }

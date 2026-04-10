@@ -236,18 +236,17 @@
       { cls: 'bronze', label: '🥉' },
     ];
 
-    // ── Personal medals from localStorage ────────────────────────────────────
-    function countPersonalMedals() {
+    // ── Personal medals (dynamic from API, local fallback) ───────────────────
+    function countPersonalMedalsFromLocalCache() {
       const counts = { gold: 0, silver: 0, bronze: 0, top10: 0 };
       for (const gameId of Object.keys(GAME_META)) {
-        // Scan all leaderboard entries for this game
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
           if (!key?.startsWith(`dailygrid_${gameId}_leaderboard_`)) continue;
           try {
             const entry = JSON.parse(localStorage.getItem(key));
-            const rank = entry?.rank;
-            if (!rank) continue;
+            const rank = Number(entry?.rank);
+            if (!Number.isFinite(rank)) continue;
             if (rank === 1) counts.gold++;
             else if (rank === 2) counts.silver++;
             else if (rank === 3) counts.bronze++;
@@ -258,12 +257,30 @@
       return counts;
     }
 
-    function renderPersonalMedals() {
-      const c = countPersonalMedals();
-      document.getElementById('your-gold').textContent   = c.gold;
-      document.getElementById('your-silver').textContent = c.silver;
-      document.getElementById('your-bronze').textContent = c.bronze;
-      document.getElementById('your-top10').textContent  = c.top10;
+    function applyPersonalMedals(counts) {
+      const c = counts || { gold: 0, silver: 0, bronze: 0, top10: 0 };
+      document.getElementById('your-gold').textContent   = c.gold || 0;
+      document.getElementById('your-silver').textContent = c.silver || 0;
+      document.getElementById('your-bronze').textContent = c.bronze || 0;
+      document.getElementById('your-top10').textContent  = c.top10 || 0;
+    }
+
+    async function renderPersonalMedals() {
+      const anonId = getAnonId();
+      if (!anonId) {
+        applyPersonalMedals(countPersonalMedalsFromLocalCache());
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/medals/personal?anonId=${encodeURIComponent(anonId)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        applyPersonalMedals(data?.counts);
+      } catch (err) {
+        console.warn('[Medals] Failed to load personal medals from API, using local cache:', err);
+        applyPersonalMedals(countPersonalMedalsFromLocalCache());
+      }
     }
 
     // ── Leaderboard from API ──────────────────────────────────────────────────
@@ -394,7 +411,7 @@
     }
 
     async function init() {
-      renderPersonalMedals();
+      await renderPersonalMedals();
       updateDateUI();
       await loadLeaderboard(currentDate);
 
