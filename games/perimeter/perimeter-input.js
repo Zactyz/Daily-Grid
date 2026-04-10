@@ -48,6 +48,7 @@ export class PerimeterInput {
   }
 
   handlePointerDown(event) {
+    if (this.engine?.isComplete || this.engine?.isPaused) return;
     if (event.button && event.button !== 0) return;
     event.preventDefault();
 
@@ -69,6 +70,15 @@ export class PerimeterInput {
 
   handlePointerMove(event) {
     const edge = this.renderer.getNearestEdge(event.clientX, event.clientY);
+
+    if (this.engine?.isComplete || this.engine?.isPaused) {
+      this.renderer.setHoverEdge(null);
+      this.dragging = false;
+      this.changed.clear();
+      this.renderer.render();
+      return;
+    }
+
     this.renderer.setHoverEdge(edge);
 
     if (this.dragging) {
