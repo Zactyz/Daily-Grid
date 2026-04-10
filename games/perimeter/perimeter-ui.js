@@ -215,36 +215,6 @@ function initState() {
     engine.isPaused = false;
     engine.isComplete = false;
     completionMs = null;
-
-    // Parity with other games on completed revisit: if local completion evidence
-    // exists but granular board state is missing, hydrate with solved board so
-    // the user sees a completed puzzle instead of an empty/paused board.
-    if (currentMode === 'daily') {
-      try {
-        const completedKey = `dailygrid_perimeter_completed_${puzzleId}`;
-        const submittedKey = `dailygrid_perimeter_submitted_${puzzleId}`;
-        const entryKey = `dailygrid_perimeter_leaderboard_${puzzleId}`;
-        const hasCompleted = localStorage.getItem(completedKey) === 'true';
-        const hasSubmitted = localStorage.getItem(submittedKey) === 'true';
-        const entryRaw = localStorage.getItem(entryKey);
-        const entry = entryRaw ? JSON.parse(entryRaw) : null;
-        if (hasCompleted || hasSubmitted || entry) {
-          const solutionEdges = Array.from(engine?.puzzle?.solutionEdges || []);
-          engine.edgeStates = new Map(solutionEdges.map((edge) => [edge, 1]));
-          engine.syncStatus();
-          engine.isComplete = true;
-          engine.isPaused = true;
-          engine.timerStarted = true;
-          const entryTime = Number(entry?.timeMs);
-          if (Number.isFinite(entryTime)) {
-            engine.timeMs = entryTime;
-            completionMs = entryTime;
-          }
-        }
-      } catch {
-        // ignore malformed local storage
-      }
-    }
   }
   solutionShown = false;
   renderer?.render();
