@@ -340,12 +340,15 @@ function initTouchGuards() {
       modalShown = true;
     }
 
-    if (mode === 'daily' && hasSubmittedScore && !adapter.isComplete() && !isInReplayMode) {
-      if (loadCompletedState()) {
+    if (mode === 'daily' && !adapter.isComplete() && !isInReplayMode) {
+      const completedFlag = loadCompletedState();
+      const hasLocalLeaderboardEntry = !!loadLocalLeaderboardEntry();
+      const hasCompletionEvidence = hasSubmittedScore || completedFlag || hasLocalLeaderboardEntry;
+      if (hasCompletionEvidence) {
         completionMs = adapter.getCompletionMs?.() ?? completionMs;
         shouldShowCompletedRevisitModal = true;
+        if (!completedFlag) saveCompletedState();
       }
-      saveCompletedState();
     }
   }
 
