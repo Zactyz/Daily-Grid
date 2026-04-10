@@ -145,7 +145,15 @@ function showSolution() {
 }
 
 function handleInteraction() {
-  if (!engine || engine.isComplete || solutionShown) return;
+  if (!engine || solutionShown) return;
+
+  // If the latest interaction completed the puzzle, persist completion state
+  // immediately before any early-return path.
+  if (engine.isComplete) {
+    completeIfSolved();
+    return;
+  }
+
   if (!engine.timerStarted) startTimer();
   if (engine.isPaused) resumeTimer();
   updateProgress();
@@ -234,6 +242,7 @@ function loadPuzzle() {
       onEdgeChange: () => {
         renderer.render();
         updateProgress();
+        saveProgress();
       },
       onInteraction: () => {
         handleInteraction();
