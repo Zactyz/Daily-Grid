@@ -30,16 +30,23 @@ export class PerimeterRenderer {
   }
 
   resize() {
-    const parent = this.canvas.parentElement;
-    if (!parent || !this.engine) return;
-    const size = Math.min(parent.clientWidth, parent.clientHeight || parent.clientWidth);
+    if (!this.engine) return;
+
+    // Use the canvas' laid-out box (content area) for sizing. This avoids
+    // parent padding from skewing the render size and keeps the grid centered.
+    const rect = this.canvas.getBoundingClientRect();
+    const cssWidth = rect.width || this.canvas.clientWidth || this.canvas.parentElement?.clientWidth || 0;
+    const cssHeight = rect.height || this.canvas.clientHeight || cssWidth;
+    const size = Math.max(1, Math.floor(Math.min(cssWidth, cssHeight || cssWidth)));
+
     this.displaySize = size;
-    this.canvas.style.width = `${size}px`;
-    this.canvas.style.height = `${size}px`;
     this.canvas.width = Math.round(size * this.dpr);
     this.canvas.height = Math.round(size * this.dpr);
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+
     const gridSpan = this.engine.getGridSize();
+    const dynamicPadding = Math.max(18, Math.round(size * 0.07));
+    this.padding = dynamicPadding;
     const available = Math.max(1, size - this.padding * 2);
     this.cellSize = available / Math.max(1, gridSpan);
     this.dotRadius = Math.max(4, this.cellSize * 0.12);
