@@ -333,7 +333,6 @@ function initShell() {
     },
     isTimerRunning: () => (engine?.timerStarted && !engine?.isPaused && !engine?.isComplete) || false,
     hideResetWhenComplete: true,
-    allowLeaderboardWhenIncomplete: true,
     disableReplay: true,
     pauseOnHide: true
   });

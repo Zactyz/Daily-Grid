@@ -183,6 +183,7 @@ function initTouchGuards() {
   const wantsLeaderboard = new URLSearchParams(window.location.search).get('leaderboard') === '1';
   let leaderboardDeepLink = wantsLeaderboard;
   let modalPending = false;
+  let shouldShowCompletedRevisitModal = false;
   let latestPlayerEntry = null;
 
   function puzzleKeyPrefix(prefix) {
@@ -329,6 +330,7 @@ function initTouchGuards() {
 
     modalShown = false;
     completionMs = adapter.getCompletionMs?.() ?? null;
+    shouldShowCompletedRevisitModal = false;
 
     hasSubmittedScore = mode === 'daily' ? loadSubmittedState() : false;
     isInReplayMode = (mode === 'daily' && !adapter.disableReplay) ? loadReplayMode() : false;
@@ -341,7 +343,7 @@ function initTouchGuards() {
     if (mode === 'daily' && hasSubmittedScore && !adapter.isComplete() && !isInReplayMode) {
       if (loadCompletedState()) {
         completionMs = adapter.getCompletionMs?.() ?? completionMs;
-        modalShown = true;
+        shouldShowCompletedRevisitModal = true;
       }
       saveCompletedState();
     }
@@ -460,9 +462,7 @@ function initTouchGuards() {
       return;
     }
 
-    const hasCompletedHistory = hasSubmittedScore && loadCompletedState();
-    const canOpen = adapter.isComplete() || (adapter.allowLeaderboardWhenIncomplete && hasCompletedHistory);
-    if (canOpen) elements.leaderboardBtn.classList.remove('hidden');
+    if (adapter.isComplete()) elements.leaderboardBtn.classList.remove('hidden');
     else elements.leaderboardBtn.classList.add('hidden');
   }
 
@@ -1157,6 +1157,13 @@ function initTouchGuards() {
 
     if (leaderboardDeepLink && adapter.getMode() === 'daily' && adapter.isComplete() && !isInReplayMode) {
       leaderboardDeepLink = false;
+      modalPending = false;
+      modalShown = true;
+      showCompletionModal({ force: true });
+    }
+
+    if (shouldShowCompletedRevisitModal && adapter.getMode() === 'daily' && !adapter.isComplete() && !isInReplayMode) {
+      shouldShowCompletedRevisitModal = false;
       modalPending = false;
       modalShown = true;
       showCompletionModal({ force: true });
