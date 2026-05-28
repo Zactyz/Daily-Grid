@@ -37,6 +37,10 @@ function shouldAllowDoubleTap(target) {
   // Polyfit piece bank lives inside this canvas; let its own pointer handling
   // own rapid taps so the global double-tap guard doesn't nudge page scroll.
   if (target.closest?.('#polyfit-canvas')) return true;
+  // Gameplay surfaces handle their own rapid taps (Bits grid, etc.)
+  if (target.closest?.('#game-container.game-touch')) return true;
+  // Gameplay surfaces handle their own rapid taps (Bits grid, etc.)
+  if (target.closest?.('#game-container.game-touch')) return true;
   return false;
 }
 
@@ -109,6 +113,10 @@ function initTouchGuards() {
     const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     if (window.scrollY > maxScroll) {
       window.scrollTo(0, maxScroll);
+    }
+    const vv = window.visualViewport;
+    if (vv && Math.abs(window.scrollY - vv.offsetTop) > 1) {
+      window.scrollTo(0, Math.max(0, Math.min(window.scrollY, maxScroll)));
     }
   }, { passive: false });
 

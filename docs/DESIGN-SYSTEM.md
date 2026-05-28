@@ -263,6 +263,22 @@ Apply `.tab-bar-clear` to the outermost scrollable container on every page that 
 - Game canvas: `touch-action: none` during play, `touch-action: auto` after completion
 - Prevent text selection on game elements: `-webkit-user-select: none`
 
+### 7.6 Touch and double-tap guard
+
+The shell (`shell-controller.js` → `initTouchGuards`) blocks rapid second `touchstart` events within 320ms to prevent iOS double-tap zoom and scroll bounce. This can swallow synthetic `click` events on fast grid taps.
+
+**Guidelines for game authors:**
+
+| Pattern | When to use |
+|---------|-------------|
+| `#game-container.game-touch` | Wrap the playable board; exempts children from the global double-tap guard |
+| `pointerdown` + debounce (~280ms per cell) | Fast-tap grid games (Bits); prefer over `click` alone on touch |
+| `touch-action: manipulation` | Button grids where zoom must stay disabled but taps should feel instant |
+| `touch-action: none` | Canvas/drag games (Polyfit, Hashi); pair with `preventDefault` on pointer events |
+| `#polyfit-canvas` | Already exempt; uses scroll lock while touching the canvas |
+
+Document-level settings: `touch-action: manipulation` on `html, body`, `overscroll-behavior-y: none`, and `visualViewport` clamp on `touchend` to correct iOS scroll offset drift.
+
 ---
 
 ## 8. Background Ambience

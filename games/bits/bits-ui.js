@@ -711,6 +711,9 @@ function applyAdjacencyHints() {
   });
 }
 
+let lastCellPointerAt = 0;
+let lastCellPointerIndex = -1;
+
 function createGrid() {
   if (!els.gridRoot) return;
   els.gridRoot.innerHTML = '';
@@ -719,6 +722,7 @@ function createGrid() {
     btn.type = 'button';
     btn.className = 'grid-cell celebrate-target';
     btn.dataset.index = index.toString();
+    btn.addEventListener('pointerdown', handleCellPointer);
     btn.addEventListener('click', handleCellClick);
     cell.element = btn;
     updateCellAppearance(cell);
@@ -949,8 +953,24 @@ function applySavedValues(savedValues) {
   validateBoard();
 }
 
-function handleCellClick(event) {
+function handleCellPointer(event) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
   const index = Number(event.currentTarget.dataset.index);
+  const now = Date.now();
+  if (index === lastCellPointerIndex && now - lastCellPointerAt < 280) return;
+  lastCellPointerIndex = index;
+  lastCellPointerAt = now;
+  event.preventDefault();
+  handleCellAction(event.currentTarget, index);
+}
+
+function handleCellClick(event) {
+  if (event.pointerType && event.pointerType !== 'mouse') return;
+  const index = Number(event.currentTarget.dataset.index);
+  handleCellAction(event.currentTarget, index);
+}
+
+function handleCellAction(target, index) {
   const cell = cells[index];
   if (!cell || cell.isClue || isComplete) return;
 
