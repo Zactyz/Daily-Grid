@@ -684,11 +684,10 @@ function countSolutions({ islands, edges, crossings }, limit = 2) {
   let solutions = 0;
 
   function isConnected() {
-    const usedEdges = edges.filter((_, idx) => edgeCounts[idx] > 0);
-    if (usedEdges.length === 0) return false;
+    if (!edgeCounts.some(count => count > 0)) return false;
     const adjacency = new Map();
     islands.forEach(island => adjacency.set(island.id, []));
-    usedEdges.forEach((edge, idx) => {
+    edges.forEach((edge, idx) => {
       if (edgeCounts[idx] <= 0) return;
       adjacency.get(edge.a).push(edge.b);
       adjacency.get(edge.b).push(edge.a);
@@ -762,62 +761,88 @@ function getFallbackTemplates() {
     {
       gridSize: 6,
       islands: [
-        { id: 'A', r: 0, c: 1, required: 2 },
-        { id: 'B', r: 0, c: 4, required: 2 },
-        { id: 'C', r: 2, c: 0, required: 3 },
-        { id: 'D', r: 2, c: 2, required: 4 },
-        { id: 'E', r: 2, c: 5, required: 3 },
-        { id: 'F', r: 4, c: 1, required: 2 },
-        { id: 'G', r: 5, c: 4, required: 2 }
+        { id: 'A', r: 3, c: 0, required: 2 },
+        { id: 'B', r: 3, c: 3, required: 3 },
+        { id: 'C', r: 0, c: 0, required: 2 },
+        { id: 'D', r: 1, c: 3, required: 3 },
+        { id: 'E', r: 3, c: 2, required: 5 },
+        { id: 'F', r: 0, c: 3, required: 2 },
+        { id: 'G', r: 1, c: 2, required: 2 },
+        { id: 'H', r: 2, c: 2, required: 3 }
       ],
       solutionEdges: [
-        { a: 'A', b: 'D', count: 2 },
+        { a: 'A', b: 'C', count: 1 },
+        { a: 'A', b: 'E', count: 1 },
+        { a: 'B', b: 'D', count: 1 },
         { a: 'B', b: 'E', count: 2 },
-        { a: 'C', b: 'D', count: 1 },
-        { a: 'D', b: 'F', count: 2 },
-        { a: 'E', b: 'G', count: 2 },
-        { a: 'C', b: 'F', count: 1 }
-      ]
-    },
-    {
-      gridSize: 6,
-      islands: [
-        { id: 'A', r: 1, c: 1, required: 2 },
-        { id: 'B', r: 1, c: 4, required: 2 },
-        { id: 'C', r: 3, c: 0, required: 2 },
-        { id: 'D', r: 3, c: 3, required: 4 },
-        { id: 'E', r: 3, c: 5, required: 2 },
-        { id: 'F', r: 5, c: 2, required: 3 },
-        { id: 'G', r: 5, c: 5, required: 2 }
-      ],
-      solutionEdges: [
-        { a: 'A', b: 'D', count: 2 },
-        { a: 'B', b: 'D', count: 2 },
         { a: 'C', b: 'F', count: 1 },
-        { a: 'D', b: 'F', count: 2 },
-        { a: 'E', b: 'G', count: 2 },
-        { a: 'D', b: 'E', count: 1 }
+        { a: 'D', b: 'F', count: 1 },
+        { a: 'D', b: 'G', count: 1 },
+        { a: 'E', b: 'H', count: 2 },
+        { a: 'G', b: 'H', count: 1 }
       ]
     },
     {
       gridSize: 5,
       islands: [
-        { id: 'A', r: 0, c: 1, required: 1 },
-        { id: 'B', r: 0, c: 3, required: 1 },
-        { id: 'C', r: 2, c: 1, required: 4 },
-        { id: 'D', r: 2, c: 3, required: 4 },
-        { id: 'E', r: 4, c: 1, required: 2 },
-        { id: 'F', r: 4, c: 3, required: 2 }
+        { id: 'A', r: 0, c: 4, required: 4 },
+        { id: 'B', r: 4, c: 4, required: 2 },
+        { id: 'C', r: 0, c: 3, required: 4 },
+        { id: 'D', r: 3, c: 1, required: 3 },
+        { id: 'E', r: 0, c: 0, required: 3 },
+        { id: 'F', r: 4, c: 1, required: 1 },
+        { id: 'G', r: 3, c: 0, required: 3 },
+        { id: 'H', r: 3, c: 3, required: 2 }
       ],
       solutionEdges: [
-        { a: 'A', b: 'C', count: 1 },
-        { a: 'C', b: 'E', count: 2 },
+        { a: 'A', b: 'B', count: 2 },
+        { a: 'A', b: 'C', count: 2 },
+        { a: 'C', b: 'E', count: 1 },
+        { a: 'C', b: 'H', count: 1 },
+        { a: 'D', b: 'F', count: 1 },
+        { a: 'D', b: 'G', count: 1 },
+        { a: 'D', b: 'H', count: 1 },
+        { a: 'E', b: 'G', count: 2 }
+      ]
+    },
+    {
+      gridSize: 5,
+      islands: [
+        { id: 'A', r: 2, c: 3, required: 3 },
+        { id: 'B', r: 0, c: 0, required: 2 },
+        { id: 'C', r: 2, c: 0, required: 3 },
+        { id: 'D', r: 0, c: 1, required: 5 },
+        { id: 'E', r: 2, c: 4, required: 1 },
+        { id: 'F', r: 0, c: 3, required: 3 },
+        { id: 'G', r: 2, c: 1, required: 5 }
+      ],
+      solutionEdges: [
+        { a: 'A', b: 'E', count: 1 },
+        { a: 'A', b: 'F', count: 1 },
+        { a: 'A', b: 'G', count: 1 },
+        { a: 'B', b: 'C', count: 1 },
         { a: 'B', b: 'D', count: 1 },
+        { a: 'C', b: 'G', count: 2 },
         { a: 'D', b: 'F', count: 2 },
-        { a: 'C', b: 'D', count: 1 }
+        { a: 'D', b: 'G', count: 2 }
       ]
     }
   ];
+}
+
+function validatePuzzleStructure(puzzle) {
+  if (!puzzle?.islands?.length || !puzzle?.solutionEdges?.length) return false;
+  const degree = new Map(puzzle.islands.map(island => [island.id, 0]));
+  for (const edge of puzzle.solutionEdges) {
+    if (!edge?.count) continue;
+    degree.set(edge.a, (degree.get(edge.a) || 0) + edge.count);
+    degree.set(edge.b, (degree.get(edge.b) || 0) + edge.count);
+  }
+  if (puzzle.islands.some(island => degree.get(island.id) !== island.required)) return false;
+  const edges = buildVisibilityEdges(puzzle.islands);
+  const crossings = buildCrossingMap(edges, puzzle.islands);
+  const islandsCopy = puzzle.islands.map(island => ({ ...island }));
+  return countSolutions({ islands: islandsCopy, edges, crossings }, 2) === 1;
 }
 
 function tryGeneratePuzzle(rng, { gridMin, gridMax, islandMin, islandMax, avgDegreeMin }) {
@@ -928,22 +953,22 @@ function tryGeneratePuzzle(rng, { gridMin, gridMax, islandMin, islandMax, avgDeg
 
 function generatePuzzle(seedString, { isDaily = true } = {}) {
   const baseOpts = {
-    gridMin: isDaily ? 6 : 5,
+    gridMin: 5,
     gridMax: 7,
-    islandMin: isDaily ? 7 : 6,
+    islandMin: 6,
     islandMax: 10,
-    avgDegreeMin: isDaily ? 2.35 : 2.2
+    avgDegreeMin: 2.2
   };
 
   for (let attempt = 0; attempt < 120; attempt += 1) {
     const result = tryGeneratePuzzle(makeRng(`${seedString}:a${attempt}`), baseOpts);
-    if (result) return result;
+    if (result && validatePuzzleStructure(result)) return result;
   }
 
-  const relaxedOpts = { ...baseOpts, avgDegreeMin: 2.0, islandMin: Math.max(6, baseOpts.islandMin - 1) };
-  for (let attempt = 0; attempt < 25; attempt += 1) {
+  const relaxedOpts = { ...baseOpts, avgDegreeMin: 2.0, islandMin: 5 };
+  for (let attempt = 0; attempt < 40; attempt += 1) {
     const result = tryGeneratePuzzle(makeRng(`${seedString}:fb${attempt}`), relaxedOpts);
-    if (result) return result;
+    if (result && validatePuzzleStructure(result)) return result;
   }
 
   console.warn('[hashi] using template fallback for seed', seedString);
@@ -951,8 +976,12 @@ function generatePuzzle(seedString, { isDaily = true } = {}) {
     localStorage.setItem('dailygrid_hashi_last_fallback', seedString);
   } catch { /* ignore */ }
   const templates = getFallbackTemplates();
-  const pick = templates[hashString(seedString) % templates.length];
-  return JSON.parse(JSON.stringify(pick));
+  const start = hashString(seedString) % templates.length;
+  for (let i = 0; i < templates.length; i += 1) {
+    const pick = JSON.parse(JSON.stringify(templates[(start + i) % templates.length]));
+    if (validatePuzzleStructure(pick)) return pick;
+  }
+  return JSON.parse(JSON.stringify(templates[0]));
 }
 
 function loadState() {
