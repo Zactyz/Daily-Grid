@@ -292,11 +292,51 @@
         return acc;
       }, {});
 
-    function renderLeaderboard(games) {
+    function isCompletedToday(gameId, puzzleId = today) {
+      const g = GAME_META[gameId];
+      if (!g) return false;
+      try {
+        if (g.completedKeyPrefix && localStorage.getItem(`${g.completedKeyPrefix}${puzzleId}`) === 'true') return true;
+      } catch { /* ignore */ }
+      try {
+        return localStorage.getItem(`${g.submittedKeyPrefix}${puzzleId}`) === 'true';
+      } catch { return false; }
+    }
+
+    function renderLockedGameCard(id, name) {
+      const meta = GAME_META[id] || {};
+      return `
+        <div class="glass-card opacity-90">
+          <a href="${meta.path || '#'}" class="flex items-center gap-3 p-4" style="text-decoration:none">
+            <img src="${meta.logo || ''}" alt="${name}" class="game-logo" onerror="this.style.display='none'">
+            <div class="flex-1 min-w-0">
+              <h3 class="font-semibold text-sm">${name}</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Solve today's puzzle to see the leaderboard</p>
+            </div>
+            <svg class="text-slate-600 shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </a>
+        </div>`;
+    }
+
+    function renderLeaderboard(games, dateStr) {
       const anonId = getAnonId();
       const container = document.getElementById('leaderboard-list');
+      const isViewingToday = dateStr === today;
+      const apiById = Object.fromEntries((games || []).map((g) => [g.id, g]));
 
-      if (!games || games.length === 0) {
+      let displayGames;
+      if (isViewingToday) {
+        displayGames = GAME_META_LIST.map((g) => {
+          if (!isCompletedToday(g.id, dateStr)) {
+            return { id: g.id, name: g.name, locked: true };
+          }
+          return apiById[g.id] || { id: g.id, name: g.name, entries: [], totalSolvers: 0, locked: false };
+        });
+      } else {
+        displayGames = (games || []).map((g) => ({ ...g, locked: false }));
+      }
+
+      if (!displayGames.length) {
         container.innerHTML = `
           <div class="glass-card p-6 text-center empty-state">
             <svg class="mx-auto mb-3 opacity-40" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -308,14 +348,16 @@
         return;
       }
 
-      const sortedGames = [...games].sort((a, b) => {
+      const sortedGames = [...displayGames].sort((a, b) => {
+        if (a.locked !== b.locked) return a.locked ? 1 : -1;
         const aCount = a.totalSolvers ?? a.entries?.length ?? 0;
         const bCount = b.totalSolvers ?? b.entries?.length ?? 0;
         if (bCount !== aCount) return bCount - aCount;
         return (GAME_NAME_ORDER[a.id] ?? Number.MAX_SAFE_INTEGER) - (GAME_NAME_ORDER[b.id] ?? Number.MAX_SAFE_INTEGER);
       });
 
-      container.innerHTML = sortedGames.map(({ id, name, entries, totalSolvers }) => {
+      container.innerHTML = sortedGames.map(({ id, name, entries, totalSolvers, locked }) => {
+        if (locked) return renderLockedGameCard(id, name);
         const meta = GAME_META[id] || {};
         const rows = entries.map((e) => {
           const isYou = anonId && e.anonId === anonId;
@@ -399,7 +441,7 @@
         const res = await fetch(`/api/medals/leaderboard?puzzleId=${dateStr}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        renderLeaderboard(data.games || []);
+        renderLeaderboard(data.games || [], dateStr);
       } catch (err) {
         console.warn('[Medals] Failed to load leaderboard:', err);
         container.innerHTML = `
