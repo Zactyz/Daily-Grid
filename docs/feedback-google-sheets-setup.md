@@ -9,7 +9,31 @@ Daily Grid sends feedback through `POST /api/feedback/submit`, which forwards to
 
    `timestamp` | `anon_id` | `message` | `page` | `user_agent` | `pwa_mode`
 
-## 2. Apps Script web app
+## 2. Automated setup (recommended)
+
+From the repo root (after `npm install`):
+
+```powershell
+node scripts/setup-feedback-integration.js
+```
+
+This will:
+
+1. Open **Google sign-in** (`clasp login`) — complete in the browser
+2. Ask for your **Apps Script ID** (see below)
+3. Push the webhook script and deploy the web app
+4. Open **Cloudflare login** (`wrangler login`) if needed, then set Pages secrets
+
+**Apps Script ID:** In your sheet → **Extensions → Apps Script** → Project settings (gear) → **Script ID**.
+
+**Required once per Google account:** Enable the Apps Script API at  
+https://script.google.com/home/usersettings → turn **Google Apps Script API** ON → wait ~1 minute.
+
+Optional: set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` to skip wrangler prompts (same as push secrets setup).
+
+---
+
+## 2b. Manual Apps Script web app
 
 1. In the sheet: **Extensions → Apps Script**.
 2. Replace `Code.gs` with:
@@ -69,7 +93,11 @@ npx wrangler pages secret put FEEDBACK_WEBHOOK_SECRET --project-name daily-grid
 
 Redeploy the preview branch after secrets are set.
 
-## 4. Test
+## 4. When feedback prompts appear
+
+The hub feedback modal and card only show after **3 distinct calendar days** with at least one completed daily puzzle (`dailygrid_play_stats_v1` → `daysWithCompletion`). The feedback page in Profile is always available.
+
+## 5. Test
 
 ```powershell
 curl -X POST https://YOUR-PREVIEW.pages.dev/api/feedback/submit `

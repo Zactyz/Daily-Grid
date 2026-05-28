@@ -19,6 +19,8 @@
       font-family: var(--dg-font-ui);
       background: var(--dg-bg);
       color: var(--dg-text);
+      min-height: 100dvh;
+      margin: 0;
     }
     body::before {
       content: '';
@@ -42,7 +44,7 @@
     }
   </style>
 </head>
-<body class="tab-bar-clear">
+<body>
   <script src="/games/common/desktop-redirect.js"></script>
   <main class="max-w-lg mx-auto px-4 pt-6">
     <div class="flex items-center gap-3 mb-6">
@@ -65,8 +67,6 @@
         style="background:linear-gradient(135deg,#D4A650,#E5C37E)">Send feedback</button>
       <p id="feedback-status" class="text-xs mt-3 hidden"></p>
     </section>
-
-    <div class="pb-4"></div>
   </main>
 
   <script type="module">

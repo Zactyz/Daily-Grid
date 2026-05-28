@@ -1,8 +1,17 @@
+import { getDistinctCompletionDaysCount, MIN_DAYS_FOR_PERSONALIZED } from './games.js';
+
 const MODAL_SEEN_KEY = 'dailygrid_feedback_modal_seen';
 const CARD_DISMISSED_KEY = 'dailygrid_feedback_card_dismissed';
 const CARD_VISIT_KEY = 'dailygrid_feedback_card_visits';
 const CARD_RESHOW_MIN = 8;
 const CARD_RESHOW_MAX = 15;
+
+/** Require several distinct play days before surfacing feedback prompts. */
+const MIN_DAYS_BEFORE_FEEDBACK = MIN_DAYS_FOR_PERSONALIZED;
+
+function hasEnoughPlayHistory() {
+  return getDistinctCompletionDaysCount() >= MIN_DAYS_BEFORE_FEEDBACK;
+}
 
 function isStandalonePwa() {
   return window.matchMedia('(display-mode: standalone)').matches
@@ -38,6 +47,7 @@ function ensureFeedbackModal() {
 }
 
 export function maybeShowFeedbackModal() {
+  if (!hasEnoughPlayHistory()) return;
   try {
     if (localStorage.getItem(MODAL_SEEN_KEY) === '1') return;
   } catch { return; }
@@ -69,7 +79,7 @@ function shouldShowFeedbackCard() {
 }
 
 export function mountFeedbackHubCard(anchorEl) {
-  if (!anchorEl || !shouldShowFeedbackCard()) return;
+  if (!anchorEl || !hasEnoughPlayHistory() || !shouldShowFeedbackCard()) return;
 
   const card = document.createElement('div');
   card.id = 'dg-feedback-hub-card';

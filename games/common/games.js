@@ -104,7 +104,7 @@ export const GAME_META = [
 ];
 
 const PLAY_STATS_KEY = 'dailygrid_play_stats_v1';
-const MIN_DAYS_FOR_PERSONALIZED = 3;
+export const MIN_DAYS_FOR_PERSONALIZED = 3;
 
 export function getGameMeta(id) {
   return GAME_META.find(game => game.id === id) || null;
@@ -134,6 +134,12 @@ function savePlayStats(stats) {
   } catch {
     // ignore storage failures
   }
+}
+
+/** Distinct calendar days (puzzle IDs) with at least one game completion recorded. */
+export function getDistinctCompletionDaysCount() {
+  const stats = loadPlayStats();
+  return stats.daysWithCompletion?.length || 0;
 }
 
 export function recordGameCompletion(gameId, puzzleId) {
