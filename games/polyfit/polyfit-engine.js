@@ -112,12 +112,12 @@ export class PolyfitEngine {
 
   generate(seedKey) {
     const difficultyHash = hashString(`polyfit:difficulty:${seedKey}`);
-    this.pieceCount = 4 + (difficultyHash % 4);
+    this.pieceCount = 5 + (difficultyHash % 4);
     this._solution = null;
 
     // Solution-first generation: place pieces on a blank board, derive targetMask from result.
     // Retry with different random sequences until placement succeeds (always fast in practice).
-    for (let attempt = 0; attempt < 40; attempt += 1) {
+    for (let attempt = 0; attempt < 50; attempt += 1) {
       const rng = createSeededRandom(hashString(`polyfit:${seedKey}:gen${attempt}`));
 
       const shuffle = (arr) => {
