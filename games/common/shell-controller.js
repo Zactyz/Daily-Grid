@@ -367,11 +367,14 @@ function initTouchGuards() {
         : 'Tap to begin';
     }
 
+    const gameContainer = document.getElementById('game-container');
     if (shouldShow) {
       elements.startOverlay.classList.remove('hidden');
       elements.pauseOverlay?.classList.add('hidden');
+      gameContainer?.classList.add('prestart');
     } else {
       elements.startOverlay.classList.add('hidden');
+      gameContainer?.classList.remove('prestart');
     }
 
     if (!adapter.isStarted() && !adapter.isComplete() && hasProgress && adapter.autoStartOnProgress) {

@@ -153,17 +153,7 @@ function getElapsedMs() {
 function setPrestart(show) {
   isPrestart = show;
 
-  // Keep board visible but block interaction with start overlay
-  if (els.startOverlay) {
-    if (show) els.startOverlay.classList.remove('hidden');
-    else els.startOverlay.classList.add('hidden');
-  }
-
-  // Dim/blur board under overlay
-  if (els.gameContainer) {
-    if (show) els.gameContainer.classList.add('prestart');
-    else els.gameContainer.classList.remove('prestart');
-  }
+  // Start overlay + prestart dim are owned by shell-controller
 
   // Hide clues until start (match vibe of other games)
   if (els.cluesPanel) {

@@ -159,6 +159,44 @@ textarea,
   display: none;
 }
 
+/* Pre-game start overlay — shared across all puzzle games */
+.shell-start-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.shell-start-overlay.hidden {
+  display: none;
+}
+
+.shell-start-overlay--top {
+  justify-content: flex-start;
+  padding-top: 2.5rem;
+  z-index: 30;
+}
+
+/* Dim puzzle content under the start overlay */
+#game-container.prestart canvas,
+#game-container.prestart #board,
+#game-container.prestart .grid-cell,
+#game-container.prestart #piece-bank,
+#game-container.prestart #hashi-canvas,
+#game-container.prestart #undo-btn {
+  filter: grayscale(0.5) blur(2px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 .shell-controls {
   display: flex;
   flex-wrap: wrap;
