@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Feedback — Daily Grid Games</title>
+  <meta name="description" content="Send feedback for Daily Grid Games." />
+  <meta name="theme-color" content="#0b1120">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/games/manifest.json">
+  <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/games/common/design-tokens.css">
+  <link rel="stylesheet" href="/games/common/tab-bar.css">
+  <style>
+    body {
+      font-family: var(--dg-font-ui);
+      background: var(--dg-bg);
+      color: var(--dg-text);
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(60, 90, 160, 0.35), transparent),
+        radial-gradient(ellipse 70% 40% at 0% 100%, rgba(35, 60, 120, 0.25), transparent);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1rem;
+      backdrop-filter: blur(12px);
+    }
+    #feedback-message {
+      min-height: 140px;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body class="tab-bar-clear">
+  <script src="/games/common/desktop-redirect.js"></script>
+  <main class="max-w-lg mx-auto px-4 pt-6">
+    <div class="flex items-center gap-3 mb-6">
+      <a href="/games/profile/" class="text-slate-400" aria-label="Back to profile" style="text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.3em] text-slate-400">Daily Grid</p>
+        <h1 class="text-2xl font-semibold text-amber-200">Feedback</h1>
+      </div>
+    </div>
+
+    <section class="glass-card p-4 mb-4">
+      <p class="text-sm text-slate-300 mb-3">Tell us what you think — bugs, ideas, or anything we can improve.</p>
+      <textarea id="feedback-message" maxlength="2000" placeholder="Your message…"
+        class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-amber-500/40"></textarea>
+      <p class="text-xs text-slate-500 mt-2"><span id="char-count">0</span> / 2000</p>
+      <button type="button" id="feedback-submit"
+        class="w-full mt-4 py-2.5 rounded-lg font-semibold text-sm text-black disabled:opacity-50"
+        style="background:linear-gradient(135deg,#D4A650,#E5C37E)">Send feedback</button>
+      <p id="feedback-status" class="text-xs mt-3 hidden"></p>
+    </section>
+
+    <div class="pb-4"></div>
+  </main>
+
+  <script type="module">
+    import { mountTabBar } from '/games/common/tab-bar.js';
+    import { getOrCreateAnonId } from '/games/common/utils.js';
+    import { getPwaModeLabel } from '/games/common/feedback-hub.js';
+
+    mountTabBar('profile');
+
+    const textarea = document.getElementById('feedback-message');
+    const charCount = document.getElementById('char-count');
+    const submitBtn = document.getElementById('feedback-submit');
+    const status = document.getElementById('feedback-status');
+
+    textarea?.addEventListener('input', () => {
+      if (charCount) charCount.textContent = String(textarea.value.length);
+    });
+
+    submitBtn?.addEventListener('click', async () => {
+      const message = textarea?.value?.trim();
+      if (!message) {
+        showStatus('Please enter a message.', true);
+        return;
+      }
+      submitBtn.disabled = true;
+      showStatus('Sending…', false);
+      try {
+        const res = await fetch('/api/feedback/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            anonId: getOrCreateAnonId(),
+            page: '/games/feedback/',
+            pwaMode: getPwaModeLabel()
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Failed to send');
+        textarea.value = '';
+        if (charCount) charCount.textContent = '0';
+        showStatus('Thanks! Your feedback was sent.', false, true);
+      } catch (err) {
+        showStatus(err.message || 'Could not send. Try again later.', true);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    function showStatus(text, isError, isSuccess) {
+      if (!status) return;
+      status.textContent = text;
+      status.classList.remove('hidden');
+      status.style.color = isError ? '#f87171' : isSuccess ? '#86efac' : '#94a3b8';
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/games/sw.js');
+    }
+  </script>
+</body>
+</html>
