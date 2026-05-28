@@ -123,3 +123,67 @@ export function initPracticeFromUrl() {
     }
   }
 }
+
+const PLAYER_INITIALS_KEY = 'dailygrid_player_initials';
+const INITIALS_PROMPT_SEEN_KEY = 'dailygrid_initials_prompt_seen';
+const COMPLETIONS_WITHOUT_INITIALS_KEY = 'dailygrid_completions_without_initials';
+
+export function getPlayerInitials() {
+  try {
+    const v = localStorage.getItem(PLAYER_INITIALS_KEY);
+    if (!v) return null;
+    const trimmed = v.toUpperCase().trim();
+    return /^[A-Z]{1,3}$/.test(trimmed) ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setPlayerInitials(initials) {
+  const trimmed = String(initials || '').toUpperCase().trim();
+  if (!/^[A-Z]{1,3}$/.test(trimmed)) return false;
+  try {
+    localStorage.setItem(PLAYER_INITIALS_KEY, trimmed);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function hasPlayerInitials() {
+  return Boolean(getPlayerInitials());
+}
+
+export function getCompletionsWithoutInitials() {
+  try {
+    return Number(localStorage.getItem(COMPLETIONS_WITHOUT_INITIALS_KEY)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function incrementCompletionsWithoutInitials() {
+  try {
+    const next = getCompletionsWithoutInitials() + 1;
+    localStorage.setItem(COMPLETIONS_WITHOUT_INITIALS_KEY, String(next));
+    return next;
+  } catch {
+    return 0;
+  }
+}
+
+export function markInitialsPromptSeen() {
+  try {
+    localStorage.setItem(INITIALS_PROMPT_SEEN_KEY, '1');
+  } catch {
+    // ignore
+  }
+}
+
+export function hasSeenInitialsPrompt() {
+  try {
+    return localStorage.getItem(INITIALS_PROMPT_SEEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}

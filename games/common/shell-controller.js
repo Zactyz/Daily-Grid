@@ -3,7 +3,14 @@ import { getGameMeta, recordGameCompletion } from './games.js';
 import { loadLeaderboard, submitScore, claimInitials, updateNextGamePromo } from './shell-ui.js';
 import { recordStreak, getStreak, getMsUntilPTMidnight, formatCountdown } from './streak.js';
 import { recordStats, showStatsModal } from './stats.js';
-import { getPTDateYYYYMMDD } from './utils.js';
+import {
+  getPTDateYYYYMMDD,
+  getPlayerInitials,
+  setPlayerInitials,
+  hasPlayerInitials,
+  incrementCompletionsWithoutInitials
+} from './utils.js';
+import { maybeShowInitialsNudgeModal } from './initials-prompt.js';
 import { requestPushPermission, isPushSubscribed, hasPushOptIn } from './push.js';
 import { showTutorialModal } from './tutorial-modal.js';
 import { maybeShowAnnouncementModal } from './announcements.js';
@@ -277,11 +284,42 @@ function initTouchGuards() {
       elements.claimInitialsForm.classList.add('hidden');
       return;
     }
+    if (hasPlayerInitials()) {
+      elements.claimInitialsForm.classList.add('hidden');
+      return;
+    }
     const entry = getPlayerEntry();
     if (entry && !entry.initials) {
       elements.claimInitialsForm.classList.remove('hidden');
+      const saved = getPlayerInitials();
+      if (saved && elements.initialsInput && !elements.initialsInput.value) {
+        elements.initialsInput.value = saved;
+      }
     } else {
       elements.claimInitialsForm.classList.add('hidden');
+    }
+  }
+
+  async function autoClaimSavedInitialsIfNeeded() {
+    if (!hasPlayerInitials()) return;
+    const entry = getPlayerEntry();
+    if (!entry || entry.initials) return;
+    if (adapter.getMode() !== 'daily') return;
+    const initials = getPlayerInitials();
+    if (!initials) return;
+    try {
+      await claimInitials({
+        api: `/api/${adapter.gameId}/claim-initials`,
+        puzzleId: adapter.getPuzzleId(),
+        anonId: adapter.getAnonId(),
+        initials
+      });
+      entry.initials = initials;
+      latestPlayerEntry = entry;
+      saveLocalLeaderboardEntry(entry);
+      elements.claimInitialsForm?.classList.add('hidden');
+    } catch {
+      // ignore — user can claim manually
     }
   }
 
@@ -549,6 +587,7 @@ function initTouchGuards() {
 
   async function loadLeaderboardIntoModal() {
     if (!elements.leaderboardList) return;
+    await autoClaimSavedInitialsIfNeeded();
     updateClaimInitialsVisibility();
     const entry = getPlayerEntry();
     await loadLeaderboard({
@@ -632,6 +671,7 @@ function initTouchGuards() {
         anonId: adapter.getAnonId(),
         initials
       });
+      setPlayerInitials(initials);
       const existingEntry = loadLocalLeaderboardEntry();
       if (existingEntry) {
         existingEntry.initials = initials;
@@ -790,8 +830,17 @@ function initTouchGuards() {
     if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
     elements.completionModal?.classList.add('hidden');
     const entry = getPlayerEntry();
+    const closedWithoutInitials = adapter.getMode() === 'daily'
+      && adapter.isComplete()
+      && entry
+      && !entry.initials
+      && !hasPlayerInitials();
     if (entry && !entry.initials) {
       markLeaderboardSeen();
+    }
+    if (closedWithoutInitials) {
+      incrementCompletionsWithoutInitials();
+      window.setTimeout(() => maybeShowInitialsNudgeModal(), 400);
     }
   }
 
