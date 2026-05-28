@@ -1,4 +1,4 @@
-import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from '../common/utils.js';
+import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId, hashString } from '../common/utils.js';
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
@@ -757,13 +757,72 @@ function countSolutions({ islands, edges, crossings }, limit = 2) {
   return solutions;
 }
 
-function generatePuzzle(seedString) {
-  const rng = makeRng(seedString);
-  const maxAttempts = 120;
+function getFallbackTemplates() {
+  return [
+    {
+      gridSize: 6,
+      islands: [
+        { id: 'A', r: 0, c: 1, required: 2 },
+        { id: 'B', r: 0, c: 4, required: 2 },
+        { id: 'C', r: 2, c: 0, required: 3 },
+        { id: 'D', r: 2, c: 2, required: 4 },
+        { id: 'E', r: 2, c: 5, required: 3 },
+        { id: 'F', r: 4, c: 1, required: 2 },
+        { id: 'G', r: 5, c: 4, required: 2 }
+      ],
+      solutionEdges: [
+        { a: 'A', b: 'D', count: 2 },
+        { a: 'B', b: 'E', count: 2 },
+        { a: 'C', b: 'D', count: 1 },
+        { a: 'D', b: 'F', count: 2 },
+        { a: 'E', b: 'G', count: 2 },
+        { a: 'C', b: 'F', count: 1 }
+      ]
+    },
+    {
+      gridSize: 6,
+      islands: [
+        { id: 'A', r: 1, c: 1, required: 2 },
+        { id: 'B', r: 1, c: 4, required: 2 },
+        { id: 'C', r: 3, c: 0, required: 2 },
+        { id: 'D', r: 3, c: 3, required: 4 },
+        { id: 'E', r: 3, c: 5, required: 2 },
+        { id: 'F', r: 5, c: 2, required: 3 },
+        { id: 'G', r: 5, c: 5, required: 2 }
+      ],
+      solutionEdges: [
+        { a: 'A', b: 'D', count: 2 },
+        { a: 'B', b: 'D', count: 2 },
+        { a: 'C', b: 'F', count: 1 },
+        { a: 'D', b: 'F', count: 2 },
+        { a: 'E', b: 'G', count: 2 },
+        { a: 'D', b: 'E', count: 1 }
+      ]
+    },
+    {
+      gridSize: 5,
+      islands: [
+        { id: 'A', r: 0, c: 1, required: 1 },
+        { id: 'B', r: 0, c: 3, required: 1 },
+        { id: 'C', r: 2, c: 1, required: 4 },
+        { id: 'D', r: 2, c: 3, required: 4 },
+        { id: 'E', r: 4, c: 1, required: 2 },
+        { id: 'F', r: 4, c: 3, required: 2 }
+      ],
+      solutionEdges: [
+        { a: 'A', b: 'C', count: 1 },
+        { a: 'C', b: 'E', count: 2 },
+        { a: 'B', b: 'D', count: 1 },
+        { a: 'D', b: 'F', count: 2 },
+        { a: 'C', b: 'D', count: 1 }
+      ]
+    }
+  ];
+}
 
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const gridSize = rngInt(rng, 5, 7);
-    const islandCount = rngInt(rng, 6, 10);
+function tryGeneratePuzzle(rng, { gridMin, gridMax, islandMin, islandMax, avgDegreeMin }) {
+  const gridSize = rngInt(rng, gridMin, gridMax);
+  const islandCount = rngInt(rng, islandMin, islandMax);
     const allCells = [];
     for (let r = 0; r < gridSize; r += 1) {
       for (let c = 0; c < gridSize; c += 1) {
@@ -779,7 +838,7 @@ function generatePuzzle(seedString) {
     }));
 
     const edges = buildVisibilityEdges(islands);
-    if (edges.length < islands.length - 1) continue;
+    if (edges.length < islands.length - 1) return null;
 
     const degreeOptions = new Map(islands.map(island => [island.id, 0]));
     edges.forEach(edge => {
@@ -789,8 +848,8 @@ function generatePuzzle(seedString) {
     const degrees = Array.from(degreeOptions.values());
     const avgDegree = degrees.reduce((a, b) => a + b, 0) / degrees.length;
     const maxDegree = Math.max(...degrees);
-    if (edges.length < islands.length + 1) continue;
-    if (avgDegree < 2.2 || maxDegree < 3) continue;
+    if (edges.length < islands.length + 1) return null;
+    if (avgDegree < avgDegreeMin || maxDegree < 3) return null;
 
     const crossings = buildCrossingMap(edges, islands);
 
@@ -818,7 +877,7 @@ function generatePuzzle(seedString) {
         stack.push(neighbor.id);
       }
     }
-    if (visited.size !== islands.length) continue;
+    if (visited.size !== islands.length) return null;
 
     const edgeOrder = shuffleInPlace(edges.map((_, idx) => idx), rng);
     for (const idx of edgeOrder) {
@@ -851,7 +910,7 @@ function generatePuzzle(seedString) {
       degreeMap.set(edge.b, degreeMap.get(edge.b) + count);
     });
 
-    if ([...degreeMap.values()].some(val => val === 0)) continue;
+    if ([...degreeMap.values()].some(val => val === 0)) return null;
 
     islands.forEach((island) => {
       island.required = degreeMap.get(island.id) || 0;
@@ -864,27 +923,36 @@ function generatePuzzle(seedString) {
         .filter(Boolean);
       return { gridSize, islands, solutionEdges };
     }
+  return null;
+}
+
+function generatePuzzle(seedString, { isDaily = true } = {}) {
+  const baseOpts = {
+    gridMin: isDaily ? 6 : 5,
+    gridMax: 7,
+    islandMin: isDaily ? 7 : 6,
+    islandMax: 10,
+    avgDegreeMin: isDaily ? 2.35 : 2.2
+  };
+
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const result = tryGeneratePuzzle(makeRng(`${seedString}:a${attempt}`), baseOpts);
+    if (result) return result;
   }
 
-  const fallback = {
-    gridSize: 5,
-    islands: [
-      { id: 'A', r: 0, c: 1, required: 1 },
-      { id: 'B', r: 0, c: 3, required: 1 },
-      { id: 'C', r: 2, c: 1, required: 4 },
-      { id: 'D', r: 2, c: 3, required: 4 },
-      { id: 'E', r: 4, c: 1, required: 2 },
-      { id: 'F', r: 4, c: 3, required: 2 }
-    ],
-    solutionEdges: [
-      { a: 'A', b: 'C', count: 1 },
-      { a: 'C', b: 'E', count: 2 },
-      { a: 'B', b: 'D', count: 1 },
-      { a: 'D', b: 'F', count: 2 },
-      { a: 'C', b: 'D', count: 1 }
-    ]
-  };
-  return fallback;
+  const relaxedOpts = { ...baseOpts, avgDegreeMin: 2.0, islandMin: Math.max(6, baseOpts.islandMin - 1) };
+  for (let attempt = 0; attempt < 25; attempt += 1) {
+    const result = tryGeneratePuzzle(makeRng(`${seedString}:fb${attempt}`), relaxedOpts);
+    if (result) return result;
+  }
+
+  console.warn('[hashi] using template fallback for seed', seedString);
+  try {
+    localStorage.setItem('dailygrid_hashi_last_fallback', seedString);
+  } catch { /* ignore */ }
+  const templates = getFallbackTemplates();
+  const pick = templates[hashString(seedString) % templates.length];
+  return JSON.parse(JSON.stringify(pick));
 }
 
 function loadState() {
@@ -962,7 +1030,7 @@ function ensureTicker() {
 function resetPracticePuzzle() {
   puzzleSeed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
   puzzleId = getPuzzleIdForMode('practice');
-  puzzle = generatePuzzle(puzzleSeed);
+  puzzle = generatePuzzle(puzzleSeed, { isDaily: currentMode === 'daily' });
   islandMap = new Map(puzzle.islands.map(i => [i.id, i]));
   updateVisibilityEdges();
   bridges.clear();
@@ -994,7 +1062,7 @@ function switchMode(mode) {
     puzzleSeed = getPTDateYYYYMMDD();
   }
   puzzleId = getPuzzleIdForMode(mode);
-  puzzle = generatePuzzle(puzzleSeed);
+  puzzle = generatePuzzle(puzzleSeed, { isDaily: currentMode === 'daily' });
   islandMap = new Map(puzzle.islands.map(i => [i.id, i]));
   updateVisibilityEdges();
   bridges.clear();
@@ -1047,7 +1115,7 @@ function initShell() {
       hintsUsed: 0
     }),
     getShareMeta: () => ({
-      gameName: 'Bridgeworks',
+      gameName: 'Bridges',
       shareUrl: 'https://dailygrid.app/games/hashi/',
       gridLabel: `${puzzle.gridSize}x${puzzle.gridSize} Bridges`
     }),
@@ -1066,7 +1134,7 @@ async function buildShareImage() {
   const finalTime = completionMs ?? getElapsedMs();
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
-    gameName: 'Bridgeworks',
+    gameName: 'Bridges',
     logoPath: '/games/hashi/hashi-logo.jpg',
     accent: '#E8B47A',
     accentSoft: 'rgba(232, 180, 122, 0.12)',
@@ -1082,7 +1150,7 @@ async function buildShareImage() {
 function init() {
   puzzleSeed = getPTDateYYYYMMDD();
   puzzleId = getPuzzleIdForMode(currentMode);
-  puzzle = generatePuzzle(puzzleSeed);
+  puzzle = generatePuzzle(puzzleSeed, { isDaily: currentMode === 'daily' });
   islandMap = new Map(puzzle.islands.map(i => [i.id, i]));
   updateVisibilityEdges();
   if (els.islandCount) els.islandCount.textContent = String(puzzle.islands.length);

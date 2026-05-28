@@ -7,7 +7,7 @@ import { validatePuzzleId } from '../../_shared/validation-helpers.js';
 // All game tables that participate in the medals leaderboard
 const GAME_TABLES = [
   { id: 'bits',       table: 'bits_scores',       name: 'Bits'       },
-  { id: 'hashi',      table: 'hashi_scores',       name: 'Bridgeworks' },
+  { id: 'hashi',      table: 'hashi_scores',       name: 'Bridges' },
   { id: 'snake',      table: 'snake_scores',       name: 'Snake'      },
   { id: 'shikaku',    table: 'shikaku_scores',     name: 'Parcel'     },
   { id: 'pathways',   table: 'pathways_scores',    name: 'Pathways'   },

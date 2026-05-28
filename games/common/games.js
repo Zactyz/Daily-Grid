@@ -48,8 +48,8 @@ export const GAME_META = [
   },
   {
     id: 'hashi',
-    name: 'Bridgeworks',
-    tagline: 'Practice island links.',
+    name: 'Bridges',
+    tagline: 'Practice connecting bridges.',
     path: '/games/hashi/',
     logo: '/games/hashi/hashi-logo.jpg',
     submittedKeyPrefix: 'dailygrid_hashi_submitted_',
