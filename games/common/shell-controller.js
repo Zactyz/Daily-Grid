@@ -7,8 +7,10 @@ import {
   getPTDateYYYYMMDD,
   getPlayerInitials,
   setPlayerInitials,
-  hasPlayerInitials
+  hasPlayerInitials,
+  incrementCompletionsWithoutInitials
 } from './utils.js';
+import { maybeShowInitialsNudgeModal } from './initials-prompt.js';
 import { requestPushPermission, isPushSubscribed, hasPushOptIn } from './push.js';
 import { showTutorialModal } from './tutorial-modal.js';
 import { maybeShowAnnouncementModal } from './announcements.js';
@@ -911,9 +913,10 @@ function initTouchGuards() {
     if (entry && !entry.initials) {
       markLeaderboardSeen();
     }
-    // Interrupting "set your initials" nudge removed — initials can still be set
-    // from the completion modal claim form and the profile editor.
-    void closedWithoutInitials;
+    if (closedWithoutInitials) {
+      incrementCompletionsWithoutInitials();
+      window.setTimeout(() => maybeShowInitialsNudgeModal(), 400);
+    }
   }
 
   function confirmReset() {

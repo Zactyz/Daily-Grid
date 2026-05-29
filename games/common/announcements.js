@@ -10,64 +10,12 @@ const TAB_ICONS = {
   profile: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.5" r="3.5"/><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"/></svg>`
 };
 
-const ANNOUNCEMENT_CAMPAIGNS = [
-  {
-    id: '2026-03-welcome-tour-v4',
-    title: 'Welcome',
-    pwaOnly: true,
-    startsAt: '2026-02-27T00:00:00Z',
-    priority: 220,
-    minLaunchCount: 1,
-    maxLaunchCount: 2,
-    steps: [
-      {
-        title: 'Welcome to Daily Grid',
-        body: 'A quick daily puzzle app: solve today, or jump into practice.',
-        visual: 'welcome'
-      },
-      {
-        title: 'One app, all puzzle modes',
-        body: 'Daily, Practice, Medals, and Profile live in one flow.',
-        visual: 'tabs'
-      },
-      {
-        title: 'Play daily, earn medals',
-        body: 'Keep your streak going and track your progress over time.',
-        visual: 'streak'
-      }
-    ]
-  },
-  {
-    id: '2026-03-whats-new-tour-v4',
-    title: "What's New",
-    pwaOnly: true,
-    startsAt: '2026-02-27T00:00:00Z',
-    priority: 140,
-    minLaunchCount: 3,
-    steps: [
-      {
-        title: '3 new games are live',
-        body: 'Polyfit, Conduit, and Perimeter are now part of Daily Grid.',
-        visual: 'games',
-        logos: [
-          { src: '/games/polyfit/polyfit-logo.png', alt: 'Polyfit', label: 'Polyfit' },
-          { src: '/games/conduit/conduit-logo.png', alt: 'Conduit', label: 'Conduit' },
-          { src: '/games/perimeter/perimeter-logo.png', alt: 'Perimeter', label: 'Perimeter' }
-        ]
-      },
-      {
-        title: 'Streaks are live',
-        body: 'Your daily consistency now tracks automatically.',
-        visual: 'streak'
-      },
-      {
-        title: 'Layout + medals refresh',
-        body: 'Cleaner navigation and better previous-day medal review.',
-        visual: 'tabs'
-      }
-    ]
-  }
-];
+// Auto-launching announcement/marketing popups are disabled. The launch-count
+// "Welcome" and "What's New" tours (e.g. "3 new games are live", "Streaks are
+// live") were removed at the user's request. Per-game onboarding is handled by
+// the tutorial modal instead. To re-enable a campaign, add an entry here with
+// the same shape: { id, title, steps:[{title, body, visual, logos?}], ... }.
+const ANNOUNCEMENT_CAMPAIGNS = [];
 
 function ensureStyles() {
   if (document.getElementById(STYLE_TAG_ID)) return;
