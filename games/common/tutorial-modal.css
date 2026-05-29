@@ -1,22 +1,25 @@
 /*
  * Tutorial Modal — Daily Grid Games
- * Full-screen glass overlay with step-through cards and SVG/HTML demo visuals.
+ * Branded, full-screen glass overlay with step-through cards and SVG/HTML demos.
+ * Accent color is themed per game via --dg-tut-accent (set on the overlay).
  */
 
 /* ─── Overlay ────────────────────────────────────────────────────────────────── */
 .dg-tutorial-overlay {
+  --dg-tut-accent: #7dd3fc;
   position: fixed;
   inset: 0;
   z-index: 900;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.68);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(4, 7, 18, 0.74);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 24px 20px;
   opacity: 0;
-  transition: opacity 0.22s ease;
+  transition: opacity 0.24s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
 }
 
 .dg-tutorial-overlay.dg-visible {
@@ -26,64 +29,145 @@
 /* ─── Card ───────────────────────────────────────────────────────────────────── */
 .dg-tutorial-card {
   position: relative;
-  background: rgba(10, 15, 34, 0.94);
+  background:
+    radial-gradient(120% 80% at 50% -10%,
+      color-mix(in srgb, var(--dg-tut-accent) 16%, transparent) 0%,
+      transparent 60%),
+    linear-gradient(180deg, rgba(17, 24, 44, 0.98), rgba(10, 14, 30, 0.98));
   border: 0.5px solid rgba(255, 255, 255, 0.14);
-  border-radius: 24px;
+  border-radius: 26px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 28px 72px rgba(0, 0, 0, 0.65);
+    0 32px 80px rgba(0, 0, 0, 0.7);
   width: 100%;
-  max-width: 340px;
+  max-width: 372px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  transform: scale(0.94) translateY(10px);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(0.94) translateY(12px);
+  transition: transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .dg-tutorial-overlay.dg-visible .dg-tutorial-card {
   transform: scale(1) translateY(0);
 }
 
+/* Accent hairline along the very top of the card */
+.dg-tutorial-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    transparent,
+    var(--dg-tut-accent),
+    transparent);
+  opacity: 0.85;
+}
+
+/* ─── Header (brand) ─────────────────────────────────────────────────────────── */
+.dg-tutorial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 14px 18px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.07);
+}
+
+.dg-tutorial-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.dg-tutorial-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.12),
+    0 4px 14px color-mix(in srgb, var(--dg-tut-accent) 30%, transparent);
+}
+
+.dg-tutorial-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dg-tutorial-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dg-tut-accent);
+  color: color-mix(in srgb, var(--dg-tut-accent) 80%, white 5%);
+  line-height: 1.2;
+}
+
+.dg-tutorial-game {
+  font-size: 17px;
+  font-weight: 750;
+  color: #f3f6fc;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ─── Skip button ────────────────────────────────────────────────────────────── */
 .dg-tutorial-skip {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  background: none;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.05);
   border: none;
-  color: rgba(200, 210, 230, 0.4);
+  color: rgba(200, 210, 230, 0.55);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 8px;
+  padding: 7px 12px;
+  border-radius: 9px;
   transition: color 0.15s, background 0.15s;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
-  z-index: 2;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .dg-tutorial-skip:hover {
-  color: rgba(255, 255, 255, 0.75);
-  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* ─── Step wrapper ───────────────────────────────────────────────────────────── */
 .dg-tutorial-step {
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ─── Demo area ──────────────────────────────────────────────────────────────── */
 .dg-tutorial-demo {
-  width: 100%;
-  min-height: 180px;
-  background: rgba(255, 255, 255, 0.022);
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.07);
+  margin: 18px 18px 0;
+  min-height: 184px;
+  border-radius: 18px;
+  background:
+    radial-gradient(90% 70% at 50% 0%,
+      color-mix(in srgb, var(--dg-tut-accent) 9%, transparent),
+      transparent 70%),
+    rgba(255, 255, 255, 0.025);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 16px;
+  padding: 16px 18px;
   overflow: hidden;
 }
 
@@ -94,24 +178,29 @@
 
 /* ─── Text ───────────────────────────────────────────────────────────────────── */
 .dg-tutorial-text {
-  padding: 18px 22px 4px;
+  padding: 18px 24px 4px;
   text-align: center;
 }
 
 .dg-tutorial-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #f1f5f9;
-  margin: 0 0 7px;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 750;
+  color: #f3f6fc;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
 }
 
 .dg-tutorial-desc {
-  font-size: 13px;
-  line-height: 1.55;
-  color: rgba(200, 210, 230, 0.62);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: rgba(206, 215, 233, 0.72);
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────────────────── */
+.dg-tutorial-footer {
+  margin-top: auto;
+  padding-top: 6px;
 }
 
 /* ─── Progress dots ──────────────────────────────────────────────────────────── */
@@ -119,7 +208,7 @@
   display: flex;
   justify-content: center;
   gap: 6px;
-  padding: 14px 0 2px;
+  padding: 14px 0 4px;
 }
 
 .dg-tutorial-dot {
@@ -131,38 +220,40 @@
 }
 
 .dg-tutorial-dot.dg-active {
-  background: rgba(255, 255, 255, 0.82);
-  width: 18px;
+  background: var(--dg-tut-accent);
+  width: 20px;
 }
 
 /* ─── Nav row ────────────────────────────────────────────────────────────────── */
 .dg-tutorial-nav {
   display: flex;
   gap: 8px;
-  padding: 10px 18px 18px;
+  padding: 8px 18px 20px;
 }
 
 .dg-tutorial-btn {
-  padding: 11px 16px;
+  padding: 12px 16px;
   border-radius: 14px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 650;
   cursor: pointer;
   border: none;
-  transition: opacity 0.15s, transform 0.15s;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+  transition: opacity 0.15s, transform 0.12s, filter 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .dg-tutorial-btn:active {
-  opacity: 0.7;
+  opacity: 0.85;
   transform: scale(0.97);
 }
 
 .dg-tutorial-btn-prev {
   background: rgba(255, 255, 255, 0.07);
-  color: rgba(200, 210, 230, 0.6);
+  color: rgba(206, 215, 233, 0.7);
   flex: 0 0 auto;
-  padding: 11px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dg-tutorial-btn-prev[disabled] {
@@ -172,16 +263,30 @@
 
 .dg-tutorial-btn-next {
   flex: 1;
-  background: rgba(255, 255, 255, 0.1);
-  color: #f1f5f9;
-  border: 0.5px solid rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--dg-tut-accent) 22%, transparent);
+  color: #eaf4ff;
+  color: color-mix(in srgb, var(--dg-tut-accent) 60%, white 40%);
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  border: 0.5px solid color-mix(in srgb, var(--dg-tut-accent) 42%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dg-tutorial-btn-next:hover {
+  filter: brightness(1.12);
 }
 
 .dg-tutorial-btn-next.dg-last {
-  background: rgba(99, 160, 255, 0.22);
-  color: #93c5fd;
-  border-color: rgba(99, 160, 255, 0.36);
+  background: var(--dg-tut-accent);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--dg-tut-accent) 90%, black 0%),
+    color-mix(in srgb, var(--dg-tut-accent) 70%, black 12%));
+  color: #06121f;
+  font-weight: 750;
+  border-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 18px color-mix(in srgb, var(--dg-tut-accent) 36%, transparent);
 }
 
 /* ─── Step slide animation ───────────────────────────────────────────────────── */

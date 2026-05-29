@@ -7,10 +7,8 @@ import {
   getPTDateYYYYMMDD,
   getPlayerInitials,
   setPlayerInitials,
-  hasPlayerInitials,
-  incrementCompletionsWithoutInitials
+  hasPlayerInitials
 } from './utils.js';
-import { maybeShowInitialsNudgeModal } from './initials-prompt.js';
 import { requestPushPermission, isPushSubscribed, hasPushOptIn } from './push.js';
 import { showTutorialModal } from './tutorial-modal.js';
 import { maybeShowAnnouncementModal } from './announcements.js';
@@ -913,10 +911,9 @@ function initTouchGuards() {
     if (entry && !entry.initials) {
       markLeaderboardSeen();
     }
-    if (closedWithoutInitials) {
-      incrementCompletionsWithoutInitials();
-      window.setTimeout(() => maybeShowInitialsNudgeModal(), 400);
-    }
+    // Interrupting "set your initials" nudge removed — initials can still be set
+    // from the completion modal claim form and the profile editor.
+    void closedWithoutInitials;
   }
 
   function confirmReset() {
@@ -1327,7 +1324,9 @@ function initTouchGuards() {
 
     // First-time onboarding: show tutorial modal (or fall back to accordion)
     if (adapter.gameId) {
-      const onboardKey = `dailygrid_onboarded_${adapter.gameId}`;
+      // Bump the version suffix to re-show the (refreshed) tutorial to everyone.
+      const onboardKey = `dailygrid_onboarded_v2_${adapter.gameId}`;
+      const tutorialBranding = { gameName: meta?.name || adapter.gameId };
 
       // Find the How to Play details element (used for fallback + help button)
       const allDetails = document.querySelectorAll('details');
@@ -1349,7 +1348,7 @@ function initTouchGuards() {
             <polygon points="10,8 16,12 10,16"/>
           </svg>
           Show Tutorial`;
-        helpBtn.addEventListener('click', () => showTutorialModal(window.DG_TUTORIAL_STEPS));
+        helpBtn.addEventListener('click', () => showTutorialModal(window.DG_TUTORIAL_STEPS, tutorialBranding));
         howToPlay.insertAdjacentElement('beforeend', helpBtn);
       }
 
@@ -1358,7 +1357,7 @@ function initTouchGuards() {
         const steps = window.DG_TUTORIAL_STEPS;
         if (steps?.length) {
           // Delay slightly so the start overlay is visible first
-          setTimeout(() => showTutorialModal(steps), 500);
+          setTimeout(() => showTutorialModal(steps, tutorialBranding), 500);
         } else if (howToPlay && !howToPlay.open) {
           // Fallback: open the How to Play accordion for games without tutorial steps
           setTimeout(() => { howToPlay.open = true; }, 400);
