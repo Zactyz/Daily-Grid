@@ -165,6 +165,18 @@
         }
         details[open] summary.details-plus::after { transform: rotate(45deg); }
 
+        /* Logice board: no nested vertical scroll (avoids iOS double-tap pan inside #board) */
+        #board {
+            touch-action: none;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: auto;
+        }
+        #board .lattice-table-wrap {
+            touch-action: none;
+            overscroll-behavior-x: contain;
+            overscroll-behavior-y: none;
+        }
+
         /* grid cells — touch-action: none comes from .game-touch in shell.css */
         .grid-cell {
             user-select: none;
@@ -283,7 +295,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10h9a6 6 0 110 12h-1" />
                 </svg>
             </button>
-            <div id="board" class="overflow-auto"></div>
+            <div id="board"></div>
 
             <!-- Start Overlay (match Snake/Pathways) -->
             <div id="start-overlay" class="shell-start-overlay shell-start-overlay--top hidden">

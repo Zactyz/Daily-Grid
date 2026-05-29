@@ -97,23 +97,46 @@ function initTouchGuards() {
   // Lock page scroll while touching the board (all games). Prevents iOS from
   // nudging the viewport on rapid/double taps when How to Play makes the page scrollable.
   let gameplayScrollLockY = null;
+  let boardScrollLockEl = null;
+  let boardScrollLockTop = 0;
 
   const clampGameplayScroll = () => {
-    if (gameplayScrollLockY == null) return;
-    if (window.scrollY !== gameplayScrollLockY) {
+    if (gameplayScrollLockY != null && window.scrollY !== gameplayScrollLockY) {
       window.scrollTo(0, gameplayScrollLockY);
+    }
+    if (boardScrollLockEl && boardScrollLockEl.scrollTop !== boardScrollLockTop) {
+      boardScrollLockEl.scrollTop = boardScrollLockTop;
     }
   };
 
   const releaseGameplayScrollLock = () => {
-    clampGameplayScroll();
+    const y = gameplayScrollLockY;
+    const board = boardScrollLockEl;
+    const boardTop = boardScrollLockTop;
     gameplayScrollLockY = null;
+    boardScrollLockEl = null;
+    boardScrollLockTop = 0;
+
+    const restore = () => {
+      if (y != null && window.scrollY !== y) window.scrollTo(0, y);
+      if (board && board.scrollTop !== boardTop) board.scrollTop = boardTop;
+    };
+    restore();
+    requestAnimationFrame(() => {
+      restore();
+      requestAnimationFrame(restore);
+    });
   };
 
   document.addEventListener('touchstart', (event) => {
     if (!isGameplayScrollLockActive()) return;
     if (!isGameplayTouchTarget(event.target)) return;
     if (gameplayScrollLockY == null) gameplayScrollLockY = window.scrollY;
+    const board = event.target.closest?.('#board');
+    if (board) {
+      boardScrollLockEl = board;
+      boardScrollLockTop = board.scrollTop;
+    }
     clampGameplayScroll();
     // Cancel native scroll / double-tap zoom on the board. Games drive play via
     // pointerdown (still fires after preventDefault); only skip interactive

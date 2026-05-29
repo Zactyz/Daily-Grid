@@ -898,7 +898,7 @@ function render() {
     header.appendChild(h);
 
     const tableWrap = document.createElement('div');
-    tableWrap.className = 'overflow-auto';
+    tableWrap.className = 'lattice-table-wrap overflow-x-auto';
 
     const table = document.createElement('table');
     table.className = 'w-auto table-fixed border-separate mx-auto';
@@ -981,9 +981,19 @@ function render() {
     container.appendChild(section);
   }
 
+  const pageScrollY = window.scrollY;
+  const boardEl = els.board;
+  const boardScrollTop = boardEl?.scrollTop ?? 0;
+
   els.board.innerHTML = '';
   els.board.appendChild(container);
   shell?.update();
+
+  // Full re-render can nudge scroll on iOS when the page is tall; restore position.
+  requestAnimationFrame(() => {
+    if (window.scrollY !== pageScrollY) window.scrollTo(0, pageScrollY);
+    if (boardEl && boardEl.scrollTop !== boardScrollTop) boardEl.scrollTop = boardScrollTop;
+  });
 }
 
 async function loadDataset() {
