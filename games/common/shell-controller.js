@@ -60,6 +60,13 @@ function isInteractiveControl(target) {
   return !!target?.closest?.(INTERACTIVE_CONTROL_SELECTOR);
 }
 
+// Boards that drive play with taps only (no drag gestures) can opt into native
+// scrolling by marking their container [data-dg-scroll="page"]. For those we
+// skip the JS scroll-lock and let CSS touch-action handle double-tap zoom.
+function isScrollFriendlyGameplay(target) {
+  return !!target?.closest?.('[data-dg-scroll="page"]');
+}
+
 function isGameplayTouchTarget(target) {
   if (!target) return false;
   if (isShellOverlayTouch(target)) return false;
@@ -132,6 +139,8 @@ function initTouchGuards() {
   document.addEventListener('touchstart', (event) => {
     if (!isGameplayScrollLockActive()) return;
     if (!isGameplayTouchTarget(event.target)) return;
+    // Tap-only boards (e.g. Logice) scroll natively — don't lock them.
+    if (isScrollFriendlyGameplay(event.target)) return;
     if (gameplayScrollLockY == null) gameplayScrollLockY = window.scrollY;
     const board = event.target.closest?.('#board');
     if (board) {

@@ -2,7 +2,7 @@ import { LatticeEngine } from './lattice-engine.js';
 import { getPTDateYYYYMMDD, parseCsv, getOrCreateAnonId, formatTime } from './lattice-utils.js';
 
 import { getUncompletedGamesSorted as getCrossGamePromo } from '../common/games.js';
-import { shouldIgnoreGhostPointer } from '../common/pointer-tap.js';
+import { shouldIgnoreGhostPointer, noteTouchPointerUp } from '../common/pointer-tap.js';
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
@@ -91,6 +91,10 @@ let isPaused = false;
 let hasSolved = false;
 let isPrestart = true;
 const cellEls = new Map();
+// Track pointer-down start per pointer so a scroll-drag on the board doesn't
+// toggle a cell. A cell only cycles on a tap (pointerup with little movement).
+const cellTapStarts = new Map();
+const CELL_TAP_SLOP_PX = 10;
 let completionMs = null;
 let isInReplayMode = loadReplayMode();
 let solutionShown = false;
@@ -970,14 +974,34 @@ function render() {
         div.textContent = cellText(state[cat.category][i][j]);
         cellEls.set(`${cat.category}:${i}:${j}`, div);
 
+        // Record the press start but DON'T toggle yet — this lets a vertical
+        // drag scroll the page (touch-action: pan-x pan-y on the board) instead
+        // of flipping a cell. The toggle happens on pointerup only if the finger
+        // barely moved (a real tap).
         div.addEventListener('pointerdown', (event) => {
-          if (hasSolved) return;
-          if (isPaused) return;
-          if (isPrestart) return;
+          if (hasSolved || isPaused || isPrestart) return;
           if (event.pointerType === 'mouse' && event.button !== 0) return;
+          cellTapStarts.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        });
+
+        div.addEventListener('pointercancel', (event) => {
+          cellTapStarts.delete(event.pointerId);
+        });
+
+        div.addEventListener('pointerup', (event) => {
+          const start = cellTapStarts.get(event.pointerId);
+          cellTapStarts.delete(event.pointerId);
+          if (!start) return;
+          if (hasSolved || isPaused || isPrestart) return;
+
+          // A drag past the slop radius was a scroll, not a tap — ignore it.
+          const dx = event.clientX - start.x;
+          const dy = event.clientY - start.y;
+          if ((dx * dx + dy * dy) > (CELL_TAP_SLOP_PX * CELL_TAP_SLOP_PX)) return;
+
           const tapKey = `lattice:${cat.category}:${i}:${j}`;
+          noteTouchPointerUp(event);
           if (shouldIgnoreGhostPointer(event, tapKey)) return;
-          event.preventDefault();
 
           // snapshot BEFORE mutation
           pushUndo();

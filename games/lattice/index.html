@@ -165,16 +165,20 @@
         }
         details[open] summary.details-plus::after { transform: rotate(45deg); }
 
-        /* Logice board: no nested vertical scroll (avoids iOS double-tap pan inside #board) */
+        /* Logice is tap-only, so the board can scroll natively. Allow vertical
+           page panning + horizontal table panning while keeping double-tap zoom
+           disabled (pan-x/pan-y excludes the double-tap gesture that used to
+           "jump" the page). This overrides .game-touch / .game-touch * which
+           otherwise force touch-action: none on the whole container subtree. */
+        #game-container,
+        #game-container * {
+            touch-action: pan-x pan-y;
+        }
         #board {
-            touch-action: none;
-            overscroll-behavior: none;
-            -webkit-overflow-scrolling: auto;
+            overscroll-behavior: contain;
         }
         #board .lattice-table-wrap {
-            touch-action: none;
             overscroll-behavior-x: contain;
-            overscroll-behavior-y: none;
         }
 
         /* grid cells — touch-action: none comes from .game-touch in shell.css */
@@ -288,7 +292,7 @@
         </details>
 
         <!-- Game Container (board tables) -->
-        <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
+        <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-5 w-full relative" data-dg-scroll="page">
             <button id="undo-btn" class="absolute top-3 right-3 z-10 btn btn-secondary w-10 h-10 p-0 flex items-center justify-center" title="Undo" aria-label="Undo">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l-4-4 4-4" />
