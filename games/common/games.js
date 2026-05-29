@@ -2,7 +2,7 @@ export const GAME_META = [
   {
     id: 'snake',
     name: 'Snake',
-    tagline: 'Practice the number path.',
+    tagline: 'Connect the numbers in order.',
     path: '/games/snake/',
     logo: '/games/snake/snake-logo.png',
     submittedKeyPrefix: 'dailygrid_submitted_',
@@ -14,7 +14,7 @@ export const GAME_META = [
   {
     id: 'pathways',
     name: 'Pathways',
-    tagline: 'Practice color routes.',
+    tagline: 'Connect the matching colors.',
     path: '/games/pathways/',
     logo: '/games/pathways/pathways-logo.png',
     submittedKeyPrefix: 'dailygrid_pathways_submitted_',
@@ -26,7 +26,7 @@ export const GAME_META = [
   {
     id: 'lattice',
     name: 'Logice',
-    tagline: 'Practice logic grids.',
+    tagline: 'Solve the grid with clues.',
     path: '/games/lattice/',
     logo: '/games/lattice/lattice-logo.png?v=2',
     submittedKeyPrefix: 'dailygrid_lattice_submitted_',
@@ -38,7 +38,7 @@ export const GAME_META = [
   {
     id: 'bits',
     name: 'Bits',
-    tagline: 'Practice binary logic.',
+    tagline: 'Balance the binary grid.',
     path: '/games/bits/',
     logo: '/games/bits/bitsnew-logo.jpg',
     submittedKeyPrefix: 'dailygrid_bits_submitted_',
@@ -49,7 +49,7 @@ export const GAME_META = [
   {
     id: 'hashi',
     name: 'Bridges',
-    tagline: 'Practice connecting bridges.',
+    tagline: 'Connect islands into one network.',
     path: '/games/hashi/',
     logo: '/games/hashi/hashi-logo.jpg',
     submittedKeyPrefix: 'dailygrid_hashi_submitted_',
@@ -60,7 +60,7 @@ export const GAME_META = [
   {
     id: 'shikaku',
     name: 'Parcel',
-    tagline: 'Practice rectangle packing.',
+    tagline: 'Pack the grid into rectangles.',
     path: '/games/shikaku/',
     logo: '/games/shikaku/shikaku-logo.jpg',
     submittedKeyPrefix: 'dailygrid_shikaku_submitted_',
@@ -71,7 +71,7 @@ export const GAME_META = [
   {
     id: 'conduit',
     name: 'Conduit',
-    tagline: 'Practice routing the current.',
+    tagline: 'Route the current to every exit.',
     path: '/games/conduit/',
     logo: '/games/conduit/conduit-logo.png',
     submittedKeyPrefix: 'dailygrid_conduit_submitted_',
@@ -82,7 +82,7 @@ export const GAME_META = [
   {
     id: 'perimeter',
     name: 'Perimeter',
-    tagline: 'Practice loop constraints.',
+    tagline: 'Draw one loop from the clues.',
     path: '/games/perimeter/',
     logo: '/games/perimeter/perimeter-logo.png',
     submittedKeyPrefix: 'dailygrid_perimeter_submitted_',
@@ -93,7 +93,7 @@ export const GAME_META = [
   {
     id: 'polyfit',
     name: 'Polyfit',
-    tagline: 'Practice shape packing.',
+    tagline: 'Fill the shape with every piece.',
     path: '/games/polyfit/',
     logo: '/games/polyfit/polyfit-logo.png',
     submittedKeyPrefix: 'dailygrid_polyfit_submitted_',

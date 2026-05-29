@@ -71,7 +71,18 @@
       <button id="exit-replay-btn" class="hidden btn btn-secondary flex items-center justify-center w-10 h-10 p-0" title="Exit Replay"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
 
-    <details class="glass-strong rounded-xl w-full max-w-md"><summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white">How to Play</summary><div class="px-5 pb-5 pt-1"><ul class="text-zinc-400 space-y-2.5 text-sm"><li>Drag a piece from the bank at the bottom onto the amber footprint.</li><li>Tap a piece in the bank to rotate it 90° clockwise.</li><li>Tap a placed piece on the board to pick it back up.</li><li>Drag placed pieces to reposition them on the board.</li><li>Fill the entire amber footprint exactly to win.</li></ul></div></details>
+    <details class="glass-strong rounded-xl w-full max-w-md">
+      <summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">How to Play</summary>
+      <div class="px-5 pb-5 pt-1">
+        <ul class="text-zinc-400 space-y-2.5 text-sm">
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-400/15 text-amber-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Drag a piece from the bank onto the amber footprint.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-400/15 text-amber-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Tap a piece to rotate it 90° clockwise.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-400/15 text-amber-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Tap a placed piece to pick it back up, or drag to reposition it.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-400/15 text-amber-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>Fill the entire footprint exactly to win.</span></li>
+        </ul>
+        <p class="text-xs text-zinc-500 mt-4 pt-3 border-t border-white/5">Tip: Every piece must be used, with no gaps or overlaps.</p>
+      </div>
+    </details>
 
     <button id="show-solution-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>Show Solution</button>
     <div id="solution-actions" class="hidden w-full max-w-md mt-4 flex gap-3"><button id="solution-retry-btn" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors flex items-center justify-center gap-2">Try Again</button><button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>Next Puzzle</button></div>
