@@ -21,7 +21,9 @@ const ANNOUNCEMENT_CAMPAIGNS = [
   {
     id: 'welcome-tour-2026-05-v5',
     title: 'Welcome',
-    pwaOnly: true,
+    // TODO(revert-before-prod): temporarily browser-visible so the Welcome tour
+    // can be reviewed on the preview URL. Set back to pwaOnly: true for release.
+    pwaOnly: false,
     startsAt: '2026-02-27T00:00:00Z',
     priority: 220,
     minLaunchCount: 1,
