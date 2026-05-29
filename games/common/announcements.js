@@ -1,7 +1,11 @@
+import { GAME_META } from './games.js';
+
 const STORAGE_PREFIX = 'dailygrid_announcement_seen_';
 const LAUNCH_COUNT_KEY = 'dailygrid_pwa_launch_count';
 const LAUNCH_COUNT_SESSION_KEY = 'dailygrid_pwa_launch_count_recorded';
 const STYLE_TAG_ID = 'dg-announcement-styles';
+
+const BRAND_LOGO = '/games/assets/dg-games-192.png';
 
 const TAB_ICONS = {
   daily: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>`,
@@ -10,22 +14,152 @@ const TAB_ICONS = {
   profile: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.5" r="3.5"/><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"/></svg>`
 };
 
-// Auto-launching announcement/marketing popups are disabled. The launch-count
-// "Welcome" and "What's New" tours (e.g. "3 new games are live", "Streaks are
-// live") were removed at the user's request. Per-game onboarding is handled by
-// the tutorial modal instead. To re-enable a campaign, add an entry here with
-// the same shape: { id, title, steps:[{title, body, visual, logos?}], ... }.
-const ANNOUNCEMENT_CAMPAIGNS = [];
+// Auto-launching campaigns. Bump an `id` to re-show a campaign to everyone.
+// The "What's New" 3rd-open tour was removed at the user's request; only the
+// branded Welcome walkthrough remains.
+const ANNOUNCEMENT_CAMPAIGNS = [
+  {
+    id: 'welcome-tour-2026-05-v5',
+    title: 'Welcome',
+    pwaOnly: true,
+    startsAt: '2026-02-27T00:00:00Z',
+    priority: 220,
+    minLaunchCount: 1,
+    // No maxLaunchCount: the fresh id ensures every player (new or returning)
+    // sees the refreshed welcome exactly once.
+    steps: [
+      {
+        title: 'Welcome to Daily Grid',
+        body: 'A calm home for daily logic puzzles. One fresh set every day — solve today\u2019s, or warm up in practice.',
+        visual: 'brand'
+      },
+      {
+        title: 'Nine puzzles, a new one each day',
+        body: 'A whole lineup of original grid puzzles, each with a fresh daily challenge.',
+        visual: 'gameGrid'
+      },
+      {
+        title: 'Build a streak, earn medals',
+        body: 'Daily, Practice, Medals, and Profile all live in one smooth flow. Keep your streak alive and track your progress.',
+        visual: 'streak'
+      }
+    ]
+  }
+];
 
 function ensureStyles() {
   if (document.getElementById(STYLE_TAG_ID)) return;
   const style = document.createElement('style');
   style.id = STYLE_TAG_ID;
   style.textContent = `
-    @keyframes dgAnnounceFadeIn { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
-    @keyframes dgAnnounceStepIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
-    .dg-announcement-card-enter { animation: dgAnnounceFadeIn 240ms cubic-bezier(.22,.61,.36,1); }
-    .dg-announcement-step-enter { animation: dgAnnounceStepIn 220ms cubic-bezier(.22,.61,.36,1); }
+    @keyframes dgAncFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes dgAncCardIn { from { opacity: 0; transform: translateY(14px) scale(.965); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes dgAncStepIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+
+    .dg-anc-overlay {
+      position: fixed; inset: 0; z-index: 140;
+      display: flex; align-items: center; justify-content: center;
+      padding: 22px 16px;
+      background: radial-gradient(120% 70% at 50% -10%, rgba(212,166,80,.16), transparent 55%), rgba(5,7,14,.86);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      animation: dgAncFadeIn .22s ease both;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+    }
+    .dg-anc-card {
+      width: min(94vw, 440px); max-height: 92vh;
+      display: flex; flex-direction: column; overflow: hidden;
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(22,26,40,.98), rgba(11,14,26,.98));
+      border: .5px solid rgba(255,255,255,.14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 32px 80px rgba(0,0,0,.7);
+      animation: dgAncCardIn .34s cubic-bezier(.34,1.56,.64,1) both;
+      position: relative;
+    }
+    .dg-anc-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, #E5C37E, transparent); opacity: .9;
+    }
+    .dg-anc-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 15px 14px 13px 17px; border-bottom: .5px solid rgba(255,255,255,.07);
+    }
+    .dg-anc-brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .dg-anc-brand img {
+      width: 38px; height: 38px; border-radius: 11px; object-fit: cover; flex: 0 0 auto;
+      box-shadow: 0 0 0 .5px rgba(255,255,255,.12), 0 4px 14px rgba(212,166,80,.3);
+    }
+    .dg-anc-brand-text { display: flex; flex-direction: column; min-width: 0; }
+    .dg-anc-eyebrow {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: #E5C37E; line-height: 1.2;
+    }
+    .dg-anc-brand-name { font-size: 16px; font-weight: 750; color: #f3f6fc; line-height: 1.2; letter-spacing: -.01em; }
+    .dg-anc-close {
+      flex: 0 0 auto; background: rgba(255,255,255,.05); border: none; color: rgba(200,210,230,.6);
+      width: 30px; height: 30px; border-radius: 9px; font-size: 19px; line-height: 1; cursor: pointer;
+      transition: background .15s, color .15s; -webkit-tap-highlight-color: transparent;
+    }
+    .dg-anc-close:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+    .dg-anc-body { padding: 20px 20px 6px; flex: 1; display: flex; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .dg-anc-visual { display: flex; align-items: center; justify-content: center; }
+    .dg-anc-title { margin: 16px 0 0; font-size: 22px; line-height: 1.2; font-weight: 750; letter-spacing: -.02em; color: #f3f6fc; text-align: center; }
+    .dg-anc-text { margin: 9px 0 0; font-size: 14px; line-height: 1.55; color: rgba(206,215,233,.74); text-align: center; }
+
+    .dg-anc-footer { padding: 6px 20px 20px; }
+    .dg-anc-progress { display: flex; justify-content: center; gap: 6px; padding: 14px 0 14px; }
+    .dg-anc-dot { height: 6px; width: 6px; border-radius: 999px; background: rgba(255,255,255,.18); transition: background .2s, width .25s cubic-bezier(.34,1.56,.64,1); }
+    .dg-anc-dot.dg-on { background: #E5C37E; width: 20px; }
+    .dg-anc-nav { display: flex; gap: 8px; }
+    .dg-anc-btn {
+      padding: 12px 16px; border-radius: 14px; font-size: 14px; font-weight: 650; cursor: pointer; border: none;
+      transition: opacity .15s, transform .12s, filter .15s; -webkit-tap-highlight-color: transparent;
+    }
+    .dg-anc-btn:active { transform: scale(.97); opacity: .9; }
+    .dg-anc-prev { flex: 0 0 auto; background: rgba(255,255,255,.07); color: rgba(206,215,233,.7); display: inline-flex; align-items: center; justify-content: center; }
+    .dg-anc-prev[data-hidden="1"] { visibility: hidden; }
+    .dg-anc-next {
+      flex: 1; color: #1b1303; font-weight: 750;
+      background: linear-gradient(135deg, #E5C37E, #D4A650);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 6px 18px rgba(212,166,80,.34);
+    }
+    .dg-anc-next:hover { filter: brightness(1.06); }
+
+    /* visuals */
+    .dg-anc-brandhero {
+      margin-top: 6px; display: flex; flex-direction: column; align-items: center; gap: 14px;
+      padding: 18px 10px 4px;
+    }
+    .dg-anc-brandhero img {
+      width: 84px; height: 84px; border-radius: 22px; object-fit: cover;
+      box-shadow: 0 0 0 .5px rgba(255,255,255,.14), 0 12px 34px rgba(212,166,80,.4);
+    }
+    .dg-anc-gamegrid { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+    .dg-anc-tile {
+      display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 11px 6px;
+      border-radius: 13px; background: rgba(255,255,255,.04); border: .5px solid rgba(255,255,255,.1);
+    }
+    .dg-anc-tile img { width: 34px; height: 34px; border-radius: 9px; object-fit: cover; }
+    .dg-anc-tile span { font-size: 10.5px; font-weight: 600; color: rgba(248,250,252,.82); }
+    .dg-anc-streak { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+    .dg-anc-stat { padding: 13px; border-radius: 14px; }
+    .dg-anc-stat .k { font-size: 11px; color: rgba(255,255,255,.66); }
+    .dg-anc-stat .v { font-size: 24px; font-weight: 750; line-height: 1.1; margin-top: 2px; }
+    .dg-anc-stat.cur { background: rgba(249,115,22,.11); border: .5px solid rgba(249,115,22,.3); }
+    .dg-anc-stat.cur .v { color: #fb923c; }
+    .dg-anc-stat.best { background: rgba(240,198,116,.11); border: .5px solid rgba(240,198,116,.3); }
+    .dg-anc-stat.best .v { color: #f0c674; }
+    .dg-anc-tabs { margin-top: 16px; width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .dg-anc-tab { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 9px 2px; border-radius: 11px; background: rgba(255,255,255,.05); color: rgba(248,250,252,.85); }
+    .dg-anc-tab span.ic { width: 15px; height: 15px; display: inline-flex; }
+    .dg-anc-tab span.lb { font-size: 10px; }
+
+    .dg-anc-step-enter { animation: dgAncStepIn .24s cubic-bezier(.22,.61,.36,1); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dg-anc-overlay, .dg-anc-card, .dg-anc-step-enter { animation: none; }
+      .dg-anc-dot { transition: none; }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -84,52 +218,46 @@ function pickCampaign(context = {}) {
   return candidates[0] || null;
 }
 
-function renderLogos(logos = []) {
-  if (!logos.length) return '';
-  return `
-    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px;">
-      ${logos.map((logo) => `
-        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 8px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);">
-          <img src="${logo.src}" alt="${logo.alt || ''}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;"/>
-          <span style="font-size:11px;color:rgba(248,250,252,0.9);font-weight:600;">${logo.label || ''}</span>
-        </div>
-      `).join('')}
-    </div>
-  `;
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+function renderGameGrid() {
+  const tiles = GAME_META.map((g) => `
+    <div class="dg-anc-tile">
+      <img src="${escapeHtml(g.logo)}" alt="" aria-hidden="true" loading="lazy"/>
+      <span>${escapeHtml(g.name)}</span>
+    </div>`).join('');
+  return `<div class="dg-anc-gamegrid">${tiles}</div>`;
 }
 
 function renderVisual(visual) {
+  if (visual === 'brand') {
+    return `<div class="dg-anc-brandhero"><img src="${BRAND_LOGO}" alt="Daily Grid" /></div>`;
+  }
+  if (visual === 'gameGrid') {
+    return renderGameGrid();
+  }
   if (visual === 'tabs') {
     return `
-      <div style="margin-top:14px;border:1px solid rgba(255,255,255,0.12);border-radius:14px;overflow:hidden;background:rgba(255,255,255,0.03);">
-        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:10px;border-bottom:1px solid rgba(255,255,255,0.08);">
-          ${[
-            ['daily', 'Daily'],
-            ['practice', 'Practice'],
-            ['medals', 'Medals'],
-            ['profile', 'Profile']
-          ].map(([k, label]) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 2px;border-radius:9px;background:rgba(255,255,255,0.05);color:rgba(248,250,252,0.85);"><span style="width:14px;height:14px;display:inline-flex;">${TAB_ICONS[k]}</span><span style="font-size:10px;">${label}</span></div>`).join('')}
-        </div>
-        <div style="padding:10px 12px;font-size:12px;color:rgba(248,250,252,0.72);line-height:1.45;">Same tab bar, cleaner flow across the app.</div>
+      <div class="dg-anc-tabs">
+        ${[['daily', 'Daily'], ['practice', 'Practice'], ['medals', 'Medals'], ['profile', 'Profile']]
+          .map(([k, label]) => `<div class="dg-anc-tab"><span class="ic">${TAB_ICONS[k]}</span><span class="lb">${label}</span></div>`)
+          .join('')}
       </div>`;
   }
   if (visual === 'streak') {
     return `
-      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div style="padding:11px;border-radius:12px;background:rgba(249,115,22,0.11);border:1px solid rgba(249,115,22,0.30);">
-          <div style="font-size:11px;color:rgba(255,255,255,0.66);">Current</div>
-          <div style="font-size:22px;font-weight:700;color:#fb923c;line-height:1.1;">7d</div>
-        </div>
-        <div style="padding:11px;border-radius:12px;background:rgba(240,198,116,0.11);border:1px solid rgba(240,198,116,0.30);">
-          <div style="font-size:11px;color:rgba(255,255,255,0.66);">Best</div>
-          <div style="font-size:22px;font-weight:700;color:#f0c674;line-height:1.1;">14d</div>
-        </div>
-      </div>`;
-  }
-  if (visual === 'games' || visual === 'welcome') {
-    return `
-      <div style="margin-top:14px;padding:12px;border-radius:12px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.22);font-size:12px;color:rgba(248,250,252,0.82);line-height:1.45;">
-        Designed for quick play sessions with a consistent app UI.
+      <div class="dg-anc-streak">
+        <div class="dg-anc-stat cur"><div class="k">Current streak</div><div class="v">7d</div></div>
+        <div class="dg-anc-stat best"><div class="k">Best streak</div><div class="v">14d</div></div>
+      </div>
+      <div class="dg-anc-tabs" style="margin-top:10px;">
+        ${[['daily', 'Daily'], ['practice', 'Practice'], ['medals', 'Medals'], ['profile', 'Profile']]
+          .map(([k, label]) => `<div class="dg-anc-tab"><span class="ic">${TAB_ICONS[k]}</span><span class="lb">${label}</span></div>`)
+          .join('')}
       </div>`;
   }
   return '';
@@ -146,89 +274,99 @@ export function maybeShowAnnouncementModal(context = {}) {
 
   const overlay = document.createElement('div');
   overlay.id = 'dg-announcement-modal';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:140;background:radial-gradient(circle at 30% -20%,rgba(240,198,116,.12),transparent 45%),rgba(6,8,15,.9);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);display:flex;align-items:center;justify-content:center;padding:20px 14px;';
+  overlay.className = 'dg-anc-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
 
   const card = document.createElement('div');
-  card.className = 'dg-announcement-card-enter';
-  card.style.cssText = 'width:min(94vw,500px);min-height:min(74vh,640px);display:flex;flex-direction:column;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);box-shadow:0 24px 56px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.08);color:#f8fafc;overflow:hidden;';
+  card.className = 'dg-anc-card';
 
   card.innerHTML = `
-    <div style="padding:15px 16px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)">
-      <div style="font-size:12px;color:rgba(248,250,252,.66);text-transform:uppercase;letter-spacing:.08em;font-weight:700;">${campaign.title}</div>
-      <button id="dg-announcement-close" aria-label="Dismiss" style="background:none;border:none;color:rgba(248,250,252,.62);font-size:24px;line-height:1;cursor:pointer;">×</button>
+    <div class="dg-anc-header">
+      <div class="dg-anc-brand">
+        <img src="${BRAND_LOGO}" alt="" aria-hidden="true"/>
+        <div class="dg-anc-brand-text">
+          <span class="dg-anc-eyebrow">${escapeHtml(campaign.title || 'Daily Grid')}</span>
+          <span class="dg-anc-brand-name">Daily Grid</span>
+        </div>
+      </div>
+      <button id="dg-anc-close" class="dg-anc-close" aria-label="Dismiss">&times;</button>
     </div>
 
-    <div id="dg-announcement-step" style="padding:20px 18px;flex:1;display:flex;flex-direction:column;">
-      <div id="dg-announcement-progress" style="display:flex;gap:8px;margin-bottom:18px;"></div>
-      <h3 id="dg-announcement-title" style="margin:0;font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-0.02em;"></h3>
-      <p id="dg-announcement-body" style="margin:12px 0 0;font-size:17px;line-height:1.4;color:rgba(248,250,252,.88);"></p>
-      <div id="dg-announcement-visual" style="margin-top:4px;"></div>
-      <div id="dg-announcement-logos"></div>
+    <div id="dg-anc-step" class="dg-anc-body">
+      <div id="dg-anc-visual" class="dg-anc-visual"></div>
+      <h3 id="dg-anc-title" class="dg-anc-title"></h3>
+      <p id="dg-anc-text" class="dg-anc-text"></p>
     </div>
 
-    <div style="padding:14px 18px 18px;display:flex;gap:10px;justify-content:space-between;align-items:center;">
-      <button id="dg-announcement-prev" style="padding:12px 16px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:#f8fafc;font-size:15px;font-weight:600;cursor:pointer;">Back</button>
-      <button id="dg-announcement-next" style="padding:12px 18px;border-radius:12px;background:linear-gradient(160deg,rgba(240,198,116,.24),rgba(240,198,116,.14));border:1px solid rgba(240,198,116,.4);color:#f0c674;font-size:15px;font-weight:700;cursor:pointer;">Next</button>
+    <div class="dg-anc-footer">
+      <div id="dg-anc-progress" class="dg-anc-progress"></div>
+      <div class="dg-anc-nav">
+        <button id="dg-anc-prev" class="dg-anc-btn dg-anc-prev" aria-label="Back">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button id="dg-anc-next" class="dg-anc-btn dg-anc-next">Next</button>
+      </div>
     </div>
   `;
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 
-  const stepWrap = card.querySelector('#dg-announcement-step');
-  const titleEl = card.querySelector('#dg-announcement-title');
-  const bodyEl = card.querySelector('#dg-announcement-body');
-  const visualEl = card.querySelector('#dg-announcement-visual');
-  const logosEl = card.querySelector('#dg-announcement-logos');
-  const progressEl = card.querySelector('#dg-announcement-progress');
-  const prevBtn = card.querySelector('#dg-announcement-prev');
-  const nextBtn = card.querySelector('#dg-announcement-next');
+  const stepWrap = card.querySelector('#dg-anc-step');
+  const titleEl = card.querySelector('#dg-anc-title');
+  const bodyEl = card.querySelector('#dg-anc-text');
+  const visualEl = card.querySelector('#dg-anc-visual');
+  const progressEl = card.querySelector('#dg-anc-progress');
+  const prevBtn = card.querySelector('#dg-anc-prev');
+  const nextBtn = card.querySelector('#dg-anc-next');
 
   const close = () => {
     markSeen(campaign.id);
     overlay.remove();
+    document.removeEventListener('keydown', onKey);
   };
 
   const goNext = () => {
-    if (stepIndex < steps.length - 1) {
-      stepIndex += 1;
-      render();
-    } else {
-      close();
-    }
+    if (stepIndex < steps.length - 1) { stepIndex += 1; render(); }
+    else close();
   };
 
   const goPrev = () => {
-    if (stepIndex > 0) {
-      stepIndex -= 1;
-      render();
-    }
+    if (stepIndex > 0) { stepIndex -= 1; render(); }
+  };
+
+  const onKey = (e) => {
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowRight') goNext();
+    else if (e.key === 'ArrowLeft') goPrev();
   };
 
   const render = () => {
     const step = steps[stepIndex];
     if (!step) return;
 
-    stepWrap.classList.remove('dg-announcement-step-enter');
+    stepWrap.classList.remove('dg-anc-step-enter');
     void stepWrap.offsetWidth;
-    stepWrap.classList.add('dg-announcement-step-enter');
+    stepWrap.classList.add('dg-anc-step-enter');
 
     titleEl.textContent = step.title || '';
     bodyEl.textContent = step.body || '';
     visualEl.innerHTML = renderVisual(step.visual);
-    logosEl.innerHTML = renderLogos(step.logos || []);
 
     progressEl.innerHTML = steps
-      .map((_, i) => `<span style="height:7px;flex:1;border-radius:999px;background:${i <= stepIndex ? 'rgba(240,198,116,.84)' : 'rgba(255,255,255,.16)'}"></span>`)
+      .map((_, i) => `<span class="dg-anc-dot${i === stepIndex ? ' dg-on' : ''}"></span>`)
       .join('');
 
-    prevBtn.style.visibility = stepIndex === 0 ? 'hidden' : 'visible';
-    nextBtn.textContent = stepIndex === steps.length - 1 ? 'Done' : 'Next';
+    prevBtn.dataset.hidden = stepIndex === 0 ? '1' : '0';
+    nextBtn.textContent = stepIndex === steps.length - 1 ? 'Start playing' : 'Next';
   };
 
   prevBtn?.addEventListener('click', goPrev);
   nextBtn?.addEventListener('click', goNext);
-  card.querySelector('#dg-announcement-close')?.addEventListener('click', close);
+  card.querySelector('#dg-anc-close')?.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', onKey);
 
   card.addEventListener('touchstart', (e) => {
     touchStartX = e.changedTouches?.[0]?.clientX ?? null;
@@ -242,8 +380,6 @@ export function maybeShowAnnouncementModal(context = {}) {
     if (delta < 0) goNext();
     else goPrev();
   }, { passive: true });
-
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) { /* no-op */ } });
 
   render();
 }
