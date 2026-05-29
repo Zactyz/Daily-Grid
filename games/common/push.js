@@ -10,6 +10,8 @@
  * NOTE: Push notifications require HTTPS and iOS 16.4+ for PWA home-screen installs.
  */
 
+import { registerGamesServiceWorker } from './sw-register.js';
+
 const PUSH_OPT_IN_KEY   = 'dailygrid_push_opted_in';  // 'true' | 'false' | absent
 const PUSH_ENDPOINT_KEY = 'dailygrid_push_endpoint';
 
@@ -28,12 +30,7 @@ function swReady(timeoutMs = 8000) {
  * The profile page doesn't load a game so we register sw.js explicitly here.
  */
 export async function ensureSwRegistered() {
-  if (!('serviceWorker' in navigator)) return;
-  try {
-    await navigator.serviceWorker.register('/games/sw.js', { scope: '/games/' });
-  } catch (err) {
-    console.warn('[Push] SW registration failed:', err);
-  }
+  return registerGamesServiceWorker();
 }
 
 /**

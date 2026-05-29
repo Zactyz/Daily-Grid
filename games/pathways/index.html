@@ -686,12 +686,6 @@
         const _pathwaysParams = new URLSearchParams(window.location.search);
         const _pathwaysStartMode = (_pathwaysParams.get('practice') === '1' || _pathwaysParams.get('mode') === 'practice') ? 'practice' : 'daily';
         init(_pathwaysStartMode);
-        
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/games/pathways/sw.js')
-                .then(() => console.log('Service Worker registered'))
-                .catch((err) => console.log('Service Worker registration failed:', err));
-        }
     </script>
 <script>
 window.DG_TUTORIAL_STEPS = [

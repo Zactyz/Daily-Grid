@@ -7,6 +7,8 @@
  * Tab keys: 'daily' | 'practice' | 'medals' | 'profile'
  */
 
+import { initServiceWorkerUpdates } from './sw-register.js';
+
 const TABS = [
   {
     key: 'daily',
@@ -58,6 +60,7 @@ const TABS = [
  * @param {number} [opts.profileMedalCount] - Number to show as badge on medals tab
  */
 export function mountTabBar(activeKey, opts = {}) {
+  initServiceWorkerUpdates();
   // Always apply page padding (CSS media query removes it on desktop)
   document.documentElement.classList.add('dg-tab-bar-active');
   const main = document.querySelector('main, .tab-page-content, #page-content');

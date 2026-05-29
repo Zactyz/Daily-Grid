@@ -1,4 +1,5 @@
-const CACHE_VERSION = 'dg-games-v8';
+// Bump CACHE_VERSION on every production deploy that changes HTML/JS/CSS.
+const CACHE_VERSION = 'dg-games-v9';
 const CORE_ASSETS = [
   '/games/',
   '/games/index.html',
@@ -20,7 +21,6 @@ const CORE_ASSETS = [
   '/games/assets/dg-games-180.png'
 ];
 
-// Hub pages that must always be served as text/html (no-extension URL → index.html).
 const HTML_PAGES = [
   '/games/',
   '/games/practice/',
@@ -44,15 +44,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-/**
- * Wrap a cached Response to guarantee Content-Type: text/html.
- * iOS Safari PWA will download the page as a file if this header is absent
- * or incorrect in the cached entry.
- *
- * Only 200-range responses with a body can be reconstructed — 204, 304, and
- * redirect responses do not carry a body and must be returned as-is to avoid
- * the "Response body cannot be used with this status" TypeError.
- */
 function ensureHtmlContentType(response) {
   if (!response) return response;
   if (response.status !== 200) return response;
@@ -63,50 +54,73 @@ function ensureHtmlContentType(response) {
   return new Response(response.body, { status: 200, statusText: 'OK', headers });
 }
 
+function shouldUseNetworkFirst(request, url) {
+  if (request.mode === 'navigate') return true;
+  if (HTML_PAGES.includes(url.pathname)) return true;
+  if (url.pathname.endsWith('.html')) return true;
+  if (/\.(js|mjs|css)(\?|$)/i.test(url.pathname)) return true;
+  return false;
+}
+
+function isStaticAsset(url) {
+  return /\.(png|jpe?g|gif|webp|svg|ico|woff2?)(\?|$)/i.test(url.pathname);
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_VERSION);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    if (request.mode === 'navigate') {
+      const fallback = await caches.match('/games/index.html');
+      if (fallback) return fallback;
+    }
+    return Response.error();
+  }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(CACHE_VERSION);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
   if (!url.pathname.startsWith('/games/')) return;
+  if (url.pathname.includes('/api/')) return;
 
-  const isHtmlPage = HTML_PAGES.includes(url.pathname);
+  const isHtml = request.mode === 'navigate' || HTML_PAGES.includes(url.pathname)
+    || url.pathname.endsWith('.html');
 
-  // Navigation requests for known hub pages: serve cached HTML, enforcing
-  // Content-Type so iOS Safari never misidentifies them as file downloads.
-  if (request.mode === 'navigate' || isHtmlPage) {
+  if (shouldUseNetworkFirst(request, url)) {
     event.respondWith((async () => {
-      // Try exact URL match first, then the /index.html variant.
-      let cached = await caches.match(request);
-      if (!cached && url.pathname.endsWith('/')) {
-        cached = await caches.match(url.pathname + 'index.html');
-      }
-      if (cached) return ensureHtmlContentType(cached);
-
-      try {
-        const response = await fetch(request);
-        const cache = await caches.open(CACHE_VERSION);
-        cache.put(request, response.clone());
-        return ensureHtmlContentType(response);
-      } catch {
-        const fallback = await caches.match('/games/index.html');
-        return ensureHtmlContentType(fallback);
-      }
+      const response = await networkFirst(request);
+      return isHtml ? ensureHtmlContentType(response) : response;
     })());
     return;
   }
 
-  // All other GET requests (assets, API, etc.) — cache-first.
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
-        return response;
-      }).catch(() => caches.match('/games/index.html'));
-    })
-  );
+  if (isStaticAsset(url)) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  event.respondWith(networkFirst(request));
 });
 
 // ─── Push notification handler ────────────────────────────────────────────────
@@ -123,7 +137,6 @@ self.addEventListener('push', (event) => {
     body:    data.body  || "Today's puzzles are live! Come solve them.",
     icon:    data.icon  || '/games/assets/dg-games-192.png',
     badge:   data.badge || '/games/assets/dg-games-192.png',
-    // Use tag from payload so daily and streak notifications don't replace each other.
     tag:     data.tag   || 'daily-grid-daily',
     renotify: false,
     data: { url: data.url || '/games/' },
@@ -136,7 +149,6 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// ─── Notification click handler ───────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
@@ -146,14 +158,12 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Focus an existing window if one is open
       for (const client of windowClients) {
         if (client.url.includes('/games/') && 'focus' in client) {
           client.navigate(targetUrl);
           return client.focus();
         }
       }
-      // Otherwise open a new window
       if (clients.openWindow) return clients.openWindow(targetUrl);
     })
   );

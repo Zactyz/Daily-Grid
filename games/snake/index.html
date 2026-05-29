@@ -684,13 +684,6 @@
         const _snakeParams = new URLSearchParams(window.location.search);
         const _snakeStartMode = (_snakeParams.get('practice') === '1' || _snakeParams.get('mode') === 'practice') ? 'practice' : 'daily';
         init(_snakeStartMode);
-        
-        // Register service worker for PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/games/snake/sw.js')
-                .then(() => console.log('Service Worker registered'))
-                .catch((err) => console.log('Service Worker registration failed:', err));
-        }
     </script>
 <script>
 window.DG_TUTORIAL_STEPS = [

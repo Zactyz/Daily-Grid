@@ -285,7 +285,7 @@
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
-    import { requestPushPermission, unsubscribePush, isPushSubscribed, ensureSwRegistered } from '/games/common/push.js';
+    import { requestPushPermission, unsubscribePush, isPushSubscribed } from '/games/common/push.js';
     import {
       getPTDateYYYYMMDD,
       getAnonId,
@@ -548,11 +548,6 @@
     // ── Init ──────────────────────────────────────────────────────────────────
     renderProfile();
     renderVersion();
-
-    // Register the service worker early so navigator.serviceWorker.ready is
-    // available when the user taps the notification toggle (profile page doesn't
-    // load any game, so SW won't be registered otherwise).
-    ensureSwRegistered();
 
     // Load VAPID key first, then init the toggle so key is guaranteed available
     let vapidKey = null;

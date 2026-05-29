@@ -699,10 +699,6 @@
       if (document.visibilityState === 'visible') updateCards();
     });
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => { navigator.serviceWorker.register('/games/sw.js'); });
-    }
-
     mountTabBar('daily');
     mountFeedbackHubCard(document.getElementById('feedback-card-anchor'));
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'daily' }), 500);
