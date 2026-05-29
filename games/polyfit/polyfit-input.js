@@ -22,7 +22,6 @@ export class PolyfitInput {
     this.dragging = null;
     this.pressingBoard = null;
     this.pressingBank = null;
-    this._rotationCooldownUntil = 0;
 
     this._onMove         = (e) => this.handleMove(e);
     this._onLeave        = () => this.handlePointerLeave();
@@ -103,14 +102,10 @@ export class PolyfitInput {
   }
 
   // Rotates an unplaced piece and triggers canvas animation.
-  // Cooldown prevents rapid double-taps from stacking animations and causing scroll jump.
   rotatePiece(pieceId) {
     const piece = this.engine.pieces[pieceId];
     if (!piece || piece.placed) return false;
-    const now = performance.now();
-    if (now < this._rotationCooldownUntil) return false;
 
-    this._rotationCooldownUntil = now + 220;
     this.engine.rotateSelected(pieceId);
     this.renderer.animateRotation(pieceId);
     if (this.dragging?.pieceId === pieceId) {

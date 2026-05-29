@@ -35,7 +35,7 @@ export class PolyfitRenderer {
     this.rotationAnim = {
       pieceId,
       start: performance.now(),
-      duration: 170,
+      duration: 100,
       origin,
       angleRad
     };
