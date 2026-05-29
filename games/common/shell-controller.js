@@ -53,6 +53,12 @@ function isGameplayScrollLockActive() {
   return true;
 }
 
+const INTERACTIVE_CONTROL_SELECTOR = 'button, a, summary, input, textarea, select, label, [role="button"], [contenteditable="true"]';
+
+function isInteractiveControl(target) {
+  return !!target?.closest?.(INTERACTIVE_CONTROL_SELECTOR);
+}
+
 function isGameplayTouchTarget(target) {
   if (!target) return false;
   if (isShellOverlayTouch(target)) return false;
@@ -108,8 +114,13 @@ function initTouchGuards() {
     if (!isGameplayScrollLockActive()) return;
     if (!isGameplayTouchTarget(event.target)) return;
     if (gameplayScrollLockY == null) gameplayScrollLockY = window.scrollY;
-    // Do not preventDefault here — it blocks click synthesis on start/pause overlays.
     clampGameplayScroll();
+    // Cancel native scroll / double-tap zoom on the board. Games drive play via
+    // pointerdown (still fires after preventDefault); only skip interactive
+    // controls (undo, etc.) so their click events survive.
+    if (!isInteractiveControl(event.target)) {
+      event.preventDefault();
+    }
   }, { passive: false, capture: true });
 
   document.addEventListener('touchmove', (event) => {
