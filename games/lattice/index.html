@@ -165,12 +165,9 @@
         }
         details[open] summary.details-plus::after { transform: rotate(45deg); }
 
-        /* grid cells */
-        #game-container { touch-action: manipulation; }
-        #board { touch-action: manipulation; }
+        /* grid cells — touch-action: none comes from .game-touch in shell.css */
         .grid-cell {
             user-select: none;
-            touch-action: manipulation;
             width: 58px;
             height: 58px;
             min-width: 58px;

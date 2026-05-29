@@ -38,9 +38,9 @@ const RESUME_ICON = `
 
 let touchGuardInitialized = false;
 
-function shouldAllowDoubleTap(target) {
+function isGameplayTouchTarget(target) {
   if (!target) return false;
-  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return true;
+  if (target.closest?.('input, textarea, [contenteditable="true"]')) return false;
   if (target.closest?.('.game-touch')) return true;
   if (target.closest?.('#game-container')) return true;
   if (target.closest?.('#board')) return true;
@@ -56,6 +56,12 @@ function shouldAllowDoubleTap(target) {
   return false;
 }
 
+function shouldAllowDoubleTap(target) {
+  if (!target) return false;
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return true;
+  return isGameplayTouchTarget(target);
+}
+
 function initTouchGuards() {
   if (touchGuardInitialized || typeof window === 'undefined') return;
   touchGuardInitialized = true;
@@ -66,31 +72,44 @@ function initTouchGuards() {
   const DOUBLE_TAP_MS = 320;
   const DOUBLE_TAP_RADIUS = 28;
 
-  // Polyfit-specific: lock page scroll while touching the canvas so rapid
-  // bank taps/rotations never nudge viewport in either direction in PWA/iOS.
-  let polyfitTouchLockY = null;
-  const polyfitCanvas = document.getElementById('polyfit-canvas');
-  if (polyfitCanvas) {
-    const lockPolyfitScroll = (event) => {
-      if (polyfitTouchLockY == null) polyfitTouchLockY = window.scrollY;
-      event.preventDefault();
-      if (window.scrollY !== polyfitTouchLockY) {
-        window.scrollTo(0, polyfitTouchLockY);
-      }
-    };
+  // Lock page scroll while touching the board (all games). Prevents iOS from
+  // nudging the viewport on rapid/double taps when How to Play makes the page scrollable.
+  let gameplayScrollLockY = null;
 
-    polyfitCanvas.addEventListener('touchstart', lockPolyfitScroll, { passive: false, capture: true });
-    polyfitCanvas.addEventListener('touchmove', lockPolyfitScroll, { passive: false, capture: true });
-    polyfitCanvas.addEventListener('touchend', () => {
-      if (polyfitTouchLockY != null && window.scrollY !== polyfitTouchLockY) {
-        window.scrollTo(0, polyfitTouchLockY);
-      }
-      polyfitTouchLockY = null;
-    }, { passive: false, capture: true });
-    polyfitCanvas.addEventListener('touchcancel', () => {
-      polyfitTouchLockY = null;
-    }, { passive: false, capture: true });
-  }
+  const clampGameplayScroll = () => {
+    if (gameplayScrollLockY == null) return;
+    if (window.scrollY !== gameplayScrollLockY) {
+      window.scrollTo(0, gameplayScrollLockY);
+    }
+  };
+
+  const releaseGameplayScrollLock = () => {
+    clampGameplayScroll();
+    gameplayScrollLockY = null;
+  };
+
+  document.addEventListener('touchstart', (event) => {
+    if (!isGameplayTouchTarget(event.target)) return;
+    if (gameplayScrollLockY == null) gameplayScrollLockY = window.scrollY;
+    event.preventDefault();
+    clampGameplayScroll();
+  }, { passive: false, capture: true });
+
+  document.addEventListener('touchmove', (event) => {
+    if (gameplayScrollLockY == null) return;
+    event.preventDefault();
+    clampGameplayScroll();
+  }, { passive: false, capture: true });
+
+  document.addEventListener('touchend', (event) => {
+    if (gameplayScrollLockY == null) return;
+    if (event.touches.length > 0) return;
+    releaseGameplayScrollLock();
+  }, { passive: false, capture: true });
+
+  document.addEventListener('touchcancel', () => {
+    releaseGameplayScrollLock();
+  }, { passive: false, capture: true });
 
   document.documentElement.style.overscrollBehaviorY = 'none';
 
