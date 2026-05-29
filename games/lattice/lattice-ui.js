@@ -2,7 +2,7 @@ import { LatticeEngine } from './lattice-engine.js';
 import { getPTDateYYYYMMDD, parseCsv, getOrCreateAnonId, formatTime } from './lattice-utils.js';
 
 import { getUncompletedGamesSorted as getCrossGamePromo } from '../common/games.js';
-import { isSyntheticMousePointer, isDuplicateGameplayTap } from '../common/pointer-tap.js';
+import { shouldIgnoreGhostPointer } from '../common/pointer-tap.js';
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
@@ -952,9 +952,8 @@ function render() {
           if (isPaused) return;
           if (isPrestart) return;
           if (event.pointerType === 'mouse' && event.button !== 0) return;
-          if (isSyntheticMousePointer(event)) return;
           const tapKey = `lattice:${cat.category}:${i}:${j}`;
-          if (isDuplicateGameplayTap(tapKey)) return;
+          if (shouldIgnoreGhostPointer(event, tapKey)) return;
           event.preventDefault();
 
           // snapshot BEFORE mutation

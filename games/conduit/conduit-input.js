@@ -1,4 +1,4 @@
-import { isSyntheticMousePointer, isDuplicateGameplayTap } from '../common/pointer-tap.js';
+import { shouldIgnoreGhostPointer, noteTouchPointerUp } from '../common/pointer-tap.js';
 
 export class ConduitInput {
   constructor(canvas, engine, renderer, onChange) {
@@ -9,8 +9,11 @@ export class ConduitInput {
 
     this.canvas.style.touchAction = 'none';
     this._down = this._handleDown.bind(this);
+    this._up = this._handleUp.bind(this);
 
     this.canvas.addEventListener('pointerdown', this._down);
+    this.canvas.addEventListener('pointerup', this._up);
+    this.canvas.addEventListener('pointercancel', this._up);
   }
 
   setEngine(engine) { this.engine = engine; }
@@ -22,6 +25,12 @@ export class ConduitInput {
 
   destroy() {
     this.canvas.removeEventListener('pointerdown', this._down);
+    this.canvas.removeEventListener('pointerup', this._up);
+    this.canvas.removeEventListener('pointercancel', this._up);
+  }
+
+  _handleUp(event) {
+    noteTouchPointerUp(event);
   }
 
   _cellFromEvent(event) {
@@ -31,11 +40,10 @@ export class ConduitInput {
 
   _handleDown(event) {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    if (isSyntheticMousePointer(event)) return;
     event.preventDefault();
     const idx = this._cellFromEvent(event);
     if (idx == null) return;
-    if (isDuplicateGameplayTap(`conduit:${idx}`)) return;
+    if (shouldIgnoreGhostPointer(event, `conduit:${idx}`)) return;
     const didRotate = this.engine.rotateCell(idx);
     if (didRotate) this.onChange?.();
   }

@@ -1,4 +1,4 @@
-import { isSyntheticMousePointer, noteTouchPointerUp } from '../common/pointer-tap.js';
+import { shouldIgnoreGhostPointer, noteTouchPointerUp } from '../common/pointer-tap.js';
 
 // Separate drag thresholds: bank pieces benefit from a larger threshold to avoid
 // accidental drags when the user intends to tap-to-rotate.
@@ -226,6 +226,7 @@ export class PolyfitInput {
       if (this.pressingBank.pointerId !== null && e.pointerId !== this.pressingBank.pointerId) return;
       const pieceId = this.pressingBank.pieceId;
       this.pressingBank = null;
+      if (shouldIgnoreGhostPointer(e, `polyfit:bank:${pieceId}`)) return;
       this.rotatePiece(pieceId);
       this.renderer.render();
       return;
@@ -236,6 +237,7 @@ export class PolyfitInput {
       if (this.pressingBoard.pointerId !== null && e.pointerId !== this.pressingBoard.pointerId) return;
       const pieceId = this.pressingBoard.pieceId;
       this.pressingBoard = null;
+      if (shouldIgnoreGhostPointer(e, `polyfit:board:${pieceId}`)) return;
       this.engine.removePiece(pieceId);
       this.onSelectPiece?.(pieceId);
       this.onChange?.();
@@ -255,6 +257,7 @@ export class PolyfitInput {
       this.renderer.setPreview(null);
       this.renderer.setDragPiece(null);
       this.setState('idle');
+      if (shouldIgnoreGhostPointer(e, `polyfit:bank:${pieceId}`)) return;
       this.rotatePiece(pieceId);
       this.renderer.render();
       return;
@@ -311,7 +314,6 @@ export class PolyfitInput {
   }
 
   handleDown(e) {
-    if (isSyntheticMousePointer(e)) return;
     e.preventDefault();
     if (this.dragging) return;
 
@@ -322,6 +324,7 @@ export class PolyfitInput {
     // Check bank area first (bank is below grid in canvas)
     const bankPieceId = this.renderer.getBankPieceAt(localX, localY);
     if (bankPieceId !== null) {
+      if (shouldIgnoreGhostPointer(e, `polyfit:bank:${bankPieceId}`)) return;
       this.onSelectPiece?.(bankPieceId);
       this.pressingBank = {
         pieceId: bankPieceId,
@@ -340,6 +343,7 @@ export class PolyfitInput {
     const boardId = this.engine.board[y * this.engine.size + x];
 
     if (boardId !== null) {
+      if (shouldIgnoreGhostPointer(e, `polyfit:board:${boardId}`)) return;
       this.pressingBoard = {
         pieceId: boardId,
         pointerId: e.pointerId,

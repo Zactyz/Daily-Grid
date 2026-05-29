@@ -1,9 +1,12 @@
 /**
- * Prevent duplicate gameplay actions from touch + synthetic mouse pointer events
- * and from rapid double-taps on the same target.
+ * Shared touch/pointer deduplication for all Daily Grid games.
+ *
+ * iOS/WebKit fires pointerdown (touch) then a synthetic pointerdown (mouse)
+ * for the same tap. We record real touches and ignore only the follow-up ghost.
+ * Real taps (touch or desktop mouse) are never rate-limited.
  */
 
-const recentTapByKey = new Map();
+const ghostTapAt = new Map();
 let lastTouchPointerUpAt = 0;
 
 /** Skip ghost mouse events that follow a touch on iOS/WebKit. */
@@ -17,31 +20,41 @@ export function noteTouchPointerUp(event) {
   }
 }
 
+function ghostKey(key) {
+  return `ghost:${key}`;
+}
+
 /**
- * @param {string} key - Stable id for the tap target (cell, edge, piece, etc.)
- * @param {number} [cooldownMs=280]
- * @returns {true} if this tap should be ignored
+ * Call at the start of any gameplay pointer handler that mutates state.
+ * @returns {true} if this event should be ignored
  */
-export function isDuplicateGameplayTap(key, cooldownMs = 280) {
-  const now = performance.now();
-  const prev = recentTapByKey.get(key);
-  if (prev != null && now - prev < cooldownMs) return true;
-  recentTapByKey.set(key, now);
+export function shouldIgnoreGhostPointer(event, key) {
+  if (!key) return false;
+
+  const gk = ghostKey(key);
+
+  if (event.pointerType === 'touch') {
+    ghostTapAt.set(gk, performance.now());
+    return false;
+  }
+
+  if (event.pointerType === 'mouse' && event.button !== 0) return false;
+  if (!isSyntheticMousePointer(event)) return false;
+
+  const prev = ghostTapAt.get(gk);
+  if (prev != null && performance.now() - prev < 450) return true;
+  ghostTapAt.set(gk, performance.now());
   return false;
 }
 
 /**
- * @param {PointerEvent} event
- * @param {() => void} handler
- * @param {{ key?: string, getKey?: (event: PointerEvent) => string, cooldownMs?: number }} [opts]
+ * @deprecated Use shouldIgnoreGhostPointer — kept for callers migrating gradually.
  */
-export function onGameplayPointerDown(event, handler, opts = {}) {
-  if (event.pointerType === 'mouse' && event.button !== 0) return;
-  if (isSyntheticMousePointer(event)) return;
-
-  const key = opts.getKey?.(event) ?? opts.key;
-  if (key != null && isDuplicateGameplayTap(key, opts.cooldownMs ?? 280)) return;
-
-  event.preventDefault();
-  handler(event);
+export function isDuplicateGameplayTap(key, cooldownMs = 280) {
+  const gk = ghostKey(key);
+  const now = performance.now();
+  const prev = ghostTapAt.get(gk);
+  if (prev != null && now - prev < cooldownMs) return true;
+  ghostTapAt.set(gk, now);
+  return false;
 }

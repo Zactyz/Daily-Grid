@@ -1,5 +1,5 @@
 import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId } from '../common/utils.js';
-import { isSyntheticMousePointer, isDuplicateGameplayTap } from '../common/pointer-tap.js';
+import { shouldIgnoreGhostPointer } from '../common/pointer-tap.js';
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
@@ -952,9 +952,8 @@ function applySavedValues(savedValues) {
 
 function handleCellPointer(event) {
   if (event.pointerType === 'mouse' && event.button !== 0) return;
-  if (isSyntheticMousePointer(event)) return;
   const index = Number(event.currentTarget.dataset.index);
-  if (isDuplicateGameplayTap(`bits:${index}`)) return;
+  if (shouldIgnoreGhostPointer(event, `bits:${index}`)) return;
   event.preventDefault();
   handleCellAction(event.currentTarget, index);
 }

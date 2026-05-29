@@ -1,4 +1,4 @@
-import { isSyntheticMousePointer, noteTouchPointerUp } from '../common/pointer-tap.js';
+import { shouldIgnoreGhostPointer, noteTouchPointerUp } from '../common/pointer-tap.js';
 
 export class SnakeInput {
   constructor(canvas, engine, renderer, onUpdate, onValidationCheck) {
@@ -31,7 +31,6 @@ export class SnakeInput {
   
   handlePointerDown(e) {
     if (this.engine.state.isPaused || this.engine.state.isComplete) return;
-    if (isSyntheticMousePointer(e)) return;
 
     e.preventDefault();
     this.canvas.setPointerCapture?.(e.pointerId);
@@ -40,6 +39,7 @@ export class SnakeInput {
     if (!cell) return;
     
     const [x, y] = cell;
+    if (shouldIgnoreGhostPointer(e, `snake:${x},${y}`)) return;
     
     const existingIdx = this.engine.state.path.findIndex(([px, py]) => px === x && py === y);
     if (existingIdx !== -1) {

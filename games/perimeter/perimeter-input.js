@@ -1,5 +1,5 @@
 import { normalizeWall } from '../common/utils.js';
-import { isSyntheticMousePointer, noteTouchPointerUp } from '../common/pointer-tap.js';
+import { shouldIgnoreGhostPointer, noteTouchPointerUp } from '../common/pointer-tap.js';
 
 export class PerimeterInput {
   constructor(canvas, engine, renderer, callbacks = {}) {
@@ -51,7 +51,6 @@ export class PerimeterInput {
   handlePointerDown(event) {
     if (this.engine?.isComplete || this.engine?.isPaused) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    if (isSyntheticMousePointer(event)) return;
     event.preventDefault();
 
     const edge = this.renderer.getNearestEdge(event.clientX, event.clientY);
@@ -59,6 +58,7 @@ export class PerimeterInput {
 
     const [a, b] = edge;
     const key = normalizeWall(a, b);
+    if (shouldIgnoreGhostPointer(event, `perimeter:${key}`)) return;
 
     this.dragging = true;
     this.changed.clear();

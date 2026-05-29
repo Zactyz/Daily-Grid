@@ -1,4 +1,4 @@
-import { isSyntheticMousePointer, noteTouchPointerUp } from '../common/pointer-tap.js';
+import { shouldIgnoreGhostPointer, noteTouchPointerUp } from '../common/pointer-tap.js';
 
 export class PathwaysInput {
   constructor(canvas, engine, renderer, onUpdate, onValidationCheck) {
@@ -35,7 +35,6 @@ export class PathwaysInput {
   
   handlePointerDown(e) {
     if (this.engine.state.isPaused || this.engine.state.isComplete) return;
-    if (isSyntheticMousePointer(e)) return;
 
     e.preventDefault();
     this.canvas.setPointerCapture?.(e.pointerId);
@@ -44,6 +43,7 @@ export class PathwaysInput {
     if (!cell) return;
     
     const [x, y] = cell;
+    if (shouldIgnoreGhostPointer(e, `pathways:${x},${y}`)) return;
     
     // Check what's at this cell
     const endpointColor = this.engine.isEndpoint(x, y);
