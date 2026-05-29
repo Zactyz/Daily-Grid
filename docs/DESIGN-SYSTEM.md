@@ -275,7 +275,7 @@ The shell (`shell-controller.js` → `initTouchGuards`) blocks rapid second `tou
 | `games/common/pointer-tap.js` | `shouldIgnoreGhostPointer(event, key)` — all nine games use the same helper; touch marks the target, only the follow-up synthetic mouse is ignored (rapid real taps are never rate-limited) |
 | `pointerdown` (not `click`) | Fast-tap grid games (Bits, Lattice); `click` alone doubles actions on touch |
 | `touch-action: none` on `.game-touch` | Default in `shell.css` for all boards; do not override with `manipulation` on cells (allows scroll nudge on double-tap when the page is tall) |
-| Shell scroll lock | `initTouchGuards` pins `scrollY` during any touch on `.game-touch` / `#game-container` / gameplay canvases |
+| Shell scroll lock | `initTouchGuards` pins `scrollY` on `touchmove` over the board; disabled while start/pause overlays are visible |
 
 Document-level settings: `touch-action: manipulation` on `html, body`, `overscroll-behavior-y: none`, and `visualViewport` clamp on `touchend` to correct iOS scroll offset drift.
 

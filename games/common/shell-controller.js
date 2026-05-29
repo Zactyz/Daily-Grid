@@ -38,8 +38,24 @@ const RESUME_ICON = `
 
 let touchGuardInitialized = false;
 
+const SHELL_OVERLAY_SELECTOR = '#start-overlay, #pause-overlay, .shell-start-overlay';
+
+function isShellOverlayTouch(target) {
+  return !!target?.closest?.(SHELL_OVERLAY_SELECTOR);
+}
+
+function isGameplayScrollLockActive() {
+  const start = document.getElementById('start-overlay');
+  if (start && !start.classList.contains('hidden')) return false;
+  if (document.getElementById('game-container')?.classList.contains('prestart')) return false;
+  const pause = document.getElementById('pause-overlay');
+  if (pause && !pause.classList.contains('hidden')) return false;
+  return true;
+}
+
 function isGameplayTouchTarget(target) {
   if (!target) return false;
+  if (isShellOverlayTouch(target)) return false;
   if (target.closest?.('input, textarea, [contenteditable="true"]')) return false;
   if (target.closest?.('.game-touch')) return true;
   if (target.closest?.('#game-container')) return true;
@@ -89,9 +105,10 @@ function initTouchGuards() {
   };
 
   document.addEventListener('touchstart', (event) => {
+    if (!isGameplayScrollLockActive()) return;
     if (!isGameplayTouchTarget(event.target)) return;
     if (gameplayScrollLockY == null) gameplayScrollLockY = window.scrollY;
-    event.preventDefault();
+    // Do not preventDefault here — it blocks click synthesis on start/pause overlays.
     clampGameplayScroll();
   }, { passive: false, capture: true });
 
