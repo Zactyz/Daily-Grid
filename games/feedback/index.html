@@ -15,12 +15,20 @@
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
   <style>
+    /* Match the body background so a short page never reveals a darker band
+       under the floating tab bar when the mobile toolbar collapses. */
+    html {
+      background: var(--dg-bg);
+      min-height: 100%;
+    }
     body {
       font-family: var(--dg-font-ui);
       background: var(--dg-bg);
       color: var(--dg-text);
       min-height: 100dvh;
       margin: 0;
+      display: flex;
+      flex-direction: column;
     }
     body::before {
       content: '';
