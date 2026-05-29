@@ -1,4 +1,5 @@
 import { getPTDateYYYYMMDD, formatTime, getOrCreateAnonId, hashString } from '../common/utils.js';
+import { isSyntheticMousePointer, isDuplicateGameplayTap, noteTouchPointerUp } from '../common/pointer-tap.js';
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
@@ -384,6 +385,7 @@ function getIslandAtPoint(clientX, clientY) {
 
 function handlePointerDown(event) {
   if (isComplete) return;
+  if (isSyntheticMousePointer(event)) return;
   event.preventDefault();
   if (els.canvas?.setPointerCapture) els.canvas.setPointerCapture(event.pointerId);
   pointerDownIsland = getIslandAtPoint(event.clientX, event.clientY);
@@ -391,12 +393,19 @@ function handlePointerDown(event) {
 
 function handlePointerUp(event) {
   if (isComplete) return;
+  noteTouchPointerUp(event);
+  if (isSyntheticMousePointer(event)) return;
   event.preventDefault();
   if (els.canvas?.releasePointerCapture) els.canvas.releasePointerCapture(event.pointerId);
   const endIsland = getIslandAtPoint(event.clientX, event.clientY);
   if (!endIsland) {
     const edgeHit = getEdgeAtPoint(event.clientX, event.clientY);
     if (edgeHit) {
+      const tapKey = `hashi:edge:${edgeHit.a}:${edgeHit.b}`;
+      if (isDuplicateGameplayTap(tapKey)) {
+        pointerDownIsland = null;
+        return;
+      }
       if (!timerStarted) startTimer();
       if (isPaused) resumeTimer();
       cycleBridge(edgeHit.a, edgeHit.b);
@@ -417,7 +426,10 @@ function handlePointerUp(event) {
 
   if (pointerDownIsland === endIsland) {
     if (selected && selected !== endIsland) {
-      cycleBridge(selected, endIsland);
+      const pairKey = `hashi:edge:${[selected, endIsland].sort().join(':')}`;
+      if (!isDuplicateGameplayTap(pairKey)) {
+        cycleBridge(selected, endIsland);
+      }
       pointerDownIsland = null;
       return;
     }
@@ -432,7 +444,12 @@ function handlePointerUp(event) {
     return;
   }
 
-  cycleBridge(pointerDownIsland, endIsland);
+  {
+    const pairKey = `hashi:edge:${[pointerDownIsland, endIsland].sort().join(':')}`;
+    if (!isDuplicateGameplayTap(pairKey)) {
+      cycleBridge(pointerDownIsland, endIsland);
+    }
+  }
   pointerDownIsland = null;
 }
 

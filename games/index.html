@@ -564,7 +564,7 @@
 
   <script type="module">
     import { getPTDateYYYYMMDD } from '/games/common/utils.js';
-    import { GAME_META as GAME_META_LIST } from '/games/common/games.js';
+    import { GAME_META as GAME_META_LIST, sortGamesByPlayHistory } from '/games/common/games.js';
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
     import { mountFeedbackHubCard, maybeShowFeedbackModal } from '/games/common/feedback-hub.js';
@@ -598,14 +598,37 @@
       const dailyList = document.getElementById('daily-list');
       const completedList = document.getElementById('completed-list');
       const completedSection = document.getElementById('completed-section');
-      const cards = Array.from(document.querySelectorAll('#daily-list a.app-card[data-game-id], #completed-list a.app-card[data-game-id]'))
-        .sort((a, b) => {
-          const aName = gameMeta[a.dataset.gameId]?.name || '';
-          const bName = gameMeta[b.dataset.gameId]?.name || '';
-          return aName.localeCompare(bName);
-        });
-      let completedCount = 0;
+      const cards = Array.from(document.querySelectorAll('#daily-list a.app-card[data-game-id], #completed-list a.app-card[data-game-id]'));
+
+      const incompleteCards = [];
+      const completedCards = [];
       cards.forEach((card) => {
+        if (isCompletedToday(card.dataset.gameId)) completedCards.push(card);
+        else incompleteCards.push(card);
+      });
+
+      const incompleteGames = incompleteCards
+        .map((card) => gameMeta[card.dataset.gameId])
+        .filter(Boolean);
+      const puzzleId = getPTDateYYYYMMDD();
+      const playOrder = sortGamesByPlayHistory(incompleteGames, { puzzleId });
+      const orderRank = new Map(playOrder.map((game, index) => [game.id, index]));
+      incompleteCards.sort((a, b) => {
+        const ar = orderRank.get(a.dataset.gameId) ?? 999;
+        const br = orderRank.get(b.dataset.gameId) ?? 999;
+        if (ar !== br) return ar - br;
+        const aName = gameMeta[a.dataset.gameId]?.name || '';
+        const bName = gameMeta[b.dataset.gameId]?.name || '';
+        return aName.localeCompare(bName);
+      });
+      completedCards.sort((a, b) => {
+        const aName = gameMeta[a.dataset.gameId]?.name || '';
+        const bName = gameMeta[b.dataset.gameId]?.name || '';
+        return aName.localeCompare(bName);
+      });
+
+      let completedCount = 0;
+      [...incompleteCards, ...completedCards].forEach((card) => {
         const id = card.dataset.gameId;
         const completed = isCompletedToday(id);
         if (completed) completedCount += 1;

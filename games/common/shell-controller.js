@@ -41,13 +41,18 @@ let touchGuardInitialized = false;
 function shouldAllowDoubleTap(target) {
   if (!target) return false;
   if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return true;
-  // Polyfit piece bank lives inside this canvas; let its own pointer handling
-  // own rapid taps so the global double-tap guard doesn't nudge page scroll.
-  if (target.closest?.('#polyfit-canvas')) return true;
-  // Gameplay surfaces handle their own rapid taps (Bits grid, etc.)
-  if (target.closest?.('#game-container.game-touch')) return true;
-  // Gameplay surfaces handle their own rapid taps (Bits grid, etc.)
-  if (target.closest?.('#game-container.game-touch')) return true;
+  if (target.closest?.('.game-touch')) return true;
+  if (target.closest?.('#game-container')) return true;
+  if (target.closest?.('#board')) return true;
+  const gameplayCanvasIds = new Set([
+    'polyfit-canvas',
+    'conduit-canvas',
+    'perimeter-canvas',
+    'hashi-canvas',
+    'game-canvas'
+  ]);
+  if (gameplayCanvasIds.has(target.id)) return true;
+  if (target.closest?.('#shikaku-grid')) return true;
   return false;
 }
 

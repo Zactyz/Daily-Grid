@@ -1,3 +1,5 @@
+import { isSyntheticMousePointer, noteTouchPointerUp } from '../common/pointer-tap.js';
+
 // Separate drag thresholds: bank pieces benefit from a larger threshold to avoid
 // accidental drags when the user intends to tap-to-rotate.
 const BOARD_DRAG_THRESHOLD = 4;
@@ -218,6 +220,7 @@ export class PolyfitInput {
   }
 
   handleGlobalDragEnd(e) {
+    noteTouchPointerUp(e);
     // Bank press: tap to rotate
     if (this.pressingBank && !this.dragging) {
       if (this.pressingBank.pointerId !== null && e.pointerId !== this.pressingBank.pointerId) return;
@@ -308,6 +311,7 @@ export class PolyfitInput {
   }
 
   handleDown(e) {
+    if (isSyntheticMousePointer(e)) return;
     e.preventDefault();
     if (this.dragging) return;
 

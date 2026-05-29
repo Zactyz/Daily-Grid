@@ -161,24 +161,120 @@ export function recordGameCompletion(gameId, puzzleId) {
   savePlayStats(stats);
 }
 
-function getPersonalizedOrder(games, { now = Date.now(), minDays = MIN_DAYS_FOR_PERSONALIZED } = {}) {
-  const stats = loadPlayStats();
-  if (!stats.daysWithCompletion || stats.daysWithCompletion.length < minDays) return games;
+function getDailyStateStorageKey(gameId, puzzleId) {
+  if (gameId === 'polyfit') return `dailygrid_polyfit_state_v2_daily_${puzzleId}`;
+  if (gameId === 'snake') return 'dailygrid_snake_progress';
+  if (gameId === 'pathways') return 'dailygrid_pathways_progress';
+  if (gameId === 'lattice') return `dailygrid_lattice_progress_${puzzleId}`;
+  return `dailygrid_${gameId}_state_daily_${puzzleId}`;
+}
 
-  const maxCompletions = Math.max(1, ...games.map(game => stats.games?.[game.id]?.completions || 0));
+function readDailyProgress(gameId, puzzleId) {
+  try {
+    const raw = localStorage.getItem(getDailyStateStorageKey(gameId, puzzleId));
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function isProgressForToday(data, gameId, puzzleId) {
+  if (!data) return false;
+  if (gameId === 'snake' || gameId === 'pathways' || gameId === 'lattice') {
+    return data.puzzleId === puzzleId;
+  }
+  return true;
+}
+
+function hasMeaningfulAttempt(data, gameId) {
+  if (!data || data.isComplete) return false;
+  if (data.timerStarted) return true;
+
+  switch (gameId) {
+    case 'snake':
+      return Array.isArray(data.path) && data.path.length > 0;
+    case 'pathways':
+      return data.paths && Object.values(data.paths).some((path) => Array.isArray(path) && path.length > 0);
+    case 'lattice':
+      return data.hasSolved === true ? false : Boolean(data.timerStarted);
+    case 'bits':
+    case 'hashi':
+      return Array.isArray(data.bridges) && data.bridges.some((bridge) => (bridge?.count || 0) > 0);
+    case 'conduit':
+      return (data.moveCount || 0) > 0;
+    case 'perimeter':
+      return Array.isArray(data.edges) && data.edges.length > 0;
+    case 'shikaku':
+      return Array.isArray(data.rectangles) && data.rectangles.length > 0;
+    case 'polyfit':
+      return (Array.isArray(data.pieces) && data.pieces.some((piece) => piece?.placed))
+        || (Array.isArray(data.board) && data.board.some((cell) => cell != null));
+    default:
+      return false;
+  }
+}
+
+/** True when today's daily puzzle was started but not finished or submitted. */
+export function isGameAttemptedToday(game, puzzleId) {
+  if (!game?.id || !puzzleId || isGameFinishedToday(game, puzzleId)) return false;
+  const data = readDailyProgress(game.id, puzzleId);
+  if (!isProgressForToday(data, game.id, puzzleId)) return false;
+  return hasMeaningfulAttempt(data, game.id);
+}
+
+export function isGameFinishedToday(game, puzzleId) {
+  if (!game || !puzzleId) return false;
+  try {
+    if (game.completedKeyPrefix) {
+      const completedKey = `${game.completedKeyPrefix}${puzzleId}`;
+      if (localStorage.getItem(completedKey) === 'true') return true;
+    }
+    const submittedKey = `${game.submittedKeyPrefix}${puzzleId}`;
+    return localStorage.getItem(submittedKey) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Order games by recent play history. In-progress attempts for today are pushed to the end.
+ */
+export function sortGamesByPlayHistory(games, { minDays = MIN_DAYS_FOR_PERSONALIZED, puzzleId } = {}) {
+  if (!games?.length) return games;
+
+  const stats = loadPlayStats();
+  const useHistory = stats.daysWithCompletion && stats.daysWithCompletion.length >= minDays;
+  const catalogIndex = new Map(GAME_META.map((game, index) => [game.id, index]));
+
   return [...games].sort((a, b) => {
+    if (puzzleId) {
+      const aAttempted = isGameAttemptedToday(a, puzzleId);
+      const bAttempted = isGameAttemptedToday(b, puzzleId);
+      if (aAttempted !== bAttempted) return aAttempted ? 1 : -1;
+    }
+
+    if (!useHistory) {
+      return (catalogIndex.get(a.id) ?? 0) - (catalogIndex.get(b.id) ?? 0);
+    }
+
     const aStats = stats.games?.[a.id] || {};
     const bStats = stats.games?.[b.id] || {};
-    const aPlays = (aStats.completions || 0) / maxCompletions;
-    const bPlays = (bStats.completions || 0) / maxCompletions;
-    const aDaysSince = aStats.lastCompleted ? (now - aStats.lastCompleted) / 86400000 : 999;
-    const bDaysSince = bStats.lastCompleted ? (now - bStats.lastCompleted) / 86400000 : 999;
-    const aRecency = Math.max(0, 1 - (aDaysSince / 14));
-    const bRecency = Math.max(0, 1 - (bDaysSince / 14));
-    const aScore = (aPlays * 0.6) + (aRecency * 0.4);
-    const bScore = (bPlays * 0.6) + (bRecency * 0.4);
-    return bScore - aScore;
+    const aLast = aStats.lastCompleted || 0;
+    const bLast = bStats.lastCompleted || 0;
+
+    if (bLast !== aLast) return bLast - aLast;
+
+    const aPlays = aStats.completions || 0;
+    const bPlays = bStats.completions || 0;
+    if (bPlays !== aPlays) return bPlays - aPlays;
+
+    return (catalogIndex.get(a.id) ?? 0) - (catalogIndex.get(b.id) ?? 0);
   });
+}
+
+function getPersonalizedOrder(games, options) {
+  return sortGamesByPlayHistory(games, options);
 }
 
 export function getUncompletedGames(currentId, puzzleId) {
@@ -186,25 +282,15 @@ export function getUncompletedGames(currentId, puzzleId) {
     return getOtherGames(currentId);
   }
 
-  return getOtherGames(currentId).filter(game => {
-    try {
-      const completedKey = game.completedKeyPrefix ? `${game.completedKeyPrefix}${puzzleId}` : null;
-      if (completedKey && localStorage.getItem(completedKey) === 'true') return false;
-      const submittedKey = `${game.submittedKeyPrefix}${puzzleId}`;
-      return localStorage.getItem(submittedKey) !== 'true';
-    } catch (error) {
-      console.warn('Unable to read completed flag for', game.id, error);
-      return true;
-    }
-  });
+  return getOtherGames(currentId).filter(game => !isGameFinishedToday(game, puzzleId));
 }
 
 export function getUncompletedGamesSorted(currentId, puzzleId) {
   const base = getUncompletedGames(currentId, puzzleId);
-  return getPersonalizedOrder(base);
+  return getPersonalizedOrder(base, { puzzleId });
 }
 
 export function getDefaultNextGame(currentId, puzzleId) {
-  const uncompleted = getUncompletedGames(currentId, puzzleId);
-  return uncompleted.length > 0 ? uncompleted[0] : null;
+  const sorted = getUncompletedGamesSorted(currentId, puzzleId);
+  return sorted.length > 0 ? sorted[0] : null;
 }

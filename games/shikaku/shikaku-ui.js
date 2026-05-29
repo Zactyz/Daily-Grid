@@ -8,6 +8,7 @@ import {
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
+import { isSyntheticMousePointer, noteTouchPointerUp } from '../common/pointer-tap.js';
 
 const STATE_PREFIX = 'dailygrid_shikaku_state_';
 const SIZE_RANGE = { min: 7, max: 9 };
@@ -605,6 +606,7 @@ function endDrag(clientX, clientY, target) {
 
 function handlePointerDown(event) {
   if (activePointerId !== null) return;
+  if (isSyntheticMousePointer(event)) return;
   event.preventDefault();
   activePointerId = event.pointerId;
   if (event.currentTarget && event.currentTarget.setPointerCapture) {
@@ -622,6 +624,8 @@ function handlePointerMove(event) {
 
 function handlePointerUp(event) {
   if (activePointerId !== event.pointerId) return;
+  noteTouchPointerUp(event);
+  if (isSyntheticMousePointer(event)) return;
   event.preventDefault();
   if (dragStart) {
     endDrag(event.clientX, event.clientY, event.target);

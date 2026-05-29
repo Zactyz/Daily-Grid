@@ -271,8 +271,9 @@ The shell (`shell-controller.js` → `initTouchGuards`) blocks rapid second `tou
 
 | Pattern | When to use |
 |---------|-------------|
-| `#game-container.game-touch` | Wrap the playable board; exempts children from the global double-tap guard |
-| `pointerdown` + debounce (~280ms per cell) | Fast-tap grid games (Bits); prefer over `click` alone on touch |
+| `#game-container.game-touch` or `.game-touch` | Wrap the playable board; exempts children from the global double-tap guard |
+| `games/common/pointer-tap.js` | Filter synthetic mouse after touch and debounce duplicate pointerdown on the same target |
+| `pointerdown` (not `click`) | Fast-tap grid games (Bits, Lattice); `click` alone doubles actions on touch |
 | `touch-action: manipulation` | Button grids where zoom must stay disabled but taps should feel instant |
 | `touch-action: none` | Canvas/drag games (Polyfit, Hashi); pair with `preventDefault` on pointer events |
 | `#polyfit-canvas` | Already exempt; uses scroll lock while touching the canvas |

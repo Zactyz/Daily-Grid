@@ -1,3 +1,5 @@
+import { isSyntheticMousePointer, isDuplicateGameplayTap } from '../common/pointer-tap.js';
+
 export class ConduitInput {
   constructor(canvas, engine, renderer, onChange) {
     this.canvas = canvas;
@@ -28,10 +30,12 @@ export class ConduitInput {
   }
 
   _handleDown(event) {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (isSyntheticMousePointer(event)) return;
     event.preventDefault();
-    if (event.button && event.button !== 0) return;
     const idx = this._cellFromEvent(event);
     if (idx == null) return;
+    if (isDuplicateGameplayTap(`conduit:${idx}`)) return;
     const didRotate = this.engine.rotateCell(idx);
     if (didRotate) this.onChange?.();
   }

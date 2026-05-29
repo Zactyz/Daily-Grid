@@ -1,3 +1,5 @@
+import { isSyntheticMousePointer, noteTouchPointerUp } from '../common/pointer-tap.js';
+
 export class PathwaysInput {
   constructor(canvas, engine, renderer, onUpdate, onValidationCheck) {
     this.canvas = canvas;
@@ -33,7 +35,8 @@ export class PathwaysInput {
   
   handlePointerDown(e) {
     if (this.engine.state.isPaused || this.engine.state.isComplete) return;
-    
+    if (isSyntheticMousePointer(e)) return;
+
     e.preventDefault();
     this.canvas.setPointerCapture?.(e.pointerId);
     
@@ -144,6 +147,7 @@ export class PathwaysInput {
   }
   
   handlePointerUp(e) {
+    noteTouchPointerUp(e);
     if (this.isDragging) {
       // Check for validation messages when user finishes a drag
       this.onValidationCheck();

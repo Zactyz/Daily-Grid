@@ -1,5 +1,5 @@
 import { formatTime, getOrCreateAnonId, getPTDateYYYYMMDD } from './pathways-utils.js';
-import { getUncompletedGames as getCrossGamePromo } from '../common/games.js';
+import { getUncompletedGamesSorted as getCrossGamePromo } from '../common/games.js';
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';

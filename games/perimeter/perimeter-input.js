@@ -1,4 +1,5 @@
 import { normalizeWall } from '../common/utils.js';
+import { isSyntheticMousePointer, noteTouchPointerUp } from '../common/pointer-tap.js';
 
 export class PerimeterInput {
   constructor(canvas, engine, renderer, callbacks = {}) {
@@ -49,17 +50,19 @@ export class PerimeterInput {
 
   handlePointerDown(event) {
     if (this.engine?.isComplete || this.engine?.isPaused) return;
-    if (event.button && event.button !== 0) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (isSyntheticMousePointer(event)) return;
     event.preventDefault();
 
     const edge = this.renderer.getNearestEdge(event.clientX, event.clientY);
     if (!edge) return;
 
+    const [a, b] = edge;
+    const key = normalizeWall(a, b);
+
     this.dragging = true;
     this.changed.clear();
 
-    const [a, b] = edge;
-    const key = normalizeWall(a, b);
     const current = this.engine.edgeStates.get(key) || 0;
 
     // tap on path = turn off, tap off path = draw line
@@ -89,7 +92,8 @@ export class PerimeterInput {
     this.renderer.render();
   }
 
-  handlePointerUp() {
+  handlePointerUp(event) {
+    if (event) noteTouchPointerUp(event);
     this.dragging = false;
     this.changed.clear();
     this.renderer.setHoverEdge(null);
