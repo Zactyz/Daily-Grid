@@ -90,6 +90,7 @@ let timerStarted = false;
 let isPaused = false;
 let hasSolved = false;
 let isPrestart = true;
+const cellEls = new Map();
 let completionMs = null;
 let isInReplayMode = loadReplayMode();
 let solutionShown = false;
@@ -214,6 +215,25 @@ function cellText(v) {
   if (v === 1) return '×';
   if (v === 2) return '✓';
   return '';
+}
+
+// Update existing cell elements in place from current state (no DOM rebuild).
+function refreshCells() {
+  for (const cat of puzzle.categories) {
+    if (cat.category === puzzle.identityCategory) continue;
+    const grid = state[cat.category];
+    for (let i = 0; i < puzzle.size; i++) {
+      for (let j = 0; j < puzzle.size; j++) {
+        const el = cellEls.get(`${cat.category}:${i}:${j}`);
+        if (!el) continue;
+        const v = grid[i][j];
+        const cls = `${cellClass(v)} celebrate-target`;
+        if (el.className !== cls) el.className = cls;
+        const txt = cellText(v);
+        if (el.textContent !== txt) el.textContent = txt;
+      }
+    }
+  }
 }
 
 function cellClass(v) {
@@ -880,6 +900,8 @@ function render() {
     els.clues.appendChild(li);
   });
 
+  cellEls.clear();
+
   const container = document.createElement('div');
   container.className = 'space-y-5';
 
@@ -946,6 +968,7 @@ function render() {
         div.className = cellClass(state[cat.category][i][j]);
         div.classList.add('celebrate-target');
         div.textContent = cellText(state[cat.category][i][j]);
+        cellEls.set(`${cat.category}:${i}:${j}`, div);
 
         div.addEventListener('pointerdown', (event) => {
           if (hasSolved) return;
@@ -961,7 +984,9 @@ function render() {
 
           ensureTimerStarted();
           toggleCell(cat.category, i, j);
-          render();
+          // Surgical in-place refresh (no DOM rebuild) avoids layout thrash that
+          // nudges page scroll on rapid taps on tall pages.
+          refreshCells();
           updateClueStyles();
           tryAutoSolve();
           saveProgress(false);
