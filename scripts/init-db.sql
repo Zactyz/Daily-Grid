@@ -195,6 +195,27 @@ CREATE INDEX IF NOT EXISTS idx_polyfit_puzzle_created
 CREATE INDEX IF NOT EXISTS idx_polyfit_puzzle_anon
   ON polyfit_scores(puzzle_id, anon_id);
 
+-- Sliders game leaderboard table
+CREATE TABLE IF NOT EXISTS sliders_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  puzzle_id TEXT NOT NULL,
+  anon_id TEXT NOT NULL,
+  time_ms INTEGER NOT NULL,
+  hints_used INTEGER DEFAULT 0,
+  initials TEXT CHECK(length(initials) <= 3),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(puzzle_id, anon_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sliders_puzzle_time
+  ON sliders_scores(puzzle_id, time_ms);
+
+CREATE INDEX IF NOT EXISTS idx_sliders_puzzle_created
+  ON sliders_scores(puzzle_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_sliders_puzzle_anon
+  ON sliders_scores(puzzle_id, anon_id);
+
 -- Push notification subscriptions
 CREATE TABLE IF NOT EXISTS push_subscriptions (
   id                   INTEGER PRIMARY KEY AUTOINCREMENT,

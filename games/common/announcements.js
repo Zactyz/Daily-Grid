@@ -36,7 +36,7 @@ const ANNOUNCEMENT_CAMPAIGNS = [
         visual: 'brand'
       },
       {
-        title: 'Nine puzzles, a new one each day',
+        title: 'Ten puzzles, a new one each day',
         body: 'A whole lineup of original grid puzzles, each with a fresh daily challenge.',
         visual: 'gameGrid'
       },

@@ -100,6 +100,17 @@ export const GAME_META = [
     completedKeyPrefix: 'dailygrid_polyfit_completed_',
     theme: { bg: 'bg-amber-500/10', border: 'border-amber-400/30', text: 'text-amber-300' },
     shareUrl: 'https://dailygrid.app/games/polyfit/'
+  },
+  {
+    id: 'sliders',
+    name: 'Sliders',
+    tagline: 'Slide the tiles into order.',
+    path: '/games/sliders/',
+    logo: '/games/sliders/sliders-logo.svg',
+    submittedKeyPrefix: 'dailygrid_sliders_submitted_',
+    completedKeyPrefix: 'dailygrid_sliders_completed_',
+    theme: { bg: 'bg-violet-500/10', border: 'border-violet-400/30', text: 'text-violet-300' },
+    shareUrl: 'https://dailygrid.app/games/sliders/'
   }
 ];
 
@@ -210,6 +221,8 @@ function hasMeaningfulAttempt(data, gameId) {
     case 'polyfit':
       return (Array.isArray(data.pieces) && data.pieces.some((piece) => piece?.placed))
         || (Array.isArray(data.board) && data.board.some((cell) => cell != null));
+    case 'sliders':
+      return (data.moveCount || 0) > 0;
     default:
       return false;
   }

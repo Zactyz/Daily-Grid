@@ -25,7 +25,7 @@ const BATCH_SIZE = 100;
 // All game score tables — used to detect whether a subscriber has played today.
 const GAME_TABLES = [
   'snake_scores', 'pathways_scores', 'lattice_scores', 'bits_scores',
-  'hashi_scores', 'shikaku_scores', 'conduit_scores', 'perimeter_scores', 'polyfit_scores',
+  'hashi_scores', 'shikaku_scores', 'conduit_scores', 'perimeter_scores', 'polyfit_scores', 'sliders_scores',
 ];
 
 /** Returns date in YYYY-MM-DD format in America/Los_Angeles time. */
