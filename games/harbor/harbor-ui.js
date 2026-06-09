@@ -136,21 +136,32 @@ function ensureBoardDom() {
 }
 
 function createPieceElement(piece) {
-  const el = document.createElement('button');
-  el.type = 'button';
+  const el = document.createElement('div');
   el.dataset.pieceId = piece.id;
   el.className = `harbor-piece harbor-piece-${piece.orient === 'H' ? 'h' : 'v'}`;
   if (piece.isGoal) {
     el.classList.add('harbor-piece-goal');
+    el.setAttribute('aria-hidden', 'true');
+    return el;
   }
 
-  el.setAttribute('aria-label', piece.isGoal ? 'Goal car (exits automatically)' : `Vehicle ${piece.id}`);
-  if (!piece.isGoal) {
-    el.addEventListener('click', (event) => {
-      if (event.target.closest('.harbor-dir-btn')) return;
-      handlePieceClick(piece.id);
-    });
-  }
+  const hit = document.createElement('button');
+  hit.type = 'button';
+  hit.className = 'harbor-piece-hit';
+  hit.setAttribute('aria-label', `Vehicle ${piece.id}`);
+  hit.addEventListener('click', () => handlePieceClick(piece.id));
+  el.appendChild(hit);
+
+  const dirBtn = document.createElement('button');
+  dirBtn.type = 'button';
+  dirBtn.className = 'harbor-dir-btn hidden';
+  dirBtn.setAttribute('aria-label', 'Flip slide direction');
+  dirBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    handleDirectionToggle(piece.id);
+  });
+  el.appendChild(dirBtn);
+
   return el;
 }
 
@@ -162,11 +173,16 @@ function updatePieceElement(el, piece) {
   el.classList.toggle('harbor-piece-selectable', selectable);
   el.classList.toggle('harbor-piece-selected', idx >= 0);
   el.classList.toggle('harbor-piece-goal', !!piece.isGoal);
-  el.disabled = piece.isGoal || !selectable;
 
   if (!piece.isGoal) {
     el.style.setProperty('--piece-color', engine.getPieceColor(piece.id));
     el.style.background = engine.getPieceColor(piece.id);
+  }
+
+  const hit = el.querySelector('.harbor-piece-hit');
+  if (hit) {
+    hit.disabled = !selectable;
+    hit.tabIndex = selectable ? 0 : -1;
   }
 
   let badge = el.querySelector('.harbor-piece-badge');
@@ -181,23 +197,14 @@ function updatePieceElement(el, piece) {
     badge.remove();
   }
 
-  let dirBtn = el.querySelector('.harbor-dir-btn');
-  if (idx >= 0 && planStep) {
-    if (!dirBtn) {
-      dirBtn = document.createElement('button');
-      dirBtn.type = 'button';
-      dirBtn.className = 'harbor-dir-btn';
-      dirBtn.setAttribute('aria-label', 'Flip slide direction');
-      dirBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
-        handleDirectionToggle(piece.id);
-      });
-      el.appendChild(dirBtn);
-    }
-    dirBtn.innerHTML = DIR_ICON[dirKey(planStep.dr, planStep.dc)] || '';
+  const dirBtn = el.querySelector('.harbor-dir-btn');
+  if (dirBtn) {
+    const showDir = idx >= 0 && planStep;
+    dirBtn.classList.toggle('hidden', !showDir);
     dirBtn.disabled = !selectable;
-  } else if (dirBtn) {
-    dirBtn.remove();
+    if (showDir) {
+      dirBtn.innerHTML = DIR_ICON[dirKey(planStep.dr, planStep.dc)] || '';
+    }
   }
 
   applyPieceLayout(el, piece);

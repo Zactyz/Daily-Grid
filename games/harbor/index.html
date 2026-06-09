@@ -50,21 +50,23 @@
     .harbor-pieces-layer.harbor-animating .harbor-piece{transition:left .28s cubic-bezier(.4,0,.2,1),top .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1),height .28s cubic-bezier(.4,0,.2,1)}
     .harbor-exit-hole{position:absolute;right:-16px;top:calc(10px + (100% - 20px) * 2 / 5);width:16px;height:calc((100% - 20px) / 5);background:#050508;border:2px solid rgba(95,217,194,.55);border-left:none;border-radius:0 8px 8px 0;box-shadow:inset 0 0 12px rgba(95,217,194,.2),0 0 16px rgba(95,217,194,.12);z-index:1}
     .harbor-exit-hole::after{content:'';position:absolute;inset:2px 3px 2px 0;border-radius:0 5px 5px 0;background:radial-gradient(ellipse at left center,rgba(95,217,194,.25),transparent 70%)}
-    .harbor-piece{position:absolute;border:0;padding:0;margin:0;pointer-events:auto;background:var(--piece-color,#6d7f99);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -2px 0 rgba(0,0,0,.2);transition:box-shadow .15s ease,filter .15s ease,transform .12s ease;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    .harbor-piece{position:absolute;border:0;padding:0;margin:0;pointer-events:auto;background:var(--piece-color,#6d7f99);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -2px 0 rgba(0,0,0,.2);transition:box-shadow .15s ease,filter .15s ease,transform .12s ease;overflow:hidden}
+    .harbor-piece-hit{position:absolute;inset:0;z-index:1;border:0;padding:0;margin:0;background:transparent;cursor:pointer;border-radius:inherit}
+    .harbor-piece-hit:disabled{cursor:default;pointer-events:none}
     .harbor-piece-h{border-radius:6px}
     .harbor-piece-v{border-radius:6px}
     .harbor-piece-goal{background:linear-gradient(180deg,#f5a0a0,#f08080 55%,#d66a6a);cursor:default}
     .harbor-piece-goal::after{content:'';position:absolute;inset:22% 14%;border-radius:4px;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06));pointer-events:none}
-    .harbor-dir-btn{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;border:0;padding:0;margin:0;background:rgba(0,0,0,.22);color:rgba(255,255,255,.92);cursor:pointer;border-radius:inherit}
-    .harbor-dir-btn:hover{background:rgba(0,0,0,.32)}
-    .harbor-dir-btn:active{transform:scale(.96)}
-    .harbor-dir-icon{width:46%;height:46%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
-    .harbor-piece-v .harbor-dir-icon{width:40%;height:52%}
+    .harbor-dir-btn{position:absolute;left:50%;top:50%;z-index:3;transform:translate(-50%,-50%);width:min(52%,2.1rem);height:min(52%,2.1rem);display:flex;align-items:center;justify-content:center;border:0;padding:0;margin:0;background:rgba(0,0,0,.38);color:rgba(255,255,255,.95);cursor:pointer;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+    .harbor-dir-btn.hidden{display:none}
+    .harbor-dir-btn:hover{background:rgba(0,0,0,.5)}
+    .harbor-dir-btn:active{transform:translate(-50%,-50%) scale(.94)}
+    .harbor-dir-icon{width:68%;height:68%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
     .harbor-piece-selectable{cursor:pointer}
     .harbor-piece-selectable:hover{filter:brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 0 1px rgba(95,217,194,.28)}
     .harbor-piece-selectable:active{transform:scale(.985)}
     .harbor-piece-selected{box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 0 0 2px rgba(95,217,194,.65),0 0 14px rgba(95,217,194,.18);filter:saturate(1.08)}
-    .harbor-piece-badge{position:absolute;top:3px;right:4px;z-index:2;font-family:'JetBrains Mono',monospace;font-size:clamp(.56rem,2.6vw,.7rem);font-weight:700;line-height:1;color:#fff;background:rgba(0,0,0,.4);border-radius:4px;padding:1px 4px}
+    .harbor-piece-badge{position:absolute;top:3px;right:4px;z-index:4;font-family:'JetBrains Mono',monospace;font-size:clamp(.56rem,2.6vw,.7rem);font-weight:700;line-height:1;color:#fff;background:rgba(0,0,0,.4);border-radius:4px;padding:1px 4px;pointer-events:none}
     .harbor-tray.harbor-complete .harbor-exit-hole{border-color:rgba(240,128,128,.65);box-shadow:inset 0 0 14px rgba(240,128,128,.22),0 0 18px rgba(240,128,128,.15)}
     @media (max-width:899px){nav{display:none!important}.mobile-app-bar{display:flex}}
   </style>
