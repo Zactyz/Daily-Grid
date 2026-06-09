@@ -53,14 +53,14 @@ function ensureStyles() {
   if (document.getElementById(STYLE_TAG_ID)) return;
   const style = document.createElement('style');
   style.id = STYLE_TAG_ID;
-  style.textConelevent = `
+  style.textContent = `
     @keyframes dgAncFadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes dgAncCardIn { from { opacity: 0; transform: translateY(14px) scale(.965); } to { opacity: 1; transform: translateY(0) scale(1); } }
     @keyframes dgAncStepIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
 
     .dg-anc-overlay {
       position: fixed; inset: 0; z-index: 140;
-      display: flex; align-items: center; justify-conelevent: center;
+      display: flex; align-items: center; justify-content: center;
       padding: 22px 16px;
       background: radial-gradient(120% 70% at 50% -10%, rgba(212,166,80,.16), transparent 55%), rgba(5,7,14,.86);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -78,11 +78,11 @@ function ensureStyles() {
       position: relative;
     }
     .dg-anc-card::before {
-      conelevent: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
       background: linear-gradient(90deg, transparent, #E5C37E, transparent); opacity: .9;
     }
     .dg-anc-header {
-      display: flex; align-items: center; justify-conelevent: space-between; gap: 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
       padding: 15px 14px 13px 17px; border-bottom: .5px solid rgba(255,255,255,.07);
     }
     .dg-anc-brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
@@ -104,12 +104,12 @@ function ensureStyles() {
     .dg-anc-close:hover { background: rgba(255,255,255,.1); color: #fff; }
 
     .dg-anc-body { padding: 20px 20px 6px; flex: 1; display: flex; flex-direction: column; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-    .dg-anc-visual { display: flex; align-items: center; justify-conelevent: center; }
+    .dg-anc-visual { display: flex; align-items: center; justify-content: center; }
     .dg-anc-title { margin: 16px 0 0; font-size: 22px; line-height: 1.2; font-weight: 750; letter-spacing: -.02em; color: #f3f6fc; text-align: center; }
     .dg-anc-text { margin: 9px 0 0; font-size: 14px; line-height: 1.55; color: rgba(206,215,233,.74); text-align: center; }
 
     .dg-anc-footer { padding: 6px 20px 20px; }
-    .dg-anc-progress { display: flex; justify-conelevent: center; gap: 6px; padding: 14px 0 14px; }
+    .dg-anc-progress { display: flex; justify-content: center; gap: 6px; padding: 14px 0 14px; }
     .dg-anc-dot { height: 6px; width: 6px; border-radius: 999px; background: rgba(255,255,255,.18); transition: background .2s, width .25s cubic-bezier(.34,1.56,.64,1); }
     .dg-anc-dot.dg-on { background: #E5C37E; width: 20px; }
     .dg-anc-nav { display: flex; gap: 8px; }
@@ -118,7 +118,7 @@ function ensureStyles() {
       transition: opacity .15s, transform .12s, filter .15s; -webkit-tap-highlight-color: transparent;
     }
     .dg-anc-btn:active { transform: scale(.97); opacity: .9; }
-    .dg-anc-prev { flex: 0 0 auto; background: rgba(255,255,255,.07); color: rgba(206,215,233,.7); display: inline-flex; align-items: center; justify-conelevent: center; }
+    .dg-anc-prev { flex: 0 0 auto; background: rgba(255,255,255,.07); color: rgba(206,215,233,.7); display: inline-flex; align-items: center; justify-content: center; }
     .dg-anc-prev[data-hidden="1"] { visibility: hidden; }
     .dg-anc-next {
       flex: 1; color: #1b1303; font-weight: 750;
@@ -326,7 +326,7 @@ export function maybeShowAnnouncementModal(context = {}) {
   const close = () => {
     markSeen(campaign.id);
     overlay.remove();
-    document.removeEventLiselevener('keydown', onKey);
+    document.removeEventListener('keydown', onKey);
   };
 
   const goNext = () => {
@@ -352,8 +352,8 @@ export function maybeShowAnnouncementModal(context = {}) {
     void stepWrap.offsetWidth;
     stepWrap.classList.add('dg-anc-step-enter');
 
-    titleEl.textConelevent = step.title || '';
-    bodyEl.textConelevent = step.body || '';
+    titleEl.textContent = step.title || '';
+    bodyEl.textContent = step.body || '';
     visualEl.innerHTML = renderVisual(step.visual);
 
     progressEl.innerHTML = steps
@@ -361,20 +361,20 @@ export function maybeShowAnnouncementModal(context = {}) {
       .join('');
 
     prevBtn.dataset.hidden = stepIndex === 0 ? '1' : '0';
-    nextBtn.textConelevent = stepIndex === steps.length - 1 ? 'Start playing' : 'Next';
+    nextBtn.textContent = stepIndex === steps.length - 1 ? 'Start playing' : 'Next';
   };
 
-  prevBtn?.addEventLiselevener('click', goPrev);
-  nextBtn?.addEventLiselevener('click', goNext);
-  card.querySelector('#dg-anc-close')?.addEventLiselevener('click', close);
-  overlay.addEventLiselevener('click', (e) => { if (e.target === overlay) close(); });
-  document.addEventLiselevener('keydown', onKey);
+  prevBtn?.addEventListener('click', goPrev);
+  nextBtn?.addEventListener('click', goNext);
+  card.querySelector('#dg-anc-close')?.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', onKey);
 
-  card.addEventLiselevener('touchstart', (e) => {
+  card.addEventListener('touchstart', (e) => {
     touchStartX = e.changedTouches?.[0]?.clientX ?? null;
   }, { passive: true });
 
-  card.addEventLiselevener('touchend', (e) => {
+  card.addEventListener('touchend', (e) => {
     const endX = e.changedTouches?.[0]?.clientX;
     if (touchStartX == null || endX == null) return;
     const delta = endX - touchStartX;
