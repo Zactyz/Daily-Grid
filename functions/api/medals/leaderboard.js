@@ -16,7 +16,7 @@ const GAME_TABLES = [
   { id: 'perimeter',  table: 'perimeter_scores',   name: 'Perimeter'  },
   { id: 'polyfit',    table: 'polyfit_scores',     name: 'Polyfit'    },
   { id: 'tiles',    table: 'tiles_scores',     name: 'Tiles'    },
-  { id: 'harbor',   table: 'harbor_scores',    name: 'Harbor'   },
+  { id: 'harbor',   table: 'harbor_scores',    name: 'BlindSlide'   },
 ];
 
 export async function onRequest(context) {

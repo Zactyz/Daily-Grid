@@ -1,9 +1,8 @@
-import { generatePuzzle, getDefaultDirection, directionsForPiece } from './harbor-puzzles.js';
+import { generatePuzzle, getDefaultDirection, directionsForPiece, PUZZLE_VERSION } from './harbor-puzzles.js';
 
-const EXIT_ROW = 2;
-const PIECE_COLORS = ['#7b8fa8', '#8b9cb5', '#6d7f99', '#95a6bd'];
-const GOAL_COLOR = '#f08080';
-const IDLE_COLOR = '#6d7f99';
+const GOAL_COLOR = '#ff2d95';
+const IDLE_COLOR = '#4a5f78';
+const SELECTED_COLOR = '#5ec8e8';
 
 function clonePieces(pieces) {
   return pieces.map((p) => ({ ...p }));
@@ -16,9 +15,12 @@ function clonePlan(plan) {
 export class HarborEngine {
   constructor(seedKey) {
     this.seedKey = seedKey;
-    this.width = 5;
-    this.height = 5;
-    this.exitRow = EXIT_ROW;
+    this.width = 7;
+    this.height = 7;
+    this.exitRow = 3;
+    this.exitCol = 3;
+    this.exitSide = 'right';
+    this.moveLimit = 0;
     this.timeMs = 0;
     this.timerStarted = false;
     this.isPaused = false;
@@ -31,11 +33,19 @@ export class HarborEngine {
     this.pieces = [];
     this.puzzle = null;
     this.moverIds = [];
+    this.selectableIds = [];
     this.loadPuzzle(seedKey);
   }
 
   loadPuzzle(seedKey) {
     this.puzzle = generatePuzzle(seedKey);
+    this.width = this.puzzle.width;
+    this.height = this.puzzle.height;
+    this.exitRow = this.puzzle.exitRow;
+    this.exitCol = this.puzzle.exitCol;
+    this.exitSide = this.puzzle.exitSide;
+    this.moveLimit = this.puzzle.moveLimit;
+    this.selectableIds = [...this.puzzle.selectableIds];
     this.moverIds = [...this.puzzle.moverIds];
     this.initialPieces = clonePieces(this.puzzle.pieces);
     this.pieces = clonePieces(this.puzzle.pieces);
@@ -49,20 +59,22 @@ export class HarborEngine {
     return this.moverIds.length;
   }
 
+  get movesRemaining() {
+    return Math.max(0, this.moveLimit - this.playerPlan.length);
+  }
+
   getGridLabel() {
-    return '5×5';
+    return `${this.width}x${this.height} / ${this.moveLimit} moves`;
   }
 
   isMovable(pieceId) {
-    return this.moverIds.includes(pieceId);
+    return this.selectableIds.includes(pieceId);
   }
 
   getPieceColor(pieceId) {
     const piece = this.pieces.find((p) => p.id === pieceId);
     if (piece?.isGoal) return GOAL_COLOR;
-    const idx = this.getSelectionIndex(pieceId);
-    if (idx < 0) return IDLE_COLOR;
-    return PIECE_COLORS[idx % PIECE_COLORS.length];
+    return this.getSelectionIndex(pieceId) >= 0 ? SELECTED_COLOR : IDLE_COLOR;
   }
 
   getSelectionIndex(pieceId) {
@@ -71,6 +83,51 @@ export class HarborEngine {
 
   getPlanStep(pieceId) {
     return this.playerPlan.find((step) => step.id === pieceId) || null;
+  }
+
+  isLastSelected(pieceId) {
+    return this.playerPlan.length > 0 && this.playerPlan[this.playerPlan.length - 1].id === pieceId;
+  }
+
+  canRunPlan() {
+    return this.playerPlan.length === this.moveLimit;
+  }
+
+  canInteractWith(pieceId) {
+    if (this.phase !== 'planning' || this.isComplete) return false;
+    if (!this.isMovable(pieceId)) return false;
+
+    const idx = this.getSelectionIndex(pieceId);
+    if (idx >= 0) return this.isLastSelected(pieceId);
+    return this.playerPlan.length < this.moveLimit;
+  }
+
+  selectWithDirection(pieceId, dr, dc) {
+    if (!this.canInteractWith(pieceId)) return false;
+
+    const piece = this.pieces.find((p) => p.id === pieceId);
+    const validDirection = directionsForPiece(piece).some((dir) => dir.dr === dr && dir.dc === dc);
+    if (!validDirection) return false;
+
+    const idx = this.getSelectionIndex(pieceId);
+    if (idx >= 0) {
+      if (this.isLastSelected(pieceId) && this.playerPlan[idx].dr === dr && this.playerPlan[idx].dc === dc) {
+        this.playerPlan.pop();
+        return true;
+      }
+      this.playerPlan[idx] = { id: pieceId, dr, dc };
+      return true;
+    }
+
+    this.playerPlan.push({ id: pieceId, dr, dc });
+    return true;
+  }
+
+  undoLast() {
+    if (this.phase !== 'planning' || this.isComplete) return false;
+    if (this.playerPlan.length === 0) return false;
+    this.playerPlan.pop();
+    return true;
   }
 
   toggleSelection(pieceId) {
@@ -83,7 +140,9 @@ export class HarborEngine {
       return true;
     }
 
-    const dir = getDefaultDirection(this.pieces, pieceId);
+    if (this.playerPlan.length >= this.moveLimit) return false;
+
+    const dir = getDefaultDirection(this.pieces, pieceId, this.puzzle);
     this.playerPlan.push({ id: pieceId, dr: dir.dr, dc: dir.dc });
     return true;
   }
@@ -105,7 +164,7 @@ export class HarborEngine {
   }
 
   allSelected() {
-    return this.playerPlan.length === this.moverIds.length;
+    return this.playerPlan.length === this.moveLimit;
   }
 
   showsPauseOverlay() {
@@ -146,7 +205,14 @@ export class HarborEngine {
 
   exportState() {
     return {
+      version: PUZZLE_VERSION,
       seedKey: this.seedKey,
+      width: this.width,
+      height: this.height,
+      exitRow: this.exitRow,
+      exitCol: this.exitCol,
+      exitSide: this.exitSide,
+      moveLimit: this.moveLimit,
       pieces: clonePieces(this.pieces),
       initialPieces: clonePieces(this.initialPieces),
       playerPlan: clonePlan(this.playerPlan),
@@ -160,25 +226,31 @@ export class HarborEngine {
 
   importState(state) {
     if (!state) return;
-    if (state.seedKey && state.seedKey !== this.seedKey) {
-      this.seedKey = state.seedKey;
-      this.loadPuzzle(state.seedKey);
-    }
+    if (state.seedKey && state.seedKey !== this.seedKey) return;
+    if (state.version !== PUZZLE_VERSION) return;
+    if (state.width !== this.width || state.height !== this.height || state.moveLimit !== this.moveLimit) return;
+    if (state.exitSide !== this.exitSide) return;
+
     this.pieces = clonePieces(state.pieces || this.initialPieces);
     if (Array.isArray(state.playerPlan)) {
-      this.playerPlan = clonePlan(state.playerPlan);
-    } else if (Array.isArray(state.playerOrder)) {
-      this.playerPlan = state.playerOrder.map((id) => {
-        const dir = getDefaultDirection(this.initialPieces, id);
-        return { id, dr: dir.dr, dc: dir.dc };
-      });
+      const seen = new Set();
+      this.playerPlan = clonePlan(state.playerPlan)
+        .filter((step) => {
+          if (!this.isMovable(step.id) || seen.has(step.id)) return false;
+          const piece = this.initialPieces.find((p) => p.id === step.id);
+          const validDirection = directionsForPiece(piece).some((dir) => dir.dr === step.dr && dir.dc === step.dc);
+          if (!validDirection) return false;
+          seen.add(step.id);
+          return true;
+        })
+        .slice(0, this.moveLimit);
     } else {
       this.playerPlan = [];
     }
-    this.phase = state.phase || 'planning';
+    this.phase = 'planning';
     this.timeMs = state.timeMs || 0;
     this.timerStarted = !!state.timerStarted;
-    this.isPaused = !!state.isPaused;
     this.isComplete = !!state.isComplete;
+    this.isPaused = !!state.isPaused && !this.isComplete;
   }
 }

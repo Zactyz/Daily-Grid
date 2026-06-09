@@ -45,7 +45,7 @@ function updateProgress() {
     return;
   }
   els.progress.textContent = engine.moveCount === 0
-    ? 'Slide tiles into the empty space. Order 1–8 with the gap bottom-right.'
+    ? 'Tap or swipe to slide tiles.'
     : `${engine.moveCount} move${engine.moveCount === 1 ? '' : 's'} • keep sliding`;
 }
 
@@ -120,6 +120,52 @@ function handleTileClick(index) {
   if (!engine.tryMove(index)) return;
   onInteract();
   if (engine.isComplete) shell?.update();
+}
+
+function initSwipeControls() {
+  if (!els.grid) return;
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+  let swipeHandled = false;
+  const THRESH = 28;
+
+  const onStart = (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const pt = e.touches?.[0] ?? e;
+    startX = pt.clientX;
+    startY = pt.clientY;
+    tracking = true;
+    swipeHandled = false;
+  };
+
+  const onEnd = (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const pt = e.changedTouches?.[0] ?? e;
+    const dx = pt.clientX - startX;
+    const dy = pt.clientY - startY;
+    if (Math.hypot(dx, dy) < THRESH) return;
+    if (!engine.tryMoveBySwipe(dx, dy)) return;
+    swipeHandled = true;
+    e.preventDefault();
+    e.stopPropagation();
+    onInteract();
+    if (engine.isComplete) shell?.update();
+  };
+
+  const suppressClickAfterSwipe = (e) => {
+    if (!swipeHandled) return;
+    e.preventDefault();
+    e.stopPropagation();
+    swipeHandled = false;
+  };
+
+  els.grid.addEventListener('pointerdown', onStart, { capture: true });
+  els.grid.addEventListener('pointerup', onEnd, { capture: true });
+  els.grid.addEventListener('touchstart', onStart, { capture: true, passive: true });
+  els.grid.addEventListener('touchend', onEnd, { capture: true });
+  els.grid.addEventListener('click', suppressClickAfterSwipe, { capture: true });
 }
 
 function initPuzzle() {
@@ -226,6 +272,7 @@ function initShell() {
 document.addEventListener('DOMContentLoaded', () => {
   initPuzzle();
   initShell();
+  initSwipeControls();
 
   els.showSolutionBtn?.addEventListener('click', showSolution);
   els.solutionRetryBtn?.addEventListener('click', () => resetGame({ resetTimer: true }));

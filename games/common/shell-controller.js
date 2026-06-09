@@ -490,6 +490,13 @@ function initTouchGuards() {
 
   function updateStartOverlay() {
     if (!elements.startOverlay) return;
+    const gameContainer = document.getElementById('game-container');
+    if (adapter.disableStartOverlay) {
+      elements.startOverlay.classList.add('hidden');
+      gameContainer?.classList.remove('prestart');
+      return;
+    }
+
     const hasProgress = adapter.hasProgress ? adapter.hasProgress() : false;
     const shouldShow = !adapter.isStarted() && !adapter.isComplete() && !hasProgress;
 
@@ -499,7 +506,6 @@ function initTouchGuards() {
         : 'Tap to begin';
     }
 
-    const gameContainer = document.getElementById('game-container');
     if (shouldShow) {
       elements.startOverlay.classList.remove('hidden');
       elements.pauseOverlay?.classList.add('hidden');
@@ -622,9 +628,7 @@ function initTouchGuards() {
     const existing = adapter.getCompletionMs?.();
     if (existing != null) {
       completionMs = existing;
-      return;
-    }
-    if (completionMs == null) {
+    } else if (completionMs == null) {
       completionMs = adapter.getElapsedMs();
       adapter.setCompletionMs?.(completionMs);
     }
@@ -1013,6 +1017,7 @@ function initTouchGuards() {
     });
 
     elements.startOverlay?.addEventListener('click', () => {
+      if (adapter.disableStartOverlay) return;
       if (adapter.isComplete()) return;
       adapter.startGame();
       updateStartOverlay();

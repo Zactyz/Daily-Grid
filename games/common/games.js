@@ -114,8 +114,8 @@ export const GAME_META = [
   },
   {
     id: 'harbor',
-    name: 'Harbor',
-    tagline: 'Order the slides, clear the exit.',
+    name: 'BlindSlide',
+    tagline: 'Program the slides, clear the exit.',
     path: '/games/harbor/',
     logo: '/games/harbor/harbor-logo.svg',
     submittedKeyPrefix: 'dailygrid_harbor_submitted_',

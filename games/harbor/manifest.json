@@ -1,6 +1,6 @@
 {
-  "name": "Harbor by Daily Grid",
-  "short_name": "Harbor",
+  "name": "BlindSlide by Daily Grid",
+  "short_name": "BlindSlide",
   "description": "Order the blocks, clear the exit.",
   "start_url": "/games/harbor/",
   "scope": "/games/harbor/",

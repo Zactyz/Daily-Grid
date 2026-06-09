@@ -53,14 +53,14 @@
       <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/25 text-violet-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-violet-300 animate-pulse"></span>Daily Puzzle</div>
       <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-400/10 border border-violet-400/25 text-violet-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-violet-300"></span>Practice Mode</div>
       <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Tiles</h1>
-      <p class="text-zinc-400 text-sm">Slide tiles into the empty space. Put 1–8 in order with the gap at the bottom-right.</p>
+      <p class="text-zinc-400 text-sm">Put 1–8 in order. Tap or swipe to slide tiles.</p>
       <span id="puzzle-date" class="hidden"></span>
       <span id="grid-size" class="hidden"></span>
       <span id="timer" class="hidden font-mono">0:00</span>
     </header>
 
     <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-4 w-full relative">
-      <div id="progress-text" class="progress-text mb-3">Slide tiles into the empty space.</div>
+      <div id="progress-text" class="progress-text mb-3">Tap or swipe to slide tiles.</div>
       <div id="tiles-grid" class="celebrate-target"></div>
 
       <div id="start-overlay" class="shell-start-overlay hidden"><div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/30 to-violet-600/20 flex items-center justify-center mb-4"><svg class="w-10 h-10 text-violet-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><span class="text-2xl font-bold text-white tracking-wide">Ready?</span><span id="start-overlay-text" class="text-sm text-white/60 mt-1">Tap to begin</span></div>
@@ -78,7 +78,7 @@
       <summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">How to Play</summary>
       <div class="px-5 pb-5 pt-1">
         <ul class="text-zinc-400 space-y-2.5 text-sm">
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-violet-400/15 text-violet-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Tap a tile next to the empty space to slide it.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-violet-400/15 text-violet-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Tap or swipe a tile next to the empty space to slide it.</span></li>
           <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-violet-400/15 text-violet-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Arrange tiles 1 through 8 in reading order.</span></li>
           <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-violet-400/15 text-violet-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Leave the empty space in the bottom-right corner to win.</span></li>
         </ul>
@@ -115,5 +115,65 @@
     }
   }
   </script>
+<script>
+window.DG_TUTORIAL_STEPS = [
+  {
+    title: 'Tap or Swipe',
+    desc: 'Tap a tile beside the empty space, or swipe across the grid. Only tiles next to the gap can move.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(167,139,250,0.22)' stroke='rgba(167,139,250,0.65)' stroke-width='1.5'>
+    <rect x='44' y='24' width='36' height='36' rx='8'/><rect x='82' y='24' width='36' height='36' rx='8'/>
+    <rect x='120' y='24' width='36' height='36' rx='8'/><rect x='44' y='62' width='36' height='36' rx='8'/>
+    <rect x='82' y='62' width='36' height='36' rx='8' class='dg-demo-pulse' stroke='rgba(196,181,253,0.95)' stroke-width='2'/>
+    <rect x='120' y='62' width='36' height='36' rx='8'/>
+    <rect x='44' y='100' width='36' height='36' rx='8'/><rect x='82' y='100' width='36' height='36' rx='8'/>
+    <rect x='120' y='100' width='36' height='36' rx='8' fill='none' stroke='rgba(167,139,250,0.25)' stroke-dasharray='4,3'/>
+  </g>
+  <text x='100' y='54' font-size='14' text-anchor='middle' fill='#ede9fe' font-family='system-ui,sans-serif' font-weight='700'>5</text>
+  <path d='M118,80 L98,80' stroke='rgba(196,181,253,0.8)' stroke-width='2' marker-end='url(#arr)'/>
+  <defs><marker id='arr' markerWidth='6' markerHeight='6' refX='5' refY='3' orient='auto'><path d='M0,0 L6,3 L0,6 Z' fill='rgba(196,181,253,0.8)'/></marker></defs>
+  <text x='100' y='132' font-size='10' text-anchor='middle' fill='rgba(167,139,250,0.55)' font-family='system-ui,sans-serif'>slide into the gap</text>
+</svg>`
+  },
+  {
+    title: 'Number Order',
+    desc: 'Arrange tiles 1 through 8 in reading order — left to right, top to bottom.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(167,139,250,0.22)' stroke='rgba(167,139,250,0.65)' stroke-width='1.5'>
+    <rect x='44' y='28' width='36' height='36' rx='8'/><rect x='82' y='28' width='36' height='36' rx='8'/>
+    <rect x='120' y='28' width='36' height='36' rx='8'/><rect x='44' y='66' width='36' height='36' rx='8'/>
+    <rect x='82' y='66' width='36' height='36' rx='8'/><rect x='120' y='66' width='36' height='36' rx='8'/>
+    <rect x='44' y='104' width='36' height='36' rx='8'/><rect x='82' y='104' width='36' height='36' rx='8'/>
+  </g>
+  <text x='62' y='52' font-size='13' text-anchor='middle' fill='#ede9fe' font-family='system-ui,sans-serif' font-weight='700'>1</text>
+  <text x='100' y='52' font-size='13' text-anchor='middle' fill='#ede9fe' font-family='system-ui,sans-serif' font-weight='700'>2</text>
+  <text x='138' y='52' font-size='13' text-anchor='middle' fill='#ede9fe' font-family='system-ui,sans-serif' font-weight='700'>3</text>
+  <text x='62' y='90' font-size='13' text-anchor='middle' fill='#ede9fe' font-family='system-ui,sans-serif' font-weight='700'>4</text>
+  <text x='100' y='90' font-size='13' text-anchor='middle' fill='#ede9fe' font-family='system-ui,sans-serif' font-weight='700'>5</text>
+  <text x='138' y='90' font-size='13' text-anchor='middle' fill='#ede9fe' font-family='system-ui,sans-serif' font-weight='700'>6</text>
+  <text x='62' y='128' font-size='13' text-anchor='middle' fill='#ede9fe' font-family='system-ui,sans-serif' font-weight='700'>7</text>
+  <text x='100' y='128' font-size='13' text-anchor='middle' fill='#ede9fe' font-family='system-ui,sans-serif' font-weight='700'>8</text>
+  <path d='M52,18 H148' stroke='rgba(167,139,250,0.35)' stroke-width='1.5' marker-end='url(#arr2)'/>
+  <defs><marker id='arr2' markerWidth='6' markerHeight='6' refX='5' refY='3' orient='auto'><path d='M0,0 L6,3 L0,6 Z' fill='rgba(167,139,250,0.35)'/></marker></defs>
+</svg>`
+  },
+  {
+    title: 'Win the Puzzle',
+    desc: 'Leave the empty space in the bottom-right corner when every number is in place.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <g fill='rgba(167,139,250,0.28)' stroke='rgba(167,139,250,0.75)' stroke-width='1.5'>
+    <rect x='44' y='28' width='36' height='36' rx='8'/><rect x='82' y='28' width='36' height='36' rx='8'/>
+    <rect x='120' y='28' width='36' height='36' rx='8'/><rect x='44' y='66' width='36' height='36' rx='8'/>
+    <rect x='82' y='66' width='36' height='36' rx='8'/><rect x='120' y='66' width='36' height='36' rx='8'/>
+    <rect x='44' y='104' width='36' height='36' rx='8'/><rect x='82' y='104' width='36' height='36' rx='8'/>
+    <rect x='120' y='104' width='36' height='36' rx='8' fill='none' stroke='rgba(167,139,250,0.35)' stroke-dasharray='4,3' class='dg-demo-pulse'/>
+  </g>
+  <text x='100' y='122' font-size='11' text-anchor='middle' fill='rgba(167,139,250,0.6)' font-family='system-ui,sans-serif'>gap here</text>
+  <circle cx='100' cy='18' r='10' fill='rgba(52,211,153,0.2)' stroke='rgba(52,211,153,0.7)' stroke-width='1.5'/>
+  <path d='M96,18 L99,21 L104,15' fill='none' stroke='rgba(52,211,153,0.9)' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/>
+</svg>`
+  }
+];
+</script>
 </body>
 </html>

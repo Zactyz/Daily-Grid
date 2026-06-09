@@ -88,6 +88,23 @@ export class TilesEngine {
     return true;
   }
 
+  /** Move the tile adjacent to the empty cell in the swipe direction. */
+  tryMoveBySwipe(dx, dy) {
+    if (this.isComplete || this.solutionShown) return false;
+    const emptyIdx = this.getEmptyIndex();
+    const [er, ec] = indexToRowCol(emptyIdx);
+    let targetIdx = -1;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) targetIdx = rowColToIndex(er, ec + 1);
+      else if (dx > 0) targetIdx = rowColToIndex(er, ec - 1);
+    } else {
+      if (dy < 0) targetIdx = rowColToIndex(er + 1, ec);
+      else if (dy > 0) targetIdx = rowColToIndex(er - 1, ec);
+    }
+    if (targetIdx < 0 || targetIdx >= CELL_COUNT) return false;
+    return this.tryMove(targetIdx);
+  }
+
   revealSolution() {
     this.tiles = [...SOLVED];
     this.solutionShown = true;

@@ -3,16 +3,25 @@ import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
 import { HarborEngine } from './harbor-engine.js';
-import { slidePieceDirected, clonePieces, stepGoalExit, isGoalExited } from './harbor-puzzles.js';
+import {
+  slidePieceDirected,
+  clonePieces,
+  slideGoalToExit,
+  isGoalExited,
+  directionsForPiece,
+  exitDirectionForPuzzle
+} from './harbor-puzzles.js';
 
 const STATE_PREFIX = 'dailygrid_harbor_state_';
 const ANIM_MS = 280;
+const EXIT_ANIM_MS = 620;
 
 const els = {
   board: document.getElementById('harbor-board'),
   progress: document.getElementById('progress-text'),
   gridSize: document.getElementById('grid-size'),
-  puzzleDate: document.getElementById('puzzle-date')
+  puzzleDate: document.getElementById('puzzle-date'),
+  undoBtn: document.getElementById('undo-btn')
 };
 
 let engine;
@@ -24,6 +33,7 @@ let completionMs = null;
 let lastTs = performance.now();
 let lastSaveTs = 0;
 let executing = false;
+let pendingRunTimer = null;
 
 let boardDom = null;
 const pieceEls = new Map();
@@ -48,6 +58,13 @@ function setLabels() {
   els.puzzleDate.textContent = currentMode === 'practice' ? 'Practice' : puzzleId;
 }
 
+function updateUndoButton() {
+  if (!els.undoBtn) return;
+  const canUndo = engine.phase === 'planning' && !executing && !engine.isComplete && engine.playerPlan.length > 0;
+  els.undoBtn.disabled = !canUndo;
+  els.undoBtn.classList.toggle('opacity-40', !canUndo);
+}
+
 function updateProgress(message) {
   if (!els.progress) return;
   if (message) {
@@ -55,35 +72,34 @@ function updateProgress(message) {
     return;
   }
   if (engine.phase === 'executing') {
-    els.progress.textContent = 'Running your sequence…';
+    els.progress.textContent = 'Running your sequence...';
     return;
   }
   if (engine.phase === 'rewinding') {
-    els.progress.textContent = 'Path blocked — rewinding…';
+    els.progress.textContent = 'Path blocked - rewinding...';
     return;
   }
   if (engine.isComplete) {
     els.progress.textContent = 'Exit cleared!';
     return;
   }
-  const remaining = engine.movableCount - engine.playerPlan.length;
+  const remaining = engine.movesRemaining;
   if (remaining === 0) {
-    els.progress.textContent = 'All vehicles programmed — watch them slide…';
+    els.progress.textContent = 'Moves left: 0';
     return;
   }
-  els.progress.textContent = remaining === engine.movableCount
-    ? 'Tap gray vehicles in move order. Tap the arrow to flip direction.'
-    : `${engine.playerPlan.length} of ${engine.movableCount} programmed • ${remaining} left`;
+  els.progress.textContent = `Moves left: ${remaining}`;
 }
 
 function pieceLayout(piece) {
-  const unit = 100 / engine.width;
+  const colUnit = 100 / engine.width;
+  const rowUnit = 100 / engine.height;
   const isH = piece.orient === 'H';
   return {
-    left: `${piece.col * unit}%`,
-    top: `${piece.row * unit}%`,
-    width: isH ? `${piece.len * unit}%` : `${unit}%`,
-    height: isH ? `${unit}%` : `${piece.len * unit}%`
+    left: `${piece.col * colUnit}%`,
+    top: `${piece.row * rowUnit}%`,
+    width: isH ? `${piece.len * colUnit}%` : `${colUnit}%`,
+    height: isH ? `${rowUnit}%` : `${piece.len * rowUnit}%`
   };
 }
 
@@ -95,17 +111,61 @@ function applyPieceLayout(el, piece) {
   el.style.height = layout.height;
 }
 
+function positionExitHole(exitHole) {
+  const side = engine.exitSide || 'right';
+  const isHorizontalExit = side === 'left' || side === 'right';
+  const trackSize = isHorizontalExit ? engine.height : engine.width;
+  const line = isHorizontalExit ? engine.exitRow : engine.exitCol;
+  const offsetPct = (line / trackSize) * 100;
+  const offsetPad = (20 * line) / trackSize;
+  const cellSize = `calc(${100 / trackSize}% - ${20 / trackSize}px)`;
+
+  ['top', 'right', 'bottom', 'left', 'width', 'height'].forEach((prop) => {
+    exitHole.style[prop] = '';
+  });
+
+  if (side === 'left' || side === 'right') {
+    exitHole.style.top = `calc(10px + ${offsetPct}% - ${offsetPad}px)`;
+    exitHole.style.width = '24px';
+    exitHole.style.height = cellSize;
+    exitHole.style[side] = '-24px';
+    return;
+  }
+
+  exitHole.style.left = `calc(10px + ${offsetPct}% - ${offsetPad}px)`;
+  exitHole.style.width = cellSize;
+  exitHole.style.height = '24px';
+  exitHole.style[side] = '-24px';
+}
+
 function destroyBoardDom() {
   pieceEls.clear();
   boardDom = null;
   if (els.board) els.board.innerHTML = '';
 }
 
+function clearPendingRun() {
+  if (!pendingRunTimer) return;
+  clearTimeout(pendingRunTimer);
+  pendingRunTimer = null;
+}
+
+function scheduleAutoRun() {
+  clearPendingRun();
+  pendingRunTimer = setTimeout(() => {
+    pendingRunTimer = null;
+    if (!engine.canRunPlan() || executing || engine.phase !== 'planning' || engine.isComplete) return;
+    void runSequence();
+  }, 260);
+}
+
 function ensureBoardDom() {
   if (boardDom) return boardDom;
 
   const tray = document.createElement('div');
-  tray.className = 'harbor-tray';
+  tray.className = `harbor-tray harbor-exit-${engine.exitSide || 'right'}`;
+  tray.style.setProperty('--harbor-cols', String(engine.width));
+  tray.style.setProperty('--harbor-rows', String(engine.height));
 
   const playfield = document.createElement('div');
   playfield.className = 'harbor-playfield';
@@ -122,8 +182,14 @@ function ensureBoardDom() {
   piecesLayer.className = 'harbor-pieces-layer';
 
   const exitHole = document.createElement('div');
-  exitHole.className = 'harbor-exit-hole';
+  exitHole.className = `harbor-exit-hole harbor-exit-hole-${engine.exitSide || 'right'}`;
   exitHole.setAttribute('aria-hidden', 'true');
+  positionExitHole(exitHole);
+
+  const exitSign = document.createElement('div');
+  exitSign.className = 'harbor-exit-sign';
+  exitSign.textContent = 'EXIT';
+  exitHole.appendChild(exitSign);
 
   playfield.appendChild(gridBg);
   playfield.appendChild(piecesLayer);
@@ -135,32 +201,44 @@ function ensureBoardDom() {
   return boardDom;
 }
 
+function createArrowButton(pieceId, dr, dc, className) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = `harbor-end-arrow ${className}`;
+  btn.dataset.dr = String(dr);
+  btn.dataset.dc = String(dc);
+  btn.innerHTML = DIR_ICON[dirKey(dr, dc)] || '';
+  btn.setAttribute('aria-label', 'Set slide direction');
+  btn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    handleDirectionSelect(pieceId, dr, dc);
+  });
+  return btn;
+}
+
 function createPieceElement(piece) {
   const el = document.createElement('div');
   el.dataset.pieceId = piece.id;
   el.className = `harbor-piece harbor-piece-${piece.orient === 'H' ? 'h' : 'v'}`;
+
   if (piece.isGoal) {
     el.classList.add('harbor-piece-goal');
     el.setAttribute('aria-hidden', 'true');
+    const dir = exitDirectionForPuzzle(engine.puzzle);
+    const arrow = document.createElement('span');
+    arrow.className = 'harbor-goal-arrow';
+    arrow.innerHTML = DIR_ICON[dirKey(dir.dr, dir.dc)] || '';
+    el.appendChild(arrow);
     return el;
   }
 
-  const hit = document.createElement('button');
-  hit.type = 'button';
-  hit.className = 'harbor-piece-hit';
-  hit.setAttribute('aria-label', `Vehicle ${piece.id}`);
-  hit.addEventListener('click', () => handlePieceClick(piece.id));
-  el.appendChild(hit);
-
-  const dirBtn = document.createElement('button');
-  dirBtn.type = 'button';
-  dirBtn.className = 'harbor-dir-btn hidden';
-  dirBtn.setAttribute('aria-label', 'Flip slide direction');
-  dirBtn.addEventListener('click', (event) => {
-    event.stopPropagation();
-    handleDirectionToggle(piece.id);
+  const dirs = directionsForPiece(piece);
+  dirs.forEach((dir, index) => {
+    const sideClass = piece.orient === 'H'
+      ? (dir.dc < 0 ? 'harbor-end-arrow-left' : 'harbor-end-arrow-right')
+      : (dir.dr < 0 ? 'harbor-end-arrow-top' : 'harbor-end-arrow-bottom');
+    el.appendChild(createArrowButton(piece.id, dir.dr, dir.dc, sideClass));
   });
-  el.appendChild(dirBtn);
 
   return el;
 }
@@ -168,25 +246,23 @@ function createPieceElement(piece) {
 function updatePieceElement(el, piece) {
   const idx = engine.getSelectionIndex(piece.id);
   const planStep = engine.getPlanStep(piece.id);
-  const selectable = !piece.isGoal && engine.phase === 'planning' && !executing && !engine.isComplete;
+  const isSelected = idx >= 0;
+  const isLast = engine.isLastSelected(piece.id);
+  const isLocked = isSelected && !isLast;
+  const canInteract = engine.canInteractWith(piece.id) && !executing;
 
-  el.classList.toggle('harbor-piece-selectable', selectable);
-  el.classList.toggle('harbor-piece-selected', idx >= 0);
+  el.classList.toggle('harbor-piece-selected', isSelected);
+  el.classList.toggle('harbor-piece-locked', isLocked);
   el.classList.toggle('harbor-piece-goal', !!piece.isGoal);
+  el.classList.toggle('harbor-piece-idle', !isSelected && !piece.isGoal);
 
   if (!piece.isGoal) {
     el.style.setProperty('--piece-color', engine.getPieceColor(piece.id));
     el.style.background = engine.getPieceColor(piece.id);
   }
 
-  const hit = el.querySelector('.harbor-piece-hit');
-  if (hit) {
-    hit.disabled = !selectable;
-    hit.tabIndex = selectable ? 0 : -1;
-  }
-
   let badge = el.querySelector('.harbor-piece-badge');
-  if (idx >= 0) {
+  if (isSelected) {
     if (!badge) {
       badge = document.createElement('span');
       badge.className = 'harbor-piece-badge';
@@ -197,15 +273,15 @@ function updatePieceElement(el, piece) {
     badge.remove();
   }
 
-  const dirBtn = el.querySelector('.harbor-dir-btn');
-  if (dirBtn) {
-    const showDir = idx >= 0 && planStep;
-    dirBtn.classList.toggle('hidden', !showDir);
-    dirBtn.disabled = !selectable;
-    if (showDir) {
-      dirBtn.innerHTML = DIR_ICON[dirKey(planStep.dr, planStep.dc)] || '';
-    }
-  }
+  el.querySelectorAll('.harbor-end-arrow').forEach((btn) => {
+    const dr = Number(btn.dataset.dr);
+    const dc = Number(btn.dataset.dc);
+    const isActive = !!(planStep && planStep.dr === dr && planStep.dc === dc);
+    btn.classList.toggle('harbor-end-arrow-active', isActive);
+    btn.classList.toggle('harbor-end-arrow-idle', !isSelected);
+    btn.classList.toggle('harbor-end-arrow-dim', isSelected && !isActive);
+    btn.disabled = !canInteract;
+  });
 
   applyPieceLayout(el, piece);
 }
@@ -214,6 +290,11 @@ function setAnimating(on) {
   if (!boardDom) return;
   boardDom.piecesLayer.classList.toggle('harbor-animating', on);
   boardDom.tray.classList.toggle('harbor-complete', engine.isComplete);
+}
+
+function setGoalExiting(on) {
+  if (!boardDom) return;
+  boardDom.piecesLayer.classList.toggle('harbor-goal-exiting', on);
 }
 
 function renderBoard({ animate = false } = {}) {
@@ -241,6 +322,8 @@ function renderBoard({ animate = false } = {}) {
       pieceEls.delete(id);
     }
   }
+
+  updateUndoButton();
 }
 
 function save() {
@@ -272,62 +355,65 @@ function onPlanningChange() {
   save();
   shell?.update();
 
-  if (engine.allSelected() && !executing) {
-    void runSequence();
-  }
+  if (engine.canRunPlan() && !executing) scheduleAutoRun();
+  else clearPendingRun();
 }
 
-function handlePieceClick(pieceId) {
+function handleDirectionSelect(pieceId, dr, dc) {
   if (engine.phase !== 'planning' || executing || engine.isComplete) return;
-  if (!engine.toggleSelection(pieceId)) return;
+  if (!engine.selectWithDirection(pieceId, dr, dc)) return;
   onPlanningChange();
 }
 
-function handleDirectionToggle(pieceId) {
+function handleUndo() {
   if (engine.phase !== 'planning' || executing || engine.isComplete) return;
-  if (!engine.toggleDirection(pieceId)) return;
-  renderBoard();
-  save();
-  shell?.update();
+  if (!engine.undoLast()) return;
+  onPlanningChange();
 }
 
 async function animateGoalExit() {
-  const maxSteps = engine.width + 2;
-  for (let i = 0; i < maxSteps; i += 1) {
-    if (isGoalExited(engine.pieces)) return true;
-    if (!stepGoalExit(engine.pieces)) break;
-    renderBoard({ animate: true });
-    await sleep(ANIM_MS);
-  }
-  return isGoalExited(engine.pieces);
+  if (isGoalExited(engine.pieces, engine.puzzle)) return true;
+  const distance = slideGoalToExit(engine.pieces, engine.puzzle);
+  if (distance <= 0) return false;
+  setGoalExiting(true);
+  renderBoard({ animate: true });
+  await sleep(EXIT_ANIM_MS);
+  setGoalExiting(false);
+  return isGoalExited(engine.pieces, engine.puzzle);
 }
 
 async function runSequence() {
   if (executing) return;
+  clearPendingRun();
   executing = true;
   engine.phase = 'executing';
   updateProgress();
   renderBoard();
 
   const applied = [];
+  let allMoved = true;
 
   for (const step of engine.playerPlan) {
     const before = clonePieces(engine.pieces);
-    const distance = slidePieceDirected(engine.pieces, step.id, step.dr, step.dc);
+    const distance = slidePieceDirected(engine.pieces, step.id, step.dr, step.dc, engine.puzzle);
     renderBoard({ animate: true });
     await sleep(ANIM_MS);
-
     applied.push({ pieceId: step.id, before, distance });
+    if (distance <= 0) {
+      allMoved = false;
+      updateProgress('That vehicle cannot move - rewinding...');
+      await rewindSequence(applied);
+      return;
+    }
   }
 
   const beforeExit = clonePieces(engine.pieces);
   const exited = await animateGoalExit();
 
-  if (!exited) {
+  if (!exited || !allMoved) {
     applied.push({ pieceId: 'goal-exit', before: beforeExit });
-    updateProgress('Path blocked — try a different plan');
+    updateProgress(allMoved ? 'Path blocked - try a different plan' : 'That vehicle cannot move - try again');
     await rewindSequence(applied);
-    executing = false;
     return;
   }
 
@@ -354,6 +440,7 @@ async function rewindSequence(applied) {
 
   engine.playerPlan = [];
   engine.phase = 'planning';
+  executing = false;
   setAnimating(false);
   updateProgress();
   renderBoard();
@@ -372,6 +459,7 @@ function initPuzzle() {
 }
 
 function switchMode(mode) {
+  clearPendingRun();
   currentMode = mode;
   puzzleSeed = mode === 'practice'
     ? `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`
@@ -386,6 +474,7 @@ window.startPracticeMode = () => switchMode('practice');
 window.startDailyMode = () => switchMode('daily');
 
 function resetGame({ resetTimer = true } = {}) {
+  clearPendingRun();
   executing = false;
   engine.reset({ resetTimer });
   completionMs = null;
@@ -403,7 +492,8 @@ function initShell() {
     getGridLabel: () => engine.getGridLabel(),
     getElapsedMs: () => engine.timeMs,
     formatTime,
-    autoStartOnProgress: true,
+    autoStartOnProgress: false,
+    disableStartOverlay: true,
     isComplete: () => engine.isComplete,
     isPaused: () => engine.showsPauseOverlay(),
     isStarted: () => engine.timerStarted,
@@ -429,18 +519,18 @@ function initShell() {
       hintsUsed: 0
     }),
     getShareMeta: () => ({
-      gameName: 'Harbor',
+      gameName: 'BlindSlide',
       shareUrl: 'https://dailygrid.app/games/harbor/',
       gridLabel: engine.getGridLabel(),
-      accent: '#f08080'
+      accent: '#ff2d95'
     }),
     getShareFile: () => buildShareCard({
-      gameName: 'Harbor',
+      gameName: 'BlindSlide',
       logoPath: '/games/harbor/harbor-logo.svg',
-      accent: '#f08080',
-      accentSoft: 'rgba(240,128,128,.12)',
-      backgroundStart: '#0a0a0f',
-      backgroundEnd: '#101018',
+      accent: '#ff2d95',
+      accentSoft: 'rgba(255,45,149,.12)',
+      backgroundStart: '#070d18',
+      backgroundEnd: '#0a1224',
       dateText: formatDateForShare(getPTDateYYYYMMDD()),
       timeText: formatTime(completionMs ?? engine.timeMs),
       gridLabel: engine.getGridLabel(),
@@ -457,6 +547,8 @@ function initShell() {
 document.addEventListener('DOMContentLoaded', () => {
   initPuzzle();
   initShell();
+
+  els.undoBtn?.addEventListener('click', handleUndo);
 
   setInterval(() => {
     const now = performance.now();

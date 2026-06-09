@@ -8,7 +8,8 @@
     "deploy": "wrangler pages deploy .",
     "db:init": "wrangler d1 execute daily-grid-db --file=./scripts/init-db.sql",
     "db:init:local": "wrangler d1 execute daily-grid-db --local --file=./scripts/init-db.sql",
-    "push:preview-secrets": "node scripts/add-preview-push-secrets.js"
+    "push:preview-secrets": "node scripts/add-preview-push-secrets.js",
+    "validate:harbor": "node scripts/validate-harbor.js"
   },
   "devDependencies": {
     "@google/clasp": "^3.3.0",
