@@ -13,7 +13,8 @@ const els = {
   progress: document.getElementById('progress-text'),
   gridSize: document.getElementById('grid-size'),
   puzzleDate: document.getElementById('puzzle-date'),
-  undoBtn: document.getElementById('undo-btn')
+  undoBtn: document.getElementById('undo-btn'),
+  runBtn: document.getElementById('run-btn')
 };
 
 let engine;
@@ -56,6 +57,13 @@ function updateUndoButton() {
   els.undoBtn.classList.toggle('opacity-40', !canUndo);
 }
 
+function updateRunButton() {
+  if (!els.runBtn) return;
+  const canRun = engine.phase === 'planning' && !executing && !engine.isComplete && engine.canRunPlan();
+  els.runBtn.disabled = !canRun;
+  els.runBtn.classList.toggle('opacity-40', !canRun);
+}
+
 function updateProgress(message) {
   if (!els.progress) return;
   if (message) {
@@ -76,11 +84,11 @@ function updateProgress(message) {
   }
   const remaining = engine.movableCount - engine.playerPlan.length;
   if (remaining === 0) {
-    els.progress.textContent = 'All vehicles programmed — watch them slide…';
+    els.progress.textContent = 'All vehicles programmed — tap Run to test your plan';
     return;
   }
   els.progress.textContent = remaining === engine.movableCount
-    ? 'Tap an arrow on each vehicle in move order. Pink car is not selectable.'
+    ? `Program all ${engine.movableCount} gray vehicles, then tap Run. Pink car is not selectable.`
     : `${engine.playerPlan.length} of ${engine.movableCount} programmed • ${remaining} left`;
 }
 
@@ -256,6 +264,7 @@ function renderBoard({ animate = false } = {}) {
   }
 
   updateUndoButton();
+  updateRunButton();
 }
 
 function save() {
@@ -287,9 +296,6 @@ function onPlanningChange() {
   save();
   shell?.update();
 
-  if (engine.allSelected() && !executing) {
-    void runSequence();
-  }
 }
 
 function handleDirectionSelect(pieceId, dr, dc) {
@@ -473,6 +479,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initShell();
 
   els.undoBtn?.addEventListener('click', handleUndo);
+  els.runBtn?.addEventListener('click', () => {
+    if (!engine.canRunPlan() || executing) return;
+    void runSequence();
+  });
 
   setInterval(() => {
     const now = performance.now();

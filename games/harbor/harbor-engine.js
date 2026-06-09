@@ -20,8 +20,8 @@ function sameDir(a, b) {
 export class HarborEngine {
   constructor(seedKey) {
     this.seedKey = seedKey;
-    this.width = 5;
-    this.height = 5;
+    this.width = 6;
+    this.height = 6;
     this.exitRow = EXIT_ROW;
     this.timeMs = 0;
     this.timerStarted = false;
@@ -54,7 +54,11 @@ export class HarborEngine {
   }
 
   getGridLabel() {
-    return '5×5';
+    return '6×6';
+  }
+
+  canRunPlan() {
+    return this.playerPlan.length === this.moverIds.length;
   }
 
   isMovable(pieceId) {

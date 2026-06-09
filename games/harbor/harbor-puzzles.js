@@ -1,9 +1,10 @@
 import { createSeededRandom, hashString } from '../common/utils.js';
 
-const WIDTH = 5;
-const HEIGHT = 5;
+const WIDTH = 6;
+const HEIGHT = 6;
 const EXIT_ROW = 2;
-const MAX_GENERATION_ATTEMPTS = 12000;
+const MOVER_IDS = ['a', 'b', 'c', 'd'];
+const MAX_GENERATION_ATTEMPTS = 2500;
 
 const PUZZLE_CACHE = new Map();
 
@@ -75,22 +76,6 @@ export function directionsForPiece(piece) {
     : [{ dr: -1, dc: 0 }, { dr: 1, dc: 0 }];
 }
 
-export function getDefaultDirection(pieces, pieceId) {
-  const piece = pieces.find((p) => p.id === pieceId);
-  if (!piece) return { dr: 0, dc: 0 };
-  const options = directionsForPiece(piece).map((dir) => ({
-    ...dir,
-    dist: measureSlide(pieces, pieceId, dir.dr, dir.dc)
-  }));
-  const viable = options.filter((o) => o.dist > 0);
-  if (viable.length === 0) return options[1] || options[0];
-  const maxDist = Math.max(...viable.map((o) => o.dist));
-  const best = viable.filter((o) => o.dist === maxDist);
-  return best.find((o) => o.dc === 1)
-    || best.find((o) => o.dr === 1)
-    || best[0];
-}
-
 export function slidePieceDirected(pieces, pieceId, dr, dc) {
   const dist = measureSlide(pieces, pieceId, dr, dc);
   if (dist > 0) shiftPiece(pieces, pieceId, dr, dc, dist);
@@ -153,20 +138,32 @@ function directionCombos(movers) {
 export function simulatePlan(initialPieces, plan) {
   const pieces = clonePieces(initialPieces);
   const moved = new Set();
+  const dists = [];
 
   for (const step of plan) {
-    if (slidePieceDirected(pieces, step.id, step.dr, step.dc) > 0) moved.add(step.id);
+    const dist = slidePieceDirected(pieces, step.id, step.dr, step.dc);
+    if (dist > 0) moved.add(step.id);
+    dists.push(dist);
   }
 
   tryGoalExit(pieces);
   return {
     success: isGoalExited(pieces),
     allMoved: moved.size === plan.length,
-    movedCount: moved.size
+    movedCount: moved.size,
+    dists
   };
 }
 
-/** Exactly one winning plan where every mover slides at least one cell. */
+function plansEqual(a, b) {
+  if (a.length !== b.length) return false;
+  return a.every((step, index) => (
+    step.id === b[index].id
+    && step.dr === b[index].dr
+    && step.dc === b[index].dc
+  ));
+}
+
 function findUniqueFullPlan(pieces) {
   const movers = pieces.filter((p) => !p.isGoal);
   const ids = movers.map((p) => p.id);
@@ -189,33 +186,58 @@ function findUniqueFullPlan(pieces) {
   return solutions.length === 1 ? solutions[0] : null;
 }
 
+function canExitAfterPrefix(pieces, plan, count) {
+  const state = clonePieces(pieces);
+  for (let i = 0; i < count; i += 1) {
+    slidePieceDirected(state, plan[i].id, plan[i].dr, plan[i].dc);
+  }
+  return tryGoalExit(state);
+}
+
+function passesQualityGate(pieces, plan) {
+  const forward = simulatePlan(pieces, plan);
+  if (!forward.success || !forward.allMoved) return false;
+  if (forward.dists.some((d) => d < 2)) return false;
+  if (forward.dists.reduce((sum, d) => sum + d, 0) < 10) return false;
+
+  for (let k = 1; k < plan.length; k += 1) {
+    if (canExitAfterPrefix(pieces, plan, k)) return false;
+  }
+
+  for (let i = 0; i < plan.length; i += 1) {
+    const reduced = plan.filter((_, index) => index !== i);
+    if (simulatePlan(pieces, reduced).success) return false;
+  }
+
+  return true;
+}
+
+function tryPlacePiece(pieces, candidate, attempts, rng) {
+  for (let i = 0; i < attempts; i += 1) {
+    const trial = { ...candidate };
+    if (i > 0) {
+      const maxRow = trial.orient === 'V' ? HEIGHT - trial.len : HEIGHT - 1;
+      const maxCol = trial.orient === 'H' ? WIDTH - trial.len : WIDTH - 1;
+      trial.row = Math.floor(rng() * (maxRow + 1));
+      trial.col = Math.floor(rng() * (maxCol + 1));
+    }
+    if (!overlapsAny(pieces, trial)) {
+      pieces.push(trial);
+      return true;
+    }
+  }
+  return false;
+}
+
 function buildCandidateLayout(rng) {
   const pieces = [
     { id: 'goal', isGoal: true, row: EXIT_ROW, col: 0, len: 2, orient: 'H' }
   ];
-  const ids = ['a', 'b', 'c', 'd'];
 
-  for (let i = 0; i < ids.length; i += 1) {
-    let placed = false;
-    for (let attempt = 0; attempt < 150; attempt += 1) {
-      const len = rng() < 0.4 ? 3 : 2;
-      const orient = rng() < 0.55 ? 'H' : 'V';
-      const maxRow = orient === 'V' ? HEIGHT - len : HEIGHT - 1;
-      const maxCol = orient === 'H' ? WIDTH - len : WIDTH - 1;
-      const candidate = {
-        id: ids[i],
-        len,
-        orient,
-        row: Math.floor(rng() * (maxRow + 1)),
-        col: Math.floor(rng() * (maxCol + 1))
-      };
-      if (!overlapsAny(pieces, candidate)) {
-        pieces.push(candidate);
-        placed = true;
-        break;
-      }
-    }
-    if (!placed) return null;
+  for (const id of MOVER_IDS) {
+    const len = rng() < 0.45 ? 3 : 2;
+    const orient = rng() < 0.55 ? 'H' : 'V';
+    if (!tryPlacePiece(pieces, { id, len, orient, row: 0, col: 0 }, 200, rng)) return null;
   }
 
   if (canGoalExitImmediately(pieces)) return null;
@@ -240,7 +262,7 @@ function generateFromSeed(seedKey, wave = 0, maxAttempts = MAX_GENERATION_ATTEMP
     if (!pieces) continue;
 
     const solutionPlan = findUniqueFullPlan(pieces);
-    if (!solutionPlan) continue;
+    if (!solutionPlan || !passesQualityGate(pieces, solutionPlan)) continue;
 
     return finalizePuzzle(pieces, solutionPlan);
   }
@@ -251,7 +273,7 @@ function generateFromSeed(seedKey, wave = 0, maxAttempts = MAX_GENERATION_ATTEMP
 export function generatePuzzle(seedKey) {
   if (PUZZLE_CACHE.has(seedKey)) return PUZZLE_CACHE.get(seedKey);
 
-  for (let wave = 0; wave < 4; wave += 1) {
+  for (let wave = 0; wave < 6; wave += 1) {
     const puzzle = generateFromSeed(seedKey, wave);
     if (puzzle) {
       PUZZLE_CACHE.set(seedKey, puzzle);
