@@ -3,7 +3,12 @@ import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
 import { HarborEngine } from './harbor-engine.js';
-import { applyPieceMove, applyGoalExit, clonePieces } from './harbor-puzzles.js';
+import {
+  applyPieceMove,
+  clonePieces,
+  isGoalExited,
+  stepGoalExit
+} from './harbor-puzzles.js';
 
 const STATE_PREFIX = 'dailygrid_harbor_state_';
 const ANIM_MS = 220;
@@ -25,6 +30,11 @@ let lastTs = performance.now();
 let lastSaveTs = 0;
 let executing = false;
 
+/** @type {{ tray: HTMLElement, piecesLayer: HTMLElement } | null} */
+let boardDom = null;
+/** @type {Map<string, HTMLButtonElement>} */
+const pieceEls = new Map();
+
 const stateKey = () => `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 const getPuzzleId = () => (currentMode === 'practice' ? `practice-${puzzleSeed}` : getPTDateYYYYMMDD());
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -45,7 +55,7 @@ function updateProgress(message) {
     return;
   }
   if (engine.phase === 'rewinding') {
-    els.progress.textContent = 'Wrong order — resetting…';
+    els.progress.textContent = 'Wrong order — rewinding…';
     return;
   }
   if (engine.isComplete) {
@@ -54,59 +64,144 @@ function updateProgress(message) {
   }
   const remaining = engine.pieceCount - engine.playerOrder.length;
   if (remaining === 0) {
-    els.progress.textContent = 'All blocks selected — launching moves…';
+    els.progress.textContent = 'All vehicles selected — launching moves…';
     return;
   }
   els.progress.textContent = remaining === engine.pieceCount
-    ? 'Tap blocks in the order they should move. The pink car must reach the exit.'
+    ? 'Tap vehicles in the order they should move. The pink car must reach the exit hole.'
     : `${engine.playerOrder.length} of ${engine.pieceCount} selected • ${remaining} left`;
 }
 
-function renderBoard() {
-  if (!els.board || !engine) return;
-  els.board.innerHTML = '';
+function pieceLayout(piece) {
+  const unit = 100 / engine.width;
+  const isH = piece.orient === 'H';
+  return {
+    left: `${piece.col * unit}%`,
+    top: `${piece.row * unit}%`,
+    width: isH ? `${piece.len * unit}%` : `${unit}%`,
+    height: isH ? `${unit}%` : `${piece.len * unit}%`
+  };
+}
 
-  const grid = document.createElement('div');
-  grid.className = 'harbor-grid';
+function applyPieceLayout(el, piece) {
+  const layout = pieceLayout(piece);
+  el.style.left = layout.left;
+  el.style.top = layout.top;
+  el.style.width = layout.width;
+  el.style.height = layout.height;
+}
+
+function destroyBoardDom() {
+  pieceEls.clear();
+  boardDom = null;
+  if (els.board) els.board.innerHTML = '';
+}
+
+function ensureBoardDom() {
+  if (boardDom) return boardDom;
+
+  const tray = document.createElement('div');
+  tray.className = 'harbor-tray';
+
+  const playfield = document.createElement('div');
+  playfield.className = 'harbor-playfield';
+
+  const gridBg = document.createElement('div');
+  gridBg.className = 'harbor-grid-bg';
   for (let i = 0; i < engine.width * engine.height; i += 1) {
     const cell = document.createElement('div');
     cell.className = 'harbor-cell';
-    if (Math.floor(i / engine.width) === engine.exitRow && i % engine.width === engine.width - 1) {
-      cell.classList.add('harbor-exit');
-    }
-    grid.appendChild(cell);
+    gridBg.appendChild(cell);
   }
-  els.board.appendChild(grid);
 
-  engine.pieces.forEach((piece) => {
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = 'harbor-piece';
-    if (piece.isGoal) el.classList.add('harbor-piece-goal');
-    if (engine.phase === 'planning' && !executing) el.classList.add('harbor-piece-selectable');
+  const piecesLayer = document.createElement('div');
+  piecesLayer.className = 'harbor-pieces-layer';
 
-    const idx = engine.getSelectionIndex(piece.id);
-    if (idx >= 0) {
-      el.classList.add('harbor-piece-selected');
-      const badge = document.createElement('span');
+  const exitHole = document.createElement('div');
+  exitHole.className = 'harbor-exit-hole';
+  exitHole.setAttribute('aria-hidden', 'true');
+
+  playfield.appendChild(gridBg);
+  playfield.appendChild(piecesLayer);
+  tray.appendChild(playfield);
+  tray.appendChild(exitHole);
+  els.board.appendChild(tray);
+
+  boardDom = { tray, piecesLayer };
+  return boardDom;
+}
+
+function createPieceElement(piece) {
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.dataset.pieceId = piece.id;
+  el.className = `harbor-piece harbor-piece-${piece.orient === 'H' ? 'h' : 'v'}`;
+  if (piece.isGoal) el.classList.add('harbor-piece-goal');
+  el.setAttribute('aria-label', piece.isGoal ? 'Goal car' : `Vehicle ${piece.id}`);
+  el.addEventListener('click', () => handlePieceClick(piece.id));
+  return el;
+}
+
+function updatePieceElement(el, piece) {
+  const idx = engine.getSelectionIndex(piece.id);
+  const selectable = engine.phase === 'planning' && !executing && !engine.isComplete;
+
+  el.classList.toggle('harbor-piece-selectable', selectable);
+  el.classList.toggle('harbor-piece-selected', idx >= 0);
+  el.disabled = !selectable;
+
+  const color = engine.getPieceColor(piece.id);
+  el.style.setProperty('--piece-color', color);
+  if (!piece.isGoal) {
+    el.style.background = color;
+  }
+
+  let badge = el.querySelector('.harbor-piece-badge');
+  if (idx >= 0) {
+    if (!badge) {
+      badge = document.createElement('span');
       badge.className = 'harbor-piece-badge';
-      badge.textContent = String(idx + 1);
       el.appendChild(badge);
     }
+    badge.textContent = String(idx + 1);
+  } else if (badge) {
+    badge.remove();
+  }
 
-    const color = engine.getPieceColor(piece.id);
-    el.style.setProperty('--piece-color', color);
-    el.style.gridRow = piece.orient === 'H'
-      ? `${piece.row + 1} / span 1`
-      : `${piece.row + 1} / span ${piece.len}`;
-    el.style.gridColumn = piece.orient === 'H'
-      ? `${piece.col + 1} / span ${piece.len}`
-      : `${piece.col + 1} / span 1`;
+  applyPieceLayout(el, piece);
+}
 
-    el.setAttribute('aria-label', piece.isGoal ? 'Goal car' : `Block ${piece.id}`);
-    el.addEventListener('click', () => handlePieceClick(piece.id));
-    grid.appendChild(el);
+function setAnimating(on) {
+  if (!boardDom) return;
+  boardDom.piecesLayer.classList.toggle('harbor-animating', on);
+  boardDom.tray.classList.toggle('harbor-complete', engine.isComplete);
+}
+
+function renderBoard({ animate = false } = {}) {
+  if (!els.board || !engine) return;
+
+  ensureBoardDom();
+  setAnimating(animate);
+  boardDom.tray.classList.toggle('harbor-complete', engine.isComplete);
+
+  const seen = new Set();
+  engine.pieces.forEach((piece) => {
+    seen.add(piece.id);
+    let el = pieceEls.get(piece.id);
+    if (!el) {
+      el = createPieceElement(piece);
+      pieceEls.set(piece.id, el);
+      boardDom.piecesLayer.appendChild(el);
+    }
+    updatePieceElement(el, piece);
   });
+
+  for (const [id, el] of pieceEls) {
+    if (!seen.has(id)) {
+      el.remove();
+      pieceEls.delete(id);
+    }
+  }
 }
 
 function save() {
@@ -144,9 +239,20 @@ function onPlanningChange() {
 }
 
 function handlePieceClick(pieceId) {
-  if (engine.phase !== 'planning' || executing) return;
+  if (engine.phase !== 'planning' || executing || engine.isComplete) return;
   if (!engine.toggleSelection(pieceId)) return;
   onPlanningChange();
+}
+
+async function animateGoalExit() {
+  const maxSteps = engine.width + 2;
+  for (let i = 0; i < maxSteps; i += 1) {
+    if (isGoalExited(engine.pieces)) return true;
+    if (!stepGoalExit(engine.pieces)) break;
+    renderBoard({ animate: true });
+    await sleep(ANIM_MS);
+  }
+  return isGoalExited(engine.pieces);
 }
 
 async function runSequence() {
@@ -164,10 +270,11 @@ async function runSequence() {
     const before = clonePieces(engine.pieces);
     const move = movesMap[pieceId];
     const ok = applyPieceMove(engine.pieces, pieceId, move);
-    renderBoard();
+    renderBoard({ animate: true });
     await sleep(ANIM_MS);
 
     if (!ok) {
+      updateProgress('Blocked move — rewinding…');
       await rewindSequence(applied);
       executing = false;
       return;
@@ -176,12 +283,11 @@ async function runSequence() {
   }
 
   const beforeExit = clonePieces(engine.pieces);
-  const exited = applyGoalExit(engine.pieces);
-  renderBoard();
-  await sleep(ANIM_MS);
+  const exited = await animateGoalExit();
 
   if (!exited) {
     applied.push({ pieceId: 'goal-exit', before: beforeExit });
+    updateProgress('Path not clear — rewinding…');
     await rewindSequence(applied);
     executing = false;
     return;
@@ -192,6 +298,7 @@ async function runSequence() {
   completionMs = engine.timeMs;
   engine.pause();
   executing = false;
+  setAnimating(false);
   updateProgress();
   renderBoard();
   save();
@@ -204,13 +311,14 @@ async function rewindSequence(applied) {
 
   for (let i = applied.length - 1; i >= 0; i -= 1) {
     engine.pieces = clonePieces(applied[i].before);
-    renderBoard();
+    renderBoard({ animate: true });
     await sleep(ANIM_MS * 0.75);
   }
 
   engine.playerOrder = [];
   engine.phase = 'planning';
   engine.resume();
+  setAnimating(false);
   updateProgress();
   renderBoard();
   save();
@@ -218,6 +326,7 @@ async function rewindSequence(applied) {
 }
 
 function initPuzzle() {
+  destroyBoardDom();
   engine = new HarborEngine(puzzleId);
   load();
   setLabels();

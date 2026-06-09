@@ -133,7 +133,7 @@ export class HarborEngine {
     this.phase = state.phase || 'planning';
     this.timeMs = state.timeMs || 0;
     this.timerStarted = !!state.timerStarted;
-    this.isPaused = state.timerStarted ? true : !!state.isPaused;
+    this.isPaused = !!state.isPaused;
     this.isComplete = !!state.isComplete;
   }
 }

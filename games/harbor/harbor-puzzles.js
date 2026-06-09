@@ -50,13 +50,25 @@ function shiftPiece(pieces, pieceId, dr, dc, steps = 1) {
   return true;
 }
 
+function isGoalExited(pieces) {
+  const goal = pieces.find((p) => p.isGoal);
+  return !!(goal && goal.row === EXIT_ROW && goal.col + goal.len >= WIDTH);
+}
+
 function tryGoalExit(pieces) {
   const goal = pieces.find((p) => p.isGoal);
   if (!goal || goal.row !== EXIT_ROW) return false;
   while (canShift(pieces, goal.id, 0, 1)) {
     shiftPiece(pieces, goal.id, 0, 1);
   }
-  return goal.col + goal.len >= WIDTH;
+  return isGoalExited(pieces);
+}
+
+/** Slide the goal one cell right when legal (for stepped exit animation). */
+export function stepGoalExit(pieces) {
+  const goal = pieces.find((p) => p.isGoal);
+  if (!goal || goal.row !== EXIT_ROW) return false;
+  return shiftPiece(pieces, goal.id, 0, 1);
 }
 
 export function simulateTemplate(template) {
@@ -159,4 +171,4 @@ export function applyGoalExit(pieces) {
   return tryGoalExit(pieces);
 }
 
-export { clonePieces, EXIT_ROW, WIDTH, HEIGHT };
+export { clonePieces, EXIT_ROW, WIDTH, HEIGHT, isGoalExited, canShift };
