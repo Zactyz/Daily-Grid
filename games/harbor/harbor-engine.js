@@ -1,9 +1,9 @@
-import { pickTemplate, PUZZLE_TEMPLATES } from './harbor-puzzles.js';
+import { generatePuzzle } from './harbor-puzzles.js';
 
 const EXIT_ROW = 2;
-const PIECE_COLORS = ['#00d4ff', '#bf5af2', '#54d6ff', '#7b2cbf', '#f72585'];
-const GOAL_COLOR = '#ff2d95';
-const IDLE_COLOR = '#4b5d73';
+const PIECE_COLORS = ['#7b8fa8', '#8b9cb5', '#6d7f99', '#95a6bd', '#7486a0'];
+const GOAL_COLOR = '#f08080';
+const IDLE_COLOR = '#6d7f99';
 
 function clonePieces(pieces) {
   return pieces.map((p) => ({ ...p }));
@@ -25,33 +25,39 @@ export class HarborEngine {
     this.playerOrder = [];
     this.initialPieces = [];
     this.pieces = [];
-    this.template = null;
+    this.puzzle = null;
+    this.moverIds = [];
     this.loadPuzzle(seedKey);
   }
 
   loadPuzzle(seedKey) {
-    this.template = pickTemplate(seedKey);
-    this.initialPieces = clonePieces(this.template.pieces);
-    this.pieces = clonePieces(this.template.pieces);
+    this.puzzle = generatePuzzle(seedKey);
+    this.moverIds = [...this.puzzle.moverIds];
+    this.initialPieces = clonePieces(this.puzzle.pieces);
+    this.pieces = clonePieces(this.puzzle.pieces);
     this.playerOrder = [];
     this.phase = 'planning';
     this.isComplete = false;
     this.solutionShown = false;
   }
 
-  get pieceCount() {
-    return this.pieces.length;
+  get movableCount() {
+    return this.moverIds.length;
   }
 
   getGridLabel() {
-    return `${this.pieceCount} blocks`;
+    return '6×6';
+  }
+
+  isMovable(pieceId) {
+    return this.moverIds.includes(pieceId);
   }
 
   getPieceColor(pieceId) {
-    const idx = this.getSelectionIndex(pieceId);
-    if (idx < 0) return IDLE_COLOR;
     const piece = this.pieces.find((p) => p.id === pieceId);
     if (piece?.isGoal) return GOAL_COLOR;
+    const idx = this.getSelectionIndex(pieceId);
+    if (idx < 0) return IDLE_COLOR;
     return PIECE_COLORS[idx % PIECE_COLORS.length];
   }
 
@@ -61,6 +67,8 @@ export class HarborEngine {
 
   toggleSelection(pieceId) {
     if (this.phase !== 'planning' || this.isComplete) return false;
+    if (!this.isMovable(pieceId)) return false;
+
     const idx = this.playerOrder.indexOf(pieceId);
     if (idx >= 0) {
       this.playerOrder = this.playerOrder.slice(0, idx);
@@ -71,11 +79,7 @@ export class HarborEngine {
   }
 
   allSelected() {
-    return this.playerOrder.length === this.pieces.length;
-  }
-
-  getMoveFor(pieceId) {
-    return this.template.moves[pieceId];
+    return this.playerOrder.length === this.moverIds.length;
   }
 
   startTimer() {
@@ -111,6 +115,7 @@ export class HarborEngine {
 
   exportState() {
     return {
+      seedKey: this.seedKey,
       pieces: clonePieces(this.pieces),
       initialPieces: clonePieces(this.initialPieces),
       playerOrder: [...this.playerOrder],
@@ -118,16 +123,16 @@ export class HarborEngine {
       timeMs: this.timeMs,
       timerStarted: this.timerStarted,
       isPaused: this.isPaused,
-      isComplete: this.isComplete,
-      templateIndex: PUZZLE_TEMPLATES.indexOf(this.template)
+      isComplete: this.isComplete
     };
   }
 
   importState(state) {
     if (!state) return;
-    const template = PUZZLE_TEMPLATES[state.templateIndex] || this.template;
-    this.template = template;
-    this.initialPieces = clonePieces(state.initialPieces || template.pieces);
+    if (state.seedKey && state.seedKey !== this.seedKey) {
+      this.seedKey = state.seedKey;
+      this.loadPuzzle(state.seedKey);
+    }
     this.pieces = clonePieces(state.pieces || this.initialPieces);
     this.playerOrder = Array.isArray(state.playerOrder) ? [...state.playerOrder] : [];
     this.phase = state.phase || 'planning';

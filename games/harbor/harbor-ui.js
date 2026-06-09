@@ -3,15 +3,10 @@ import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
 import { HarborEngine } from './harbor-engine.js';
-import {
-  applyPieceMove,
-  clonePieces,
-  isGoalExited,
-  stepGoalExit
-} from './harbor-puzzles.js';
+import { slidePieceMax, clonePieces, stepGoalExit, isGoalExited } from './harbor-puzzles.js';
 
 const STATE_PREFIX = 'dailygrid_harbor_state_';
-const ANIM_MS = 220;
+const ANIM_MS = 280;
 
 const els = {
   board: document.getElementById('harbor-board'),
@@ -30,14 +25,15 @@ let lastTs = performance.now();
 let lastSaveTs = 0;
 let executing = false;
 
-/** @type {{ tray: HTMLElement, piecesLayer: HTMLElement } | null} */
 let boardDom = null;
-/** @type {Map<string, HTMLButtonElement>} */
 const pieceEls = new Map();
 
 const stateKey = () => `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 const getPuzzleId = () => (currentMode === 'practice' ? `practice-${puzzleSeed}` : getPTDateYYYYMMDD());
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const AXIS_ARROW_H = '<svg class="harbor-axis-icon" viewBox="0 0 24 8" aria-hidden="true"><path d="M1 4h22M4 1L1 4l3 3M20 1l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const AXIS_ARROW_V = '<svg class="harbor-axis-icon" viewBox="0 0 8 24" aria-hidden="true"><path d="M4 1v22M1 4l3-3 3 3M1 20l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function setLabels() {
   els.gridSize.textContent = engine.getGridLabel();
@@ -55,21 +51,21 @@ function updateProgress(message) {
     return;
   }
   if (engine.phase === 'rewinding') {
-    els.progress.textContent = 'Wrong order — rewinding…';
+    els.progress.textContent = 'Path blocked — rewinding…';
     return;
   }
   if (engine.isComplete) {
     els.progress.textContent = 'Exit cleared!';
     return;
   }
-  const remaining = engine.pieceCount - engine.playerOrder.length;
+  const remaining = engine.movableCount - engine.playerOrder.length;
   if (remaining === 0) {
-    els.progress.textContent = 'All vehicles selected — launching moves…';
+    els.progress.textContent = 'All vehicles selected — watch them slide…';
     return;
   }
-  els.progress.textContent = remaining === engine.pieceCount
-    ? 'Tap vehicles in the order they should move. The pink car must reach the exit hole.'
-    : `${engine.playerOrder.length} of ${engine.pieceCount} selected • ${remaining} left`;
+  els.progress.textContent = remaining === engine.movableCount
+    ? 'Tap gray vehicles in move order. The pink car exits last on its own.'
+    : `${engine.playerOrder.length} of ${engine.movableCount} selected • ${remaining} left`;
 }
 
 function pieceLayout(piece) {
@@ -136,24 +132,34 @@ function createPieceElement(piece) {
   el.type = 'button';
   el.dataset.pieceId = piece.id;
   el.className = `harbor-piece harbor-piece-${piece.orient === 'H' ? 'h' : 'v'}`;
-  if (piece.isGoal) el.classList.add('harbor-piece-goal');
-  el.setAttribute('aria-label', piece.isGoal ? 'Goal car' : `Vehicle ${piece.id}`);
-  el.addEventListener('click', () => handlePieceClick(piece.id));
+  if (piece.isGoal) {
+    el.classList.add('harbor-piece-goal');
+  } else {
+    const axis = document.createElement('span');
+    axis.className = 'harbor-axis';
+    axis.innerHTML = piece.orient === 'H' ? AXIS_ARROW_H : AXIS_ARROW_V;
+    el.appendChild(axis);
+  }
+
+  el.setAttribute('aria-label', piece.isGoal ? 'Goal car (exits automatically)' : `Vehicle ${piece.id}`);
+  if (!piece.isGoal) {
+    el.addEventListener('click', () => handlePieceClick(piece.id));
+  }
   return el;
 }
 
 function updatePieceElement(el, piece) {
   const idx = engine.getSelectionIndex(piece.id);
-  const selectable = engine.phase === 'planning' && !executing && !engine.isComplete;
+  const selectable = !piece.isGoal && engine.phase === 'planning' && !executing && !engine.isComplete;
 
   el.classList.toggle('harbor-piece-selectable', selectable);
   el.classList.toggle('harbor-piece-selected', idx >= 0);
-  el.disabled = !selectable;
+  el.classList.toggle('harbor-piece-goal', !!piece.isGoal);
+  el.disabled = piece.isGoal || !selectable;
 
-  const color = engine.getPieceColor(piece.id);
-  el.style.setProperty('--piece-color', color);
   if (!piece.isGoal) {
-    el.style.background = color;
+    el.style.setProperty('--piece-color', engine.getPieceColor(piece.id));
+    el.style.background = engine.getPieceColor(piece.id);
   }
 
   let badge = el.querySelector('.harbor-piece-badge');
@@ -264,22 +270,14 @@ async function runSequence() {
   renderBoard();
 
   const applied = [];
-  const movesMap = engine.template.moves;
 
   for (const pieceId of engine.playerOrder) {
     const before = clonePieces(engine.pieces);
-    const move = movesMap[pieceId];
-    const ok = applyPieceMove(engine.pieces, pieceId, move);
+    const distance = slidePieceMax(engine.pieces, pieceId);
     renderBoard({ animate: true });
     await sleep(ANIM_MS);
 
-    if (!ok) {
-      updateProgress('Blocked move — rewinding…');
-      await rewindSequence(applied);
-      executing = false;
-      return;
-    }
-    applied.push({ pieceId, before });
+    applied.push({ pieceId, before, distance });
   }
 
   const beforeExit = clonePieces(engine.pieces);
@@ -287,7 +285,7 @@ async function runSequence() {
 
   if (!exited) {
     applied.push({ pieceId: 'goal-exit', before: beforeExit });
-    updateProgress('Path not clear — rewinding…');
+    updateProgress('Path blocked — try a different order');
     await rewindSequence(applied);
     executing = false;
     return;
@@ -312,7 +310,7 @@ async function rewindSequence(applied) {
   for (let i = applied.length - 1; i >= 0; i -= 1) {
     engine.pieces = clonePieces(applied[i].before);
     renderBoard({ animate: true });
-    await sleep(ANIM_MS * 0.75);
+    await sleep(ANIM_MS * 0.7);
   }
 
   engine.playerOrder = [];
@@ -396,15 +394,15 @@ function initShell() {
       gameName: 'Harbor',
       shareUrl: 'https://dailygrid.app/games/harbor/',
       gridLabel: engine.getGridLabel(),
-      accent: '#ff2d95'
+      accent: '#f08080'
     }),
     getShareFile: () => buildShareCard({
       gameName: 'Harbor',
       logoPath: '/games/harbor/harbor-logo.svg',
-      accent: '#ff2d95',
-      accentSoft: 'rgba(255,45,149,.12)',
-      backgroundStart: '#070d18',
-      backgroundEnd: '#101b35',
+      accent: '#f08080',
+      accentSoft: 'rgba(240,128,128,.12)',
+      backgroundStart: '#0a0a0f',
+      backgroundEnd: '#101018',
       dateText: formatDateForShare(getPTDateYYYYMMDD()),
       timeText: formatTime(completionMs ?? engine.timeMs),
       gridLabel: engine.getGridLabel(),

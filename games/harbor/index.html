@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <link rel="icon" type="image/svg+xml" href="/games/harbor/harbor-logo.svg">
   <link rel="manifest" href="/games/harbor/manifest.json">
-  <meta name="theme-color" content="#070d18">
+  <meta name="theme-color" content="#0a0a0f">
   <title>Harbor by Daily Grid</title>
   <meta name="description" content="Order the sliding blocks and clear the exit. A new Harbor puzzle every day — free to play in your browser.">
   <meta property="og:title" content="Harbor — Daily Grid">
@@ -28,35 +28,42 @@
   <link rel="stylesheet" href="/games/common/games-base.css">
   <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
-    :root { --brand-bg:#070d18; --brand-accent:#ff2d95; --brand-accent-dim:#00d4ff; }
-    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 45% at 50% -15%,rgba(255,45,149,.12),transparent),radial-gradient(ellipse 55% 35% at 100% 100%,rgba(0,212,255,.08),transparent);pointer-events:none;z-index:-1;}
-    .btn-primary{color:#1a0612;box-shadow:0 2px 12px rgba(255,45,149,.28);}
-    .btn-primary:hover{box-shadow:0 4px 20px rgba(255,45,149,.4);}
-    .timer-display{background:linear-gradient(135deg,rgba(255,45,149,.14),rgba(0,212,255,.06));border:1px solid rgba(255,45,149,.24)}
-    .accent-glow{text-shadow:0 0 30px rgba(255,45,149,.35);}
-    .progress-text{text-align:center;color:rgba(186,230,253,.9);letter-spacing:.03em;font-size:.76rem}
-    #harbor-board{width:100%;max-width:360px;margin:0 auto;touch-action:manipulation;user-select:none}
-    .harbor-tray{position:relative;padding:10px;background:linear-gradient(165deg,#0f1a32,#0a1224);border:4px solid rgba(0,212,255,.42);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(0,212,255,.08),0 12px 32px rgba(0,0,0,.35)}
-    .harbor-playfield{position:relative;aspect-ratio:1;overflow:visible}
-    .harbor-grid-bg{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(6,1fr);position:absolute;inset:0;gap:0}
-    .harbor-cell{background:rgba(8,14,28,.65);border:1px solid rgba(0,212,255,.07);box-shadow:inset 0 2px 6px rgba(0,0,0,.22)}
+    :root { --brand-bg:#0a0a0f; --brand-accent:#f08080; --brand-accent-dim:#5fd9c2; }
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(240,128,128,.08),transparent),radial-gradient(ellipse 60% 40% at 100% 100%,rgba(95,217,194,.06),transparent),radial-gradient(ellipse 40% 30% at 0% 80%,rgba(255,45,149,.05),transparent);pointer-events:none;z-index:-1;}
+    body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:-1;}
+    h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:-.02em}
+    .glass-strong{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 24px -4px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.05)}
+    .btn-primary{background:linear-gradient(135deg,var(--brand-accent),#d66a6a);color:#0a0a0f;box-shadow:0 2px 12px rgba(240,128,128,.25)}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(240,128,128,.35)}
+    .btn-secondary{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#a1a1aa}
+    .btn-secondary:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:#e8e8ed}
+    .timer-display{background:linear-gradient(135deg,rgba(240,128,128,.1),rgba(95,217,194,.05));border:1px solid rgba(240,128,128,.2)}
+    .accent-text{color:var(--brand-accent)}
+    .accent-glow{text-shadow:0 0 30px rgba(240,128,128,.35)}
+    .progress-text{text-align:center;color:rgba(161,161,170,.92);letter-spacing:.02em;font-size:.8rem;line-height:1.45}
+    #harbor-board{width:100%;max-width:min(100%,380px);margin:0 auto;touch-action:manipulation;user-select:none}
+    .harbor-tray{position:relative;padding:10px;background:rgba(255,255,255,.03);border:3px solid rgba(255,255,255,.1);border-radius:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 8px 28px rgba(0,0,0,.28)}
+    .harbor-playfield{position:relative;aspect-ratio:1;overflow:visible;border-radius:10px}
+    .harbor-grid-bg{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(6,1fr);position:absolute;inset:0;gap:0;border-radius:10px;overflow:hidden}
+    .harbor-cell{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);box-shadow:inset 0 1px 4px rgba(0,0,0,.18)}
     .harbor-pieces-layer{position:absolute;inset:0;z-index:2;pointer-events:none}
-    .harbor-pieces-layer.harbor-animating .harbor-piece{transition:left .22s ease,top .22s ease,width .22s ease,height .22s ease}
-    .harbor-exit-hole{position:absolute;right:-18px;top:calc(10px + (100% - 20px) * 2 / 6);width:18px;height:calc((100% - 20px) / 6);background:linear-gradient(90deg,rgba(5,10,20,.2),#03060f);border:3px solid rgba(0,212,255,.65);border-left:none;border-radius:0 10px 10px 0;box-shadow:inset 0 0 14px rgba(0,212,255,.22),0 0 20px rgba(0,212,255,.18);z-index:1;animation:harbor-exit-pulse 2.8s ease-in-out infinite}
-    @keyframes harbor-exit-pulse{0%,100%{box-shadow:inset 0 0 14px rgba(0,212,255,.22),0 0 20px rgba(0,212,255,.18)}50%{box-shadow:inset 0 0 18px rgba(0,212,255,.32),0 0 26px rgba(0,212,255,.28)}}
-    .harbor-exit-hole::after{content:'';position:absolute;inset:3px 4px 3px 0;border-radius:0 6px 6px 0;background:radial-gradient(ellipse at left center,rgba(0,212,255,.22),transparent 70%)}
-    .harbor-piece{position:absolute;border:0;padding:0;margin:0;pointer-events:auto;background:var(--piece-color,#4b5d73);box-shadow:inset 0 2px 0 rgba(255,255,255,.14),inset 0 -3px 0 rgba(0,0,0,.22),0 1px 0 rgba(0,0,0,.35);transition:box-shadow .15s ease,filter .15s ease;overflow:hidden}
-    .harbor-piece::before{content:'';position:absolute;inset:18% 12%;border-radius:4px;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.04));opacity:.55;pointer-events:none}
-    .harbor-piece-h{border-radius:7px}
-    .harbor-piece-v{border-radius:7px}
-    .harbor-piece-goal{background:linear-gradient(180deg,#ff4da8,#ff2d95 55%,#d41478);--piece-color:#ff2d95}
-    .harbor-piece-goal::before{background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,.08));opacity:.7}
+    .harbor-pieces-layer.harbor-animating .harbor-piece{transition:left .28s cubic-bezier(.4,0,.2,1),top .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1),height .28s cubic-bezier(.4,0,.2,1)}
+    .harbor-exit-hole{position:absolute;right:-16px;top:calc(10px + (100% - 20px) * 2 / 6);width:16px;height:calc((100% - 20px) / 6);background:#050508;border:2px solid rgba(95,217,194,.55);border-left:none;border-radius:0 8px 8px 0;box-shadow:inset 0 0 12px rgba(95,217,194,.2),0 0 16px rgba(95,217,194,.12);z-index:1}
+    .harbor-exit-hole::after{content:'';position:absolute;inset:2px 3px 2px 0;border-radius:0 5px 5px 0;background:radial-gradient(ellipse at left center,rgba(95,217,194,.25),transparent 70%)}
+    .harbor-piece{position:absolute;border:0;padding:0;margin:0;pointer-events:auto;background:var(--piece-color,#6d7f99);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -2px 0 rgba(0,0,0,.2);transition:box-shadow .15s ease,filter .15s ease,transform .12s ease;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    .harbor-piece-h{border-radius:6px}
+    .harbor-piece-v{border-radius:6px}
+    .harbor-piece-goal{background:linear-gradient(180deg,#f5a0a0,#f08080 55%,#d66a6a);cursor:default}
+    .harbor-piece-goal::after{content:'';position:absolute;inset:22% 14%;border-radius:4px;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06));pointer-events:none}
+    .harbor-axis{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.42);pointer-events:none}
+    .harbor-axis-icon{width:58%;height:auto;max-height:42%;opacity:.85}
+    .harbor-piece-v .harbor-axis-icon{width:auto;max-width:42%;height:58%}
     .harbor-piece-selectable{cursor:pointer}
-    .harbor-piece-selectable:hover{filter:brightness(1.1);box-shadow:inset 0 2px 0 rgba(255,255,255,.18),inset 0 -3px 0 rgba(0,0,0,.22),0 0 0 1px rgba(0,212,255,.35)}
-    .harbor-piece-selectable:active{filter:brightness(1.08)}
-    .harbor-piece-selected{box-shadow:inset 0 2px 0 rgba(255,255,255,.2),inset 0 -3px 0 rgba(0,0,0,.22),0 0 0 2px rgba(0,212,255,.75),0 0 16px rgba(0,212,255,.25);filter:saturate(1.12)}
-    .harbor-piece-badge{position:absolute;top:3px;right:5px;z-index:1;font-family:'JetBrains Mono',monospace;font-size:clamp(.58rem,2.8vw,.72rem);font-weight:700;line-height:1;color:#fff;background:rgba(0,0,0,.35);border-radius:4px;padding:1px 4px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
-    .harbor-tray.harbor-complete .harbor-exit-hole{border-color:rgba(255,45,149,.7);box-shadow:inset 0 0 18px rgba(255,45,149,.25),0 0 22px rgba(255,45,149,.2)}
+    .harbor-piece-selectable:hover{filter:brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 0 1px rgba(95,217,194,.28)}
+    .harbor-piece-selectable:active{transform:scale(.985)}
+    .harbor-piece-selected{box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 0 0 2px rgba(95,217,194,.65),0 0 14px rgba(95,217,194,.18);filter:saturate(1.08)}
+    .harbor-piece-badge{position:absolute;top:3px;right:4px;z-index:2;font-family:'JetBrains Mono',monospace;font-size:clamp(.56rem,2.6vw,.7rem);font-weight:700;line-height:1;color:#fff;background:rgba(0,0,0,.4);border-radius:4px;padding:1px 4px}
+    .harbor-tray.harbor-complete .harbor-exit-hole{border-color:rgba(240,128,128,.65);box-shadow:inset 0 0 14px rgba(240,128,128,.22),0 0 18px rgba(240,128,128,.15)}
     @media (max-width:899px){nav{display:none!important}.mobile-app-bar{display:flex}}
   </style>
 </head>
@@ -66,17 +73,17 @@
 
   <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
     <header class="text-center mb-6 w-full">
-      <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/25 text-fuchsia-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-fuchsia-300 animate-pulse"></span>Daily Puzzle</div>
-      <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-400/10 border border-fuchsia-400/25 text-fuchsia-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-fuchsia-300"></span>Practice Mode</div>
+      <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/25 text-rose-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-rose-300 animate-pulse"></span>Daily Puzzle</div>
+      <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-400/10 border border-rose-400/25 text-rose-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-rose-300"></span>Practice Mode</div>
       <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Harbor</h1>
-      <p class="text-zinc-400 text-sm">Tap every vehicle in move order. They slide one at a time — clear a path for the pink car to drive through the exit.</p>
+      <p class="text-zinc-400 text-sm">Program the traffic jam. Tap gray vehicles in order — each slides along its axis. The pink car drives out last.</p>
       <span id="puzzle-date" class="hidden"></span>
       <span id="grid-size" class="hidden"></span>
       <span id="timer" class="hidden font-mono">0:00</span>
     </header>
 
     <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-4 w-full relative">
-      <div id="progress-text" class="progress-text mb-3">Tap blocks in the order they should move.</div>
+      <div id="progress-text" class="progress-text mb-3">Tap gray vehicles in move order. The pink car exits automatically.</div>
       <div id="harbor-board" class="celebrate-target"></div>
 
       <div id="start-overlay" class="shell-start-overlay hidden"><div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-fuchsia-500/30 to-fuchsia-600/20 flex items-center justify-center mb-4"><svg class="w-10 h-10 text-fuchsia-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><span class="text-2xl font-bold text-white tracking-wide">Ready?</span><span id="start-overlay-text" class="text-sm text-white/60 mt-1">Tap to begin</span></div>
@@ -94,9 +101,9 @@
       <summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">How to Play</summary>
       <div class="px-5 pb-5 pt-1">
         <ul class="text-zinc-400 space-y-2.5 text-sm">
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-fuchsia-400/15 text-fuchsia-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Tap each vehicle to set its move order (1, 2, 3…). Tap again to undo from that point.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-fuchsia-400/15 text-fuchsia-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>When every vehicle is selected, they slide in that order.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-fuchsia-400/15 text-fuchsia-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Wrong order rewinds the puzzle. Drive the pink car through the exit hole to win.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-rose-400/15 text-rose-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Tap each gray vehicle to set move order (1, 2, 3…). Tap again to undo from that point. The pink car is not selectable.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-rose-400/15 text-rose-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Each vehicle slides as far as it can along its arrow axis (↔ or ↕).</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-rose-400/15 text-rose-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Wrong order rewinds the jam. Clear a path so the pink car can roll through the exit hole.</span></li>
         </ul>
       </div>
     </details>
