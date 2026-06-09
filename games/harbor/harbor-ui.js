@@ -3,7 +3,7 @@ import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
 import { HarborEngine } from './harbor-engine.js';
-import { slidePieceDirected, clonePieces, stepGoalExit, isGoalExited } from './harbor-puzzles.js';
+import { slidePieceDirected, clonePieces, stepGoalExit, isGoalExited, directionsForPiece } from './harbor-puzzles.js';
 
 const STATE_PREFIX = 'dailygrid_harbor_state_';
 const ANIM_MS = 280;
@@ -12,7 +12,8 @@ const els = {
   board: document.getElementById('harbor-board'),
   progress: document.getElementById('progress-text'),
   gridSize: document.getElementById('grid-size'),
-  puzzleDate: document.getElementById('puzzle-date')
+  puzzleDate: document.getElementById('puzzle-date'),
+  undoBtn: document.getElementById('undo-btn')
 };
 
 let engine;
@@ -48,6 +49,13 @@ function setLabels() {
   els.puzzleDate.textContent = currentMode === 'practice' ? 'Practice' : puzzleId;
 }
 
+function updateUndoButton() {
+  if (!els.undoBtn) return;
+  const canUndo = engine.phase === 'planning' && !executing && !engine.isComplete && engine.playerPlan.length > 0;
+  els.undoBtn.disabled = !canUndo;
+  els.undoBtn.classList.toggle('opacity-40', !canUndo);
+}
+
 function updateProgress(message) {
   if (!els.progress) return;
   if (message) {
@@ -72,7 +80,7 @@ function updateProgress(message) {
     return;
   }
   els.progress.textContent = remaining === engine.movableCount
-    ? 'Tap gray vehicles in move order. Tap the arrow to flip direction.'
+    ? 'Tap an arrow on each vehicle in move order. Pink car is not selectable.'
     : `${engine.playerPlan.length} of ${engine.movableCount} programmed • ${remaining} left`;
 }
 
@@ -135,32 +143,39 @@ function ensureBoardDom() {
   return boardDom;
 }
 
+function createArrowButton(pieceId, dr, dc, className) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = `harbor-end-arrow ${className}`;
+  btn.dataset.dr = String(dr);
+  btn.dataset.dc = String(dc);
+  btn.innerHTML = DIR_ICON[dirKey(dr, dc)] || '';
+  btn.setAttribute('aria-label', 'Set slide direction');
+  btn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    handleDirectionSelect(pieceId, dr, dc);
+  });
+  return btn;
+}
+
 function createPieceElement(piece) {
   const el = document.createElement('div');
   el.dataset.pieceId = piece.id;
   el.className = `harbor-piece harbor-piece-${piece.orient === 'H' ? 'h' : 'v'}`;
+
   if (piece.isGoal) {
     el.classList.add('harbor-piece-goal');
     el.setAttribute('aria-hidden', 'true');
     return el;
   }
 
-  const hit = document.createElement('button');
-  hit.type = 'button';
-  hit.className = 'harbor-piece-hit';
-  hit.setAttribute('aria-label', `Vehicle ${piece.id}`);
-  hit.addEventListener('click', () => handlePieceClick(piece.id));
-  el.appendChild(hit);
-
-  const dirBtn = document.createElement('button');
-  dirBtn.type = 'button';
-  dirBtn.className = 'harbor-dir-btn hidden';
-  dirBtn.setAttribute('aria-label', 'Flip slide direction');
-  dirBtn.addEventListener('click', (event) => {
-    event.stopPropagation();
-    handleDirectionToggle(piece.id);
+  const dirs = directionsForPiece(piece);
+  dirs.forEach((dir, index) => {
+    const sideClass = piece.orient === 'H'
+      ? (dir.dc < 0 ? 'harbor-end-arrow-left' : 'harbor-end-arrow-right')
+      : (dir.dr < 0 ? 'harbor-end-arrow-top' : 'harbor-end-arrow-bottom');
+    el.appendChild(createArrowButton(piece.id, dir.dr, dir.dc, sideClass));
   });
-  el.appendChild(dirBtn);
 
   return el;
 }
@@ -168,25 +183,23 @@ function createPieceElement(piece) {
 function updatePieceElement(el, piece) {
   const idx = engine.getSelectionIndex(piece.id);
   const planStep = engine.getPlanStep(piece.id);
-  const selectable = !piece.isGoal && engine.phase === 'planning' && !executing && !engine.isComplete;
+  const isSelected = idx >= 0;
+  const isLast = engine.isLastSelected(piece.id);
+  const isLocked = isSelected && !isLast;
+  const canInteract = engine.canInteractWith(piece.id) && !executing;
 
-  el.classList.toggle('harbor-piece-selectable', selectable);
-  el.classList.toggle('harbor-piece-selected', idx >= 0);
+  el.classList.toggle('harbor-piece-selected', isSelected);
+  el.classList.toggle('harbor-piece-locked', isLocked);
   el.classList.toggle('harbor-piece-goal', !!piece.isGoal);
+  el.classList.toggle('harbor-piece-idle', !isSelected && !piece.isGoal);
 
   if (!piece.isGoal) {
     el.style.setProperty('--piece-color', engine.getPieceColor(piece.id));
     el.style.background = engine.getPieceColor(piece.id);
   }
 
-  const hit = el.querySelector('.harbor-piece-hit');
-  if (hit) {
-    hit.disabled = !selectable;
-    hit.tabIndex = selectable ? 0 : -1;
-  }
-
   let badge = el.querySelector('.harbor-piece-badge');
-  if (idx >= 0) {
+  if (isSelected) {
     if (!badge) {
       badge = document.createElement('span');
       badge.className = 'harbor-piece-badge';
@@ -197,15 +210,15 @@ function updatePieceElement(el, piece) {
     badge.remove();
   }
 
-  const dirBtn = el.querySelector('.harbor-dir-btn');
-  if (dirBtn) {
-    const showDir = idx >= 0 && planStep;
-    dirBtn.classList.toggle('hidden', !showDir);
-    dirBtn.disabled = !selectable;
-    if (showDir) {
-      dirBtn.innerHTML = DIR_ICON[dirKey(planStep.dr, planStep.dc)] || '';
-    }
-  }
+  el.querySelectorAll('.harbor-end-arrow').forEach((btn) => {
+    const dr = Number(btn.dataset.dr);
+    const dc = Number(btn.dataset.dc);
+    const isActive = !!(planStep && planStep.dr === dr && planStep.dc === dc);
+    btn.classList.toggle('harbor-end-arrow-active', isActive);
+    btn.classList.toggle('harbor-end-arrow-idle', !isSelected);
+    btn.classList.toggle('harbor-end-arrow-dim', isSelected && !isActive);
+    btn.disabled = !canInteract;
+  });
 
   applyPieceLayout(el, piece);
 }
@@ -241,6 +254,8 @@ function renderBoard({ animate = false } = {}) {
       pieceEls.delete(id);
     }
   }
+
+  updateUndoButton();
 }
 
 function save() {
@@ -277,18 +292,16 @@ function onPlanningChange() {
   }
 }
 
-function handlePieceClick(pieceId) {
+function handleDirectionSelect(pieceId, dr, dc) {
   if (engine.phase !== 'planning' || executing || engine.isComplete) return;
-  if (!engine.toggleSelection(pieceId)) return;
+  if (!engine.selectWithDirection(pieceId, dr, dc)) return;
   onPlanningChange();
 }
 
-function handleDirectionToggle(pieceId) {
+function handleUndo() {
   if (engine.phase !== 'planning' || executing || engine.isComplete) return;
-  if (!engine.toggleDirection(pieceId)) return;
-  renderBoard();
-  save();
-  shell?.update();
+  if (!engine.undoLast()) return;
+  onPlanningChange();
 }
 
 async function animateGoalExit() {
@@ -310,22 +323,23 @@ async function runSequence() {
   renderBoard();
 
   const applied = [];
+  let allMoved = true;
 
   for (const step of engine.playerPlan) {
     const before = clonePieces(engine.pieces);
     const distance = slidePieceDirected(engine.pieces, step.id, step.dr, step.dc);
+    if (distance === 0) allMoved = false;
     renderBoard({ animate: true });
     await sleep(ANIM_MS);
-
     applied.push({ pieceId: step.id, before, distance });
   }
 
   const beforeExit = clonePieces(engine.pieces);
   const exited = await animateGoalExit();
 
-  if (!exited) {
+  if (!exited || !allMoved) {
     applied.push({ pieceId: 'goal-exit', before: beforeExit });
-    updateProgress('Path blocked — try a different plan');
+    updateProgress(allMoved ? 'Path blocked — try a different plan' : 'Every vehicle must move — try again');
     await rewindSequence(applied);
     executing = false;
     return;
@@ -432,15 +446,15 @@ function initShell() {
       gameName: 'Harbor',
       shareUrl: 'https://dailygrid.app/games/harbor/',
       gridLabel: engine.getGridLabel(),
-      accent: '#f08080'
+      accent: '#ff2d95'
     }),
     getShareFile: () => buildShareCard({
       gameName: 'Harbor',
       logoPath: '/games/harbor/harbor-logo.svg',
-      accent: '#f08080',
-      accentSoft: 'rgba(240,128,128,.12)',
-      backgroundStart: '#0a0a0f',
-      backgroundEnd: '#101018',
+      accent: '#ff2d95',
+      accentSoft: 'rgba(255,45,149,.12)',
+      backgroundStart: '#070d18',
+      backgroundEnd: '#0a1224',
       dateText: formatDateForShare(getPTDateYYYYMMDD()),
       timeText: formatTime(completionMs ?? engine.timeMs),
       gridLabel: engine.getGridLabel(),
@@ -457,6 +471,8 @@ function initShell() {
 document.addEventListener('DOMContentLoaded', () => {
   initPuzzle();
   initShell();
+
+  els.undoBtn?.addEventListener('click', handleUndo);
 
   setInterval(() => {
     const now = performance.now();

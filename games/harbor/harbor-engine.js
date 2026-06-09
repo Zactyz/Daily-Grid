@@ -1,9 +1,9 @@
-import { generatePuzzle, getDefaultDirection, directionsForPiece } from './harbor-puzzles.js';
+import { generatePuzzle, directionsForPiece } from './harbor-puzzles.js';
 
 const EXIT_ROW = 2;
-const PIECE_COLORS = ['#7b8fa8', '#8b9cb5', '#6d7f99', '#95a6bd'];
-const GOAL_COLOR = '#f08080';
-const IDLE_COLOR = '#6d7f99';
+const GOAL_COLOR = '#ff2d95';
+const IDLE_COLOR = '#4a5f78';
+const SELECTED_COLOR = '#5ec8e8';
 
 function clonePieces(pieces) {
   return pieces.map((p) => ({ ...p }));
@@ -11,6 +11,10 @@ function clonePieces(pieces) {
 
 function clonePlan(plan) {
   return plan.map((step) => ({ ...step }));
+}
+
+function sameDir(a, b) {
+  return a.dr === b.dr && a.dc === b.dc;
 }
 
 export class HarborEngine {
@@ -60,9 +64,8 @@ export class HarborEngine {
   getPieceColor(pieceId) {
     const piece = this.pieces.find((p) => p.id === pieceId);
     if (piece?.isGoal) return GOAL_COLOR;
-    const idx = this.getSelectionIndex(pieceId);
-    if (idx < 0) return IDLE_COLOR;
-    return PIECE_COLORS[idx % PIECE_COLORS.length];
+    if (this.getSelectionIndex(pieceId) >= 0) return SELECTED_COLOR;
+    return IDLE_COLOR;
   }
 
   getSelectionIndex(pieceId) {
@@ -73,34 +76,38 @@ export class HarborEngine {
     return this.playerPlan.find((step) => step.id === pieceId) || null;
   }
 
-  toggleSelection(pieceId) {
+  isLastSelected(pieceId) {
+    if (this.playerPlan.length === 0) return false;
+    return this.playerPlan[this.playerPlan.length - 1].id === pieceId;
+  }
+
+  canInteractWith(pieceId) {
     if (this.phase !== 'planning' || this.isComplete) return false;
     if (!this.isMovable(pieceId)) return false;
+    const idx = this.getSelectionIndex(pieceId);
+    return idx < 0 || this.isLastSelected(pieceId);
+  }
+
+  selectWithDirection(pieceId, dr, dc) {
+    if (!this.canInteractWith(pieceId)) return false;
+
+    const dirs = directionsForPiece(this.pieces.find((p) => p.id === pieceId));
+    if (!dirs.some((dir) => sameDir(dir, { dr, dc }))) return false;
 
     const idx = this.getSelectionIndex(pieceId);
     if (idx >= 0) {
-      this.playerPlan = this.playerPlan.slice(0, idx);
+      this.playerPlan[idx] = { id: pieceId, dr, dc };
       return true;
     }
 
-    const dir = getDefaultDirection(this.pieces, pieceId);
-    this.playerPlan.push({ id: pieceId, dr: dir.dr, dc: dir.dc });
+    this.playerPlan.push({ id: pieceId, dr, dc });
     return true;
   }
 
-  toggleDirection(pieceId) {
+  undoLast() {
     if (this.phase !== 'planning' || this.isComplete) return false;
-    const idx = this.getSelectionIndex(pieceId);
-    if (idx < 0) return false;
-
-    const piece = this.pieces.find((p) => p.id === pieceId);
-    if (!piece) return false;
-    const dirs = directionsForPiece(piece);
-    if (dirs.length < 2) return false;
-
-    const current = this.playerPlan[idx];
-    const next = dirs.find((dir) => dir.dr !== current.dr || dir.dc !== current.dc) || dirs[0];
-    this.playerPlan[idx] = { id: pieceId, dr: next.dr, dc: next.dc };
+    if (this.playerPlan.length === 0) return false;
+    this.playerPlan.pop();
     return true;
   }
 
@@ -165,16 +172,7 @@ export class HarborEngine {
       this.loadPuzzle(state.seedKey);
     }
     this.pieces = clonePieces(state.pieces || this.initialPieces);
-    if (Array.isArray(state.playerPlan)) {
-      this.playerPlan = clonePlan(state.playerPlan);
-    } else if (Array.isArray(state.playerOrder)) {
-      this.playerPlan = state.playerOrder.map((id) => {
-        const dir = getDefaultDirection(this.initialPieces, id);
-        return { id, dr: dir.dr, dc: dir.dc };
-      });
-    } else {
-      this.playerPlan = [];
-    }
+    this.playerPlan = Array.isArray(state.playerPlan) ? clonePlan(state.playerPlan) : [];
     this.phase = state.phase || 'planning';
     this.timeMs = state.timeMs || 0;
     this.timerStarted = !!state.timerStarted;
