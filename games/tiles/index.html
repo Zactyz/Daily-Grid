@@ -35,7 +35,7 @@
     .timer-display{background:linear-gradient(135deg,rgba(167,139,250,.14),rgba(167,139,250,.04));border:1px solid rgba(167,139,250,.24)}
     .accent-glow{text-shadow:0 0 30px rgba(167,139,250,.35);}
     .progress-text{text-align:center;color:rgba(221,214,254,.88);letter-spacing:.03em;font-size:.76rem}
-    #tiles-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;max-width:320px;margin:0 auto;touch-action:manipulation;user-select:none}
+    #tiles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:280px;margin:0 auto;touch-action:manipulation;user-select:none}
     .tiles-tile{aspect-ratio:1;border-radius:14px;border:1px solid rgba(167,139,250,.35);background:linear-gradient(145deg,rgba(167,139,250,.22),rgba(91,33,182,.35));color:#ede9fe;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(1rem,5vw,1.35rem);display:flex;align-items:center;justify-content:center;transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
     .tiles-tile-active{cursor:pointer;box-shadow:0 0 0 1px rgba(196,181,253,.45),0 8px 20px rgba(91,33,182,.25)}
     .tiles-tile-active:active{transform:scale(.96)}
@@ -53,7 +53,7 @@
       <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/25 text-violet-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-violet-300 animate-pulse"></span>Daily Puzzle</div>
       <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-400/10 border border-violet-400/25 text-violet-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-violet-300"></span>Practice Mode</div>
       <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Tiles</h1>
-      <p class="text-zinc-400 text-sm">Slide tiles into the empty space. Put 1–15 in order with the gap at the bottom-right.</p>
+      <p class="text-zinc-400 text-sm">Slide tiles into the empty space. Put 1–8 in order with the gap at the bottom-right.</p>
       <span id="puzzle-date" class="hidden"></span>
       <span id="grid-size" class="hidden"></span>
       <span id="timer" class="hidden font-mono">0:00</span>
@@ -79,7 +79,7 @@
       <div class="px-5 pb-5 pt-1">
         <ul class="text-zinc-400 space-y-2.5 text-sm">
           <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-violet-400/15 text-violet-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Tap a tile next to the empty space to slide it.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-violet-400/15 text-violet-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Arrange tiles 1 through 15 in reading order.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-violet-400/15 text-violet-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Arrange tiles 1 through 8 in reading order.</span></li>
           <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-violet-400/15 text-violet-300 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Leave the empty space in the bottom-right corner to win.</span></li>
         </ul>
       </div>

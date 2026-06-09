@@ -45,7 +45,7 @@ function updateProgress() {
     return;
   }
   els.progress.textContent = engine.moveCount === 0
-    ? 'Slide tiles into the empty space. Order 1–15 with the gap bottom-right.'
+    ? 'Slide tiles into the empty space. Order 1–8 with the gap bottom-right.'
     : `${engine.moveCount} move${engine.moveCount === 1 ? '' : 's'} • keep sliding`;
 }
 

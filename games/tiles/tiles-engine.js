@@ -1,6 +1,6 @@
 import { createSeededRandom, hashString } from '../common/utils.js';
 
-const SIZE = 4;
+const SIZE = 3;
 const CELL_COUNT = SIZE * SIZE;
 
 const SOLVED = Array.from({ length: CELL_COUNT - 1 }, (_, i) => i + 1).concat(0);
@@ -46,7 +46,7 @@ export class TilesEngine {
 
   generate(seedKey) {
     const rng = createSeededRandom(hashString(`tiles:${seedKey}`));
-    const scrambleMoves = 80 + (hashString(`tiles:moves:${seedKey}`) % 120);
+    const scrambleMoves = 30 + (hashString(`tiles:moves:${seedKey}`) % 50);
     this.tiles = [...SOLVED];
     this.moveCount = 0;
     this.isComplete = false;
