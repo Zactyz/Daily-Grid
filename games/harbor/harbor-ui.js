@@ -3,7 +3,7 @@ import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
 import { HarborEngine } from './harbor-engine.js';
-import { slidePieceMax, clonePieces, stepGoalExit, isGoalExited } from './harbor-puzzles.js';
+import { slidePieceDirected, clonePieces, stepGoalExit, isGoalExited } from './harbor-puzzles.js';
 
 const STATE_PREFIX = 'dailygrid_harbor_state_';
 const ANIM_MS = 280;
@@ -32,8 +32,16 @@ const stateKey = () => `${STATE_PREFIX}${currentMode}_${puzzleId}`;
 const getPuzzleId = () => (currentMode === 'practice' ? `practice-${puzzleSeed}` : getPTDateYYYYMMDD());
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const AXIS_ARROW_H = '<svg class="harbor-axis-icon" viewBox="0 0 24 8" aria-hidden="true"><path d="M1 4h22M4 1L1 4l3 3M20 1l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const AXIS_ARROW_V = '<svg class="harbor-axis-icon" viewBox="0 0 8 24" aria-hidden="true"><path d="M4 1v22M1 4l3-3 3 3M1 20l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const DIR_ICON = {
+  '0,-1': '<svg class="harbor-dir-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M10 6H2M4 3L1 6l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  '0,1': '<svg class="harbor-dir-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8M8 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  '-1,0': '<svg class="harbor-dir-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10V2M3 4L6 1l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  '1,0': '<svg class="harbor-dir-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2v8M3 8l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
+function dirKey(dr, dc) {
+  return `${dr},${dc}`;
+}
 
 function setLabels() {
   els.gridSize.textContent = engine.getGridLabel();
@@ -58,14 +66,14 @@ function updateProgress(message) {
     els.progress.textContent = 'Exit cleared!';
     return;
   }
-  const remaining = engine.movableCount - engine.playerOrder.length;
+  const remaining = engine.movableCount - engine.playerPlan.length;
   if (remaining === 0) {
-    els.progress.textContent = 'All vehicles selected — watch them slide…';
+    els.progress.textContent = 'All vehicles programmed — watch them slide…';
     return;
   }
   els.progress.textContent = remaining === engine.movableCount
-    ? 'Tap gray vehicles in move order. The pink car exits last on its own.'
-    : `${engine.playerOrder.length} of ${engine.movableCount} selected • ${remaining} left`;
+    ? 'Tap gray vehicles in move order. Tap the arrow to flip direction.'
+    : `${engine.playerPlan.length} of ${engine.movableCount} programmed • ${remaining} left`;
 }
 
 function pieceLayout(piece) {
@@ -134,22 +142,21 @@ function createPieceElement(piece) {
   el.className = `harbor-piece harbor-piece-${piece.orient === 'H' ? 'h' : 'v'}`;
   if (piece.isGoal) {
     el.classList.add('harbor-piece-goal');
-  } else {
-    const axis = document.createElement('span');
-    axis.className = 'harbor-axis';
-    axis.innerHTML = piece.orient === 'H' ? AXIS_ARROW_H : AXIS_ARROW_V;
-    el.appendChild(axis);
   }
 
   el.setAttribute('aria-label', piece.isGoal ? 'Goal car (exits automatically)' : `Vehicle ${piece.id}`);
   if (!piece.isGoal) {
-    el.addEventListener('click', () => handlePieceClick(piece.id));
+    el.addEventListener('click', (event) => {
+      if (event.target.closest('.harbor-dir-btn')) return;
+      handlePieceClick(piece.id);
+    });
   }
   return el;
 }
 
 function updatePieceElement(el, piece) {
   const idx = engine.getSelectionIndex(piece.id);
+  const planStep = engine.getPlanStep(piece.id);
   const selectable = !piece.isGoal && engine.phase === 'planning' && !executing && !engine.isComplete;
 
   el.classList.toggle('harbor-piece-selectable', selectable);
@@ -172,6 +179,25 @@ function updatePieceElement(el, piece) {
     badge.textContent = String(idx + 1);
   } else if (badge) {
     badge.remove();
+  }
+
+  let dirBtn = el.querySelector('.harbor-dir-btn');
+  if (idx >= 0 && planStep) {
+    if (!dirBtn) {
+      dirBtn = document.createElement('button');
+      dirBtn.type = 'button';
+      dirBtn.className = 'harbor-dir-btn';
+      dirBtn.setAttribute('aria-label', 'Flip slide direction');
+      dirBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        handleDirectionToggle(piece.id);
+      });
+      el.appendChild(dirBtn);
+    }
+    dirBtn.innerHTML = DIR_ICON[dirKey(planStep.dr, planStep.dc)] || '';
+    dirBtn.disabled = !selectable;
+  } else if (dirBtn) {
+    dirBtn.remove();
   }
 
   applyPieceLayout(el, piece);
@@ -250,6 +276,14 @@ function handlePieceClick(pieceId) {
   onPlanningChange();
 }
 
+function handleDirectionToggle(pieceId) {
+  if (engine.phase !== 'planning' || executing || engine.isComplete) return;
+  if (!engine.toggleDirection(pieceId)) return;
+  renderBoard();
+  save();
+  shell?.update();
+}
+
 async function animateGoalExit() {
   const maxSteps = engine.width + 2;
   for (let i = 0; i < maxSteps; i += 1) {
@@ -265,19 +299,18 @@ async function runSequence() {
   if (executing) return;
   executing = true;
   engine.phase = 'executing';
-  engine.pause();
   updateProgress();
   renderBoard();
 
   const applied = [];
 
-  for (const pieceId of engine.playerOrder) {
+  for (const step of engine.playerPlan) {
     const before = clonePieces(engine.pieces);
-    const distance = slidePieceMax(engine.pieces, pieceId);
+    const distance = slidePieceDirected(engine.pieces, step.id, step.dr, step.dc);
     renderBoard({ animate: true });
     await sleep(ANIM_MS);
 
-    applied.push({ pieceId, before, distance });
+    applied.push({ pieceId: step.id, before, distance });
   }
 
   const beforeExit = clonePieces(engine.pieces);
@@ -285,7 +318,7 @@ async function runSequence() {
 
   if (!exited) {
     applied.push({ pieceId: 'goal-exit', before: beforeExit });
-    updateProgress('Path blocked — try a different order');
+    updateProgress('Path blocked — try a different plan');
     await rewindSequence(applied);
     executing = false;
     return;
@@ -294,7 +327,6 @@ async function runSequence() {
   engine.phase = 'planning';
   engine.isComplete = true;
   completionMs = engine.timeMs;
-  engine.pause();
   executing = false;
   setAnimating(false);
   updateProgress();
@@ -313,9 +345,8 @@ async function rewindSequence(applied) {
     await sleep(ANIM_MS * 0.7);
   }
 
-  engine.playerOrder = [];
+  engine.playerPlan = [];
   engine.phase = 'planning';
-  engine.resume();
   setAnimating(false);
   updateProgress();
   renderBoard();
@@ -367,9 +398,9 @@ function initShell() {
     formatTime,
     autoStartOnProgress: true,
     isComplete: () => engine.isComplete,
-    isPaused: () => engine.isPaused,
+    isPaused: () => engine.showsPauseOverlay(),
     isStarted: () => engine.timerStarted,
-    hasProgress: () => engine.playerOrder.length > 0,
+    hasProgress: () => engine.playerPlan.length > 0,
     isSolutionShown: () => false,
     shouldShowCompletionModal: () => true,
     pause: () => { engine.pause(); save(); },

@@ -1,7 +1,7 @@
 import { createSeededRandom, hashString } from '../common/utils.js';
 
-const WIDTH = 6;
-const HEIGHT = 6;
+const WIDTH = 5;
+const HEIGHT = 5;
 const EXIT_ROW = 2;
 
 const PUZZLE_CACHE = new Map();
@@ -67,35 +67,33 @@ function measureSlide(pieces, pieceId, dr, dc) {
   return steps;
 }
 
-/**
- * Slide along the piece axis as far as possible toward open space.
- * When both directions are open, take the longer run (tie → toward exit / up).
- */
-export function slidePieceMax(pieces, pieceId) {
+export function directionsForPiece(piece) {
+  if (!piece || piece.isGoal) return [];
+  return piece.orient === 'H'
+    ? [{ dr: 0, dc: -1 }, { dr: 0, dc: 1 }]
+    : [{ dr: -1, dc: 0 }, { dr: 1, dc: 0 }];
+}
+
+export function getDefaultDirection(pieces, pieceId) {
   const piece = pieces.find((p) => p.id === pieceId);
-  if (!piece || piece.isGoal) return 0;
-
-  const options = piece.orient === 'H'
-    ? [
-      { dr: 0, dc: -1, dist: measureSlide(pieces, pieceId, 0, -1) },
-      { dr: 0, dc: 1, dist: measureSlide(pieces, pieceId, 0, 1) }
-    ]
-    : [
-      { dr: -1, dc: 0, dist: measureSlide(pieces, pieceId, -1, 0) },
-      { dr: 1, dc: 0, dist: measureSlide(pieces, pieceId, 1, 0) }
-    ];
-
+  if (!piece) return { dr: 0, dc: 0 };
+  const options = directionsForPiece(piece).map((dir) => ({
+    ...dir,
+    dist: measureSlide(pieces, pieceId, dir.dr, dir.dc)
+  }));
   const viable = options.filter((o) => o.dist > 0);
-  if (viable.length === 0) return 0;
-
+  if (viable.length === 0) return options[1] || options[0];
   const maxDist = Math.max(...viable.map((o) => o.dist));
   const best = viable.filter((o) => o.dist === maxDist);
-  const chosen = best.find((o) => o.dc === 1)
-    || best.find((o) => o.dr === -1)
+  return best.find((o) => o.dc === 1)
+    || best.find((o) => o.dr === 1)
     || best[0];
+}
 
-  shiftPiece(pieces, pieceId, chosen.dr, chosen.dc, chosen.dist);
-  return chosen.dist;
+export function slidePieceDirected(pieces, pieceId, dr, dc) {
+  const dist = measureSlide(pieces, pieceId, dr, dc);
+  if (dist > 0) shiftPiece(pieces, pieceId, dr, dc, dist);
+  return dist;
 }
 
 function isGoalExited(pieces) {
@@ -133,29 +131,56 @@ function permutations(arr) {
   return result;
 }
 
-export function simulateOrder(initialPieces, order) {
+function directionCombos(movers) {
+  const options = movers.map((piece) => directionsForPiece(piece));
+  const result = [];
+
+  function walk(index, acc) {
+    if (index === movers.length) {
+      result.push(acc);
+      return;
+    }
+    for (const dir of options[index]) {
+      walk(index + 1, [...acc, { id: movers[index].id, dr: dir.dr, dc: dir.dc }]);
+    }
+  }
+
+  walk(0, []);
+  return result;
+}
+
+export function simulatePlan(initialPieces, plan) {
   const pieces = clonePieces(initialPieces);
   const moved = new Set();
 
-  for (const id of order) {
-    if (slidePieceMax(pieces, id) > 0) moved.add(id);
+  for (const step of plan) {
+    if (slidePieceDirected(pieces, step.id, step.dr, step.dc) > 0) moved.add(step.id);
   }
 
   tryGoalExit(pieces);
   return {
     success: isGoalExited(pieces),
-    allMoved: moved.size === order.length
+    allMoved: moved.size === plan.length
   };
 }
 
-function findUniqueSolution(pieces) {
-  const movers = pieces.filter((p) => !p.isGoal).map((p) => p.id);
+function findUniquePlan(pieces) {
+  const movers = pieces.filter((p) => !p.isGoal);
+  const ids = movers.map((p) => p.id);
   const solutions = [];
 
-  for (const order of permutations(movers)) {
-    const result = simulateOrder(pieces, order);
-    if (result.success) solutions.push(order);
-    if (solutions.length > 1) return null;
+  for (const order of permutations(ids)) {
+    const orderedMovers = order.map((id) => movers.find((m) => m.id === id));
+    for (const dirs of directionCombos(orderedMovers)) {
+      const plan = order.map((id, index) => ({
+        id,
+        dr: dirs[index].dr,
+        dc: dirs[index].dc
+      }));
+      const result = simulatePlan(pieces, plan);
+      if (result.success && result.allMoved) solutions.push(plan);
+      if (solutions.length > 1) return null;
+    }
   }
 
   return solutions.length === 1 ? solutions[0] : null;
@@ -165,12 +190,12 @@ function buildCandidateLayout(rng) {
   const pieces = [
     { id: 'goal', isGoal: true, row: EXIT_ROW, col: 0, len: 2, orient: 'H' }
   ];
-  const ids = ['a', 'b', 'c', 'd', 'e'];
+  const ids = ['a', 'b', 'c', 'd'];
 
   for (let i = 0; i < ids.length; i += 1) {
     let placed = false;
-    for (let attempt = 0; attempt < 120; attempt += 1) {
-      const len = rng() < 0.45 ? 3 : 2;
+    for (let attempt = 0; attempt < 150; attempt += 1) {
+      const len = rng() < 0.4 ? 3 : 2;
       const orient = rng() < 0.55 ? 'H' : 'V';
       const maxRow = orient === 'V' ? HEIGHT - len : HEIGHT - 1;
       const maxCol = orient === 'H' ? WIDTH - len : WIDTH - 1;
@@ -194,43 +219,43 @@ function buildCandidateLayout(rng) {
   return pieces;
 }
 
-/** Verified dense jams — each has exactly one solving move order. */
+/** Verified dense jams — each has exactly one solving order + direction plan. */
 const PRECOMPUTED_PUZZLES = [
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 3, orient: 'V', row: 2, col: 4 }, { id: 'b', len: 3, orient: 'H', row: 5, col: 1 }, { id: 'c', len: 2, orient: 'H', row: 1, col: 1 }, { id: 'd', len: 2, orient: 'H', row: 4, col: 2 }, { id: 'e', len: 2, orient: 'V', row: 1, col: 3 }], order: ['d', 'e', 'c', 'a', 'b'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 3, orient: 'V', row: 0, col: 3 }, { id: 'b', len: 3, orient: 'H', row: 3, col: 1 }, { id: 'c', len: 2, orient: 'V', row: 3, col: 0 }, { id: 'd', len: 3, orient: 'V', row: 0, col: 4 }, { id: 'e', len: 2, orient: 'H', row: 5, col: 4 }], order: ['c', 'e', 'd', 'b', 'a'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 3, col: 3 }, { id: 'b', len: 2, orient: 'H', row: 4, col: 4 }, { id: 'c', len: 3, orient: 'V', row: 0, col: 4 }, { id: 'd', len: 3, orient: 'H', row: 5, col: 0 }, { id: 'e', len: 2, orient: 'H', row: 1, col: 2 }], order: ['e', 'a', 'b', 'c', 'd'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 3, orient: 'V', row: 0, col: 3 }, { id: 'b', len: 2, orient: 'V', row: 3, col: 5 }, { id: 'c', len: 2, orient: 'V', row: 4, col: 0 }, { id: 'd', len: 2, orient: 'H', row: 0, col: 4 }, { id: 'e', len: 3, orient: 'H', row: 5, col: 3 }], order: ['c', 'e', 'a', 'd', 'b'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 4, col: 4 }, { id: 'b', len: 2, orient: 'H', row: 5, col: 2 }, { id: 'c', len: 2, orient: 'V', row: 3, col: 3 }, { id: 'd', len: 3, orient: 'V', row: 1, col: 2 }, { id: 'e', len: 3, orient: 'V', row: 1, col: 5 }], order: ['c', 'a', 'e', 'b', 'd'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 3, col: 1 }, { id: 'b', len: 2, orient: 'V', row: 0, col: 2 }, { id: 'c', len: 3, orient: 'V', row: 0, col: 4 }, { id: 'd', len: 3, orient: 'H', row: 5, col: 0 }, { id: 'e', len: 2, orient: 'V', row: 0, col: 3 }], order: ['c', 'd', 'e', 'a', 'b'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 5, col: 2 }, { id: 'b', len: 3, orient: 'V', row: 2, col: 4 }, { id: 'c', len: 3, orient: 'H', row: 1, col: 0 }, { id: 'd', len: 2, orient: 'V', row: 3, col: 5 }, { id: 'e', len: 3, orient: 'V', row: 2, col: 2 }], order: ['d', 'c', 'b', 'a', 'e'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 5, col: 2 }, { id: 'b', len: 2, orient: 'V', row: 4, col: 5 }, { id: 'c', len: 2, orient: 'V', row: 1, col: 4 }, { id: 'd', len: 2, orient: 'V', row: 0, col: 3 }, { id: 'e', len: 3, orient: 'H', row: 3, col: 1 }], order: ['b', 'a', 'c', 'e', 'd'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 4, col: 5 }, { id: 'b', len: 3, orient: 'H', row: 1, col: 3 }, { id: 'c', len: 3, orient: 'H', row: 5, col: 1 }, { id: 'd', len: 3, orient: 'V', row: 2, col: 3 }, { id: 'e', len: 3, orient: 'V', row: 2, col: 4 }], order: ['e', 'c', 'd', 'b', 'a'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 1, col: 3 }, { id: 'b', len: 3, orient: 'H', row: 5, col: 1 }, { id: 'c', len: 3, orient: 'V', row: 2, col: 5 }, { id: 'd', len: 3, orient: 'H', row: 3, col: 2 }, { id: 'e', len: 3, orient: 'H', row: 1, col: 0 }], order: ['d', 'a', 'e', 'c', 'b'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 0, col: 2 }, { id: 'b', len: 2, orient: 'V', row: 4, col: 3 }, { id: 'c', len: 2, orient: 'H', row: 1, col: 0 }, { id: 'd', len: 2, orient: 'V', row: 3, col: 4 }, { id: 'e', len: 2, orient: 'V', row: 1, col: 4 }], order: ['d', 'e', 'a', 'b', 'c'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 3, orient: 'V', row: 1, col: 4 }, { id: 'b', len: 2, orient: 'V', row: 0, col: 2 }, { id: 'c', len: 2, orient: 'H', row: 5, col: 0 }, { id: 'd', len: 2, orient: 'H', row: 3, col: 1 }, { id: 'e', len: 2, orient: 'V', row: 0, col: 3 }], order: ['a', 'c', 'e', 'd', 'b'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 1, col: 3 }, { id: 'b', len: 2, orient: 'V', row: 2, col: 2 }, { id: 'c', len: 2, orient: 'H', row: 5, col: 1 }, { id: 'd', len: 3, orient: 'H', row: 0, col: 1 }, { id: 'e', len: 3, orient: 'V', row: 2, col: 5 }], order: ['d', 'b', 'a', 'e', 'c'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 3, col: 4 }, { id: 'b', len: 3, orient: 'V', row: 0, col: 2 }, { id: 'c', len: 2, orient: 'V', row: 0, col: 3 }, { id: 'd', len: 2, orient: 'H', row: 3, col: 1 }, { id: 'e', len: 2, orient: 'H', row: 4, col: 3 }], order: ['e', 'c', 'a', 'd', 'b'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 0, col: 5 }, { id: 'b', len: 2, orient: 'H', row: 1, col: 2 }, { id: 'c', len: 3, orient: 'H', row: 3, col: 3 }, { id: 'd', len: 2, orient: 'H', row: 4, col: 2 }, { id: 'e', len: 2, orient: 'V', row: 2, col: 2 }], order: ['b', 'e', 'c', 'a', 'd'] },
-  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 3, orient: 'H', row: 1, col: 3 }, { id: 'b', len: 3, orient: 'V', row: 1, col: 2 }, { id: 'c', len: 2, orient: 'V', row: 3, col: 3 }, { id: 'd', len: 2, orient: 'H', row: 0, col: 2 }, { id: 'e', len: 2, orient: 'V', row: 3, col: 5 }], order: ['b', 'a', 'e', 'd', 'c'] }
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 0, col: 0 }, { id: 'b', len: 2, orient: 'V', row: 0, col: 3 }, { id: 'c', len: 2, orient: 'V', row: 1, col: 2 }, { id: 'd', len: 3, orient: 'H', row: 4, col: 2 }], plan: [{ id: 'd', dr: 0, dc: -1 }, { id: 'b', dr: 1, dc: 0 }, { id: 'a', dr: 0, dc: 1 }, { id: 'c', dr: -1, dc: 0 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 0, col: 2 }, { id: 'b', len: 2, orient: 'H', row: 1, col: 3 }, { id: 'c', len: 2, orient: 'H', row: 4, col: 0 }, { id: 'd', len: 2, orient: 'V', row: 2, col: 4 }], plan: [{ id: 'c', dr: 0, dc: 1 }, { id: 'a', dr: 1, dc: 0 }, { id: 'b', dr: 0, dc: -1 }, { id: 'd', dr: -1, dc: 0 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 1, col: 0 }, { id: 'b', len: 2, orient: 'H', row: 1, col: 2 }, { id: 'c', len: 2, orient: 'H', row: 4, col: 3 }, { id: 'd', len: 2, orient: 'V', row: 1, col: 4 }], plan: [{ id: 'c', dr: 0, dc: -1 }, { id: 'd', dr: 1, dc: 0 }, { id: 'b', dr: 0, dc: 1 }, { id: 'a', dr: 0, dc: 1 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 1, col: 2 }, { id: 'b', len: 2, orient: 'H', row: 1, col: 3 }, { id: 'c', len: 2, orient: 'V', row: 2, col: 3 }, { id: 'd', len: 2, orient: 'H', row: 4, col: 0 }], plan: [{ id: 'd', dr: 0, dc: 1 }, { id: 'a', dr: 1, dc: 0 }, { id: 'b', dr: 0, dc: -1 }, { id: 'c', dr: -1, dc: 0 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 1, col: 0 }, { id: 'b', len: 2, orient: 'H', row: 1, col: 2 }, { id: 'c', len: 2, orient: 'V', row: 1, col: 4 }, { id: 'd', len: 2, orient: 'H', row: 3, col: 3 }], plan: [{ id: 'd', dr: 0, dc: -1 }, { id: 'c', dr: 1, dc: 0 }, { id: 'b', dr: 0, dc: 1 }, { id: 'a', dr: 0, dc: 1 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 1, col: 2 }, { id: 'b', len: 3, orient: 'H', row: 3, col: 2 }, { id: 'c', len: 2, orient: 'V', row: 1, col: 4 }, { id: 'd', len: 2, orient: 'H', row: 1, col: 0 }], plan: [{ id: 'b', dr: 0, dc: -1 }, { id: 'c', dr: 1, dc: 0 }, { id: 'a', dr: 0, dc: 1 }, { id: 'd', dr: 0, dc: 1 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 0, col: 3 }, { id: 'b', len: 2, orient: 'V', row: 1, col: 4 }, { id: 'c', len: 2, orient: 'V', row: 0, col: 2 }, { id: 'd', len: 2, orient: 'H', row: 4, col: 0 }], plan: [{ id: 'd', dr: 0, dc: 1 }, { id: 'c', dr: 1, dc: 0 }, { id: 'a', dr: 0, dc: -1 }, { id: 'b', dr: -1, dc: 0 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 2, col: 4 }, { id: 'b', len: 2, orient: 'H', row: 1, col: 0 }, { id: 'c', len: 2, orient: 'H', row: 3, col: 0 }, { id: 'd', len: 2, orient: 'V', row: 0, col: 2 }], plan: [{ id: 'a', dr: -1, dc: 0 }, { id: 'c', dr: 0, dc: 1 }, { id: 'd', dr: 1, dc: 0 }, { id: 'b', dr: 0, dc: 1 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 3, col: 0 }, { id: 'b', len: 2, orient: 'H', row: 3, col: 2 }, { id: 'c', len: 3, orient: 'H', row: 0, col: 2 }, { id: 'd', len: 2, orient: 'V', row: 2, col: 4 }], plan: [{ id: 'c', dr: 0, dc: -1 }, { id: 'd', dr: -1, dc: 0 }, { id: 'b', dr: 0, dc: 1 }, { id: 'a', dr: 0, dc: 1 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 1, col: 3 }, { id: 'b', len: 2, orient: 'V', row: 3, col: 2 }, { id: 'c', len: 2, orient: 'H', row: 4, col: 0 }, { id: 'd', len: 2, orient: 'H', row: 1, col: 0 }], plan: [{ id: 'a', dr: 1, dc: 0 }, { id: 'd', dr: 0, dc: 1 }, { id: 'b', dr: -1, dc: 0 }, { id: 'c', dr: 0, dc: 1 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 0, col: 0 }, { id: 'b', len: 2, orient: 'V', row: 0, col: 3 }, { id: 'c', len: 3, orient: 'H', row: 4, col: 2 }, { id: 'd', len: 2, orient: 'V', row: 1, col: 2 }], plan: [{ id: 'c', dr: 0, dc: -1 }, { id: 'b', dr: 1, dc: 0 }, { id: 'a', dr: 0, dc: 1 }, { id: 'd', dr: -1, dc: 0 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 2, col: 2 }, { id: 'b', len: 2, orient: 'V', row: 0, col: 4 }, { id: 'c', len: 2, orient: 'H', row: 3, col: 0 }, { id: 'd', len: 2, orient: 'H', row: 0, col: 0 }], plan: [{ id: 'b', dr: 1, dc: 0 }, { id: 'd', dr: 0, dc: 1 }, { id: 'a', dr: -1, dc: 0 }, { id: 'c', dr: 0, dc: 1 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 1, col: 2 }, { id: 'b', len: 3, orient: 'H', row: 0, col: 2 }, { id: 'c', len: 2, orient: 'H', row: 4, col: 0 }, { id: 'd', len: 2, orient: 'V', row: 3, col: 4 }], plan: [{ id: 'b', dr: 0, dc: -1 }, { id: 'd', dr: -1, dc: 0 }, { id: 'c', dr: 0, dc: 1 }, { id: 'a', dr: 1, dc: 0 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 2, col: 2 }, { id: 'b', len: 2, orient: 'H', row: 0, col: 1 }, { id: 'c', len: 2, orient: 'H', row: 3, col: 3 }, { id: 'd', len: 2, orient: 'V', row: 0, col: 4 }], plan: [{ id: 'b', dr: 0, dc: -1 }, { id: 'a', dr: -1, dc: 0 }, { id: 'c', dr: 0, dc: -1 }, { id: 'd', dr: 1, dc: 0 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'H', row: 1, col: 3 }, { id: 'b', len: 2, orient: 'H', row: 3, col: 1 }, { id: 'c', len: 2, orient: 'V', row: 1, col: 2 }, { id: 'd', len: 2, orient: 'V', row: 3, col: 3 }], plan: [{ id: 'b', dr: 0, dc: -1 }, { id: 'c', dr: 1, dc: 0 }, { id: 'a', dr: 0, dc: -1 }, { id: 'd', dr: -1, dc: 0 }] },
+  { pieces: [{ id: 'goal', isGoal: true, row: 2, col: 0, len: 2, orient: 'H' }, { id: 'a', len: 2, orient: 'V', row: 1, col: 2 }, { id: 'b', len: 2, orient: 'H', row: 1, col: 3 }, { id: 'c', len: 2, orient: 'V', row: 3, col: 3 }, { id: 'd', len: 2, orient: 'H', row: 0, col: 0 }], plan: [{ id: 'a', dr: 1, dc: 0 }, { id: 'b', dr: 0, dc: -1 }, { id: 'c', dr: -1, dc: 0 }, { id: 'd', dr: 0, dc: 1 }] }
 ];
 
 PRECOMPUTED_PUZZLES.forEach((puzzle, index) => {
-  const solution = findUniqueSolution(puzzle.pieces);
+  const solution = findUniquePlan(puzzle.pieces);
   if (!solution) {
     throw new Error(`Harbor precomputed puzzle ${index} is invalid`);
   }
 });
 
-function finalizePuzzle(pieces, solutionOrder) {
+function finalizePuzzle(pieces, solutionPlan) {
   const moverIds = pieces.filter((p) => !p.isGoal).map((p) => p.id);
   return {
     pieces: clonePieces(pieces),
-    solutionOrder,
+    solutionPlan,
     moverIds
   };
 }
 
-function tryGenerate(seedKey, maxAttempts = 40) {
+function tryGenerate(seedKey, maxAttempts = 80) {
   const baseHash = hashString(`harbor-gen:${seedKey}`);
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -238,10 +263,10 @@ function tryGenerate(seedKey, maxAttempts = 40) {
     const pieces = buildCandidateLayout(rng);
     if (!pieces) continue;
 
-    const solutionOrder = findUniqueSolution(pieces);
-    if (!solutionOrder) continue;
+    const solutionPlan = findUniquePlan(pieces);
+    if (!solutionPlan) continue;
 
-    return finalizePuzzle(pieces, solutionOrder);
+    return finalizePuzzle(pieces, solutionPlan);
   }
 
   return null;
@@ -257,7 +282,7 @@ export function generatePuzzle(seedKey) {
   }
 
   const fallback = PRECOMPUTED_PUZZLES[hashString(`harbor:${seedKey}`) % PRECOMPUTED_PUZZLES.length];
-  const puzzle = finalizePuzzle(fallback.pieces, fallback.order);
+  const puzzle = finalizePuzzle(fallback.pieces, fallback.plan);
   PUZZLE_CACHE.set(seedKey, puzzle);
   return puzzle;
 }
