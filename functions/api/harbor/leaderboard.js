@@ -1,4 +1,4 @@
-// GET /api/sliders/leaderboard?puzzleId=YYYY-MM-DD
+// GET /api/harbor/leaderboard?puzzleId=YYYY-MM-DD
 import { handleOptions, methodNotAllowed, jsonOk, jsonError, internalError, validateEnv } from '../../_shared/api-helpers.js';
 import { validatePuzzleId } from '../../_shared/validation-helpers.js';
 import { fetchLeaderboard } from '../../_shared/leaderboard-helpers.js';
@@ -11,9 +11,9 @@ export async function onRequest(context) {
     validateEnv(env);
     const puzzleId = new URL(request.url).searchParams.get('puzzleId');
     if (!validatePuzzleId(puzzleId)) return jsonError('Invalid or missing puzzleId');
-    const data = await fetchLeaderboard(env.DB, 'sliders_scores', puzzleId);
+    const data = await fetchLeaderboard(env.DB, 'harbor_scores', puzzleId);
     return jsonOk(data);
   } catch (err) {
-    return internalError(err, 'Sliders leaderboard');
+    return internalError(err, 'Harbor leaderboard');
   }
 }

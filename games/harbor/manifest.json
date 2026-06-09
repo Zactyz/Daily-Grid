@@ -1,0 +1,17 @@
+{
+  "name": "Harbor by Daily Grid",
+  "short_name": "Harbor",
+  "description": "Order the blocks, clear the exit.",
+  "start_url": "/games/harbor/",
+  "scope": "/games/harbor/",
+  "display": "standalone",
+  "background_color": "#070d18",
+  "theme_color": "#070d18",
+  "icons": [
+    {
+      "src": "/games/harbor/harbor-logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

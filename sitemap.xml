@@ -56,7 +56,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://dailygrid.app/games/sliders/</loc>
+    <loc>https://dailygrid.app/games/tiles/</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://dailygrid.app/games/harbor/</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

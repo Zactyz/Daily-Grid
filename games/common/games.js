@@ -102,15 +102,26 @@ export const GAME_META = [
     shareUrl: 'https://dailygrid.app/games/polyfit/'
   },
   {
-    id: 'sliders',
-    name: 'Sliders',
+    id: 'tiles',
+    name: 'Tiles',
     tagline: 'Slide the tiles into order.',
-    path: '/games/sliders/',
-    logo: '/games/sliders/sliders-logo.svg',
-    submittedKeyPrefix: 'dailygrid_sliders_submitted_',
-    completedKeyPrefix: 'dailygrid_sliders_completed_',
+    path: '/games/tiles/',
+    logo: '/games/tiles/tiles-logo.svg',
+    submittedKeyPrefix: 'dailygrid_tiles_submitted_',
+    completedKeyPrefix: 'dailygrid_tiles_completed_',
     theme: { bg: 'bg-violet-500/10', border: 'border-violet-400/30', text: 'text-violet-300' },
-    shareUrl: 'https://dailygrid.app/games/sliders/'
+    shareUrl: 'https://dailygrid.app/games/tiles/'
+  },
+  {
+    id: 'harbor',
+    name: 'Harbor',
+    tagline: 'Order the slides, clear the exit.',
+    path: '/games/harbor/',
+    logo: '/games/harbor/harbor-logo.svg',
+    submittedKeyPrefix: 'dailygrid_harbor_submitted_',
+    completedKeyPrefix: 'dailygrid_harbor_completed_',
+    theme: { bg: 'bg-fuchsia-500/10', border: 'border-cyan-400/30', text: 'text-fuchsia-300' },
+    shareUrl: 'https://dailygrid.app/games/harbor/'
   }
 ];
 
@@ -221,8 +232,10 @@ function hasMeaningfulAttempt(data, gameId) {
     case 'polyfit':
       return (Array.isArray(data.pieces) && data.pieces.some((piece) => piece?.placed))
         || (Array.isArray(data.board) && data.board.some((cell) => cell != null));
-    case 'sliders':
+    case 'tiles':
       return (data.moveCount || 0) > 0;
+    case 'harbor':
+      return Array.isArray(data.playerOrder) && data.playerOrder.length > 0;
     default:
       return false;
   }

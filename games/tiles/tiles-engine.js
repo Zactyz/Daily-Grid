@@ -29,7 +29,7 @@ function isAdjacent(a, b) {
   return Math.abs(ar - br) + Math.abs(ac - bc) === 1;
 }
 
-export class SlidersEngine {
+export class TilesEngine {
   constructor(seedKey) {
     this.seedKey = seedKey;
     this.size = SIZE;
@@ -45,8 +45,8 @@ export class SlidersEngine {
   }
 
   generate(seedKey) {
-    const rng = createSeededRandom(hashString(`sliders:${seedKey}`));
-    const scrambleMoves = 80 + (hashString(`sliders:moves:${seedKey}`) % 120);
+    const rng = createSeededRandom(hashString(`tiles:${seedKey}`));
+    const scrambleMoves = 80 + (hashString(`tiles:moves:${seedKey}`) % 120);
     this.tiles = [...SOLVED];
     this.moveCount = 0;
     this.isComplete = false;

@@ -2,12 +2,12 @@ import { getPTDateYYYYMMDD, getOrCreateAnonId, formatTime } from '../common/util
 import { createShellController } from '../common/shell-controller.js';
 import { formatDateForShare } from '../common/share.js';
 import { buildShareCard } from '../common/share-card.js';
-import { SlidersEngine } from './sliders-engine.js';
+import { TilesEngine } from './tiles-engine.js';
 
-const STATE_PREFIX = 'dailygrid_sliders_state_';
+const STATE_PREFIX = 'dailygrid_tiles_state_';
 
 const els = {
-  grid: document.getElementById('sliders-grid'),
+  grid: document.getElementById('tiles-grid'),
   progress: document.getElementById('progress-text'),
   gridSize: document.getElementById('grid-size'),
   puzzleDate: document.getElementById('puzzle-date'),
@@ -71,17 +71,17 @@ function renderGrid() {
   engine.tiles.forEach((value, index) => {
     const tile = document.createElement('button');
     tile.type = 'button';
-    tile.className = 'sliders-tile';
+    tile.className = 'tiles-tile';
     tile.dataset.index = String(index);
     tile.setAttribute('aria-label', value === 0 ? 'Empty space' : `Tile ${value}`);
 
     if (value === 0) {
-      tile.classList.add('sliders-tile-empty');
+      tile.classList.add('tiles-tile-empty');
       tile.disabled = true;
     } else {
       tile.textContent = String(value);
       tile.disabled = !engine.canMove(index);
-      if (engine.canMove(index)) tile.classList.add('sliders-tile-active');
+      if (engine.canMove(index)) tile.classList.add('tiles-tile-active');
     }
 
     tile.addEventListener('click', () => handleTileClick(index));
@@ -123,7 +123,7 @@ function handleTileClick(index) {
 }
 
 function initPuzzle() {
-  engine = new SlidersEngine(puzzleId);
+  engine = new TilesEngine(puzzleId);
   load();
   setLabels();
   updateProgress();
@@ -166,7 +166,7 @@ function showSolution() {
 
 function initShell() {
   shell = createShellController({
-    gameId: 'sliders',
+    gameId: 'tiles',
     getMode: () => currentMode,
     getPuzzleId: () => puzzleId,
     getGridLabel: () => engine.getGridLabel(),
@@ -198,14 +198,14 @@ function initShell() {
       hintsUsed: 0
     }),
     getShareMeta: () => ({
-      gameName: 'Sliders',
-      shareUrl: 'https://dailygrid.app/games/sliders/',
+      gameName: 'Tiles',
+      shareUrl: 'https://dailygrid.app/games/tiles/',
       gridLabel: engine.getGridLabel(),
       accent: '#a78bfa'
     }),
     getShareFile: () => buildShareCard({
-      gameName: 'Sliders',
-      logoPath: '/games/sliders/sliders-logo.svg',
+      gameName: 'Tiles',
+      logoPath: '/games/tiles/tiles-logo.svg',
       accent: '#a78bfa',
       accentSoft: 'rgba(167,139,250,.12)',
       backgroundStart: '#0f0a1a',
@@ -213,7 +213,7 @@ function initShell() {
       dateText: formatDateForShare(getPTDateYYYYMMDD()),
       timeText: formatTime(completionMs ?? engine.timeMs),
       gridLabel: engine.getGridLabel(),
-      footerText: 'dailygrid.app/games/sliders'
+      footerText: 'dailygrid.app/games/tiles'
     }),
     getCompletionMs: () => completionMs,
     setCompletionMs: (ms) => { completionMs = ms; },
