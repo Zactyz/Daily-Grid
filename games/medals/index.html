@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Medals — Daily Grid">
-  <title>Medals — Daily Grid Games</title>
+  <meta name="apple-mobile-web-app-title" content="Medals | Daily Grid">
+  <title>Medals | Daily Grid Games</title>
   <meta name="description" content="Today's top puzzle solvers across all Daily Grid games.">
   <link rel="manifest" href="/games/manifest.json">
   <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
@@ -189,7 +189,7 @@
           <span class="text-xs text-slate-400">Top 10</span>
         </div>
       </div>
-      <!-- TODO (Tier 2 — user accounts): show global rank and username here once auth is added -->
+      <!-- TODO (Tier 2, user accounts): show global rank and username here once auth is added -->
     </section>
 
     <!-- Leaderboard by game -->
@@ -367,7 +367,7 @@
           return `
             <div class="flex items-center gap-3 py-2 px-3 rounded-xl ${isYou ? 'is-you' : ''}" style="border: 1px solid transparent">
               <span class="rank-badge ${rankClass}">${rankLabel}</span>
-              <span class="flex-1 text-sm font-medium">${e.initials || '—'}</span>
+              <span class="flex-1 text-sm font-medium">${e.initials || '-'}</span>
               ${isYou ? '<span class="you-chip">You</span>' : ''}
               <span class="text-sm font-mono text-slate-300">${formatTime(e.timeMs)}</span>
             </div>`;
@@ -418,7 +418,7 @@
         nextBtn.style.opacity = isToday ? '0.3' : '1';
         nextBtn.style.pointerEvents = isToday ? 'none' : '';
       }
-      if (heading) heading.textContent = isToday ? "Today's Top Solvers" : `Top Solvers — ${formatDateLabel(currentDate)}`;
+      if (heading) heading.textContent = isToday ? "Today's Top Solvers" : `Top Solvers, ${formatDateLabel(currentDate)}`;
     }
 
     // ── Init ──────────────────────────────────────────────────────────────────

@@ -93,7 +93,17 @@ export class HarborEngine {
     return this.playerPlan.length === this.moveLimit;
   }
 
+  applySolutionPlan() {
+    const plan = this.puzzle?.solutionPlan;
+    if (!Array.isArray(plan) || plan.length === 0) return false;
+    this.solutionShown = true;
+    this.playerPlan = clonePlan(plan);
+    this.pause();
+    return true;
+  }
+
   canInteractWith(pieceId) {
+    if (this.solutionShown) return false;
     if (this.phase !== 'planning' || this.isComplete) return false;
     if (!this.isMovable(pieceId)) return false;
 

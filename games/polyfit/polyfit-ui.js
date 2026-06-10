@@ -41,7 +41,7 @@ function updateProgress() {
   const placed = engine.pieces.filter((p) => p.placed).length;
   const remaining = engine.pieces.length - placed;
   els.progress.textContent = remaining === 0
-    ? `All ${engine.pieces.length} pieces placed — fill the amber footprint!`
+    ? `All ${engine.pieces.length} pieces placed, fill the amber footprint!`
     : `${placed} of ${engine.pieces.length} pieces placed • ${remaining} remaining`;
 }
 

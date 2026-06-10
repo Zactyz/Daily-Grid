@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <link rel="icon" type="image/svg+xml" href="/games/tiles/tiles-logo.svg">
+  <link rel="icon" type="image/png" href="/games/tiles/tiles-logo.png">
   <link rel="manifest" href="/games/tiles/manifest.json">
   <meta name="theme-color" content="#0f0a1a">
   <title>Tiles by Daily Grid</title>
-  <meta name="description" content="Slide numbered tiles into order. A new Tiles puzzle every day — free to play in your browser.">
-  <meta property="og:title" content="Tiles — Daily Grid">
+  <meta name="description" content="Slide numbered tiles into order. A new Tiles puzzle every day, free to play in your browser.">
+  <meta property="og:title" content="Tiles | Daily Grid">
   <meta property="og:description" content="Slide numbered tiles into order. A new puzzle every day, free to play.">
-  <meta property="og:image" content="https://dailygrid.app/games/tiles/tiles-logo.svg">
+  <meta property="og:image" content="https://dailygrid.app/games/tiles/tiles-logo.png">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://dailygrid.app/games/tiles/">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Tiles — Daily Grid">
+  <meta name="twitter:title" content="Tiles | Daily Grid">
   <meta name="twitter:description" content="Slide numbered tiles into order. A new puzzle every day, free to play.">
-  <meta name="twitter:image" content="https://dailygrid.app/games/tiles/tiles-logo.svg">
+  <meta name="twitter:image" content="https://dailygrid.app/games/tiles/tiles-logo.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Tiles">
-  <link rel="apple-touch-icon" href="/games/tiles/tiles-logo.svg">
+  <link rel="apple-touch-icon" href="/games/tiles/tiles-logo.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
@@ -46,7 +46,7 @@
 </head>
 <body>
   <div class="mobile-app-bar"><a href="/games/" aria-label="Back to games"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a></div>
-  <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6"><div class="max-w-5xl mx-auto flex justify-between items-center"><a href="/games/tiles/" class="flex items-center gap-2.5 hover:opacity-80"><img src="/games/tiles/tiles-logo.svg" alt="Tiles logo" class="w-9 h-9 rounded-lg"><span class="font-semibold text-lg tracking-tight hidden sm:block">Tiles</span></a><div class="flex gap-5 text-sm font-medium text-zinc-400"><a href="/" class="hover:text-white">Home</a><a href="/games/" class="text-white">Games</a><a href="/support/" class="hover:text-white">Support</a></div></div></nav>
+  <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6"><div class="max-w-5xl mx-auto flex justify-between items-center"><a href="/games/tiles/" class="flex items-center gap-2.5 hover:opacity-80"><img src="/games/tiles/tiles-logo.png" alt="Tiles logo" class="w-9 h-9 rounded-lg"><span class="font-semibold text-lg tracking-tight hidden sm:block">Tiles</span></a><div class="flex gap-5 text-sm font-medium text-zinc-400"><a href="/" class="hover:text-white">Home</a><a href="/games/" class="text-white">Games</a><a href="/support/" class="hover:text-white">Support</a></div></div></nav>
 
   <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
     <header class="text-center mb-6 w-full">
@@ -104,16 +104,8 @@
   <script type="module">import { mountShell } from '../common/shell-mount.js'; mountShell();</script>
   <script type="module" src="/games/tiles/tiles-ui.js"></script>
   <script type="module">
-  const params = new URLSearchParams(window.location.search);
-  const wantsPractice = params.get('practice') === '1' || params.get('mode') === 'practice';
-  if (wantsPractice) {
-    const start = () => window.startPracticeMode?.();
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => setTimeout(start, 0), { once: true });
-    } else {
-      setTimeout(start, 0);
-    }
-  }
+  import { initPracticeFromUrl } from '../common/utils.js';
+  initPracticeFromUrl();
   </script>
 <script>
 window.DG_TUTORIAL_STEPS = [
@@ -137,7 +129,7 @@ window.DG_TUTORIAL_STEPS = [
   },
   {
     title: 'Number Order',
-    desc: 'Arrange tiles 1 through 8 in reading order — left to right, top to bottom.',
+    desc: 'Arrange tiles 1 through 8 in reading order, left to right, top to bottom.',
     demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
   <g fill='rgba(167,139,250,0.22)' stroke='rgba(167,139,250,0.65)' stroke-width='1.5'>
     <rect x='44' y='28' width='36' height='36' rx='8'/><rect x='82' y='28' width='36' height='36' rx='8'/>

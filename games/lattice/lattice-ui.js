@@ -974,7 +974,7 @@ function render() {
         div.textContent = cellText(state[cat.category][i][j]);
         cellEls.set(`${cat.category}:${i}:${j}`, div);
 
-        // Record the press start but DON'T toggle yet — this lets a vertical
+        // Record the press start but DON'T toggle yet, this lets a vertical
         // drag scroll the page (touch-action: pan-x pan-y on the board) instead
         // of flipping a cell. The toggle happens on pointerup only if the finger
         // barely moved (a real tap).
@@ -994,7 +994,7 @@ function render() {
           if (!start) return;
           if (hasSolved || isPaused || isPrestart) return;
 
-          // A drag past the slop radius was a scroll, not a tap — ignore it.
+          // A drag past the slop radius was a scroll, not a tap, ignore it.
           const dx = event.clientX - start.x;
           const dy = event.clientY - start.y;
           if ((dx * dx + dy * dy) > (CELL_TAP_SLOP_PX * CELL_TAP_SLOP_PX)) return;

@@ -251,7 +251,7 @@ function initShell() {
     }),
     getShareFile: () => buildShareCard({
       gameName: 'Tiles',
-      logoPath: '/games/tiles/tiles-logo.svg',
+      logoPath: '/games/tiles/tiles-logo.png',
       accent: '#a78bfa',
       accentSoft: 'rgba(167,139,250,.12)',
       backgroundStart: '#0f0a1a',

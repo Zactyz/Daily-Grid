@@ -99,9 +99,9 @@ export function showStatsModal(gameId, gameName) {
 
   const statItems = [
     { label: 'Puzzles Completed', value: stats.totalCompleted },
-    { label: 'Current Streak', value: streak.current ? `${streak.current} day${streak.current !== 1 ? 's' : ''}` : '—' },
-    { label: 'Best Streak', value: streak.best ? `${streak.best} day${streak.best !== 1 ? 's' : ''}` : '—' },
-    { label: 'Average Time', value: avgMs > 0 ? formatTime(avgMs) : '—' },
+    { label: 'Current Streak', value: streak.current ? `${streak.current} day${streak.current !== 1 ? 's' : ''}` : '-' },
+    { label: 'Best Streak', value: streak.best ? `${streak.best} day${streak.best !== 1 ? 's' : ''}` : '-' },
+    { label: 'Average Time', value: avgMs > 0 ? formatTime(avgMs) : '-' },
   ];
 
   body.innerHTML = statItems.map((item, i) => `

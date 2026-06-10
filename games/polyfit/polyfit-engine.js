@@ -157,7 +157,7 @@ export class PolyfitEngine {
       }
     }
 
-    // Emergency fallback — statistically unreachable with 40 attempts.
+    // Emergency fallback, statistically unreachable with 40 attempts.
     // Falls back to the original random-generation approach without solvability guarantee.
     const rng = createSeededRandom(hashString(`polyfit:${seedKey}:fallback`));
     this.pieces = Array.from({ length: this.pieceCount }, (_, i) => ({

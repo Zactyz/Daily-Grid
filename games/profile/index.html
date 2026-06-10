@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Profile — Daily Grid">
-  <title>Profile — Daily Grid Games</title>
+  <meta name="apple-mobile-web-app-title" content="Profile | Daily Grid">
+  <title>Profile | Daily Grid Games</title>
   <meta name="description" content="Your Daily Grid stats, streaks, and settings.">
   <link rel="manifest" href="/games/manifest.json">
   <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
@@ -143,7 +143,7 @@
         <h1 class="text-2xl font-semibold text-amber-200">Profile</h1>
       </div>
     </div>
-    <!-- TODO (Tier 2 — user accounts): settings gear or edit button once auth is added -->
+    <!-- TODO (Tier 2, user accounts): settings gear or edit button once auth is added -->
 
     <!-- Identity card -->
     <section class="glass-card p-5 mb-4 flex items-center gap-4">
@@ -154,7 +154,7 @@
         </div>
       </div>
       <div class="flex-1 min-w-0">
-        <!-- TODO (Tier 2 — user accounts): replace "Anonymous Solver" with real username after auth -->
+        <!-- TODO (Tier 2, user accounts): replace "Anonymous Solver" with real username after auth -->
         <p class="font-semibold text-base" id="display-name">Anonymous Solver</p>
         <p class="text-xs text-slate-400" id="member-since"></p>
       </div>
@@ -272,7 +272,7 @@
         <svg class="ml-auto text-slate-600" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </a>
 
-      <!-- TODO (Tier 2 — user accounts): Sign In / Create Account row -->
+      <!-- TODO (Tier 2, user accounts): Sign In / Create Account row -->
       <!-- TODO (Tier 2): Privacy & Data, Export stats, Delete account -->
     </section>
 
@@ -379,7 +379,7 @@
       const profileInitialsInput = document.getElementById('profile-initials-input');
       if (profileInitialsInput && savedInitials) profileInitialsInput.value = savedInitials;
 
-      // Display name — TODO (Tier 2): replace with auth username
+      // Display name, TODO (Tier 2): replace with auth username
       // Using a friendly label based on streak for now
       const totalStreak = gameRows.reduce((s, r) => s + r.current, 0);
       if (totalStreak >= 30) document.getElementById('display-name').textContent = 'Elite Solver';
@@ -423,7 +423,7 @@
                 ? `<p class="text-xs font-bold streak-flame flex items-center gap-1 justify-end">
                     <svg width="10" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-6-6-8-6-14z"/></svg>
                     ${current}</p>`
-                : '<p class="text-xs text-slate-600">—</p>'
+                : '<p class="text-xs text-slate-600">-</p>'
               }
               ${best > 1 ? `<p class="text-xs best-streak">best ${best}</p>` : ''}
             </div>
@@ -452,13 +452,13 @@
         return;
       }
 
-      // 'denied' = user blocked at OS/browser level — nothing we can do programmatically
+      // 'denied' = user blocked at OS/browser level, nothing we can do programmatically
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
         toggle.checked = false;
         toggle.disabled = true;
         statusText.textContent = isIos
-          ? 'Blocked — Settings → Notifications → Daily Grid Games'
-          : 'Blocked in browser settings — clear site permissions to re-enable';
+          ? 'Blocked, Settings → Notifications → Daily Grid Games'
+          : 'Blocked in browser settings, clear site permissions to re-enable';
         return;
       }
 
@@ -473,7 +473,7 @@
         if (toggle.checked) {
           if (!vapidPublicKey) {
             toggle.checked = false;
-            statusText.textContent = 'Notifications unavailable — server not configured';
+            statusText.textContent = 'Notifications unavailable, server not configured';
             return;
           }
           const anonId = getOrCreateAnonId();
@@ -489,21 +489,21 @@
             toggle.checked = false;
             toggle.disabled = true;
             statusText.textContent = isIos
-              ? 'Blocked — Settings → Notifications → Daily Grid Games'
-              : 'Blocked in browser settings — clear site permissions to re-enable';
+              ? 'Blocked, Settings → Notifications → Daily Grid Games'
+              : 'Blocked in browser settings, clear site permissions to re-enable';
           } else if (result.reason === 'dismissed') {
             toggle.checked = false;
             statusText.textContent = 'Tap the toggle to try again';
           } else if (Notification.permission === 'granted') {
-            // OS permission is on — server sync failed but the user DID enable it.
+            // OS permission is on, server sync failed but the user DID enable it.
             // Keep toggle ON so the UI matches the OS state; retry will happen on
             // the next toggle cycle.
             toggle.checked = true;
             localStorage.setItem('dailygrid_push_opted_in', 'true');
-            statusText.textContent = "Enabled — if reminders don't arrive, toggle off and on";
+            statusText.textContent = "Enabled, if reminders don't arrive, toggle off and on";
           } else {
             toggle.checked = false;
-            statusText.textContent = 'Could not enable — tap to try again';
+            statusText.textContent = 'Could not enable, tap to try again';
           }
         } else {
           // Soft opt-out: remove from server only, keep browser subscription alive

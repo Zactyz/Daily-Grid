@@ -21,7 +21,11 @@ const els = {
   progress: document.getElementById('progress-text'),
   gridSize: document.getElementById('grid-size'),
   puzzleDate: document.getElementById('puzzle-date'),
-  undoBtn: document.getElementById('undo-btn')
+  undoBtn: document.getElementById('undo-btn'),
+  showSolutionBtn: document.getElementById('show-solution-btn'),
+  solutionActions: document.getElementById('solution-actions'),
+  solutionRetryBtn: document.getElementById('solution-retry-btn'),
+  solutionNextBtn: document.getElementById('solution-next-btn')
 };
 
 let engine;
@@ -60,15 +64,39 @@ function setLabels() {
 
 function updateUndoButton() {
   if (!els.undoBtn) return;
-  const canUndo = engine.phase === 'planning' && !executing && !engine.isComplete && engine.playerPlan.length > 0;
+  const canUndo = engine.phase === 'planning' && !executing && !engine.isComplete && !engine.solutionShown && engine.playerPlan.length > 0;
   els.undoBtn.disabled = !canUndo;
   els.undoBtn.classList.toggle('opacity-40', !canUndo);
+}
+
+function updateSolutionUI() {
+  const showPractice = currentMode === 'practice' && !engine.isComplete;
+  if (!showPractice) {
+    els.showSolutionBtn?.classList.add('hidden');
+    els.solutionActions?.classList.add('hidden');
+    return;
+  }
+  if (engine.solutionShown) {
+    els.showSolutionBtn?.classList.add('hidden');
+    if (executing) {
+      els.solutionActions?.classList.add('hidden');
+    } else {
+      els.solutionActions?.classList.remove('hidden');
+    }
+  } else {
+    els.showSolutionBtn?.classList.remove('hidden');
+    els.solutionActions?.classList.add('hidden');
+  }
 }
 
 function updateProgress(message) {
   if (!els.progress) return;
   if (message) {
     els.progress.textContent = message;
+    return;
+  }
+  if (engine.solutionShown && currentMode === 'practice' && !executing) {
+    els.progress.textContent = 'Solution shown • Try again or load the next practice puzzle.';
     return;
   }
   if (engine.phase === 'executing') {
@@ -154,7 +182,7 @@ function scheduleAutoRun() {
   clearPendingRun();
   pendingRunTimer = setTimeout(() => {
     pendingRunTimer = null;
-    if (!engine.canRunPlan() || executing || engine.phase !== 'planning' || engine.isComplete) return;
+    if (engine.solutionShown || !engine.canRunPlan() || executing || engine.phase !== 'planning' || engine.isComplete) return;
     void runSequence();
   }, 260);
 }
@@ -382,12 +410,13 @@ async function animateGoalExit() {
   return isGoalExited(engine.pieces, engine.puzzle);
 }
 
-async function runSequence() {
+async function runSequence({ solutionPlayback = false } = {}) {
   if (executing) return;
   clearPendingRun();
   executing = true;
   engine.phase = 'executing';
-  updateProgress();
+  updateProgress(solutionPlayback ? 'Running solution...' : undefined);
+  updateSolutionUI();
   renderBoard();
 
   const applied = [];
@@ -402,7 +431,7 @@ async function runSequence() {
     if (distance <= 0) {
       allMoved = false;
       updateProgress('That vehicle cannot move - rewinding...');
-      await rewindSequence(applied);
+      await rewindSequence(applied, { solutionPlayback });
       return;
     }
   }
@@ -413,22 +442,31 @@ async function runSequence() {
   if (!exited || !allMoved) {
     applied.push({ pieceId: 'goal-exit', before: beforeExit });
     updateProgress(allMoved ? 'Path blocked - try a different plan' : 'That vehicle cannot move - try again');
-    await rewindSequence(applied);
+    await rewindSequence(applied, { solutionPlayback });
     return;
   }
 
   engine.phase = 'planning';
-  engine.isComplete = true;
-  completionMs = engine.timeMs;
   executing = false;
   setAnimating(false);
+
+  if (solutionPlayback) {
+    updateProgress();
+    updateSolutionUI();
+    renderBoard();
+    shell?.update();
+    return;
+  }
+
+  engine.isComplete = true;
+  completionMs = engine.timeMs;
   updateProgress();
   renderBoard();
   save();
   shell?.update();
 }
 
-async function rewindSequence(applied) {
+async function rewindSequence(applied, { solutionPlayback = false } = {}) {
   engine.phase = 'rewinding';
   updateProgress();
 
@@ -442,7 +480,11 @@ async function rewindSequence(applied) {
   engine.phase = 'planning';
   executing = false;
   setAnimating(false);
+  if (solutionPlayback) {
+    engine.solutionShown = false;
+  }
   updateProgress();
+  updateSolutionUI();
   renderBoard();
   save();
   shell?.update();
@@ -454,6 +496,7 @@ function initPuzzle() {
   load();
   setLabels();
   updateProgress();
+  updateSolutionUI();
   renderBoard();
   shell?.update();
 }
@@ -479,9 +522,22 @@ function resetGame({ resetTimer = true } = {}) {
   engine.reset({ resetTimer });
   completionMs = null;
   updateProgress();
+  updateSolutionUI();
   renderBoard();
   save();
   shell?.update();
+}
+
+async function showSolution() {
+  if (currentMode !== 'practice' || engine.solutionShown || engine.isComplete || executing) return;
+  if (!engine.applySolutionPlan()) return;
+  if (!engine.timerStarted) engine.startTimer();
+  updateProgress('Showing solution moves...');
+  updateSolutionUI();
+  renderBoard();
+  shell?.update();
+  await sleep(500);
+  await runSequence({ solutionPlayback: true });
 }
 
 function initShell() {
@@ -498,8 +554,8 @@ function initShell() {
     isPaused: () => engine.showsPauseOverlay(),
     isStarted: () => engine.timerStarted,
     hasProgress: () => engine.playerPlan.length > 0,
-    isSolutionShown: () => false,
-    shouldShowCompletionModal: () => true,
+    isSolutionShown: () => engine.solutionShown,
+    shouldShowCompletionModal: () => !engine.solutionShown,
     pause: () => { engine.pause(); save(); },
     resume: () => { engine.resume(); save(); },
     startGame: () => { engine.startTimer(); save(); },
@@ -526,7 +582,7 @@ function initShell() {
     }),
     getShareFile: () => buildShareCard({
       gameName: 'BlindSlide',
-      logoPath: '/games/harbor/harbor-logo.svg',
+      logoPath: '/games/harbor/harbor-logo.png',
       accent: '#ff2d95',
       accentSoft: 'rgba(255,45,149,.12)',
       backgroundStart: '#070d18',
@@ -549,6 +605,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initShell();
 
   els.undoBtn?.addEventListener('click', handleUndo);
+  els.showSolutionBtn?.addEventListener('click', () => { void showSolution(); });
+  els.solutionRetryBtn?.addEventListener('click', () => resetGame({ resetTimer: true }));
+  els.solutionNextBtn?.addEventListener('click', () => switchMode('practice'));
 
   setInterval(() => {
     const now = performance.now();

@@ -9,9 +9,9 @@
   "theme_color": "#0f0a1a",
   "icons": [
     {
-      "src": "/games/tiles/tiles-logo.svg",
+      "src": "/games/tiles/tiles-logo.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ]
 }

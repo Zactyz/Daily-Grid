@@ -1,5 +1,5 @@
 /**
- * Tutorial Modal — Daily Grid Games
+ * Tutorial Modal | Daily Grid Games
  *
  * Usage:
  *   import { showTutorialModal, hideTutorialModal } from '../common/tutorial-modal.js';
@@ -30,7 +30,7 @@ function detectBranding(overrides = {}) {
 
   const gameName = overrides.gameName
     || document.querySelector('meta[name="apple-mobile-web-app-title"]')?.content
-    || (document.title || '').split(/\s+(?:by|—|-)\s+/i)[0].trim()
+    || (document.title || '').split(/\s+(?:by|\||-)\s+/i)[0].trim()
     || 'Daily Grid';
 
   return {

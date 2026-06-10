@@ -26,7 +26,7 @@ export function generateUUID() {
   });
 }
 
-/** Read-only version — never creates an ID; returns null if not set. */
+/** Read-only version, never creates an ID; returns null if not set. */
 export function getAnonId() {
   try { return localStorage.getItem('dailygrid_anon_id'); } catch { return null; }
 }
@@ -55,11 +55,11 @@ export function formatTime(ms) {
 }
 
 /**
- * Like formatTime but returns '—' for invalid values and
+ * Like formatTime but returns '-' for invalid values and
  * shows "Xs" (e.g. "45s") for sub-minute times. Used by hub/leaderboard pages.
  */
 export function formatTimeShort(ms) {
-  if (!ms || ms <= 0) return '—';
+  if (!ms || ms <= 0) return '-';
   const s = Math.floor(ms / 1000);
   const m = Math.floor(s / 60);
   const sec = s % 60;

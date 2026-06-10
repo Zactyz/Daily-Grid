@@ -139,7 +139,7 @@ function initTouchGuards() {
   document.addEventListener('touchstart', (event) => {
     if (!isGameplayScrollLockActive()) return;
     if (!isGameplayTouchTarget(event.target)) return;
-    // Tap-only boards (e.g. Logice) scroll natively — don't lock them.
+    // Tap-only boards (e.g. Logice) scroll natively, don't lock them.
     if (isScrollFriendlyGameplay(event.target)) return;
     if (gameplayScrollLockY == null) gameplayScrollLockY = window.scrollY;
     const board = event.target.closest?.('#board');
@@ -405,7 +405,7 @@ function initTouchGuards() {
       saveLocalLeaderboardEntry(entry);
       elements.claimInitialsForm?.classList.add('hidden');
     } catch {
-      // ignore — user can claim manually
+      // ignore, user can claim manually
     }
   }
 
@@ -793,7 +793,7 @@ function initTouchGuards() {
       else modal.querySelector('[id="percentile-msg"]')?.before(el);
     }
     if (streak.current >= 2) {
-      const best = streak.current === streak.best && streak.best > 1 ? ' — new best!' : '';
+      const best = streak.current === streak.best && streak.best > 1 ? ', new best!' : '';
       el.innerHTML = `
         <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#f97316">
           <path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-6-6-8-6-14z"/>

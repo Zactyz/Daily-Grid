@@ -15,8 +15,6 @@ const TAB_ICONS = {
 };
 
 // Auto-launching campaigns. Bump an `id` to re-show a campaign to everyone.
-// The "What's New" 3rd-open tour was removed at the user's request; only the
-// branded Welcome walkthrough remains.
 const ANNOUNCEMENT_CAMPAIGNS = [
   {
     id: 'welcome-tour-2026-05-v5',
@@ -27,12 +25,10 @@ const ANNOUNCEMENT_CAMPAIGNS = [
     startsAt: '2026-02-27T00:00:00Z',
     priority: 220,
     minLaunchCount: 1,
-    // No maxLaunchCount: the fresh id ensures every player (new or returning)
-    // sees the refreshed welcome exactly once.
     steps: [
       {
         title: 'Welcome to Daily Grid',
-        body: 'A calm home for daily logic puzzles. One fresh set every day — solve today\u2019s, or warm up in practice.',
+        body: 'A calm home for daily logic puzzles. One fresh set every day. Solve today\u2019s, or warm up in practice.',
         visual: 'brand'
       },
       {
@@ -46,6 +42,35 @@ const ANNOUNCEMENT_CAMPAIGNS = [
         visual: 'streak'
       }
     ]
+  },
+  {
+    id: 'new-games-tiles-blindslide-2026-06-v1',
+    title: "What's New",
+    pwaOnly: false,
+    startsAt: '2026-06-01T00:00:00Z',
+    priority: 210,
+    minLaunchCount: 2,
+    requiresSeen: ['welcome-tour-2026-05-v5'],
+    steps: [
+      {
+        title: 'Two new daily puzzles',
+        body: 'Tiles and BlindSlide just joined the lineup. That\u2019s eleven puzzles now, each with a fresh challenge every day.',
+        visual: 'newGamesIntro'
+      },
+      {
+        title: 'Tiles',
+        body: 'Slide numbered tiles into order. Tap or swipe tiles next to the empty space to get 1 through 8 lined up to win.',
+        visual: 'tilesPreview',
+        link: { href: '/games/tiles/', label: 'Play Tiles' }
+      },
+      {
+        title: 'BlindSlide',
+        body: 'Tap arrows on gray blocks in move order, then watch the plan run. The pink car exits when the path is clear.',
+        visual: 'blindslidePreview',
+        link: { href: '/games/harbor/', label: 'Play BlindSlide' }
+      }
+    ],
+    finishLabel: 'Got it'
   }
 ];
 
@@ -158,6 +183,76 @@ function ensureStyles() {
 
     .dg-anc-step-enter { animation: dgAncStepIn .24s cubic-bezier(.22,.61,.36,1); }
 
+    .dg-anc-newduo { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+    .dg-anc-newcard {
+      position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px;
+      padding: 14px 8px 12px; border-radius: 16px;
+      background: rgba(255,255,255,.04); border: .5px solid rgba(255,255,255,.11);
+    }
+    .dg-anc-newcard img { width: 58px; height: 58px; border-radius: 16px; object-fit: cover; }
+    .dg-anc-newcard span.nm { font-size: 12px; font-weight: 700; color: rgba(248,250,252,.92); }
+    .dg-anc-newbadge {
+      position: absolute; top: 8px; right: 8px; font-size: 9px; font-weight: 800; letter-spacing: .08em;
+      text-transform: uppercase; padding: 3px 7px; border-radius: 999px;
+      background: linear-gradient(135deg, #E5C37E, #D4A650); color: #1b1303;
+    }
+
+    .dg-anc-feature { margin-top: 12px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .dg-anc-feature-logo { width: 72px; height: 72px; border-radius: 20px; object-fit: cover; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+    .dg-anc-preview {
+      width: 100%; border-radius: 18px; padding: 14px;
+      background: rgba(255,255,255,.03); border: .5px solid rgba(255,255,255,.1);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .dg-anc-preview--tiles { background: linear-gradient(165deg, rgba(167,139,250,.08), rgba(15,10,26,.55)); border-color: rgba(167,139,250,.22); }
+    .dg-anc-preview--blindslide { background: linear-gradient(165deg, rgba(255,45,149,.08), rgba(7,13,24,.65)); border-color: rgba(255,45,149,.24); }
+
+    .dg-anc-tiles-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 210px; margin: 0 auto;
+    }
+    .dg-anc-tiles-cell {
+      aspect-ratio: 1; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; font-weight: 700; color: #ede9fe;
+      background: linear-gradient(145deg, rgba(167,139,250,.28), rgba(91,33,182,.38));
+      border: 1px solid rgba(167,139,250,.35);
+    }
+    .dg-anc-tiles-cell.empty {
+      background: rgba(15,10,26,.35); border-style: dashed; border-color: rgba(167,139,250,.22); color: transparent;
+    }
+
+    .dg-anc-bs-tray {
+      position: relative; max-width: 250px; height: 118px; margin: 0 auto; padding: 10px;
+      border-radius: 14px; border: 2px solid rgba(255,45,149,.45);
+      background: linear-gradient(165deg, #0f1a32, #0a1224); overflow: hidden;
+    }
+    .dg-anc-bs-board { position: absolute; inset: 10px; border-radius: 8px; background: rgba(8,14,28,.55); }
+    .dg-anc-bs-block { position: absolute; border-radius: 5px; background: #566a84; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); }
+    .dg-anc-bs-block.goal {
+      left: 28%; top: 42%; width: 34%; height: 16%;
+      background: linear-gradient(180deg, #ff4da8, #ff2d95);
+    }
+    .dg-anc-bs-block.h1 { left: 8%; top: 24%; width: 38%; height: 14%; }
+    .dg-anc-bs-block.h2 { left: 18%; top: 66%; width: 44%; height: 14%; }
+    .dg-anc-bs-block.v1 { left: 72%; top: 30%; width: 14%; height: 34%; }
+    .dg-anc-bs-exit {
+      position: absolute; right: -2px; top: 50%; transform: translateY(-50%);
+      width: 14px; height: 28px; border-radius: 0 6px 6px 0;
+      border: 2px solid rgba(255,45,149,.85); border-left: none; background: #03060f;
+    }
+    .dg-anc-bs-meta {
+      margin-top: 8px; display: flex; justify-content: space-between; gap: 8px;
+      font-size: 10px; font-weight: 600; color: rgba(186,230,253,.75);
+    }
+    .dg-anc-bs-meta span { padding: 4px 8px; border-radius: 999px; background: rgba(0,212,255,.12); border: 1px solid rgba(0,212,255,.22); }
+
+    .dg-anc-link {
+      display: inline-flex; align-items: center; justify-content: center; margin-top: 12px;
+      padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; text-decoration: none;
+      color: #1b1303; background: linear-gradient(135deg, #E5C37E, #D4A650);
+      box-shadow: 0 4px 14px rgba(212,166,80,.28);
+    }
+    .dg-anc-link-wrap { display: flex; justify-content: center; width: 100%; }
+
     @media (prefers-reduced-motion: reduce) {
       .dg-anc-overlay, .dg-anc-card, .dg-anc-step-enter { animation: none; }
       .dg-anc-dot { transition: none; }
@@ -213,6 +308,11 @@ function pickCampaign(context = {}) {
     .filter((item) => !item.pwaOnly || isStandalonePWA())
     .filter((item) => !Number.isFinite(item.minLaunchCount) || launchCount >= item.minLaunchCount)
     .filter((item) => !Number.isFinite(item.maxLaunchCount) || launchCount <= item.maxLaunchCount)
+    .filter((item) => {
+      const req = item.requiresSeen;
+      if (!Array.isArray(req) || !req.length) return true;
+      return req.every((id) => isSeen(id));
+    })
     .filter((item) => !Array.isArray(item.gameIds) || !item.gameIds.length || item.gameIds.includes(context.gameId))
     .filter((item) => !isSeen(item.id));
 
@@ -241,6 +341,51 @@ function renderVisual(visual) {
   }
   if (visual === 'gameGrid') {
     return renderGameGrid();
+  }
+  if (visual === 'newGamesIntro') {
+    return `
+      <div class="dg-anc-newduo">
+        <div class="dg-anc-newcard">
+          <span class="dg-anc-newbadge">New</span>
+          <img src="/games/tiles/tiles-logo.png" alt="Tiles"/>
+          <span class="nm">Tiles</span>
+        </div>
+        <div class="dg-anc-newcard">
+          <span class="dg-anc-newbadge">New</span>
+          <img src="/games/harbor/harbor-logo.png" alt="BlindSlide"/>
+          <span class="nm">BlindSlide</span>
+        </div>
+      </div>`;
+  }
+  if (visual === 'tilesPreview') {
+    return `
+      <div class="dg-anc-feature">
+        <img class="dg-anc-feature-logo" src="/games/tiles/tiles-logo.png" alt="Tiles"/>
+        <div class="dg-anc-preview dg-anc-preview--tiles">
+          <div class="dg-anc-tiles-grid" aria-hidden="true">
+            <div class="dg-anc-tiles-cell">1</div><div class="dg-anc-tiles-cell">2</div><div class="dg-anc-tiles-cell">3</div>
+            <div class="dg-anc-tiles-cell">4</div><div class="dg-anc-tiles-cell">5</div><div class="dg-anc-tiles-cell">6</div>
+            <div class="dg-anc-tiles-cell">7</div><div class="dg-anc-tiles-cell">8</div><div class="dg-anc-tiles-cell empty"></div>
+          </div>
+        </div>
+      </div>`;
+  }
+  if (visual === 'blindslidePreview') {
+    return `
+      <div class="dg-anc-feature">
+        <img class="dg-anc-feature-logo" src="/games/harbor/harbor-logo.png" alt="BlindSlide"/>
+        <div class="dg-anc-preview dg-anc-preview--blindslide">
+          <div class="dg-anc-bs-tray">
+            <div class="dg-anc-bs-board" aria-hidden="true"></div>
+            <div class="dg-anc-bs-block h1"></div>
+            <div class="dg-anc-bs-block v1"></div>
+            <div class="dg-anc-bs-block goal"></div>
+            <div class="dg-anc-bs-block h2"></div>
+            <div class="dg-anc-bs-exit" aria-hidden="true"></div>
+          </div>
+          <div class="dg-anc-bs-meta"><span>Moves left: 3</span><span>Tap arrows in order</span></div>
+        </div>
+      </div>`;
   }
   if (visual === 'tabs') {
     return `
@@ -299,6 +444,7 @@ export function maybeShowAnnouncementModal(context = {}) {
       <div id="dg-anc-visual" class="dg-anc-visual"></div>
       <h3 id="dg-anc-title" class="dg-anc-title"></h3>
       <p id="dg-anc-text" class="dg-anc-text"></p>
+      <div id="dg-anc-link-wrap" class="dg-anc-link-wrap"></div>
     </div>
 
     <div class="dg-anc-footer">
@@ -319,6 +465,7 @@ export function maybeShowAnnouncementModal(context = {}) {
   const titleEl = card.querySelector('#dg-anc-title');
   const bodyEl = card.querySelector('#dg-anc-text');
   const visualEl = card.querySelector('#dg-anc-visual');
+  const linkWrapEl = card.querySelector('#dg-anc-link-wrap');
   const progressEl = card.querySelector('#dg-anc-progress');
   const prevBtn = card.querySelector('#dg-anc-prev');
   const nextBtn = card.querySelector('#dg-anc-next');
@@ -356,12 +503,20 @@ export function maybeShowAnnouncementModal(context = {}) {
     bodyEl.textContent = step.body || '';
     visualEl.innerHTML = renderVisual(step.visual);
 
+    if (step.link?.href && linkWrapEl) {
+      linkWrapEl.innerHTML = `<a class="dg-anc-link" href="${escapeHtml(step.link.href)}">${escapeHtml(step.link.label || 'Play now')}</a>`;
+    } else if (linkWrapEl) {
+      linkWrapEl.innerHTML = '';
+    }
+
     progressEl.innerHTML = steps
       .map((_, i) => `<span class="dg-anc-dot${i === stepIndex ? ' dg-on' : ''}"></span>`)
       .join('');
 
     prevBtn.dataset.hidden = stepIndex === 0 ? '1' : '0';
-    nextBtn.textContent = stepIndex === steps.length - 1 ? 'Start playing' : 'Next';
+    nextBtn.textContent = stepIndex === steps.length - 1
+      ? (campaign.finishLabel || 'Start playing')
+      : 'Next';
   };
 
   prevBtn?.addEventListener('click', goPrev);

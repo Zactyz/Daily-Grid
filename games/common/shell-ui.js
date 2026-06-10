@@ -77,7 +77,7 @@ export async function loadLeaderboard({
           </div>
         `;
       }
-      const timeText = Number.isFinite(row.timeMs) ? fmt(row.timeMs) : '—';
+      const timeText = Number.isFinite(row.timeMs) ? fmt(row.timeMs) : '-';
       return `
         <div class="leaderboard-row flex items-center justify-between px-3 py-2.5 ${border}">
           <span class="leaderboard-name ${row.rankClass}">${row.rank}. ${row.initials}</span>

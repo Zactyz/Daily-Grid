@@ -48,7 +48,7 @@ export function shouldIgnoreGhostPointer(event, key) {
 }
 
 /**
- * @deprecated Use shouldIgnoreGhostPointer — kept for callers migrating gradually.
+ * @deprecated Use shouldIgnoreGhostPointer, kept for callers migrating gradually.
  */
 export function isDuplicateGameplayTap(key, cooldownMs = 280) {
   const gk = ghostKey(key);

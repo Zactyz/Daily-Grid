@@ -1,7 +1,7 @@
 {
   "name": "Daily Grid Games",
   "short_name": "DG Games",
-  "description": "Daily Grid Games — a focused hub for daily puzzles.",
+  "description": "Daily Grid Games, a focused hub for daily puzzles.",
   "start_url": "/games/",
   "scope": "/games/",
   "display": "standalone",

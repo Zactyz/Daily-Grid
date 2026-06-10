@@ -26,7 +26,7 @@ function swReady(timeoutMs = 8000) {
 }
 
 /**
- * Ensure the games service worker is registered (idempotent — safe to call repeatedly).
+ * Ensure the games service worker is registered (idempotent, safe to call repeatedly).
  * The profile page doesn't load a game so we register sw.js explicitly here.
  */
 export async function ensureSwRegistered() {
@@ -130,7 +130,7 @@ export async function requestPushPermission(anonId, vapidPublicKey) {
  * Why: on iOS Safari, calling browser unsubscribe() then immediately subscribe()
  * triggers a system-level rate-limit ("could not subscribe / try again later")
  * that can last hours. Keeping the browser subscription alive means re-enabling
- * is instant — we just re-register the existing subscription with the server.
+ * is instant, we just re-register the existing subscription with the server.
  * The user can fully revoke via iOS Settings > [App] > Notifications if needed.
  */
 export async function unsubscribePush() {
@@ -138,7 +138,7 @@ export async function unsubscribePush() {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
     if (sub) {
-      // Remove from server only — do not call sub.unsubscribe() on the browser
+      // Remove from server only, do not call sub.unsubscribe() on the browser
       await fetch('/api/push/unsubscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
