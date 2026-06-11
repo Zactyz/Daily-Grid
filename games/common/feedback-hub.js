@@ -3,8 +3,9 @@ import { getDistinctCompletionDaysCount, MIN_DAYS_FOR_PERSONALIZED } from './gam
 const MODAL_SEEN_KEY = 'dailygrid_feedback_modal_seen';
 const CARD_DISMISSED_KEY = 'dailygrid_feedback_card_dismissed';
 const CARD_VISIT_KEY = 'dailygrid_feedback_card_visits';
-const CARD_RESHOW_MIN = 8;
-const CARD_RESHOW_MAX = 15;
+const CARD_RESHOW_AT_KEY = 'dailygrid_feedback_card_reshow_at';
+const CARD_RESHOW_MIN = 7;
+const CARD_RESHOW_MAX = 10;
 
 /** Require several distinct play days before surfacing feedback prompts. */
 const MIN_DAYS_BEFORE_FEEDBACK = MIN_DAYS_FOR_PERSONALIZED;
@@ -57,25 +58,45 @@ export function maybeShowFeedbackModal() {
   try { localStorage.setItem(MODAL_SEEN_KEY, '1'); } catch { /* ignore */ }
 }
 
+function pickReshowVisitCount() {
+  return CARD_RESHOW_MIN + Math.floor(Math.random() * (CARD_RESHOW_MAX - CARD_RESHOW_MIN + 1));
+}
+
 function shouldShowFeedbackCard() {
-  let visits = 0;
   let dismissed = false;
   try {
-    visits = Number(localStorage.getItem(CARD_VISIT_KEY)) || 0;
     dismissed = localStorage.getItem(CARD_DISMISSED_KEY) === '1';
   } catch { /* ignore */ }
+
+  if (!dismissed) return true;
+
+  let visits = 0;
+  let reshowAt = pickReshowVisitCount();
+  try {
+    const storedReshowAt = localStorage.getItem(CARD_RESHOW_AT_KEY);
+    if (!storedReshowAt) {
+      // Fresh cooldown (also migrates inflated counts from the old per-visit threshold logic).
+      visits = 0;
+      reshowAt = pickReshowVisitCount();
+      localStorage.setItem(CARD_VISIT_KEY, '0');
+      localStorage.setItem(CARD_RESHOW_AT_KEY, String(reshowAt));
+    } else {
+      visits = Number(localStorage.getItem(CARD_VISIT_KEY)) || 0;
+      reshowAt = Number(storedReshowAt);
+    }
+  } catch { return false; }
 
   visits += 1;
   try { localStorage.setItem(CARD_VISIT_KEY, String(visits)); } catch { /* ignore */ }
 
-  if (!dismissed) return true;
+  if (visits < reshowAt) return false;
 
-  const threshold = CARD_RESHOW_MIN + Math.floor(Math.random() * (CARD_RESHOW_MAX - CARD_RESHOW_MIN + 1));
-  if (visits >= threshold) {
-    try { localStorage.removeItem(CARD_DISMISSED_KEY); } catch { /* ignore */ }
-    return true;
-  }
-  return false;
+  try {
+    localStorage.removeItem(CARD_DISMISSED_KEY);
+    localStorage.removeItem(CARD_VISIT_KEY);
+    localStorage.removeItem(CARD_RESHOW_AT_KEY);
+  } catch { /* ignore */ }
+  return true;
 }
 
 export function mountFeedbackHubCard(anchorEl) {
@@ -102,7 +123,11 @@ export function mountFeedbackHubCard(anchorEl) {
   anchorEl.insertAdjacentElement('afterend', card);
 
   card.querySelector('#dg-feedback-card-dismiss')?.addEventListener('click', () => {
-    try { localStorage.setItem(CARD_DISMISSED_KEY, '1'); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(CARD_DISMISSED_KEY, '1');
+      localStorage.setItem(CARD_VISIT_KEY, '0');
+      localStorage.setItem(CARD_RESHOW_AT_KEY, String(pickReshowVisitCount()));
+    } catch { /* ignore */ }
     card.remove();
   });
 }
