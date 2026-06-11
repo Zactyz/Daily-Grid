@@ -50,6 +50,23 @@ node node_modules/wrangler/bin/wrangler.js d1 execute daily-grid-db --remote --f
 
 Note: `migrate-auth-user-id-columns.sql` fails if columns already exist. Run once only.
 
+### Preview environment (required for `*.pages.dev` testing)
+
+Production secrets from `wrangler pages secret put` do **not** apply to Preview. Copy the same three auth secrets to Preview:
+
+**Dashboard:** Workers & Pages → daily-grid → Settings → Environment variables → **Preview** (encrypt each)
+
+**Or script** (uses wrangler OAuth or `CLOUDFLARE_API_TOKEN`):
+
+```powershell
+$env:RESEND_API_KEY = "re_YOUR_KEY"
+$env:AUTH_FROM_EMAIL = "Daily Grid <onboarding@resend.dev>"
+$env:AUTH_SESSION_SECRET = "your-session-secret-hex"
+node scripts/add-preview-auth-secrets.js
+```
+
+Redeploy the preview branch after updating.
+
 ## 5. Smoke test
 
 ```powershell
