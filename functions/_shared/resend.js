@@ -29,7 +29,14 @@ export async function sendAuthEmail(env, { to, subject, html, text }) {
 
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
-    throw new Error(`Resend API ${res.status}: ${errText}`);
+    let detail = errText;
+    try {
+      const parsed = JSON.parse(errText);
+      detail = parsed?.message || parsed?.error?.message || errText;
+    } catch { /* keep raw text */ }
+    const err = new Error(detail || `Resend API ${res.status}`);
+    err.statusCode = res.status;
+    throw err;
   }
 
   return res.json();

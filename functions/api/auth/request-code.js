@@ -44,6 +44,12 @@ export async function onRequest(context) {
 
     return jsonOk({ success: true });
   } catch (err) {
+    if (err?.statusCode === 403) {
+      return jsonError(
+        'Email could not be sent. With the test sender (onboarding@resend.dev), use the exact email on your Resend account, or verify dailygrid.app in Resend first.',
+        400
+      );
+    }
     return internalError(err, 'Auth request-code');
   }
 }

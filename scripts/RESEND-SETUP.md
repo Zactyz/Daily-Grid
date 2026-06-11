@@ -36,6 +36,7 @@ Suggested values:
 
 - `AUTH_FROM_EMAIL` = `Daily Grid <noreply@dailygrid.app>` (production, after domain verify)
 - For testing before domain verify: `Daily Grid <onboarding@resend.dev>`
+- **Test sender limit:** `onboarding@resend.dev` only delivers to the **exact email on your Resend account** (not Gmail `+alias` addresses). Use `zachtyz@gmail.com` for preview tests until `dailygrid.app` is verified.
 - `AUTH_SESSION_SECRET` = random 32+ char string (generate once, keep secret)
 
 **Never commit your API key to the repo.** Use Pages secrets only. The app reads it via `env.RESEND_API_KEY` in [`functions/_shared/resend.js`](../functions/_shared/resend.js).
