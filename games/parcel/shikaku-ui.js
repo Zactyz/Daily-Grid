@@ -909,7 +909,7 @@ function initShell() {
     }),
     getShareMeta: () => ({
       gameName: 'Parcel',
-      shareUrl: 'https://dailygrid.app/games/shikaku/',
+      shareUrl: 'https://dailygrid.app/games/parcel/',
       gridLabel: `${gridSize}x${gridSize} Parcel`
     }),
     getShareFile: () => buildShareImage(),
@@ -930,7 +930,7 @@ async function buildShareImage() {
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
     gameName: 'Parcel',
-    logoPath: '/games/shikaku/shikaku-logo.jpg',
+    logoPath: '/games/parcel/shikaku-logo.jpg',
     accent: '#c9a36b',
     accentSoft: 'rgba(201, 163, 107, 0.2)',
     backgroundStart: '#1b140e',
@@ -938,7 +938,7 @@ async function buildShareImage() {
     dateText: puzzleDate,
     timeText: formatTime(finalTime || 0),
     gridLabel: `Grid ${gridSize}x${gridSize}`,
-    footerText: 'dailygrid.app/games/shikaku'
+    footerText: 'dailygrid.app/games/parcel'
   });
 }
 

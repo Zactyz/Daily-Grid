@@ -27,13 +27,13 @@ export const GAME_META = [
     id: 'lattice',
     name: 'Logice',
     tagline: 'Solve the grid with clues.',
-    path: '/games/lattice/',
-    logo: '/games/lattice/lattice-logo.png?v=2',
+    path: '/games/logice/',
+    logo: '/games/logice/lattice-logo.png?v=2',
     submittedKeyPrefix: 'dailygrid_lattice_submitted_',
     completedKeyPrefix: 'dailygrid_lattice_completed_',
     replayKeyPrefix: 'dailygrid_lattice_replay_',
     theme: { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400' },
-    shareUrl: 'https://dailygrid.app/games/lattice/'
+    shareUrl: 'https://dailygrid.app/games/logice/'
   },
   {
     id: 'bits',
@@ -50,23 +50,23 @@ export const GAME_META = [
     id: 'hashi',
     name: 'Bridges',
     tagline: 'Connect islands into one network.',
-    path: '/games/hashi/',
-    logo: '/games/hashi/hashi-logo.jpg',
+    path: '/games/bridges/',
+    logo: '/games/bridges/hashi-logo.jpg',
     submittedKeyPrefix: 'dailygrid_hashi_submitted_',
     completedKeyPrefix: 'dailygrid_hashi_completed_',
     theme: { bg: 'bg-sky-500/10', border: 'border-sky-400/30', text: 'text-sky-300' },
-    shareUrl: 'https://dailygrid.app/games/hashi/'
+    shareUrl: 'https://dailygrid.app/games/bridges/'
   },
   {
     id: 'shikaku',
     name: 'Parcel',
     tagline: 'Pack the grid into rectangles.',
-    path: '/games/shikaku/',
-    logo: '/games/shikaku/shikaku-logo.jpg',
+    path: '/games/parcel/',
+    logo: '/games/parcel/shikaku-logo.jpg',
     submittedKeyPrefix: 'dailygrid_shikaku_submitted_',
     completedKeyPrefix: 'dailygrid_shikaku_completed_',
     theme: { bg: 'bg-amber-300/15', border: 'border-amber-300/30', text: 'text-amber-200' },
-    shareUrl: 'https://dailygrid.app/games/shikaku/'
+    shareUrl: 'https://dailygrid.app/games/parcel/'
   },
   {
     id: 'conduit',
@@ -116,12 +116,12 @@ export const GAME_META = [
     id: 'harbor',
     name: 'BlindSlide',
     tagline: 'Program the slides, clear the exit.',
-    path: '/games/harbor/',
-    logo: '/games/harbor/harbor-logo.png',
+    path: '/games/blindslid/',
+    logo: '/games/blindslid/harbor-logo.png',
     submittedKeyPrefix: 'dailygrid_harbor_submitted_',
     completedKeyPrefix: 'dailygrid_harbor_completed_',
     theme: { bg: 'bg-fuchsia-500/10', border: 'border-cyan-400/30', text: 'text-fuchsia-300' },
-    shareUrl: 'https://dailygrid.app/games/harbor/'
+    shareUrl: 'https://dailygrid.app/games/blindslid/'
   }
 ];
 
@@ -300,15 +300,10 @@ export function sortGamesByPlayHistory(games, { minDays = MIN_DAYS_FOR_PERSONALI
 }
 
 /**
- * Daily + Practice hub display order: incomplete dailies (play-history) then completed (A–Z).
- * Matches the Daily hub card order on both mobile and desktop.
+ * Fixed hub display order: GAME_META catalog sequence (same on Daily and Practice).
  */
-export function getHubGameDisplayOrder(puzzleId) {
-  const incomplete = GAME_META.filter((g) => !isGameFinishedToday(g, puzzleId));
-  const completed = GAME_META.filter((g) => isGameFinishedToday(g, puzzleId));
-  const incompleteSorted = sortGamesByPlayHistory(incomplete, { puzzleId });
-  const completedSorted = [...completed].sort((a, b) => a.name.localeCompare(b.name));
-  return [...incompleteSorted, ...completedSorted];
+export function getHubGameDisplayOrder(_puzzleId) {
+  return [...GAME_META];
 }
 
 function getPersonalizedOrder(games, options) {

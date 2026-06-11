@@ -1,0 +1,13 @@
+# Legacy game URL slugs → canonical display-name slugs (301)
+/games/lattice/*  /games/logice/:splat  301
+/games/lattice    /games/logice/  301
+/games/hashi/*    /games/bridges/:splat  301
+/games/hashi      /games/bridges/  301
+/games/shikaku/*  /games/parcel/:splat  301
+/games/shikaku    /games/parcel/  301
+/games/harbor/*   /games/blindslid/:splat  301
+/games/harbor     /games/blindslid/  301
+
+# Legacy OG image asset names
+/games/assets/og-lattice.png      /games/assets/og-logice.png  301
+/games/assets/og-bridgeworks.png  /games/assets/og-bridges.png  301

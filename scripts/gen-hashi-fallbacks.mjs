@@ -4,7 +4,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const src = readFileSync(resolve(root, 'games/hashi/hashi-ui.js'), 'utf8');
+const src = readFileSync(resolve(root, 'games/bridges/hashi-ui.js'), 'utf8');
 const fnBlock = src.slice(src.indexOf('function makeRng'), src.indexOf('function loadState()'));
 const fns = new Function(`${fnBlock}\nreturn { makeRng, tryGeneratePuzzle, buildVisibilityEdges, buildCrossingMap, countSolutions };`)();
 const { makeRng, tryGeneratePuzzle, buildVisibilityEdges, buildCrossingMap, countSolutions } = fns;

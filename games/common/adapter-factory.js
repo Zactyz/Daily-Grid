@@ -1,4 +1,5 @@
 import { createShellController } from './shell-controller.js';
+import { getGameMeta } from './games.js';
 import { formatTime, getOrCreateAnonId } from './utils.js';
 
 /**
@@ -79,7 +80,13 @@ export function createGameAdapter(overrides, elementOverrides = null) {
     shouldShowCompletionModal: () => true,
     isSolutionShown: () => false,
 
-    getShareMeta: () => ({ gameName: gameId, shareUrl: `https://dailygrid.app/games/${gameId}/` }),
+    getShareMeta: () => {
+      const meta = getGameMeta(gameId);
+      return {
+        gameName: meta?.name ?? gameId,
+        shareUrl: meta?.shareUrl ?? `https://dailygrid.app/games/${gameId}/`,
+      };
+    },
     getShareFile: async () => null,
 
     // Spread overrides last so games can still override any of the above defaults

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const src = readFileSync(resolve(root, 'games/hashi/hashi-ui.js'), 'utf8');
+const src = readFileSync(resolve(root, 'games/bridges/hashi-ui.js'), 'utf8');
 
 // Extract generator helpers (no DOM) by eval in isolated scope
 function hashString(str) {

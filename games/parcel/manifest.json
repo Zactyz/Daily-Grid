@@ -1,13 +1,13 @@
 {
   "name": "Parcel",
   "short_name": "Parcel",
-  "start_url": "/games/shikaku/",
+  "start_url": "/games/parcel/",
   "display": "standalone",
   "background_color": "#0E1410",
   "theme_color": "#0E1410",
   "icons": [
     {
-      "src": "/games/shikaku/shikaku-logo.jpg",
+      "src": "/games/parcel/shikaku-logo.jpg",
       "sizes": "512x512",
       "type": "image/jpeg"
     }

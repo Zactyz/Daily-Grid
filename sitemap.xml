@@ -21,7 +21,7 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://dailygrid.app/games/lattice/</loc>
+    <loc>https://dailygrid.app/games/logice/</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -31,12 +31,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://dailygrid.app/games/hashi/</loc>
+    <loc>https://dailygrid.app/games/bridges/</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://dailygrid.app/games/shikaku/</loc>
+    <loc>https://dailygrid.app/games/parcel/</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -61,7 +61,7 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://dailygrid.app/games/harbor/</loc>
+    <loc>https://dailygrid.app/games/blindslid/</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

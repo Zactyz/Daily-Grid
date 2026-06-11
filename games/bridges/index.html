@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Parcel by Daily Grid</title>
-  <meta name="description" content="Parcel, the daily rectangle packing puzzle from Daily Grid." />
-  <meta property="og:title" content="Parcel | Daily Grid">
-  <meta property="og:description" content="Parcel, the daily rectangle packing puzzle from Daily Grid.">
-  <meta property="og:image" content="https://dailygrid.app/games/assets/og-parcel.png">
-  <meta property="og:url" content="https://dailygrid.app/games/shikaku/">
+  <title>Bridges by Daily Grid</title>
+  <meta name="description" content="Bridges, a calm bridges puzzle from Daily Grid." />
+  <meta property="og:title" content="Bridges | Daily Grid">
+  <meta property="og:description" content="Bridges, a calm bridges puzzle from Daily Grid.">
+  <meta property="og:image" content="https://dailygrid.app/games/assets/og-bridges.png">
+  <meta property="og:url" content="https://dailygrid.app/games/bridges/">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Parcel | Daily Grid">
-  <meta name="twitter:description" content="Parcel, the daily rectangle packing puzzle from Daily Grid.">
-  <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-parcel.png">
+  <meta name="twitter:title" content="Bridges | Daily Grid">
+  <meta name="twitter:description" content="Bridges, a calm bridges puzzle from Daily Grid.">
+  <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-bridges.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Parcel">
-  <link rel="manifest" href="/games/shikaku/manifest.json">
-  <link rel="icon" type="image/jpeg" href="/games/shikaku/shikaku-logo.jpg">
-  <link rel="apple-touch-icon" href="/games/shikaku/shikaku-logo.jpg">
-  <meta name="theme-color" content="#1b140e">
+  <meta name="apple-mobile-web-app-title" content="Bridges">
+  <link rel="manifest" href="/games/bridges/manifest.json">
+  <link rel="icon" type="image/jpeg" href="/games/bridges/hashi-logo.jpg">
+  <link rel="apple-touch-icon" href="/games/bridges/hashi-logo.jpg">
+  <meta name="theme-color" content="#0b1b2a">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
@@ -30,9 +30,11 @@
     <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
     :root {
-      --brand-bg: #1b140e;
-      --brand-accent: #c9a36b;
-      --brand-accent-dim: #a77a45;
+      --brand-bg: #0b1b2a;
+      --brand-accent: #E8B47A;
+      --brand-accent-dim: #C99863;
+      --water-accent: #6aa7d9;
+      --water-accent-dim: #3d7fb4;
     }
 
     body::before {
@@ -40,90 +42,66 @@
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201, 163, 107, 0.12), transparent),
-        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(244, 226, 196, 0.08), transparent),
-        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(201, 163, 107, 0.05), transparent);
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(106, 167, 217, 0.18), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(120, 190, 230, 0.1), transparent),
+        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(90, 140, 190, 0.08), transparent);
       pointer-events: none;
       z-index: -1;
     }
 
     .btn-primary {
-      color: #2a1b0f;
-      box-shadow: 0 2px 12px rgba(201, 163, 107, 0.35);
+      background: linear-gradient(135deg, var(--water-accent), var(--water-accent-dim));
+      color: #0b1724;
+      box-shadow: 0 2px 12px rgba(106, 167, 217, 0.3);
     }
 
     .btn-primary:hover {
-      box-shadow: 0 4px 20px rgba(201, 163, 107, 0.45);
+      box-shadow: 0 4px 20px rgba(106, 167, 217, 0.45);
     }
 
     .timer-display {
-      background: linear-gradient(135deg, rgba(201, 163, 107, 0.18), rgba(201, 163, 107, 0.06));
-      border: 1px solid rgba(201, 163, 107, 0.3);
+      background: linear-gradient(135deg, rgba(106, 167, 217, 0.2), rgba(80, 130, 190, 0.08));
+      border: 1px solid rgba(106, 167, 217, 0.35);
     }
 
-    .accent-glow { text-shadow: 0 0 30px rgba(201, 163, 107, 0.5); }
+    .accent-glow { text-shadow: 0 0 30px rgba(232, 180, 122, 0.4); }
 
-    #parcel-grid {
-      display: grid;
-      grid-template-columns: repeat(var(--grid-size, 5), minmax(0, 1fr));
-      gap: 6px;
-      position: relative;
-      touch-action: none;
-    }
-
-    .cell {
-      position: relative;
-      z-index: 1;
-      aspect-ratio: 1 / 1;
-      border-radius: 10px;
-      background: rgba(24, 18, 12, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #f2e7d6;
-      font-weight: 600;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: border 0.15s ease, background 0.15s ease;
-      user-select: none;
-    }
-
-    .cell.clue {
-      background: rgba(201, 163, 107, 0.22);
-      color: #f4e8d4;
-    }
-
-    .cell.assigned {
-      border-color: rgba(214, 187, 146, 0.35);
-      background: #f7efe3;
+    .wood-title {
       background-image:
-        repeating-linear-gradient(135deg, rgba(160, 120, 74, 0.08) 0 10px, transparent 10px 20px);
-      color: #3c2a1b;
+        repeating-linear-gradient(-15deg,
+          rgba(131, 86, 47, 0.95) 0 10px,
+          rgba(153, 104, 58, 0.95) 10px 20px,
+          rgba(111, 70, 38, 0.95) 20px 26px
+        );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: none;
     }
 
-    .cell.selected {
-      border-color: rgba(244, 226, 196, 0.75);
-      background: rgba(244, 226, 196, 0.2);
-    }
-
-    .rect-outline {
-      position: absolute;
-      pointer-events: none;
-      z-index: 3;
-      border: 3px solid #cfae7f;
-      border-radius: 14px;
-      box-shadow:
-        0 10px 20px rgba(0, 0, 0, 0.2),
-        inset 0 0 0 1px rgba(170, 120, 70, 0.7);
-      background: transparent;
+    #hashi-canvas {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      background: #1a0f0c;
+      display: block;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .progress-text {
       text-align: center;
-      color: rgba(243, 226, 196, 0.85);
+      color: rgba(245, 208, 167, 0.8);
       letter-spacing: 0.08em;
       font-size: 0.8rem;
+    }
+
+    #leaderboard-list {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 0.75rem;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -137,29 +115,26 @@
   </div>
 <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
     <header class="text-center mb-6 w-full">
-      <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-200/10 border border-amber-300/20 text-amber-200/90 text-xs font-medium mb-3 uppercase tracking-wider">
-        <span class="w-1.5 h-1.5 rounded-full bg-amber-200 animate-pulse"></span>
+      <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300/90 text-xs font-medium mb-3 uppercase tracking-wider">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
         Daily Puzzle
       </div>
-      <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-200/10 border border-amber-300/20 text-amber-200/90 text-xs font-medium mb-3 uppercase tracking-wider">
-        <span class="w-1.5 h-1.5 rounded-full bg-amber-200"></span>
+      <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300/90 text-xs font-medium mb-3 uppercase tracking-wider">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
         Practice Mode
       </div>
-      <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow">Parcel</h1>
-      <p class="text-zinc-500 text-sm">Pack the grid into perfect rectangles.</p>
+      <h1 class="text-3xl sm:text-4xl font-bold mb-1.5 accent-text accent-glow wood-title">Bridges</h1>
+      <p class="text-zinc-500 text-sm">Build the bridges. Connect every island. One network.</p>
       <span id="timer" class="hidden font-mono"></span>
     </header>
 
-    <div id="validation-message" class="hidden w-full max-w-xs mx-auto mb-3 px-3 py-2 rounded-lg bg-amber-300/15 border border-amber-300/25 text-amber-200 text-xs text-center animate-pulse">
-      <span id="validation-message-text"></span>
-    </div>
-
-    <div id="game-container" class="glass-strong game-touch p-3 sm:p-4 rounded-2xl mb-5 w-full relative">
-      <div id="parcel-grid"></div>
+    <div id="game-container" class="glass-strong game-touch pt-2 pb-3 px-3 sm:pt-3 sm:pb-4 sm:px-4 rounded-2xl mb-5 w-full relative">
+      <div id="progress-text" class="progress-text mb-3 hidden">Choose an island to start bridging.</div>
+      <canvas id="hashi-canvas" class="celebrate-target" width="700" height="700"></canvas>
 
       <div id="start-overlay" class="shell-start-overlay hidden">
-        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-300/30 to-amber-500/20 flex items-center justify-center mb-4">
-          <svg class="w-10 h-10 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-400/35 to-sky-600/20 flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-sky-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
@@ -181,7 +156,7 @@
 
     <div class="flex gap-3 mb-8">
       <button id="leaderboard-btn" class="btn btn-secondary flex items-center gap-2 hidden">
-        <svg class="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
         </svg>
         Leaderboard
@@ -198,6 +173,13 @@
         </svg>
         Reset
       </button>
+      <button id="undo-btn" class="btn btn-secondary flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l-4-4 4-4"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10h7a5 5 0 110 10h-1"/>
+        </svg>
+        Undo
+      </button>
       <button id="exit-replay-btn" class="hidden btn btn-secondary flex items-center justify-center w-10 h-10 p-0" title="Exit Replay">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -209,11 +191,12 @@
       <summary class="details-plus cursor-pointer font-semibold text-sm px-5 py-4 text-zinc-300 hover:text-white transition-colors">How to Play</summary>
       <div class="px-5 pb-5 pt-1">
         <ul class="text-zinc-400 space-y-2.5 text-sm">
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-300/15 text-amber-200 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Each clue number must be the area of its rectangle.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-300/15 text-amber-200 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Drag to define rectangles that include exactly one clue.</span></li>
-          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-300/15 text-amber-200 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Rectangles cannot overlap and must cover the grid.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Each island shows how many bridges must connect to it.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Connect islands in straight lines, horizontally or vertically.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>No bridges can cross, and no island can have more than two bridges between a pair.</span></li>
+          <li class="flex items-start gap-2.5"><span class="w-5 h-5 rounded-md bg-amber-500/15 text-amber-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>All islands must be in one connected network.</span></li>
         </ul>
-        <p class="text-xs text-zinc-500 mt-4 pt-3 border-t border-white/5">Tip: A clue of 6 fits a 1×6, 2×3, or 6×1 rectangle.</p>
+        <p class="text-xs text-zinc-500 mt-4 pt-3 border-t border-white/5">Tip: Tap an island, then another to add a bridge. Tap the pair again to cycle 1, 2, or none.</p>
       </div>
     </details>
 
@@ -229,14 +212,14 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
       </svg>
-      Show Solution
+      <span>Show Solution</span>
     </button>
 
     <div id="solution-actions" class="hidden w-full max-w-md mt-4 flex gap-3">
       <button id="solution-retry-btn" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-medium hover:bg-zinc-800 hover:text-zinc-300 transition-colors">
         Try Again
       </button>
-      <button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-amber-300/15 border border-amber-300/30 text-amber-200 text-sm font-medium hover:bg-amber-300/25 transition-colors">
+      <button id="solution-next-btn" class="flex-1 py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-colors">
         Next Puzzle
       </button>
     </div>
@@ -252,7 +235,7 @@
       </svg>
     </a>
 
-    <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-amber-300/25 text-amber-200 text-sm font-medium hover:bg-amber-200/10 transition-colors flex items-center justify-center gap-2">
+    <button id="back-to-daily-btn" class="hidden w-full max-w-md mt-4 py-3 rounded-xl border border-amber-500/20 text-amber-300 text-sm font-medium hover:bg-amber-500/10 transition-colors flex items-center justify-center gap-2">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
       </svg>
@@ -267,7 +250,7 @@
   <div id="reset-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4">
     <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
       <h2 class="text-xl font-semibold text-white mb-2">Reset Puzzle?</h2>
-      <p class="text-sm text-white/60">This will clear all rectangles. Your time will keep running.</p>
+      <p class="text-sm text-white/60">This will clear all bridges. Your time will keep running.</p>
       <div class="flex gap-3 mt-6">
         <button id="cancel-reset-btn" class="btn btn-secondary flex-1">Cancel</button>
         <button id="confirm-reset-btn" class="btn btn-primary flex-1">Reset</button>
@@ -288,16 +271,16 @@
 
   <div id="completion-modal" class="modal-backdrop hidden fixed inset-0 flex items-center justify-center p-4">
     <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
-      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-300/10 flex items-center justify-center">
-        <svg class="w-8 h-8 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+        <svg class="w-8 h-8 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>
       </div>
       <h2 id="modal-title" class="text-2xl font-bold text-center">Solved!</h2>
-      <p id="modal-subtitle" class="text-sm text-white/60 text-center mb-4">Great job on today's Parcel</p>
+      <p id="modal-subtitle" class="text-sm text-white/60 text-center mb-4">Great job on today's Bridges</p>
 
       <div class="timer-display rounded-xl p-4 text-center mb-4">
-        <div class="text-xs uppercase tracking-wider text-amber-200/70 mb-1">Your Time</div>
+        <div class="text-xs uppercase tracking-wider text-amber-400/60 mb-1">Your Time</div>
         <div id="final-time" class="text-3xl font-bold mono accent-text">0:00</div>
       </div>
 
@@ -371,7 +354,7 @@
     import { mountShell } from '../common/shell-mount.js';
     mountShell();
   </script>
-  <script type="module" src="/games/shikaku/shikaku-ui.js"></script>
+  <script type="module" src="/games/bridges/hashi-ui.js"></script>
   <script type="module">
   const params = new URLSearchParams(window.location.search);
   const wantsPractice = params.get('practice') === '1' || params.get('mode') === 'practice';
@@ -387,82 +370,63 @@
 <script>
 window.DG_TUTORIAL_STEPS = [
   {
-    title: 'Number Clues',
-    desc: 'Each number tells you the area of the rectangle that must contain it. A "4" needs a 1×4 or 2×2 rectangle.',
+    title: 'Island Dots',
+    desc: 'Each circle is an island. The number inside tells you exactly how many bridges must connect to it.',
     demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
-  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.1)' stroke-width='1'>
-    <rect x='44' y='28' width='26' height='26' rx='4'/><rect x='73' y='28' width='26' height='26' rx='4'/>
-    <rect x='102' y='28' width='26' height='26' rx='4'/><rect x='131' y='28' width='26' height='26' rx='4'/>
-    <rect x='44' y='57' width='26' height='26' rx='4'/><rect x='73' y='57' width='26' height='26' rx='4'/>
-    <rect x='102' y='57' width='26' height='26' rx='4'/><rect x='131' y='57' width='26' height='26' rx='4'/>
-    <rect x='44' y='86' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
-    <rect x='102' y='86' width='26' height='26' rx='4'/><rect x='131' y='86' width='26' height='26' rx='4'/>
+  <!-- 4 corner islands: A(2) top-left, B(3) top-right, C(1) bottom-left, D(2) bottom-right -->
+  <g fill='rgba(232,180,122,0.18)' stroke='rgba(232,180,122,0.55)' stroke-width='2'>
+    <circle cx='55' cy='35' r='16'/><circle cx='145' cy='35' r='16'/>
+    <circle cx='55' cy='105' r='16'/><circle cx='145' cy='105' r='16'/>
   </g>
-  <!-- Highlight all 5 clue cells -->
-  <g fill='rgba(201,163,107,0.22)' stroke='rgba(201,163,107,0.6)' stroke-width='1.5'>
-    <rect x='44' y='28' width='26' height='26' rx='4'/>
-    <rect x='102' y='28' width='26' height='26' rx='4'/>
-    <rect x='102' y='57' width='26' height='26' rx='4'/>
-    <rect x='73' y='86' width='26' height='26' rx='4'/>
-    <rect x='131' y='57' width='26' height='26' rx='4'/>
+  <g font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
+    <text x='55' y='35'>2</text><text x='145' y='35'>3</text>
+    <text x='55' y='105'>1</text><text x='145' y='105'>2</text>
   </g>
-  <!-- All 5 clue numbers -->
-  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#c9a36b'>
-    <text x='57' y='41'>4</text><text x='115' y='41'>2</text>
-    <text x='115' y='70'>2</text>
-    <text x='86' y='99'>2</text><text x='144' y='70'>2</text>
+  <text x='100' y='128' font-size='10' text-anchor='middle' fill='rgba(232,180,122,0.45)' font-family='system-ui,sans-serif'>tap two islands to add a bridge</text>
+</svg>`
+  },
+  {
+    title: 'Build Bridges',
+    desc: 'Tap two islands to add a bridge. Tap again for a second parallel bridge. Bridges must be horizontal or vertical, no crossing.',
+    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
+  <!-- Bridge A-B: single horizontal line connecting (55,35)-(145,35) -->
+  <line x1='71' y1='35' x2='129' y2='35' stroke='rgba(232,180,122,0.6)' stroke-width='3' stroke-linecap='round'/>
+  <!-- Bridge B-D: first of two vertical lines at x=145 -->
+  <line x1='145' y1='51' x2='145' y2='89' stroke='rgba(232,180,122,0.6)' stroke-width='3' stroke-linecap='round'/>
+  <!-- Bridge B-D: second being added (pulsing) -->
+  <line x1='141' y1='51' x2='141' y2='89' stroke='rgba(232,180,122,0.4)' stroke-width='3' stroke-linecap='round' class='dg-demo-pulse'/>
+  <!-- Islands on top -->
+  <g fill='rgba(232,180,122,0.18)' stroke='rgba(232,180,122,0.55)' stroke-width='2'>
+    <circle cx='55' cy='35' r='16'/><circle cx='145' cy='35' r='16'/>
+    <circle cx='55' cy='105' r='16'/><circle cx='145' cy='105' r='16'/>
+  </g>
+  <g font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
+    <text x='55' y='35'>2</text><text x='145' y='35'>3</text>
+    <text x='55' y='105'>1</text><text x='145' y='105'>2</text>
   </g>
 </svg>`
   },
   {
-    title: 'Draw Rectangles',
-    desc: 'Drag to draw a rectangle around each clue number. The rectangle\'s area must exactly match the clue.',
+    title: 'All Connected',
+    desc: 'All islands must form one connected network. When every island has exactly its bridge count, you win!',
     demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
-  <g fill='rgba(255,255,255,0.05)' stroke='rgba(255,255,255,0.1)' stroke-width='1'>
-    <rect x='44' y='28' width='26' height='26' rx='4'/><rect x='73' y='28' width='26' height='26' rx='4'/>
-    <rect x='102' y='28' width='26' height='26' rx='4'/><rect x='131' y='28' width='26' height='26' rx='4'/>
-    <rect x='44' y='57' width='26' height='26' rx='4'/><rect x='73' y='57' width='26' height='26' rx='4'/>
-    <rect x='102' y='57' width='26' height='26' rx='4'/><rect x='131' y='57' width='26' height='26' rx='4'/>
-    <rect x='44' y='86' width='26' height='26' rx='4'/><rect x='73' y='86' width='26' height='26' rx='4'/>
-    <rect x='102' y='86' width='26' height='26' rx='4'/><rect x='131' y='86' width='26' height='26' rx='4'/>
+  <!-- A-B single bridge (horizontal, y=35) -->
+  <line x1='71' y1='35' x2='129' y2='35' stroke='rgba(232,180,122,0.65)' stroke-width='3' stroke-linecap='round'/>
+  <!-- A-C single bridge (vertical, x=55) -->
+  <line x1='55' y1='51' x2='55' y2='89' stroke='rgba(232,180,122,0.65)' stroke-width='3' stroke-linecap='round'/>
+  <!-- B-D double bridge (vertical, x=142 and x=148) -->
+  <line x1='142' y1='51' x2='142' y2='89' stroke='rgba(232,180,122,0.65)' stroke-width='3' stroke-linecap='round'/>
+  <line x1='148' y1='51' x2='148' y2='89' stroke='rgba(232,180,122,0.65)' stroke-width='3' stroke-linecap='round'/>
+  <!-- Islands with highlighted borders for solved state -->
+  <g fill='rgba(232,180,122,0.22)' stroke='#E8B47A' stroke-width='2'>
+    <circle cx='55' cy='35' r='16'/><circle cx='145' cy='35' r='16'/>
+    <circle cx='55' cy='105' r='16'/><circle cx='145' cy='105' r='16'/>
   </g>
-  <!-- 2×2 rectangle being drawn around clue "4" -->
-  <rect x='44' y='28' width='55' height='55' rx='6' fill='rgba(201,163,107,0.15)' stroke='#c9a36b' stroke-width='2' stroke-dasharray='4,3' class='dg-demo-pulse'/>
-  <!-- Remaining clue cells still highlighted -->
-  <g fill='rgba(201,163,107,0.18)' stroke='rgba(201,163,107,0.5)' stroke-width='1.5'>
-    <rect x='102' y='28' width='26' height='26' rx='4'/>
-    <rect x='102' y='57' width='26' height='26' rx='4'/>
-    <rect x='73' y='86' width='26' height='26' rx='4'/>
-    <rect x='131' y='57' width='26' height='26' rx='4'/>
+  <g font-size='15' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#E8B47A'>
+    <text x='55' y='35'>2</text><text x='145' y='35'>3</text>
+    <text x='55' y='105'>1</text><text x='145' y='105'>2</text>
   </g>
-  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#c9a36b'>
-    <text x='57' y='41'>4</text><text x='115' y='41'>2</text>
-    <text x='115' y='70'>2</text>
-    <text x='86' y='99'>2</text><text x='144' y='70'>2</text>
-  </g>
-</svg>`
-  },
-  {
-    title: 'Cover the Grid',
-    desc: 'Every cell must belong to exactly one rectangle. No overlaps, no gaps. Fill the entire grid!',
-    demo: `<svg viewBox='0 0 200 140' xmlns='http://www.w3.org/2000/svg'>
-  <!-- Rect A: 2×2 covering (1,1)(2,1)(1,2)(2,2) = area 4 -->
-  <rect x='44' y='28' width='55' height='55' rx='5' fill='rgba(201,163,107,0.15)' stroke='rgba(201,163,107,0.5)' stroke-width='1.5'/>
-  <!-- Rect B: 2×1 covering (3,1)(4,1) = area 2 -->
-  <rect x='102' y='28' width='55' height='26' rx='5' fill='rgba(201,163,107,0.12)' stroke='rgba(201,163,107,0.42)' stroke-width='1.5'/>
-  <!-- Rect C: 1×2 covering (3,2)(3,3) = area 2 -->
-  <rect x='102' y='57' width='26' height='55' rx='5' fill='rgba(201,163,107,0.18)' stroke='rgba(201,163,107,0.52)' stroke-width='1.5'/>
-  <!-- Rect D: 2×1 covering (1,3)(2,3) = area 2 -->
-  <rect x='44' y='86' width='55' height='26' rx='5' fill='rgba(201,163,107,0.13)' stroke='rgba(201,163,107,0.44)' stroke-width='1.5'/>
-  <!-- Rect E: 1×2 covering (4,2)(4,3) = area 2 -->
-  <rect x='131' y='57' width='26' height='55' rx='5' fill='rgba(201,163,107,0.10)' stroke='rgba(201,163,107,0.38)' stroke-width='1.5'/>
-  <!-- All 5 clue numbers at original clue cell centers -->
-  <g font-size='14' font-weight='700' text-anchor='middle' dominant-baseline='central' fill='#c9a36b'>
-    <text x='57' y='41'>4</text><text x='115' y='41'>2</text>
-    <text x='115' y='70'>2</text>
-    <text x='86' y='99'>2</text><text x='144' y='70'>2</text>
-  </g>
-  <text x='100' y='125' font-size='11' text-anchor='middle' fill='rgba(201,163,107,0.6)' font-family='system-ui,sans-serif'>Grid fully covered ✓</text>
+  <circle cx='100' cy='70' r='6' fill='none' stroke='rgba(232,180,122,0.4)' stroke-width='2' class='dg-demo-pulse'/>
 </svg>`
   }
 ];
@@ -470,7 +434,7 @@ window.DG_TUTORIAL_STEPS = [
 
   <script type="module">
     import { mountGameNav } from '/games/common/hub-nav.js';
-    mountGameNav({ name: 'Parcel', logo: '/games/shikaku/shikaku-logo.jpg', href: '/games/shikaku/' });
+    mountGameNav({ name: 'Bridges', logo: '/games/bridges/hashi-logo.jpg', href: '/games/bridges/' });
   </script>
 </body>
 </html>

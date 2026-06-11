@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION on every production deploy that changes HTML/JS/CSS.
-const CACHE_VERSION = 'dg-games-v22';
+const CACHE_VERSION = 'dg-games-v24';
 const CORE_ASSETS = [
   '/games/',
   '/games/index.html',
@@ -12,7 +12,6 @@ const CORE_ASSETS = [
   '/games/manifest.json',
   '/games/common/hub-nav.css',
   '/games/common/hub-nav.js',
-  '/games/common/practice-hub.js',
   '/games/common/hub-footer.css',
   '/games/common/hub-footer.js',
   '/games/common/desktop-game.css',
@@ -20,9 +19,9 @@ const CORE_ASSETS = [
   '/games/common/tab-bar.js',
   '/games/common/design-tokens.css',
   '/games/bits/bitsnew-logo.jpg',
-  '/games/hashi/hashi-logo.jpg',
-  '/games/shikaku/shikaku-logo.jpg',
-  '/games/lattice/lattice-logo.png?v=2',
+  '/games/bridges/hashi-logo.jpg',
+  '/games/parcel/shikaku-logo.jpg',
+  '/games/logice/lattice-logo.png?v=2',
   '/games/pathways/pathways-logo.png',
   '/games/snake/snake-logo.png',
   '/games/assets/dg-games-192.png',

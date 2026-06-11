@@ -1249,13 +1249,13 @@ function wireUI() {
     disableReplay: true,
     getShareFile: () => buildShareCard({
       gameName: 'Logice',
-      logoPath: '/games/lattice/lattice-logo.png?v=2',
+      logoPath: '/games/logice/lattice-logo.png?v=2',
       accent: '#7dd3fc',
       accentSoft: 'rgba(125, 211, 252, 0.12)',
       dateText: formatDateForShare(puzzle?.puzzleId || getPTDateYYYYMMDD()),
       timeText: formatTime(completionMs ?? getElapsedMs()),
       gridLabel: `${puzzle?.size || ''}x${puzzle?.size || ''}`,
-      footerText: 'dailygrid.app/games/lattice'
+      footerText: 'dailygrid.app/games/logice'
     }),
     saveProgress: () => saveProgress(true)
   });

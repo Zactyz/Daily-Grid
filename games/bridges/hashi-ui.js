@@ -1160,7 +1160,7 @@ function initShell() {
     }),
     getShareMeta: () => ({
       gameName: 'Bridges',
-      shareUrl: 'https://dailygrid.app/games/hashi/',
+      shareUrl: 'https://dailygrid.app/games/bridges/',
       gridLabel: `${puzzle.gridSize}x${puzzle.gridSize} Bridges`
     }),
     getShareFile: () => buildShareImage(),
@@ -1179,7 +1179,7 @@ async function buildShareImage() {
   const puzzleDate = formatDateForShare(getPTDateYYYYMMDD());
   return buildShareCard({
     gameName: 'Bridges',
-    logoPath: '/games/hashi/hashi-logo.jpg',
+    logoPath: '/games/bridges/hashi-logo.jpg',
     accent: '#E8B47A',
     accentSoft: 'rgba(232, 180, 122, 0.12)',
     backgroundStart: '#120A08',
@@ -1187,7 +1187,7 @@ async function buildShareImage() {
     dateText: puzzleDate,
     timeText: formatTime(finalTime || 0),
     gridLabel: `Grid ${puzzle.gridSize}x${puzzle.gridSize}`,
-    footerText: 'dailygrid.app/games/hashi'
+    footerText: 'dailygrid.app/games/bridges'
   });
 }
 

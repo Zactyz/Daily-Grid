@@ -3,7 +3,7 @@ import {
   generatePuzzle,
   simulatePlan,
   validatePuzzleDescriptor
-} from '../games/harbor/harbor-puzzles.js';
+} from '../games/blindslid/harbor-puzzles.js';
 
 function addDays(dateId, days) {
   const date = new Date(`${dateId}T12:00:00Z`);

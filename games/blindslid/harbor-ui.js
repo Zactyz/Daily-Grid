@@ -576,13 +576,13 @@ function initShell() {
     }),
     getShareMeta: () => ({
       gameName: 'BlindSlide',
-      shareUrl: 'https://dailygrid.app/games/harbor/',
+      shareUrl: 'https://dailygrid.app/games/blindslid/',
       gridLabel: engine.getGridLabel(),
       accent: '#ff2d95'
     }),
     getShareFile: () => buildShareCard({
       gameName: 'BlindSlide',
-      logoPath: '/games/harbor/harbor-logo.png',
+      logoPath: '/games/blindslid/harbor-logo.png',
       accent: '#ff2d95',
       accentSoft: 'rgba(255,45,149,.12)',
       backgroundStart: '#070d18',
@@ -590,7 +590,7 @@ function initShell() {
       dateText: formatDateForShare(getPTDateYYYYMMDD()),
       timeText: formatTime(completionMs ?? engine.timeMs),
       gridLabel: engine.getGridLabel(),
-      footerText: 'dailygrid.app/games/harbor'
+      footerText: 'dailygrid.app/games/blindslid'
     }),
     getCompletionMs: () => completionMs,
     setCompletionMs: (ms) => { completionMs = ms; },

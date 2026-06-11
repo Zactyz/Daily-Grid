@@ -2,14 +2,14 @@
   "name": "BlindSlide by Daily Grid",
   "short_name": "BlindSlide",
   "description": "Order the blocks, clear the exit.",
-  "start_url": "/games/harbor/",
-  "scope": "/games/harbor/",
+  "start_url": "/games/blindslid/",
+  "scope": "/games/blindslid/",
   "display": "standalone",
   "background_color": "#070d18",
   "theme_color": "#070d18",
   "icons": [
     {
-      "src": "/games/harbor/harbor-logo.png",
+      "src": "/games/blindslid/harbor-logo.png",
       "sizes": "192x192",
       "type": "image/png"
     }

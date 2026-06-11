@@ -1,13 +1,13 @@
 {
   "name": "Bridges",
   "short_name": "Bridges",
-  "start_url": "/games/hashi/",
+  "start_url": "/games/bridges/",
   "display": "standalone",
   "background_color": "#120A08",
   "theme_color": "#120A08",
   "icons": [
     {
-      "src": "/games/hashi/hashi-logo.jpg",
+      "src": "/games/bridges/hashi-logo.jpg",
       "sizes": "512x512",
       "type": "image/jpeg"
     }

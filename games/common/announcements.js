@@ -67,7 +67,7 @@ const ANNOUNCEMENT_CAMPAIGNS = [
         title: 'BlindSlide',
         body: 'Tap arrows on gray blocks in move order, then watch the plan run. The pink car exits when the path is clear.',
         visual: 'blindslidePreview',
-        link: { href: '/games/harbor/', label: 'Play BlindSlide' }
+        link: { href: '/games/blindslid/', label: 'Play BlindSlide' }
       }
     ],
     finishLabel: 'Got it'
@@ -352,7 +352,7 @@ function renderVisual(visual) {
         </div>
         <div class="dg-anc-newcard">
           <span class="dg-anc-newbadge">New</span>
-          <img src="/games/harbor/harbor-logo.png" alt="BlindSlide"/>
+          <img src="/games/blindslid/harbor-logo.png" alt="BlindSlide"/>
           <span class="nm">BlindSlide</span>
         </div>
       </div>`;
@@ -373,7 +373,7 @@ function renderVisual(visual) {
   if (visual === 'blindslidePreview') {
     return `
       <div class="dg-anc-feature">
-        <img class="dg-anc-feature-logo" src="/games/harbor/harbor-logo.png" alt="BlindSlide"/>
+        <img class="dg-anc-feature-logo" src="/games/blindslid/harbor-logo.png" alt="BlindSlide"/>
         <div class="dg-anc-preview dg-anc-preview--blindslide">
           <div class="dg-anc-bs-tray">
             <div class="dg-anc-bs-board" aria-hidden="true"></div>
