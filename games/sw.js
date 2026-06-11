@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION on every production deploy that changes HTML/JS/CSS.
-const CACHE_VERSION = 'dg-games-v12';
+const CACHE_VERSION = 'dg-games-v13';
 const CORE_ASSETS = [
   '/games/',
   '/games/index.html',
@@ -12,6 +12,7 @@ const CORE_ASSETS = [
   '/games/manifest.json',
   '/games/common/hub-nav.css',
   '/games/common/hub-nav.js',
+  '/games/common/practice-hub.js',
   '/games/common/hub-footer.css',
   '/games/common/hub-footer.js',
   '/games/common/desktop-game.css',

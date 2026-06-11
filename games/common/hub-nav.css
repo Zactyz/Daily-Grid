@@ -19,6 +19,21 @@
   display: block;
 }
 
+.hub-page-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.rank-gold {
+  color: #facc15;
+}
+
+.hub-page-header svg.hub-mobile-header-icon {
+  color: #facc15;
+}
+
 .hub-mobile-header-icon {
   width: 2.5rem;
   height: 2.5rem;
@@ -39,11 +54,35 @@
 }
 
 .hub-mobile-header-icon--profile {
-  color: rgba(248, 250, 252, 0.92);
+  color: #facc15;
 }
 
 .hub-desktop-only {
   display: none;
+}
+
+.hub-desktop-hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.hub-desktop-hero--left {
+  text-align: left;
+}
+
+.hub-desktop-hero__title {
+  font-family: 'Merriweather', serif;
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.hub-gold-gradient {
+  background: linear-gradient(135deg, #D4A650, #E5C37E);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .hub-practice-grid {
@@ -165,6 +204,14 @@
     font-weight: 700;
   }
 
+  .hub-page-header {
+    display: none;
+  }
+
+  .hub-desktop-hero {
+    margin-bottom: 2.5rem;
+  }
+
   .hub-mobile-only {
     display: none !important;
   }
@@ -179,7 +226,7 @@
   }
 
   .hub-practice-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 2rem;
     max-width: 64rem;
     margin-left: auto;
@@ -194,6 +241,7 @@
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(212, 166, 80, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .hub-practice-grid .hub-practice-card:hover {
@@ -202,21 +250,27 @@
     background: rgba(255, 255, 255, 0.05);
   }
 
-  .hub-practice-grid .hub-practice-card img {
-    width: 4rem;
-    height: 4rem;
+  .hub-practice-grid .hub-practice-card .practice-card-logo-wrap {
     margin-bottom: 1.5rem;
   }
 
-  .hub-practice-grid .hub-practice-card .font-semibold {
+  .hub-practice-grid .hub-practice-card .practice-card-logo {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 1rem;
+  }
+
+  .hub-practice-grid .hub-practice-card .practice-card-title {
+    font-family: 'Merriweather', serif;
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
   }
 
-  .hub-practice-grid .hub-practice-card .text-xs {
+  .hub-practice-grid .hub-practice-card .practice-card-tagline {
     font-size: 0.875rem;
     line-height: 1.625;
+    color: #94a3b8;
     margin-bottom: 1.5rem;
   }
 
@@ -224,6 +278,7 @@
     margin-top: auto;
     font-size: 0.875rem;
     font-weight: 700;
+    color: #f59e0b;
   }
 
   .hub-medals-grid {

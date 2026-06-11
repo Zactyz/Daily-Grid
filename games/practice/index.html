@@ -101,47 +101,33 @@
       </div>
     </nav>
 <main id="main-content" tabindex="-1" class="hub-page-main pb-3">
-    <!-- Mobile header -->
-    <div class="hub-mobile-only flex items-center gap-3 mb-6 app-header">
+    <!-- Mobile page header -->
+    <div class="hub-page-header flex items-center gap-3 app-header">
       <img src="/games/assets/dg-games-192.png" alt="" class="hub-mobile-header-icon hub-mobile-header-icon--pwa" width="40" height="40" decoding="async">
       <div>
         <p class="text-[11px] uppercase tracking-[0.3em] text-slate-400">Daily Grid</p>
-        <h1 class="text-2xl font-semibold text-amber-200">Practice</h1>
+        <h1 class="text-2xl font-semibold rank-gold">Practice</h1>
       </div>
     </div>
 
+    <!-- Desktop page header -->
+    <header class="hub-desktop-hero hub-desktop-hero--left hub-desktop-only max-w-5xl mx-auto mb-10">
+      <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Practice Puzzles</span></h1>
+    </header>
+
     <div class="hub-mobile-only app-section-title mb-3">Choose A Game</div>
-    <div id="practice-game-list" class="hub-practice-grid"></div>
-    <!--
-      Cards injected synchronously so Tailwind CDN sees all classes on its
-      initial DOM scan (DOMContentLoaded), prevents the deferred-module
-      "growing into place" flash that occurs when classes appear after load.
-    -->
-    <script>!function(){var g=[
-      {n:'Snake',       t:'Practice the number path.',       l:'/games/snake/snake-logo.png',         p:'/games/snake/'},
-      {n:'Pathways',    t:'Practice color routes.',          l:'/games/pathways/pathways-logo.png',   p:'/games/pathways/'},
-      {n:'Logice',      t:'Practice logic grids.',           l:'/games/lattice/lattice-logo.png?v=2', p:'/games/lattice/'},
-      {n:'Bits',        t:'Practice binary logic.',          l:'/games/bits/bitsnew-logo.jpg',        p:'/games/bits/'},
-      {n:'Bridges', t:'Practice connecting bridges.',          l:'/games/hashi/hashi-logo.jpg',         p:'/games/hashi/'},
-      {n:'Parcel',      t:'Practice rectangle packing.',     l:'/games/shikaku/shikaku-logo.jpg',     p:'/games/shikaku/'},
-      {n:'Conduit',     t:'Practice routing the current.',   l:'/games/conduit/conduit-logo.png',     p:'/games/conduit/'},
-      {n:'Perimeter',   t:'Practice loop constraints.',      l:'/games/perimeter/perimeter-logo.png', p:'/games/perimeter/'},
-      {n:'Polyfit',     t:'Practice shape packing.',         l:'/games/polyfit/polyfit-logo.png',     p:'/games/polyfit/'},
-      {n:'Tiles',     t:'Practice sliding tiles.',         l:'/games/tiles/tiles-logo.png',     p:'/games/tiles/'},
-      {n:'BlindSlide', t:'Practice ordered block slides.', l:'/games/harbor/harbor-logo.png', p:'/games/harbor/'}
-    ];g.sort(function(a,b){return a.n.localeCompare(b.n);});document.getElementById('practice-game-list').innerHTML=g.map(function(x){
-      return '<a href="'+x.p+'?practice=1" class="app-card hub-practice-card rounded-2xl p-4 flex items-center gap-3">'
-        +'<img src="'+x.l+'" alt="'+x.n+'" class="w-12 h-12 rounded-xl">'
-        +'<div class="flex-1"><p class="font-semibold">'+x.n+'</p>'
-        +'<p class="text-xs text-slate-400">'+x.t+'</p></div>'
-        +'<span class="text-amber-300 text-sm font-semibold practice-cta">Practice \u2192</span></a>';
-    }).join('');}();</script>
+    <div id="practice-game-list" class="hub-practice-grid max-w-5xl mx-auto"></div>
+    <!-- Tailwind CDN safelist for dynamically injected card classes -->
+    <div aria-hidden="true" class="hidden w-12 h-12 rounded-xl flex items-center gap-3 shrink-0 min-w-0 inline-flex gap-1.5"></div>
   </main>
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { mountHubNav } from '/games/common/hub-nav.js';
     import { mountHubFooter } from '/games/common/hub-footer.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
+    import { renderPracticeGameList } from '/games/common/practice-hub.js';
+
+    renderPracticeGameList(document.getElementById('practice-game-list'));
     mountTabBar('practice');
     mountHubNav('practice');
     mountHubFooter();

@@ -96,6 +96,13 @@
       background: rgba(255, 255, 255, 0.015);
     }
 
+    .game-card.complete {
+      opacity: 0.72;
+      filter: grayscale(0.25);
+      border-color: rgba(148, 163, 184, 0.25) !important;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
     .complete-mark {
       position: absolute;
       right: -4px;
@@ -221,11 +228,11 @@
     </nav>
 <!-- Mobile App Style -->
   <main class="mobile-only px-4 pt-6 pb-3">
-    <div class="flex items-center gap-3 mb-6 app-header">
-      <img src="/Images/web%20icon.png" alt="Daily Grid Games" class="w-10 h-10 rounded-xl">
+    <div class="hub-page-header flex items-center gap-3 mb-6 app-header">
+      <img src="/games/assets/dg-games-192.png" alt="" class="hub-mobile-header-icon hub-mobile-header-icon--pwa" width="40" height="40" decoding="async">
       <div>
         <p class="text-[11px] uppercase tracking-[0.3em] text-slate-400">Daily Grid</p>
-        <h1 class="text-2xl font-semibold text-amber-200">Daily Grid Games</h1>
+        <h1 class="text-2xl font-semibold rank-gold">Daily</h1>
       </div>
     </div>
 
@@ -437,129 +444,33 @@
     </section>
   </main>
 
-  <!-- Desktop (unchanged layout) -->
+  <!-- Desktop -->
   <div class="desktop-only min-h-screen flex flex-col">
-    <main id="main-content" tabindex="-1" class="flex-grow max-w-6xl mx-auto px-6 pt-8 pb-16 text-center">
+    <main id="main-content" tabindex="-1" class="flex-grow max-w-6xl mx-auto px-6 pt-8 pb-16">
 
-      <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-        <a href="/games/snake/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/snake/snake-logo.png" alt="Snake" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Snake</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Connect the numbers in order.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
+      <header class="hub-desktop-hero hub-desktop-hero--left hub-desktop-only max-w-5xl mx-auto mb-10">
+        <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Daily Puzzles</span></h1>
+      </header>
 
-        <a href="/games/pathways/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/pathways/pathways-logo.png" alt="Pathways" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Pathways</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Connect the matching colors.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
+      <section class="max-w-5xl mx-auto mb-10 text-left">
+        <div id="desktop-daily-list" class="grid md:grid-cols-3 gap-8"></div>
+      </section>
 
-        <a href="/games/lattice/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/lattice/lattice-logo.png?v=2" alt="Logice" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Logice</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Solve the grid with clues.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-
-        <a href="/games/bits/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/bits/bitsnew-logo.jpg" alt="Bits" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Bits</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Balance the binary grid.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-
-        <a href="/games/hashi/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/hashi/hashi-logo.jpg" alt="Bridges" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Bridges</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Connect islands into one network.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-
-        <a href="/games/shikaku/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/shikaku/shikaku-logo.jpg" alt="Parcel" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Parcel</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Pack the grid into rectangles.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-
-        <a href="/games/conduit/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/conduit/conduit-logo.png" alt="Conduit" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Conduit</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Route the current to every exit.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-
-        <a href="/games/polyfit/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/polyfit/polyfit-logo.png" alt="Polyfit" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Polyfit</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Fill the shape with every piece.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-        <a href="/games/perimeter/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/perimeter/perimeter-logo.png" alt="Perimeter" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Perimeter</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Draw one loop from the clues.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-        <a href="/games/tiles/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/tiles/tiles-logo.png" alt="Tiles" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">Tiles</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Slide the tiles into order.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-        <a href="/games/harbor/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
-          <img src="/games/harbor/harbor-logo.png" alt="BlindSlide" class="w-16 h-16 rounded-2xl mb-6">
-          <h2 class="text-2xl font-bold mb-2">BlindSlide</h2>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">Order the slides, clear the exit.</p>
-          <span class="mt-auto text-amber-500 font-bold text-sm flex items-center gap-2">
-            Play Today's Puzzle
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </span>
-        </a>
-      </div>
-
-      <div class="mt-16 max-w-3xl mx-auto glass p-8 rounded-3xl">
+      <div id="desktop-practice-promo" class="hidden max-w-3xl mx-auto mb-10 glass p-8 rounded-3xl text-left">
         <h3 class="text-xl font-bold mb-3">Can't wait for tomorrow?</h3>
         <p class="text-slate-400 text-sm leading-relaxed">
-          Each game includes <span class="text-amber-500 font-semibold">unlimited practice mode</span> with randomly generated puzzles.
+          Each game includes <a href="/games/practice/" class="text-amber-500 font-semibold hover:underline">unlimited practice mode</a> with randomly generated puzzles.
           Perfect your skills without the pressure of the daily timer.
         </p>
       </div>
 
+      <section id="desktop-completed-section" class="hidden max-w-5xl mx-auto mb-10 text-left">
+        <div class="app-section-title mb-4">Completed</div>
+        <div id="desktop-completed-list" class="grid md:grid-cols-3 gap-8"></div>
+      </section>
+
       <!-- Partner ad slot — unhide when ready -->
-      <div class="hidden mt-32 max-w-4xl mx-auto">
+      <div class="hidden mt-16 max-w-4xl mx-auto">
         <div class="p-4 border border-white/5 rounded-xl text-[10px] text-slate-600 uppercase tracking-[0.2em] mb-4">Space for Non-Intrusive Partner Content</div>
         <div class="h-32 w-full bg-white/5 rounded-2xl flex items-center justify-center border border-dashed border-white/10">
           <p class="text-slate-500 italic text-sm">A calm space for quality puzzle recommendations</p>
@@ -620,11 +531,42 @@
       } catch { return false; }
     }
 
-    function updateCards() {
-      const dailyList = document.getElementById('daily-list');
-      const completedList = document.getElementById('completed-list');
-      const completedSection = document.getElementById('completed-section');
-      const cards = Array.from(document.querySelectorAll('#daily-list a.app-card[data-game-id], #completed-list a.app-card[data-game-id]'));
+    const PLAY_ARROW = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`;
+
+    function createDesktopCard(game) {
+      const card = document.createElement('a');
+      card.href = game.path;
+      card.dataset.gameId = game.id;
+      card.className = 'glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20 game-card';
+      card.innerHTML = `
+        <div class="relative mb-6 self-start">
+          <img src="${game.logo}" alt="${game.name}" class="w-16 h-16 rounded-2xl">
+          <span class="complete-mark hidden">✓</span>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">${game.name}</h2>
+        <p class="text-slate-400 text-sm leading-relaxed mb-6">${game.tagline}</p>
+        <span class="mt-auto play-label text-amber-500 font-bold text-sm flex items-center gap-2">
+          <span class="play-text">Play Today's Puzzle</span>
+          ${PLAY_ARROW}
+        </span>`;
+      return card;
+    }
+
+    function buildDesktopLists() {
+      const dailyList = document.getElementById('desktop-daily-list');
+      if (!dailyList || dailyList.dataset.built === '1') return;
+      dailyList.dataset.built = '1';
+      GAME_META_LIST.forEach((game) => dailyList.appendChild(createDesktopCard(game)));
+    }
+
+    function updateListGroup({ dailyListId, completedListId, completedSectionId, playIncomplete, playComplete }) {
+      const dailyList = document.getElementById(dailyListId);
+      const completedList = document.getElementById(completedListId);
+      const completedSection = completedSectionId ? document.getElementById(completedSectionId) : null;
+      if (!dailyList || !completedList) return;
+
+      const cards = Array.from(dailyList.querySelectorAll('[data-game-id]'))
+        .concat(Array.from(completedList.querySelectorAll('[data-game-id]')));
 
       const incompleteCards = [];
       const completedCards = [];
@@ -653,18 +595,16 @@
         return aName.localeCompare(bName);
       });
 
-      let completedCount = 0;
       [...incompleteCards, ...completedCards].forEach((card) => {
         const id = card.dataset.gameId;
         const completed = isCompletedToday(id);
-        if (completed) completedCount += 1;
         const playText = card.querySelector('.play-text');
         const check = card.querySelector('.complete-mark');
         const meta = gameMeta[id];
         if (meta) {
           card.href = completed ? `${meta.path}?leaderboard=1` : meta.path;
         }
-        // Streak badge
+
         const streak = getStreakData(id);
         let badgeEl = card.querySelector('.streak-badge');
         if (streak.current >= 2) {
@@ -682,28 +622,53 @@
         if (completed) {
           card.classList.add('complete');
           if (check) check.classList.remove('hidden');
-          if (playText) playText.textContent = 'View Leaderboard';
-          if (completedList && card.parentElement !== completedList) completedList.appendChild(card);
+          if (playText) playText.textContent = playComplete;
+          if (card.parentElement !== completedList) completedList.appendChild(card);
         } else {
           card.classList.remove('complete');
           if (check) check.classList.add('hidden');
-          if (playText) playText.textContent = 'Play';
-          if (dailyList && card.parentElement !== dailyList) dailyList.appendChild(card);
+          if (playText) playText.textContent = playIncomplete;
+          if (card.parentElement !== dailyList) dailyList.appendChild(card);
         }
       });
 
       if (completedSection) {
-        if (completedList && completedList.children.length > 0) completedSection.classList.remove('hidden');
+        if (completedList.children.length > 0) completedSection.classList.remove('hidden');
         else completedSection.classList.add('hidden');
       }
+    }
 
+    function updateCards() {
+      buildDesktopLists();
+
+      updateListGroup({
+        dailyListId: 'daily-list',
+        completedListId: 'completed-list',
+        completedSectionId: 'completed-section',
+        playIncomplete: 'Play',
+        playComplete: 'View Leaderboard',
+      });
+      updateListGroup({
+        dailyListId: 'desktop-daily-list',
+        completedListId: 'desktop-completed-list',
+        completedSectionId: 'desktop-completed-section',
+        playIncomplete: "Play Today's Puzzle",
+        playComplete: 'View Leaderboard',
+      });
+
+      let completedCount = 0;
+      GAME_META_LIST.forEach((g) => {
+        if (isCompletedToday(g.id)) completedCount += 1;
+      });
+
+      const allDone = completedCount === GAME_META_LIST.length;
       const allCompleteMsg = document.getElementById('all-complete-message');
       if (allCompleteMsg) {
-        if (completedCount === GAME_META_LIST.length) {
-          allCompleteMsg.classList.remove('hidden');
-        } else {
-          allCompleteMsg.classList.add('hidden');
-        }
+        allCompleteMsg.classList.toggle('hidden', !allDone);
+      }
+      const desktopPromo = document.getElementById('desktop-practice-promo');
+      if (desktopPromo) {
+        desktopPromo.classList.toggle('hidden', !allDone);
       }
     }
 

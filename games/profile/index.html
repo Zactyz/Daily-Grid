@@ -153,17 +153,21 @@
     </nav>
 <main id="main-content" tabindex="-1" class="hub-page-main pb-4">
 
-    <!-- Mobile header -->
-    <div class="hub-mobile-only flex items-center gap-3 mb-6 app-header">
+    <!-- Page header (mobile) -->
+    <div class="hub-page-header flex items-center gap-3 app-header">
       <svg class="hub-mobile-header-icon hub-mobile-header-icon--profile" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <circle cx="12" cy="7.5" r="3.5"/>
         <path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"/>
       </svg>
       <div>
         <p class="text-[11px] uppercase tracking-[0.3em] text-slate-400">Daily Grid</p>
-        <h1 class="text-2xl font-semibold text-amber-200">Profile</h1>
+        <h1 class="text-2xl font-semibold rank-gold">Profile</h1>
       </div>
     </div>
+
+    <header class="hub-desktop-hero hub-desktop-only max-w-5xl mx-auto mb-8">
+      <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Profile</span></h1>
+    </header>
 
     <div class="hub-profile-layout">
 
@@ -302,8 +306,8 @@
       <p id="account-status" class="text-xs mt-2 hidden"></p>
     </section>
 
-    <!-- Notifications & Settings -->
-    <section class="glass-card p-4 mb-4">
+    <!-- Notifications (mobile / PWA only — push requires configured server) -->
+    <section id="notifications-section" class="glass-card p-4 mb-4 hub-mobile-only">
       <p class="section-header">Notifications</p>
 
       <div class="stat-row">
@@ -323,7 +327,7 @@
     </section>
 
     <!-- App & Links -->
-    <section class="glass-card p-4 mb-4">
+    <section id="profile-links-section" class="glass-card p-4 mb-4">
       <p class="section-header">Daily Grid</p>
 
       <a href="/games/" class="stat-row" style="text-decoration:none;display:flex;">
@@ -716,6 +720,8 @@
       const toggle = document.getElementById('push-toggle');
       const statusText = document.getElementById('push-status-text');
       const row = document.getElementById('push-toggle-wrap')?.closest('.stat-row');
+
+      if (window.matchMedia('(min-width: 900px)').matches) return;
 
       const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
       const isStandalone = !!window.navigator.standalone;
