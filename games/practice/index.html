@@ -75,8 +75,20 @@
     }
   </style>
 </head>
-<body class="min-h-screen">
-  <main class="hub-page-main pb-3">
+<body class="min-h-screen dg-hub-nav-page dg-hub-site-fonts">
+  <nav id="dg-hub-nav" class="dg-hub-nav" aria-label="Games hub">
+      <a href="/" class="dg-hub-nav__brand">
+        <img src="/Images/web%20icon.png" alt="" class="dg-hub-nav__logo" width="40" height="40" decoding="async">
+        <span class="dg-hub-nav__title">Daily Grid</span>
+      </a>
+      <div class="dg-hub-nav__links">
+        <a href="/games/" data-hub-key="daily">Daily</a>
+        <a href="/games/practice/" data-hub-key="practice" class="is-active" aria-current="page">Practice</a>
+        <a href="/games/medals/" data-hub-key="medals">Medals</a>
+        <a href="/games/profile/" data-hub-key="profile">Profile</a>
+      </div>
+    </nav>
+<main class="hub-page-main pb-3">
     <!-- Mobile header -->
     <div class="hub-mobile-only flex items-center gap-3 mb-6 app-header">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(212,166,80,0.1);border:1px solid rgba(212,166,80,0.2)">

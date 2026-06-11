@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION on every production deploy that changes HTML/JS/CSS.
-const CACHE_VERSION = 'dg-games-v9';
+const CACHE_VERSION = 'dg-games-v10';
 const CORE_ASSETS = [
   '/games/',
   '/games/index.html',
@@ -10,6 +10,11 @@ const CORE_ASSETS = [
   '/games/profile/',
   '/games/profile/index.html',
   '/games/manifest.json',
+  '/games/common/hub-nav.css',
+  '/games/common/hub-nav.js',
+  '/games/common/tab-bar.css',
+  '/games/common/tab-bar.js',
+  '/games/common/design-tokens.css',
   '/games/bits/bitsnew-logo.jpg',
   '/games/hashi/hashi-logo.jpg',
   '/games/shikaku/shikaku-logo.jpg',
@@ -54,7 +59,12 @@ function ensureHtmlContentType(response) {
   return new Response(response.body, { status: 200, statusText: 'OK', headers });
 }
 
+function isHubHtmlPage(pathname) {
+  return HTML_PAGES.includes(pathname);
+}
+
 function shouldUseNetworkFirst(request, url) {
+  if (request.mode === 'navigate' && isHubHtmlPage(url.pathname)) return false;
   if (request.mode === 'navigate') return true;
   if (HTML_PAGES.includes(url.pathname)) return true;
   if (url.pathname.endsWith('.html')) return true;
@@ -85,6 +95,27 @@ async function networkFirst(request) {
   }
 }
 
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_VERSION);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request)
+    .then(async (response) => {
+      if (response.ok) {
+        await cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    networkPromise.catch(() => {});
+    return cached;
+  }
+
+  const response = await networkPromise;
+  return response || Response.error();
+}
+
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -106,6 +137,14 @@ self.addEventListener('fetch', (event) => {
 
   const isHtml = request.mode === 'navigate' || HTML_PAGES.includes(url.pathname)
     || url.pathname.endsWith('.html');
+
+  if (request.mode === 'navigate' && isHubHtmlPage(url.pathname)) {
+    event.respondWith((async () => {
+      const response = await staleWhileRevalidate(request);
+      return ensureHtmlContentType(response);
+    })());
+    return;
+  }
 
   if (shouldUseNetworkFirst(request, url)) {
     event.respondWith((async () => {

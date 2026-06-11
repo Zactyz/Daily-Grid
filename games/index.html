@@ -204,8 +204,20 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
-  <!-- Mobile App Style -->
+<body class="min-h-screen flex flex-col dg-hub-nav-page dg-hub-site-fonts">
+  <nav id="dg-hub-nav" class="dg-hub-nav" aria-label="Games hub">
+      <a href="/" class="dg-hub-nav__brand">
+        <img src="/Images/web%20icon.png" alt="" class="dg-hub-nav__logo" width="40" height="40" decoding="async">
+        <span class="dg-hub-nav__title">Daily Grid</span>
+      </a>
+      <div class="dg-hub-nav__links">
+        <a href="/games/" data-hub-key="daily" class="is-active" aria-current="page">Daily</a>
+        <a href="/games/practice/" data-hub-key="practice">Practice</a>
+        <a href="/games/medals/" data-hub-key="medals">Medals</a>
+        <a href="/games/profile/" data-hub-key="profile">Profile</a>
+      </div>
+    </nav>
+<!-- Mobile App Style -->
   <main class="mobile-only px-4 pt-6 pb-3">
     <div class="flex items-center gap-3 mb-6 app-header">
       <img src="/Images/web%20icon.png" alt="Daily Grid Games" class="w-10 h-10 rounded-xl">

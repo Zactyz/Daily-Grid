@@ -88,6 +88,11 @@
   -webkit-backdrop-filter: none;
   border: none;
   box-shadow: none;
+  view-transition-name: dg-hub-nav;
+}
+
+@view-transition {
+  navigation: auto;
 }
 
 @media (min-width: 900px) {
@@ -106,9 +111,10 @@
     box-shadow: none;
   }
 
-  /* Home-page fonts: Daily hub + in-game pages only (not Practice/Medals/Profile) */
+  /* Home-page fonts: all hub pages + in-game desktop */
   body.dg-hub-site-fonts .dg-hub-nav,
   body.dg-hub-site-fonts .desktop-only,
+  body.dg-hub-site-fonts .hub-page-main,
   body.dg-hub-site-fonts main.flex-grow {
     font-family: 'Inter', sans-serif;
   }
@@ -116,7 +122,10 @@
   body.dg-hub-site-fonts .desktop-only h1,
   body.dg-hub-site-fonts .desktop-only h2,
   body.dg-hub-site-fonts .desktop-only h3,
-  body.dg-hub-site-fonts .desktop-only .hub-desktop-hero__title,
+  body.dg-hub-site-fonts .hub-page-main h1,
+  body.dg-hub-site-fonts .hub-page-main h2,
+  body.dg-hub-site-fonts .hub-page-main h3,
+  body.dg-hub-site-fonts .hub-desktop-hero__title,
   body.dg-hub-site-fonts main.flex-grow h1,
   body.dg-hub-site-fonts main.flex-grow h2 {
     font-family: 'Merriweather', serif;

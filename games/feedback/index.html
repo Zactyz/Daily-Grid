@@ -53,8 +53,20 @@
     }
   </style>
 </head>
-<body>
-  <main class="hub-page-main pb-6">
+<body class="dg-hub-nav-page dg-hub-site-fonts">
+  <nav id="dg-hub-nav" class="dg-hub-nav" aria-label="Games hub">
+      <a href="/" class="dg-hub-nav__brand">
+        <img src="/Images/web%20icon.png" alt="" class="dg-hub-nav__logo" width="40" height="40" decoding="async">
+        <span class="dg-hub-nav__title">Daily Grid</span>
+      </a>
+      <div class="dg-hub-nav__links">
+        <a href="/games/" data-hub-key="daily">Daily</a>
+        <a href="/games/practice/" data-hub-key="practice">Practice</a>
+        <a href="/games/medals/" data-hub-key="medals">Medals</a>
+        <a href="/games/profile/" data-hub-key="profile" class="is-active" aria-current="page">Profile</a>
+      </div>
+    </nav>
+<main class="hub-page-main pb-6">
     <div class="flex items-center gap-3 mb-6">
       <a href="/games/profile/" class="text-slate-400" aria-label="Back to profile" style="text-decoration:none">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
