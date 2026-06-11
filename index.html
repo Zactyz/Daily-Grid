@@ -8,13 +8,13 @@
     <meta name="description" content="Play eleven free daily logic puzzles in your browser. Snake, Pathways, Logice, Tiles, and more. New puzzles every day at midnight PT. No account needed.">
     <meta property="og:title" content="Daily Grid - Eleven Daily Logic Puzzles">
     <meta property="og:description" content="Play eleven free daily logic puzzles in your browser. New challenges every day at midnight PT.">
-    <meta property="og:image" content="https://playdailygrid.com/Images/og-image.png">
-    <meta property="og:url" content="https://playdailygrid.com/">
+    <meta property="og:image" content="https://dailygrid.app/Images/og-image.png">
+    <meta property="og:url" content="https://dailygrid.app/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Daily Grid - Eleven Daily Logic Puzzles">
     <meta name="twitter:description" content="Play eleven free daily logic puzzles in your browser. No account needed.">
-    <meta name="twitter:image" content="https://playdailygrid.com/Images/og-image.png">
+    <meta name="twitter:image" content="https://dailygrid.app/Images/og-image.png">
     <meta name="apple-mobile-web-app-title" content="Daily Grid">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -59,6 +59,43 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
+        .promo-video-wrap {
+            position: relative;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+        .promo-video-wrap::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 1.75rem;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(212, 166, 80, 0.45), rgba(212, 166, 80, 0.08));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .promo-video {
+            width: 100%;
+            border-radius: 1.75rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
+            background: #0f172a;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .promo-video { display: none; }
+            .promo-video-fallback { display: block; }
+        }
+        .promo-video-fallback { display: none; }
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            transition: color 0.2s;
+        }
+        .social-link:hover { color: var(--brand-gold); }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -77,26 +114,33 @@
 
     <!-- Hero Section -->
     <section class="relative pt-32 pb-16 px-6 overflow-hidden">
-        <div class="max-w-4xl mx-auto text-center relative z-10">
-            <div class="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold mb-6 uppercase tracking-widest">
-                Free to play &mdash; no download required
+        <div class="max-w-6xl mx-auto relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                <div class="text-center lg:text-left">
+                    <div class="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold mb-6 uppercase tracking-widest">
+                        Free to play &mdash; no download required
+                    </div>
+                    <h1 class="text-5xl lg:text-6xl xl:text-7xl font-black mb-6 leading-tight">
+                        A calm <span class="gold-gradient">daily ritual</span> for your mind.
+                    </h1>
+                    <p class="text-xl text-slate-400 mb-10 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                        Eleven logic puzzles, fresh every day. Play free at <span class="text-amber-400/90 font-medium">dailygrid.app/games</span>, compete on leaderboards, and build a daily streak.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center mb-6">
+                        <a href="/games/" class="btn-gold inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Play Today's Puzzles
+                        </a>
+                    </div>
+                    <p class="text-slate-600 text-xs">11 puzzles &nbsp;&middot;&nbsp; daily at midnight PT &nbsp;&middot;&nbsp; free forever</p>
+                </div>
+                <div class="promo-video-wrap">
+                    <video class="promo-video" autoplay muted loop playsinline poster="Images/promo-poster.jpg" aria-label="Daily Grid games preview">
+                        <source src="Images/promo-daily-grid.mp4" type="video/mp4">
+                    </video>
+                    <img src="Images/promo-poster.jpg" alt="Daily Grid games preview" class="promo-video-fallback rounded-[1.75rem] w-full shadow-2xl">
+                </div>
             </div>
-            <h1 class="text-5xl lg:text-7xl font-black mb-6 leading-tight">
-                A calm <span class="gold-gradient">daily ritual</span> for your mind.
-            </h1>
-            <p class="text-xl text-slate-400 mb-10 leading-relaxed max-w-2xl mx-auto">
-                Eleven logic puzzles, fresh every day. Play free in your browser, compete on leaderboards, and build a daily streak.
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-                <a href="/games/" class="btn-gold inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    Play Today's Puzzles
-                </a>
-                <a href="https://apps.apple.com/us/app/daily-grid/id6757233848" target="_blank" rel="noopener" class="inline-block transition-transform hover:scale-105 active:scale-95">
-                    <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&amp;releaseDate=1735430400" alt="Download on the App Store" class="h-[52px]">
-                </a>
-            </div>
-            <p class="text-slate-600 text-xs">9 puzzles &nbsp;&middot;&nbsp; daily at midnight PT &nbsp;&middot;&nbsp; free forever</p>
         </div>
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full blur-[130px] pointer-events-none" style="background:rgba(212,166,80,0.06)"></div>
     </section>
@@ -178,7 +222,7 @@
                         </svg>
                     </div>
                     <h3 class="text-lg font-bold mb-3">Eleven Daily Puzzles</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">Snake, Pathways, Conduit, and six more. A fresh set drops every day &mdash; no subscription, no ads.</p>
+                    <p class="text-slate-400 text-sm leading-relaxed">Snake, Pathways, Conduit, and eight more. A fresh set drops every day &mdash; no subscription, no ads.</p>
                 </div>
                 <div class="glass p-8 rounded-[2rem] hover:border-amber-500/30 transition-all group">
                     <div class="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-5 group-hover:bg-amber-500/20 transition-colors">
@@ -202,20 +246,13 @@
         </div>
     </section>
 
-    <!-- App Section -->
-    <section class="py-16 px-6 bg-white/[0.015]">
-        <div class="max-w-4xl mx-auto glass p-10 lg:p-14 rounded-[2.5rem] relative overflow-hidden">
-            <div class="absolute -top-10 -right-10 w-64 h-64 rounded-full blur-[80px] pointer-events-none" style="background:rgba(212,166,80,0.12)"></div>
-            <div class="flex flex-col sm:flex-row items-center gap-8 relative z-10">
-                <img src="Images/web%20icon.png" alt="Daily Grid App Icon" class="w-20 h-20 rounded-3xl shadow-2xl flex-none">
-                <div class="text-center sm:text-left flex-1">
-                    <h2 class="text-2xl lg:text-3xl font-black mb-2">Also on iPhone</h2>
-                    <p class="text-slate-400 mb-5 text-sm leading-relaxed">Play offline, unlock decorations, and get a native experience built for iOS. Free download.</p>
-                    <a href="https://apps.apple.com/us/app/daily-grid/id6757233848" target="_blank" rel="noopener" class="inline-block transition-transform hover:scale-105 active:scale-95">
-                        <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&amp;releaseDate=1735430400" alt="Download on the App Store" class="h-[50px]">
-                    </a>
-                </div>
-            </div>
+    <!-- Legacy App (de-emphasized) -->
+    <section class="py-10 px-6">
+        <div class="max-w-3xl mx-auto text-center">
+            <p class="text-slate-500 text-sm">
+                Also available as a legacy iOS app with fewer puzzles.
+                <a href="https://apps.apple.com/us/app/daily-grid/id6757233848" target="_blank" rel="noopener" class="text-amber-500/80 hover:text-amber-400 underline underline-offset-2 transition-colors">App Store</a>
+            </p>
         </div>
     </section>
 
@@ -224,12 +261,16 @@
         <div class="max-w-5xl mx-auto">
             <img src="Images/web%20icon.png" alt="Daily Grid" class="w-12 h-12 rounded-xl mx-auto mb-6 grayscale hover:grayscale-0 transition-all">
             <p class="text-slate-500 mb-8">&copy; 2026 Zachary Zimmerman. All rights reserved.</p>
-            <div class="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm font-medium text-slate-400">
+            <div class="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm font-medium text-slate-400 mb-6">
                 <a href="/games/" class="hover:text-amber-500 transition-colors">Play Games</a>
                 <a href="/privacy/" class="hover:text-amber-500 transition-colors">Privacy Policy</a>
                 <a href="/terms/" class="hover:text-amber-500 transition-colors">Terms of Service</a>
                 <a href="/support/" class="hover:text-amber-500 transition-colors">Support</a>
             </div>
+            <a href="https://www.instagram.com/dailygrid.games" target="_blank" rel="noopener" class="social-link text-sm font-medium" aria-label="Daily Grid on Instagram">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.75 2h8.5A5.75 5.75 0 0122 7.75v8.5A5.75 5.75 0 0116.25 22h-8.5A5.75 5.75 0 012 16.25v-8.5A5.75 5.75 0 017.75 2zm0 1.5A4.25 4.25 0 003.5 7.75v8.5A4.25 4.25 0 007.75 20.5h8.5a4.25 4.25 0 004.25-4.25v-8.5A4.25 4.25 0 0016.25 3.5h-8.5zm9.38 1.06a1.12 1.12 0 110 2.24 1.12 1.12 0 010-2.24zM12 7a5 5 0 110 10 5 5 0 010-10zm0 1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z"/></svg>
+                @dailygrid.games
+            </a>
         </div>
     </footer>
 </body>
