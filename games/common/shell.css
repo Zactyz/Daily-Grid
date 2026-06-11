@@ -170,9 +170,7 @@ textarea,
   justify-content: center;
   border-radius: 1rem;
   cursor: pointer;
-  background: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--brand-bg, var(--dg-bg-game, #0a0a0f));
 }
 
 .shell-start-overlay.hidden {
@@ -188,9 +186,14 @@ textarea,
 /* Dim puzzle content under the start overlay */
 #game-container.prestart canvas,
 #game-container.prestart #board,
+#game-container.prestart #parcel-grid,
+#game-container.prestart #tiles-grid,
+#game-container.prestart #harbor-board,
 #game-container.prestart .grid-cell,
+#game-container.prestart .cell,
 #game-container.prestart #piece-bank,
 #game-container.prestart #hashi-canvas,
+#game-container.prestart #conduit-canvas,
 #game-container.prestart #undo-btn {
   filter: grayscale(0.5) blur(2px);
   opacity: 0.55;

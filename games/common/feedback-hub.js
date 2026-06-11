@@ -29,8 +29,8 @@ function ensureFeedbackModal() {
   modal.style.background = 'rgba(0,0,0,0.75)';
   modal.innerHTML = `
     <div class="w-full max-w-sm rounded-2xl p-6" style="background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.1)">
-      <h2 class="text-lg font-semibold text-white mb-2">Ideas for Daily Grid?</h2>
-      <p class="text-sm text-slate-400 mb-5">We would love your feedback, bugs, game ideas, or anything that would make the app better.</p>
+      <h2 class="text-lg font-semibold text-white mb-2">Send feedback</h2>
+      <p class="text-sm text-slate-400 mb-5">Bugs, game ideas, or anything we should fix or add.</p>
       <div class="flex flex-col gap-2">
         <a href="/games/feedback/"
           class="w-full py-2.5 rounded-lg font-semibold text-sm text-black text-center"
@@ -115,8 +115,8 @@ export function mountFeedbackHubCard(anchorEl) {
       </svg>
     </div>
     <div class="flex-1 min-w-0 pr-6">
-      <p class="font-semibold text-sm text-amber-100">Have ideas to improve Daily Grid?</p>
-      <p class="text-xs text-slate-400 mt-1">Let us know, we read every message.</p>
+      <p class="font-semibold text-sm text-amber-100">Got feedback?</p>
+      <p class="text-xs text-slate-400 mt-1">Bugs, ideas, or requests. We read every message.</p>
       <a href="/games/feedback/" class="inline-block mt-2 text-xs font-semibold text-amber-400" style="text-decoration:none">Give feedback →</a>
     </div>`;
 

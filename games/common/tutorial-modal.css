@@ -344,17 +344,21 @@
 .dg-tutorial-help-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: rgba(200, 210, 230, 0.5);
-  font-size: 12px;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  border-radius: var(--dg-radius-md, 12px);
+  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--dg-gold)) 42%, transparent);
+  background: color-mix(in srgb, var(--brand-accent, var(--dg-gold)) 14%, var(--dg-bg-game, #0a0a0f));
+  color: var(--brand-accent, var(--dg-gold));
+  font-size: 0.8125rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  padding: 7px 14px;
-  transition: background 0.15s, color 0.15s;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--brand-accent, var(--dg-gold)) 18%, transparent);
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s;
+  font-family: var(--dg-font-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -362,14 +366,19 @@
 .dg-tutorial-help-btn--inline {
   display: flex;
   width: 100%;
-  justify-content: center;
   margin-top: 14px;
-  border-radius: 8px;
 }
 
 .dg-tutorial-help-btn:hover {
-  background: rgba(255, 255, 255, 0.09);
-  color: rgba(255, 255, 255, 0.8);
+  background: color-mix(in srgb, var(--brand-accent, var(--dg-gold)) 22%, var(--dg-bg-game, #0a0a0f));
+  border-color: color-mix(in srgb, var(--brand-accent, var(--dg-gold)) 58%, transparent);
+  color: var(--dg-text, #f8fafc);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--brand-accent, var(--dg-gold)) 24%, transparent);
+}
+
+.dg-tutorial-help-btn:active {
+  transform: translateY(0);
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────────── */
