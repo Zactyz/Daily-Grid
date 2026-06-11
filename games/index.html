@@ -201,16 +201,6 @@
     @media (min-width: 900px) {
       .mobile-only { display: none !important; }
       .desktop-only { display: block !important; }
-
-      .desktop-only {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      }
-
-      .desktop-only h1,
-      .desktop-only h2,
-      .desktop-only h3 {
-        font-family: 'Merriweather', serif;
-      }
     }
   </style>
 </head>
@@ -436,7 +426,7 @@
   <!-- Desktop (unchanged layout) -->
   <div class="desktop-only min-h-screen flex flex-col">
     <main class="flex-grow max-w-6xl mx-auto px-6 py-20 text-center">
-      <header class="hub-desktop-hero mb-20">
+      <header class="hub-desktop-hero">
         <div class="hub-desktop-hero__badge">Daily Challenges</div>
         <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Daily Puzzles</span></h1>
         <p class="hub-desktop-hero__subtitle">

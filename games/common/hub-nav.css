@@ -3,6 +3,8 @@
  * Mobile uses the liquid glass tab bar (tab-bar.css).
  */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700;900&display=swap');
+
 .hub-page-main {
   width: 100%;
   max-width: 32rem;
@@ -52,7 +54,7 @@
 }
 
 .hub-desktop-hero__title {
-  font-family: var(--dg-font-heading, 'Space Grotesk', sans-serif);
+  font-family: var(--dg-font-heading, 'Merriweather', serif);
   font-size: clamp(2.5rem, 5vw, 3.75rem);
   font-weight: 900;
   margin-bottom: 1rem;
@@ -80,6 +82,17 @@
 }
 
 @media (min-width: 900px) {
+  body.dg-hub-nav-page {
+    font-family: 'Inter', sans-serif;
+  }
+
+  body.dg-hub-nav-page h1,
+  body.dg-hub-nav-page h2,
+  body.dg-hub-nav-page h3,
+  body.dg-hub-nav-page .hub-desktop-hero__title {
+    font-family: 'Merriweather', serif;
+  }
+
   .dg-hub-nav {
     display: flex;
     position: fixed;
@@ -93,6 +106,7 @@
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    border: none;
   }
 
   .dg-hub-nav__brand {
@@ -122,6 +136,7 @@
   }
 
   .dg-hub-nav__title {
+    font-family: 'Inter', sans-serif;
     font-weight: 700;
     font-size: 1.25rem;
     letter-spacing: -0.025em;
