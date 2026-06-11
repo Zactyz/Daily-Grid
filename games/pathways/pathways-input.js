@@ -10,6 +10,7 @@ export class PathwaysInput {
     
     this.isDragging = false;
     this.dragColor = null;
+    this.activePointerId = null;
     
     this.setupListeners();
   }
@@ -22,9 +23,18 @@ export class PathwaysInput {
     this._onUp = (e) => this.handlePointerUp(e);
 
     this.canvas.addEventListener('pointerdown', this._onDown, { passive: false });
+    this.canvas.addEventListener('pointermove', this._onMove, { passive: false });
     window.addEventListener('pointermove', this._onMove, { passive: false });
     window.addEventListener('pointerup', this._onUp);
     window.addEventListener('pointercancel', this._onUp);
+  }
+
+  destroy() {
+    this.canvas.removeEventListener('pointerdown', this._onDown);
+    this.canvas.removeEventListener('pointermove', this._onMove);
+    window.removeEventListener('pointermove', this._onMove);
+    window.removeEventListener('pointerup', this._onUp);
+    window.removeEventListener('pointercancel', this._onUp);
   }
   
   // Update touch behavior based on game state (allow scrolling when complete/paused)
@@ -39,15 +49,17 @@ export class PathwaysInput {
   handlePointerDown(e) {
     if (this.engine.state.isPaused || this.engine.state.isComplete) return;
     if (e.target !== this.canvas) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     e.preventDefault();
-    this.canvas.setPointerCapture?.(e.pointerId);
     
     const cell = this.renderer.getCellFromPointer(e.clientX, e.clientY);
     if (!cell) return;
     
     const [x, y] = cell;
     if (shouldIgnoreGhostPointer(e, `pathways:${x},${y}`)) return;
+
+    this.activePointerId = e.pointerId;
     
     // Check what's at this cell
     const endpointColor = this.engine.isEndpoint(x, y);
@@ -109,6 +121,7 @@ export class PathwaysInput {
   }
   
   handlePointerMove(e) {
+    if (this.activePointerId !== null && e.pointerId !== this.activePointerId) return;
     if (!this.isDragging || this.dragColor === null) return;
     if (this.engine.state.isPaused || this.engine.state.isComplete) return;
     
@@ -151,15 +164,13 @@ export class PathwaysInput {
   }
   
   handlePointerUp(e) {
+    if (this.activePointerId !== null && e.pointerId !== this.activePointerId) return;
     noteTouchPointerUp(e);
     if (this.isDragging) {
-      // Check for validation messages when user finishes a drag
       this.onValidationCheck();
     }
     this.isDragging = false;
     this.dragColor = null;
-    try {
-      this.canvas.releasePointerCapture?.(e.pointerId);
-    } catch {}
+    this.activePointerId = null;
   }
 }

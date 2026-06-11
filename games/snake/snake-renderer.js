@@ -1,3 +1,10 @@
+import {
+  applySquareCanvasDisplay,
+  attachCanvasResizeObserver,
+  measureSquareCanvasSide,
+  pointerToDisplayCoords,
+} from '../common/drag-canvas.js';
+
 export class SnakeRenderer {
   constructor(canvas, engine) {
     this.canvas = canvas;
@@ -23,15 +30,27 @@ export class SnakeRenderer {
     };
     
     this.resize();
+    this._resizeObserver = attachCanvasResizeObserver(this.canvas, () => {
+      this.resize();
+      this.onLayoutChange?.();
+    });
+  }
+
+  destroy() {
+    this._resizeObserver?.disconnect();
   }
   
   resize() {
+    const side = measureSquareCanvasSide(this.canvas);
+    if (side > 0) applySquareCanvasDisplay(this.canvas, side);
+
     const dpr = window.devicePixelRatio || 1;
     const rect = this.canvas.getBoundingClientRect();
-    
-    this.canvas.width = rect.width * dpr;
-    this.canvas.height = rect.height * dpr;
-    this.ctx.scale(dpr, dpr);
+    if (!rect.width || !rect.height) return;
+
+    this.canvas.width = Math.round(rect.width * dpr);
+    this.canvas.height = Math.round(rect.height * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     
     this.displayWidth = rect.width;
     this.displayHeight = rect.height;
@@ -254,9 +273,12 @@ export class SnakeRenderer {
   }
   
   getCellFromPointer(clientX, clientY) {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    const coords = pointerToDisplayCoords(
+      this.canvas, clientX, clientY, this.displayWidth, this.displayHeight
+    );
+    if (!coords) return null;
+    const x = coords.x;
+    const y = coords.y;
     
     for (let cy = 0; cy < this.engine.puzzle.height; cy++) {
       for (let cx = 0; cx < this.engine.puzzle.width; cx++) {

@@ -498,7 +498,7 @@
 
   <script type="module">
     import { getPTDateYYYYMMDD } from '/games/common/utils.js';
-    import { GAME_META as GAME_META_LIST, sortGamesByPlayHistory } from '/games/common/games.js';
+    import { GAME_META as GAME_META_LIST, getHubGameDisplayOrder } from '/games/common/games.js';
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { mountHubNav } from '/games/common/hub-nav.js';
     import { mountHubFooter } from '/games/common/hub-footer.js';
@@ -575,12 +575,8 @@
         else incompleteCards.push(card);
       });
 
-      const incompleteGames = incompleteCards
-        .map((card) => gameMeta[card.dataset.gameId])
-        .filter(Boolean);
       const puzzleId = getPTDateYYYYMMDD();
-      const playOrder = sortGamesByPlayHistory(incompleteGames, { puzzleId });
-      const orderRank = new Map(playOrder.map((game, index) => [game.id, index]));
+      const orderRank = new Map(getHubGameDisplayOrder(puzzleId).map((game, index) => [game.id, index]));
       incompleteCards.sort((a, b) => {
         const ar = orderRank.get(a.dataset.gameId) ?? 999;
         const br = orderRank.get(b.dataset.gameId) ?? 999;
@@ -590,6 +586,9 @@
         return aName.localeCompare(bName);
       });
       completedCards.sort((a, b) => {
+        const ar = orderRank.get(a.dataset.gameId) ?? 999;
+        const br = orderRank.get(b.dataset.gameId) ?? 999;
+        if (ar !== br) return ar - br;
         const aName = gameMeta[a.dataset.gameId]?.name || '';
         const bName = gameMeta[b.dataset.gameId]?.name || '';
         return aName.localeCompare(bName);

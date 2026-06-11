@@ -554,6 +554,7 @@
                 
                 engine = new PathwaysEngine(puzzle, storageKey);
                 renderer = new PathwaysRenderer(canvas, engine);
+                renderer.onLayoutChange = () => renderer.render();
                 ui = new PathwaysUI(engine, reset, nextLevel, currentMode);
                 ui.setRenderer(renderer);
 

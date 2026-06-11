@@ -1,4 +1,4 @@
-import { GAME_META, sortGamesByPlayHistory } from './games.js';
+import { GAME_META, getHubGameDisplayOrder } from './games.js';
 import { getPTDateYYYYMMDD } from './utils.js';
 
 function reorderList(container, ordered) {
@@ -14,10 +14,18 @@ function reorderList(container, ordered) {
   requestAnimationFrame(() => container.classList.remove('practice-list-reordering'));
 }
 
-/** Reorder pre-rendered practice cards to match Daily hub play-history order. */
-export function initPracticeHub() {
+function applyPracticeOrder() {
   const puzzleId = getPTDateYYYYMMDD();
-  const ordered = sortGamesByPlayHistory([...GAME_META], { puzzleId });
+  const ordered = getHubGameDisplayOrder(puzzleId);
   reorderList(document.getElementById('practice-game-list'), ordered);
   reorderList(document.getElementById('desktop-practice-list'), ordered);
+}
+
+/** Reorder pre-rendered practice cards to match Daily hub play-history order. */
+export function initPracticeHub() {
+  applyPracticeOrder();
+  window.addEventListener('pageshow', applyPracticeOrder);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') applyPracticeOrder();
+  });
 }

@@ -299,6 +299,18 @@ export function sortGamesByPlayHistory(games, { minDays = MIN_DAYS_FOR_PERSONALI
   });
 }
 
+/**
+ * Daily + Practice hub display order: incomplete dailies (play-history) then completed (A–Z).
+ * Matches the Daily hub card order on both mobile and desktop.
+ */
+export function getHubGameDisplayOrder(puzzleId) {
+  const incomplete = GAME_META.filter((g) => !isGameFinishedToday(g, puzzleId));
+  const completed = GAME_META.filter((g) => isGameFinishedToday(g, puzzleId));
+  const incompleteSorted = sortGamesByPlayHistory(incomplete, { puzzleId });
+  const completedSorted = [...completed].sort((a, b) => a.name.localeCompare(b.name));
+  return [...incompleteSorted, ...completedSorted];
+}
+
 function getPersonalizedOrder(games, options) {
   return sortGamesByPlayHistory(games, options);
 }

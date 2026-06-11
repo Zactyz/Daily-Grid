@@ -555,6 +555,7 @@
                 
                 engine = new SnakeEngine(puzzle, storageKey);
                 renderer = new SnakeRenderer(canvas, engine);
+                renderer.onLayoutChange = () => renderer.render();
                 ui = new SnakeUI(engine, reset, nextLevel, currentMode);
 
                 const onUpdate = () => {
