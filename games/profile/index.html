@@ -8,15 +8,26 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Profile | Daily Grid">
   <title>Profile | Daily Grid Games</title>
-  <meta name="description" content="Your Daily Grid stats, streaks, and settings.">
   <link rel="manifest" href="/games/manifest.json">
   <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
   <link rel="icon" type="image/png" href="/Images/web%20icon.png">
+  <meta name="description" content="Track streaks, medals, and settings. Link your email to sync progress across devices.">
+  <link rel="canonical" href="https://dailygrid.app/games/profile/">
+  <meta property="og:title" content="Profile | Daily Grid Games">
+  <meta property="og:description" content="Track streaks, medals, and settings. Link your email to sync progress across devices.">
+  <meta property="og:image" content="https://dailygrid.app/games/assets/og-games.png">
+  <meta property="og:url" content="https://dailygrid.app/games/profile/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Profile | Daily Grid Games">
+  <meta name="twitter:description" content="Track streaks, medals, and settings. Link your email to sync progress across devices.">
+  <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-games.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
   <link rel="stylesheet" href="/games/common/hub-nav.css">
+  <link rel="stylesheet" href="/games/common/hub-footer.css">
   <style>
     :root { --brand-gold: var(--dg-gold); }
     body {
@@ -140,7 +151,7 @@
         <a href="/games/profile/" data-hub-key="profile" class="is-active" aria-current="page">Profile</a>
       </div>
     </nav>
-<main class="hub-page-main pb-4">
+<main id="main-content" tabindex="-1" class="hub-page-main pb-4">
 
     <!-- Mobile header -->
     <div class="hub-mobile-only flex items-center gap-3 mb-6 app-header">
@@ -153,13 +164,6 @@
         <h1 class="text-2xl font-semibold text-amber-200">Profile</h1>
       </div>
     </div>
-
-    <!-- Desktop hero -->
-    <header class="hub-desktop-only hub-desktop-hero">
-      <div class="hub-desktop-hero__badge">Your Stats</div>
-      <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Profile</span></h1>
-      <p class="hub-desktop-hero__subtitle">Track streaks, medals, and settings. Link your email to sync progress across devices.</p>
-    </header>
 
     <div class="hub-profile-layout">
 
@@ -395,6 +399,7 @@
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { mountHubNav } from '/games/common/hub-nav.js';
+    import { mountHubFooter } from '/games/common/hub-footer.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
     import { maybeShowAccountIntroModal } from '/games/common/account-intro-modal.js';
     import { requestPushPermission, unsubscribePush, isPushSubscribed } from '/games/common/push.js';
@@ -425,6 +430,7 @@
 
     mountTabBar('profile');
     mountHubNav('profile');
+    mountHubFooter();
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'profile' }), 500);
     setTimeout(() => maybeShowAccountIntroModal(), 1200);
 

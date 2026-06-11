@@ -22,11 +22,22 @@ const HUB_BRAND_HTML = `
 /** @type {Set<string>} */
 const prefetched = new Set();
 
+function ensureSkipLink() {
+  if (document.getElementById('dg-skip-link') || !document.getElementById('main-content')) return;
+  const skip = document.createElement('a');
+  skip.id = 'dg-skip-link';
+  skip.className = 'dg-skip-link';
+  skip.href = '#main-content';
+  skip.textContent = 'Skip to main content';
+  document.body.insertBefore(skip, document.body.firstChild);
+}
+
 function applyBodyState({ siteFonts = false } = {}) {
   document.body.classList.add('dg-hub-nav-page');
   if (siteFonts) {
     document.body.classList.add('dg-hub-site-fonts');
   }
+  ensureSkipLink();
 }
 
 /**

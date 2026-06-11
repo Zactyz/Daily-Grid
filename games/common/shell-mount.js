@@ -37,6 +37,12 @@ const REQUIRED_IDS = [
 ];
 
 export function mountShell({ ensureToast = true } = {}) {
+  const main = document.querySelector('main');
+  if (main && !main.id) {
+    main.id = 'main-content';
+    main.setAttribute('tabindex', '-1');
+  }
+
   const missing = [];
   for (const id of REQUIRED_IDS) {
     if (!document.getElementById(id)) missing.push(id);

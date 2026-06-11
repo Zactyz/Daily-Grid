@@ -10,6 +10,8 @@
  *   4. tutorial-modal.css ← tutorial overlay
  */
 
+@import url('desktop-game.css');
+
 /* ─── Default Tokens (game-page scope) ────────────────────────────── */
 :root {
   --brand-bg:         var(--dg-bg-game);              /* #0a0a0f */
@@ -226,7 +228,7 @@ details[open] summary.details-plus::after {
   transform: rotate(45deg);
 }
 
-/* ─── Scrollbar Utilities ─────────────────────────────────────────── */
+/* ─── Reduced Motion ──────────────────────────────────────────────── */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

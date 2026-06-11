@@ -4,18 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Feedback | Daily Grid Games</title>
-  <meta name="description" content="Send feedback for Daily Grid Games." />
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="/games/manifest.json">
   <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
   <link rel="icon" type="image/png" href="/Images/web%20icon.png">
+  <meta name="description" content="Send feedback for Daily Grid Games — bugs, ideas, and suggestions.">
+  <link rel="canonical" href="https://dailygrid.app/games/feedback/">
+  <meta property="og:title" content="Feedback | Daily Grid Games">
+  <meta property="og:description" content="Send feedback for Daily Grid Games — bugs, ideas, and suggestions.">
+  <meta property="og:image" content="https://dailygrid.app/games/assets/og-games.png">
+  <meta property="og:url" content="https://dailygrid.app/games/feedback/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Feedback | Daily Grid Games">
+  <meta name="twitter:description" content="Send feedback for Daily Grid Games — bugs, ideas, and suggestions.">
+  <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-games.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
   <link rel="stylesheet" href="/games/common/hub-nav.css">
+  <link rel="stylesheet" href="/games/common/hub-footer.css">
   <style>
     /* Match the body background so a short page never reveals a darker band
        under the floating tab bar when the mobile toolbar collapses. */
@@ -67,7 +78,7 @@
         <a href="/games/profile/" data-hub-key="profile" class="is-active" aria-current="page">Profile</a>
       </div>
     </nav>
-<main class="hub-page-main pb-6">
+<main id="main-content" tabindex="-1" class="hub-page-main pb-6">
     <div class="flex items-center gap-3 mb-6">
       <a href="/games/profile/" class="text-slate-400" aria-label="Back to profile" style="text-decoration:none">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
@@ -93,11 +104,13 @@
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { mountHubNav } from '/games/common/hub-nav.js';
+    import { mountHubFooter } from '/games/common/hub-footer.js';
     import { getOrCreateAnonId } from '/games/common/utils.js';
     import { getPwaModeLabel } from '/games/common/feedback-hub.js';
 
     mountTabBar('profile');
     mountHubNav('profile');
+    mountHubFooter();
 
     const textarea = document.getElementById('feedback-message');
     const charCount = document.getElementById('char-count');

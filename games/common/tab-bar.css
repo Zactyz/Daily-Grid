@@ -185,11 +185,6 @@
   object-fit: cover;
 }
 
-.dg-tab-bar__icon--medals {
-  width: 27px;
-  height: 27px;
-}
-
 .dg-tab-bar__tab a:active .dg-tab-bar__icon {
   transform: scale(0.88);
 }

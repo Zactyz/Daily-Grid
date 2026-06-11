@@ -1,0 +1,87 @@
+/**
+ * Desktop layout scale for in-game pages (≥900px).
+ * Loaded via games-base.css — increases board, shell, and UI footprint on large screens.
+ */
+
+@media (min-width: 900px) {
+  :root {
+    --dg-board-max-height: min(78vh, 720px);
+    --dg-shell-page-max: 1120px;
+    --dg-game-main-max: 42rem;
+    --dg-tutorial-card-max: 448px;
+    --dg-tutorial-demo-min: 220px;
+  }
+
+  .shell-page {
+    max-width: var(--dg-shell-page-max);
+    padding-top: 2rem;
+    padding-bottom: 3.5rem;
+  }
+
+  body.dg-hub-nav-page > main.max-w-lg,
+  body.dg-hub-nav-page > main[class*="max-w-lg"] {
+    max-width: var(--dg-game-main-max) !important;
+  }
+
+  #game-canvas,
+  #hashi-canvas,
+  #conduit-canvas,
+  canvas[id$="-canvas"] {
+    max-height: var(--dg-board-max-height) !important;
+  }
+
+  #harbor-board {
+    max-width: 480px !important;
+  }
+
+  #tiles-grid {
+    max-width: 360px !important;
+  }
+
+  #board {
+    max-height: min(52vh, 520px);
+  }
+
+  #parcel-grid,
+  #piece-bank {
+    max-width: min(92vw, 520px);
+  }
+
+  .shell-nav .inner {
+    max-width: 1200px;
+  }
+
+  .btn {
+    font-size: 0.9375rem;
+    padding: 0.6875rem 1.375rem;
+  }
+
+  #timer {
+    font-size: 1.125rem;
+  }
+
+  .dg-tutorial-title {
+    font-size: 1.25rem;
+  }
+
+  .dg-tutorial-desc {
+    font-size: 0.9375rem;
+  }
+
+  .dg-tutorial-game {
+    font-size: 1.125rem;
+  }
+
+  .dg-tutorial-header {
+    padding: 1.125rem 1.25rem 1rem 1.375rem;
+  }
+
+  .dg-tutorial-demo {
+    margin: 1.25rem 1.25rem 0;
+    padding: 1.125rem 1.25rem;
+  }
+
+  .dg-tutorial-text {
+    padding: 1.25rem 1.75rem 0.25rem;
+  }
+}

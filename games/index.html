@@ -21,11 +21,13 @@
   <meta name="twitter:title" content="Daily Grid Games">
   <meta name="twitter:description" content="Daily Grid Games, a focused hub for daily puzzles.">
   <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-games.png">
+  <link rel="canonical" href="https://dailygrid.app/games/">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
   <link rel="stylesheet" href="/games/common/hub-nav.css">
+  <link rel="stylesheet" href="/games/common/hub-footer.css">
   <style>
     :root {
       --brand-bg: var(--dg-bg);
@@ -437,14 +439,7 @@
 
   <!-- Desktop (unchanged layout) -->
   <div class="desktop-only min-h-screen flex flex-col">
-    <main class="flex-grow max-w-6xl mx-auto px-6 py-20 text-center">
-      <header class="hub-desktop-hero">
-        <div class="hub-desktop-hero__badge">Daily Challenges</div>
-        <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Daily Puzzles</span></h1>
-        <p class="hub-desktop-hero__subtitle">
-          New logic puzzles every day. Pick a game, beat your time, and check the leaderboard.
-        </p>
-      </header>
+    <main id="main-content" tabindex="-1" class="flex-grow max-w-6xl mx-auto px-6 pt-8 pb-16 text-center">
 
       <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
         <a href="/games/snake/" class="glass p-8 rounded-[2.5rem] card-hover text-left flex flex-col items-start border-amber-500/20">
@@ -563,7 +558,8 @@
         </p>
       </div>
 
-      <div class="mt-32 max-w-4xl mx-auto">
+      <!-- Partner ad slot — unhide when ready -->
+      <div class="hidden mt-32 max-w-4xl mx-auto">
         <div class="p-4 border border-white/5 rounded-xl text-[10px] text-slate-600 uppercase tracking-[0.2em] mb-4">Space for Non-Intrusive Partner Content</div>
         <div class="h-32 w-full bg-white/5 rounded-2xl flex items-center justify-center border border-dashed border-white/10">
           <p class="text-slate-500 italic text-sm">A calm space for quality puzzle recommendations</p>
@@ -571,28 +567,6 @@
       </div>
     </main>
 
-    <footer class="py-12 px-6 border-t border-white/5 text-center mt-auto">
-      <div class="max-w-6xl mx-auto">
-        <img src="/Images/web%20icon.png" alt="Daily Grid" class="w-12 h-12 rounded-xl mx-auto mb-6 grayscale opacity-50">
-        <p class="text-slate-500 mb-8">&copy; 2026 Zachary Zimmerman. All rights reserved.</p>
-        <div class="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm font-medium text-slate-400 mb-4">
-          <a href="/" class="hover:text-amber-500 transition-colors">Home</a>
-          <a href="/privacy/" class="hover:text-amber-500 transition-colors">Privacy Policy</a>
-          <a href="/terms/" class="hover:text-amber-500 transition-colors">Terms of Service</a>
-          <a href="/support/" class="hover:text-amber-500 transition-colors">Support</a>
-        </div>
-        <div class="mb-6">
-          <p class="text-slate-500 text-sm mb-3">Also try our iOS app. It has a different daily game.</p>
-          <a href="https://apps.apple.com/us/app/daily-grid/id6757233848" target="_blank" rel="noopener" class="inline-block transition-transform hover:scale-105 active:scale-95">
-            <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&amp;releaseDate=1735430400" alt="Download on the App Store" class="h-[44px] mx-auto opacity-90 hover:opacity-100 transition-opacity">
-          </a>
-        </div>
-        <a href="https://www.instagram.com/dailygrid.games" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-amber-500 transition-colors" aria-label="Daily Grid on Instagram">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.75 2h8.5A5.75 5.75 0 0122 7.75v8.5A5.75 5.75 0 0116.25 22h-8.5A5.75 5.75 0 012 16.25v-8.5A5.75 5.75 0 017.75 2zm0 1.5A4.25 4.25 0 003.5 7.75v8.5A4.25 4.25 0 007.75 20.5h8.5a4.25 4.25 0 004.25-4.25v-8.5A4.25 4.25 0 0016.25 3.5h-8.5zm9.38 1.06a1.12 1.12 0 110 2.24 1.12 1.12 0 010-2.24zM12 7a5 5 0 110 10 5 5 0 010-10zm0 1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z"/></svg>
-          @dailygrid.games
-        </a>
-      </div>
-    </footer>
   </div>
 
   <div id="ios-install-banner-bottom" class="ios-banner with-pointer rounded-[1.9rem] px-5 py-4 flex items-center gap-4 max-w-md w-[94%] ios-banner-bottom">
@@ -616,6 +590,7 @@
     import { GAME_META as GAME_META_LIST, sortGamesByPlayHistory } from '/games/common/games.js';
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { mountHubNav } from '/games/common/hub-nav.js';
+    import { mountHubFooter } from '/games/common/hub-footer.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
     import { maybeShowAccountIntroModal } from '/games/common/account-intro-modal.js';
     import { mountFeedbackHubCard, maybeShowFeedbackModal } from '/games/common/feedback-hub.js';
@@ -752,6 +727,7 @@
 
     mountTabBar('daily');
     mountHubNav('daily');
+    mountHubFooter();
     mountFeedbackHubCard(document.getElementById('feedback-card-anchor'));
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'daily' }), 500);
     setTimeout(() => maybeShowAccountIntroModal(), 1200);

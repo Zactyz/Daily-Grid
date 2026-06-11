@@ -9,7 +9,13 @@
 
 import { initServiceWorkerUpdates } from './sw-register.js';
 
-const BRAND_ICON = '/Images/web%20icon.png';
+const PRACTICE_TAB_ICON = `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="2" y="7" width="3.5" height="10" rx="1.75"/>
+      <rect x="5.5" y="10" width="1.5" height="4" rx="0.75"/>
+      <rect x="7" y="11" width="10" height="2" rx="1"/>
+      <rect x="17" y="10" width="1.5" height="4" rx="0.75"/>
+      <rect x="18.5" y="7" width="3.5" height="10" rx="1.75"/>
+    </svg>`;
 
 const TABS = [
   {
@@ -27,13 +33,13 @@ const TABS = [
     key: 'practice',
     label: 'Practice',
     href: '/games/practice/',
-    icon: `<img src="${BRAND_ICON}" alt="" class="dg-tab-bar__icon dg-tab-bar__icon--logo" width="24" height="24" decoding="async">`,
+    icon: PRACTICE_TAB_ICON,
   },
   {
     key: 'medals',
     label: 'Medals',
     href: '/games/medals/',
-    icon: `<svg class="dg-tab-bar__icon dg-tab-bar__icon--medals" viewBox="0 0 24 24" fill="currentColor">
+    icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor">
       <rect x="10.5" y="2" width="3" height="4.5" rx="0.75"/>
       <circle cx="12" cy="15" r="7"/>
     </svg>`,

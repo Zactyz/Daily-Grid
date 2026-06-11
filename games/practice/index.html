@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Practice Puzzles | Daily Grid Games</title>
-  <meta name="description" content="Practice puzzles for Daily Grid Games." />
   <meta name="theme-color" content="#0b1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,11 +11,23 @@
   <link rel="manifest" href="/games/manifest.json">
   <link rel="apple-touch-icon" href="/games/assets/dg-games-180.png">
   <link rel="icon" type="image/png" href="/Images/web%20icon.png">
+  <meta name="description" content="Sharpen your skills with unlimited practice puzzles across every Daily Grid game.">
+  <link rel="canonical" href="https://dailygrid.app/games/practice/">
+  <meta property="og:title" content="Practice Puzzles | Daily Grid Games">
+  <meta property="og:description" content="Sharpen your skills with unlimited practice puzzles across every Daily Grid game.">
+  <meta property="og:image" content="https://dailygrid.app/games/assets/og-games.png">
+  <meta property="og:url" content="https://dailygrid.app/games/practice/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Practice Puzzles | Daily Grid Games">
+  <meta name="twitter:description" content="Sharpen your skills with unlimited practice puzzles across every Daily Grid game.">
+  <meta name="twitter:image" content="https://dailygrid.app/games/assets/og-games.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
   <link rel="stylesheet" href="/games/common/hub-nav.css">
+  <link rel="stylesheet" href="/games/common/hub-footer.css">
   <style>
     body {
       font-family: var(--dg-font-ui);
@@ -89,22 +100,15 @@
         <a href="/games/profile/" data-hub-key="profile">Profile</a>
       </div>
     </nav>
-<main class="hub-page-main pb-3">
+<main id="main-content" tabindex="-1" class="hub-page-main pb-3">
     <!-- Mobile header -->
     <div class="hub-mobile-only flex items-center gap-3 mb-6 app-header">
-      <img src="/Images/web%20icon.png" alt="" class="hub-mobile-header-icon" width="40" height="40" decoding="async">
+      <img src="/games/assets/dg-games-192.png" alt="" class="hub-mobile-header-icon hub-mobile-header-icon--pwa" width="40" height="40" decoding="async">
       <div>
         <p class="text-[11px] uppercase tracking-[0.3em] text-slate-400">Daily Grid</p>
         <h1 class="text-2xl font-semibold text-amber-200">Practice</h1>
       </div>
     </div>
-
-    <!-- Desktop hero -->
-    <header class="hub-desktop-only hub-desktop-hero">
-      <div class="hub-desktop-hero__badge">Practice Mode</div>
-      <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Practice Puzzles</span></h1>
-      <p class="hub-desktop-hero__subtitle">Sharpen your skills with unlimited practice puzzles. Pick a game and play at your own pace.</p>
-    </header>
 
     <div class="hub-mobile-only app-section-title mb-3">Choose A Game</div>
     <div id="practice-game-list" class="hub-practice-grid"></div>
@@ -136,9 +140,11 @@
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { mountHubNav } from '/games/common/hub-nav.js';
+    import { mountHubFooter } from '/games/common/hub-footer.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
     mountTabBar('practice');
     mountHubNav('practice');
+    mountHubFooter();
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'practice' }), 500);
   </script>
   <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation"><ul class="dg-tab-bar__list">
