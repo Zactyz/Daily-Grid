@@ -159,10 +159,10 @@
   </style>
 </head>
 <body>
-  <main class="hub-page-main hub-page-main--medals pb-4">
+  <main class="hub-page-main pb-4">
 
-    <!-- Header -->
-    <div class="flex items-center gap-3 mb-4 app-header">
+    <!-- Mobile header -->
+    <div class="hub-mobile-only flex items-center gap-3 mb-4 app-header">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(250,204,21,0.12);border:1px solid rgba(250,204,21,0.2)">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="#facc15">
           <rect x="10.5" y="2" width="3" height="4.5" rx="0.75"/>
@@ -174,6 +174,14 @@
         <h1 class="text-2xl font-semibold text-amber-200">Medals</h1>
       </div>
     </div>
+
+    <!-- Desktop hero -->
+    <header class="hub-desktop-only hub-desktop-hero">
+      <div class="hub-desktop-hero__badge">Leaderboards</div>
+      <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Medals</span></h1>
+      <p class="hub-desktop-hero__subtitle">See today's top solvers across every game. Gold, silver, and bronze for the fastest times.</p>
+    </header>
+
     <!-- Date navigator -->
     <div class="flex items-center gap-1 mb-5">
       <button id="date-prev-btn" aria-label="Previous day" class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6)">

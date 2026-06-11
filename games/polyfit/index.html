@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/shell.css">
     <link rel="stylesheet" href="/games/common/games-base.css">
+  <link rel="stylesheet" href="/games/common/hub-nav.css">
     <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
     :root { --brand-bg:#120f1a; --brand-accent:#f59e0b; --brand-accent-dim:#d97706; }
@@ -38,14 +39,12 @@
     #polyfit-canvas{width:100%;height:auto;border-radius:16px;background:#0f0b17;border:1px solid rgba(245,158,11,.2);display:block}
     .progress-text{text-align:center;color:rgba(255,231,196,.88);letter-spacing:.03em;font-size:.76rem}
     .accent-glow{text-shadow:0 0 30px rgba(245,158,11,.35);}
-    @media (max-width:899px){nav{display:none!important}.mobile-app-bar{display:flex}}
+    
   </style>
 </head>
 <body>
   <div class="mobile-app-bar"><a href="/games/" aria-label="Back to games"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a></div>
-  <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6"><div class="max-w-5xl mx-auto flex justify-between items-center"><a href="/games/polyfit/" class="flex items-center gap-2.5 hover:opacity-80"><img src="/games/polyfit/polyfit-logo.png" alt="Polyfit logo" class="w-9 h-9 rounded-lg"><span class="font-semibold text-lg tracking-tight hidden sm:block">Polyfit</span></a><div class="flex gap-5 text-sm font-medium text-zinc-400"><a href="/" class="hover:text-white">Home</a><a href="/games/" class="text-white">Games</a><a href="/support/" class="hover:text-white">Support</a></div></div></nav>
-
-  <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
+<main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
     <header class="text-center mb-6 w-full">
       <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse"></span>Daily Puzzle</div>
       <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/25 text-amber-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>Practice Mode</div>
@@ -198,5 +197,10 @@ window.DG_TUTORIAL_STEPS = [
   }
 ];
 </script>
+
+  <script type="module">
+    import { mountGameNav } from '/games/common/hub-nav.js';
+    mountGameNav({ name: 'Polyfit', logo: '/games/polyfit/polyfit-logo.png', href: '/games/polyfit/' });
+  </script>
 </body>
 </html>

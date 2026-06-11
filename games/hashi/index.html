@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/shell.css">
     <link rel="stylesheet" href="/games/common/games-base.css">
+  <link rel="stylesheet" href="/games/common/hub-nav.css">
     <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
     :root {
@@ -112,21 +113,7 @@
       </svg>
     </a>
   </div>
-  <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6">
-    <div class="max-w-5xl mx-auto flex justify-between items-center">
-      <a href="/games/hashi/" class="flex items-center gap-2.5 transition-all hover:opacity-80">
-        <img src="/games/hashi/hashi-logo.jpg" alt="Bridges Logo" class="w-9 h-9 rounded-lg">
-        <span class="font-semibold text-lg tracking-tight hidden sm:block">Bridges</span>
-      </a>
-      <div class="flex gap-5 text-sm font-medium text-zinc-400">
-        <a href="/" class="hover:text-white transition-colors">Home</a>
-        <a href="/games/" class="text-white">Games</a>
-        <a href="/support/" class="hover:text-white transition-colors">Support</a>
-      </div>
-    </div>
-  </nav>
-
-  <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
+<main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
     <header class="text-center mb-6 w-full">
       <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300/90 text-xs font-medium mb-3 uppercase tracking-wider">
         <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
@@ -444,5 +431,10 @@ window.DG_TUTORIAL_STEPS = [
   }
 ];
 </script>
+
+  <script type="module">
+    import { mountGameNav } from '/games/common/hub-nav.js';
+    mountGameNav({ name: 'Bridges', logo: '/games/hashi/hashi-logo.jpg', href: '/games/hashi/' });
+  </script>
 </body>
 </html>

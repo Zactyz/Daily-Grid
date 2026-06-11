@@ -1,8 +1,8 @@
 /**
- * Desktop top navigation for games hub pages (Daily, Practice, Medals, Profile).
- * Mobile continues to use the bottom tab bar.
+ * Desktop top navigation for games hub and in-game pages.
+ * Mobile continues to use the bottom tab bar / back button.
  *
- * Tab keys: 'daily' | 'practice' | 'medals' | 'profile'
+ * Hub tab keys: 'daily' | 'practice' | 'medals' | 'profile'
  */
 
 const HUB_LINKS = [
@@ -14,15 +14,16 @@ const HUB_LINKS = [
 
 /**
  * @param {string} activeKey
+ * @param {string} brandHtml
  */
-export function mountHubNav(activeKey) {
+function mountNav(activeKey, brandHtml) {
   if (document.getElementById('dg-hub-nav')) return;
 
   document.body.classList.add('dg-hub-nav-page');
 
   const nav = document.createElement('nav');
   nav.id = 'dg-hub-nav';
-  nav.className = 'dg-hub-nav';
+  nav.className = 'dg-hub-nav glass';
   nav.setAttribute('aria-label', 'Games hub');
 
   const linksHtml = HUB_LINKS.map(({ key, label, href }) => {
@@ -32,14 +33,32 @@ export function mountHubNav(activeKey) {
   }).join('');
 
   nav.innerHTML = `
-    <a href="/games/" class="dg-hub-nav__brand">
-      <img src="/Images/web%20icon.png" alt="" class="dg-hub-nav__logo">
-      <span class="dg-hub-nav__title">Daily Grid Games</span>
-    </a>
-    <div class="dg-hub-nav__links">
-      ${linksHtml}
-      <a href="/" class="dg-hub-nav__site-link">Home</a>
-    </div>`;
+    ${brandHtml}
+    <div class="dg-hub-nav__links">${linksHtml}</div>`;
 
   document.body.insertBefore(nav, document.body.firstChild);
+}
+
+/**
+ * @param {string} activeKey
+ */
+export function mountHubNav(activeKey) {
+  mountNav(activeKey, `
+    <a href="/" class="dg-hub-nav__brand">
+      <img src="/Images/web%20icon.png" alt="" class="dg-hub-nav__logo">
+      <span class="dg-hub-nav__title">Daily Grid</span>
+    </a>`);
+}
+
+/**
+ * Desktop nav for individual game pages (game brand + hub links).
+ *
+ * @param {{ name: string, logo: string, href: string }} opts
+ */
+export function mountGameNav({ name, logo, href }) {
+  mountNav(null, `
+    <a href="${href}" class="dg-hub-nav__brand">
+      <img src="${logo}" alt="" class="dg-hub-nav__logo dg-hub-nav__logo--game">
+      <span class="dg-hub-nav__title">${name}</span>
+    </a>`);
 }

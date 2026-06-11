@@ -76,9 +76,9 @@
   </style>
 </head>
 <body class="min-h-screen">
-  <main class="hub-page-main hub-page-main--wide pb-3">
-    <!-- Header -->
-    <div class="flex items-center gap-3 mb-6 app-header">
+  <main class="hub-page-main pb-3">
+    <!-- Mobile header -->
+    <div class="hub-mobile-only flex items-center gap-3 mb-6 app-header">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(212,166,80,0.1);border:1px solid rgba(212,166,80,0.2)">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9a83c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/>
@@ -90,7 +90,14 @@
       </div>
     </div>
 
-    <div class="app-section-title mb-3">Choose A Game</div>
+    <!-- Desktop hero -->
+    <header class="hub-desktop-only hub-desktop-hero">
+      <div class="hub-desktop-hero__badge">Practice Mode</div>
+      <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Practice Puzzles</span></h1>
+      <p class="hub-desktop-hero__subtitle">Sharpen your skills with unlimited practice puzzles. Pick a game and play at your own pace.</p>
+    </header>
+
+    <div class="hub-mobile-only app-section-title mb-3">Choose A Game</div>
     <div id="practice-game-list" class="hub-practice-grid"></div>
     <!--
       Cards injected synchronously so Tailwind CDN sees all classes on its
@@ -110,11 +117,11 @@
       {n:'Tiles',     t:'Practice sliding tiles.',         l:'/games/tiles/tiles-logo.png',     p:'/games/tiles/'},
       {n:'BlindSlide', t:'Practice ordered block slides.', l:'/games/harbor/harbor-logo.png', p:'/games/harbor/'}
     ];g.sort(function(a,b){return a.n.localeCompare(b.n);});document.getElementById('practice-game-list').innerHTML=g.map(function(x){
-      return '<a href="'+x.p+'?practice=1" class="app-card rounded-2xl p-4 flex items-center gap-3">'
+      return '<a href="'+x.p+'?practice=1" class="app-card hub-practice-card rounded-2xl p-4 flex items-center gap-3">'
         +'<img src="'+x.l+'" alt="'+x.n+'" class="w-12 h-12 rounded-xl">'
         +'<div class="flex-1"><p class="font-semibold">'+x.n+'</p>'
         +'<p class="text-xs text-slate-400">'+x.t+'</p></div>'
-        +'<span class="text-amber-300 text-sm font-semibold">Practice \u2192</span></a>';
+        +'<span class="text-amber-300 text-sm font-semibold practice-cta">Practice \u2192</span></a>';
     }).join('');}();</script>
   </main>
   <script type="module">

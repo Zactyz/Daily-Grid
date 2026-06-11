@@ -13,8 +13,12 @@
   padding-top: 1.5rem;
 }
 
-.hub-page-main.hub-page-main--wide {
-  max-width: 36rem;
+.hub-mobile-only {
+  display: block;
+}
+
+.hub-desktop-only {
+  display: none;
 }
 
 .hub-practice-grid {
@@ -26,6 +30,49 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.hub-desktop-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.hub-desktop-hero__badge {
+  display: inline-block;
+  padding: 0.375rem 1rem;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.hub-desktop-hero__title {
+  font-family: var(--dg-font-heading, 'Merriweather', serif);
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 900;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.hub-desktop-hero__subtitle {
+  font-size: 1.125rem;
+  color: #94a3b8;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.625;
+}
+
+.hub-gold-gradient {
+  background: linear-gradient(135deg, #D4A650, #E5C37E);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .dg-hub-nav {
@@ -43,10 +90,6 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .dg-hub-nav__brand {
@@ -67,72 +110,142 @@
     height: 2.5rem;
     border-radius: 0.75rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    object-fit: cover;
+  }
+
+  .dg-hub-nav__logo--game {
+    border-radius: 0.5rem;
+    box-shadow: none;
   }
 
   .dg-hub-nav__title {
-    font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
-    font-size: 1.125rem;
-    letter-spacing: -0.02em;
+    font-size: 1.25rem;
+    letter-spacing: -0.025em;
   }
 
   .dg-hub-nav__links {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 1.25rem;
+    gap: 1.5rem;
     font-size: 0.875rem;
     font-weight: 500;
   }
 
   .dg-hub-nav__links a {
-    color: rgba(248, 250, 252, 0.65);
+    color: #f8fafc;
     text-decoration: none;
     transition: color 0.2s ease;
   }
 
   .dg-hub-nav__links a:hover {
-    color: var(--dg-gold, #D4A650);
+    color: #f59e0b;
   }
 
   .dg-hub-nav__links a.is-active {
-    color: var(--dg-gold, #D4A650);
+    color: #f59e0b;
     font-weight: 700;
   }
 
-  .dg-hub-nav__links a.dg-hub-nav__site-link {
-    color: rgba(248, 250, 252, 0.45);
+  .hub-mobile-only {
+    display: none !important;
   }
 
-  body.dg-hub-nav-page {
-    padding-top: 4.5rem;
+  .hub-desktop-only {
+    display: block;
   }
 
   .hub-page-main {
-    max-width: 40rem;
+    max-width: 72rem;
+    padding: 5rem 1.5rem 3rem;
   }
 
-  .hub-page-main.hub-page-main--wide {
-    max-width: 44rem;
-  }
-
-  .hub-page-main.hub-page-main--medals {
-    max-width: 56rem;
+  .hub-desktop-hero {
+    margin-bottom: 4rem;
   }
 
   .hub-practice-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+    max-width: 64rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hub-practice-grid .hub-practice-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 2rem;
+    border-radius: 2.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 166, 80, 0.2);
+  }
+
+  .hub-practice-grid .hub-practice-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(212, 166, 80, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .hub-practice-grid .hub-practice-card img {
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hub-practice-grid .hub-practice-card .font-semibold {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .hub-practice-grid .hub-practice-card .text-xs {
+    font-size: 0.875rem;
+    line-height: 1.625;
+    margin-bottom: 1.5rem;
+  }
+
+  .hub-practice-grid .hub-practice-card .practice-cta {
+    margin-top: auto;
+    font-size: 0.875rem;
+    font-weight: 700;
   }
 
   .hub-medals-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  .hub-profile-layout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
+    align-items: start;
+  }
+
+  .hub-profile-layout .hub-profile-span-full {
+    grid-column: 1 / -1;
+  }
+
+  body.dg-hub-nav-page .desktop-only > main,
+  body.dg-hub-nav-page .hub-page-main {
+    padding-top: 5rem;
+  }
+
+  body.dg-hub-nav-page main.flex-grow {
+    padding-top: 5rem;
   }
 }
 
 @media (min-width: 1200px) {
   .hub-practice-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hub-medals-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

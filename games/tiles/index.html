@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/shell.css">
   <link rel="stylesheet" href="/games/common/games-base.css">
+  <link rel="stylesheet" href="/games/common/hub-nav.css">
   <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
     :root { --brand-bg:#0f0a1a; --brand-accent:#a78bfa; --brand-accent-dim:#8b5cf6; }
@@ -41,14 +42,12 @@
     .tiles-tile-active:active{transform:scale(.96)}
     .tiles-tile:disabled:not(.tiles-tile-empty){opacity:.55}
     .tiles-tile-empty{background:rgba(15,10,26,.35);border-style:dashed;border-color:rgba(167,139,250,.18);box-shadow:inset 0 0 24px rgba(0,0,0,.25)}
-    @media (max-width:899px){nav{display:none!important}.mobile-app-bar{display:flex}}
+    
   </style>
 </head>
 <body>
   <div class="mobile-app-bar"><a href="/games/" aria-label="Back to games"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a></div>
-  <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6"><div class="max-w-5xl mx-auto flex justify-between items-center"><a href="/games/tiles/" class="flex items-center gap-2.5 hover:opacity-80"><img src="/games/tiles/tiles-logo.png" alt="Tiles logo" class="w-9 h-9 rounded-lg"><span class="font-semibold text-lg tracking-tight hidden sm:block">Tiles</span></a><div class="flex gap-5 text-sm font-medium text-zinc-400"><a href="/" class="hover:text-white">Home</a><a href="/games/" class="text-white">Games</a><a href="/support/" class="hover:text-white">Support</a></div></div></nav>
-
-  <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
+<main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
     <header class="text-center mb-6 w-full">
       <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/25 text-violet-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-violet-300 animate-pulse"></span>Daily Puzzle</div>
       <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-400/10 border border-violet-400/25 text-violet-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-violet-300"></span>Practice Mode</div>
@@ -167,5 +166,10 @@ window.DG_TUTORIAL_STEPS = [
   }
 ];
 </script>
+
+  <script type="module">
+    import { mountGameNav } from '/games/common/hub-nav.js';
+    mountGameNav({ name: 'Tiles', logo: '/games/tiles/tiles-logo.png', href: '/games/tiles/' });
+  </script>
 </body>
 </html>

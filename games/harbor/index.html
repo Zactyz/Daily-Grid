@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/shell.css">
   <link rel="stylesheet" href="/games/common/games-base.css">
+  <link rel="stylesheet" href="/games/common/hub-nav.css">
   <link rel="stylesheet" href="/games/common/tutorial-modal.css">
   <style>
     :root { --brand-bg:#070d18; --brand-accent:#ff2d95; --brand-accent-dim:#00d4ff; }
@@ -79,14 +80,12 @@
     .harbor-dir-icon{width:72%;height:72%}
     .harbor-piece-badge{position:absolute;top:3px;right:5px;z-index:4;font-family:'JetBrains Mono',monospace;font-size:clamp(.58rem,2.8vw,.72rem);font-weight:700;line-height:1;color:#fff;background:rgba(0,0,0,.35);border-radius:4px;padding:1px 4px;text-shadow:0 1px 2px rgba(0,0,0,.5);pointer-events:none}
     .harbor-tray.harbor-complete .harbor-exit-hole{border-color:rgba(255,45,149,.95);box-shadow:inset 0 0 18px rgba(255,45,149,.34),0 0 28px rgba(255,45,149,.32)}
-    @media (max-width:899px){nav{display:none!important}.mobile-app-bar{display:flex}}
+    
   </style>
 </head>
 <body>
   <div class="mobile-app-bar"><a href="/games/" aria-label="Back to games"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a></div>
-  <nav class="fixed top-0 w-full z-50 glass py-3 px-4 sm:px-6"><div class="max-w-5xl mx-auto flex justify-between items-center"><a href="/games/harbor/" class="flex items-center gap-2.5 hover:opacity-80"><img src="/games/harbor/harbor-logo.png" alt="BlindSlide logo" class="w-9 h-9 rounded-lg"><span class="font-semibold text-lg tracking-tight hidden sm:block">BlindSlide</span></a><div class="flex gap-5 text-sm font-medium text-zinc-400"><a href="/" class="hover:text-white">Home</a><a href="/games/" class="text-white">Games</a><a href="/support/" class="hover:text-white">Support</a></div></div></nav>
-
-  <main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
+<main class="flex-grow w-full max-w-lg mx-auto px-4 pt-20 pb-8 flex flex-col items-center">
     <header class="text-center mb-6 w-full">
       <div id="daily-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/25 text-fuchsia-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-fuchsia-300 animate-pulse"></span>Daily Puzzle</div>
       <div id="practice-badge" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-400/10 border border-fuchsia-400/25 text-fuchsia-300/90 text-xs font-medium mb-3 uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-fuchsia-300"></span>Practice Mode</div>
@@ -232,5 +231,10 @@ window.DG_TUTORIAL_STEPS = [
   }
 ];
 </script>
+
+  <script type="module">
+    import { mountGameNav } from '/games/common/hub-nav.js';
+    mountGameNav({ name: 'BlindSlide', logo: '/games/harbor/harbor-logo.png', href: '/games/harbor/' });
+  </script>
 </body>
 </html>

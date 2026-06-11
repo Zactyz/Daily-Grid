@@ -128,10 +128,10 @@
   </style>
 </head>
 <body>
-  <main class="hub-page-main hub-page-main--wide pb-4">
+  <main class="hub-page-main pb-4">
 
-    <!-- Header -->
-    <div class="flex items-center gap-3 mb-6 app-header">
+    <!-- Mobile header -->
+    <div class="hub-mobile-only flex items-center gap-3 mb-6 app-header">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="8" r="4"/>
@@ -144,8 +144,17 @@
       </div>
     </div>
 
+    <!-- Desktop hero -->
+    <header class="hub-desktop-only hub-desktop-hero">
+      <div class="hub-desktop-hero__badge">Your Stats</div>
+      <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Profile</span></h1>
+      <p class="hub-desktop-hero__subtitle">Track streaks, medals, and settings. Link your email to sync progress across devices.</p>
+    </header>
+
+    <div class="hub-profile-layout">
+
     <!-- Account promo banner (hidden when signed in or dismissed) -->
-    <section id="account-banner" class="glass-card p-4 mb-4 hidden">
+    <section id="account-banner" class="glass-card p-4 mb-4 hidden hub-profile-span-full">
       <div class="flex items-start gap-3">
         <div class="flex-1 min-w-0">
           <p class="text-sm font-semibold text-white">Save progress to the cloud</p>
@@ -316,6 +325,18 @@
         <svg class="ml-auto text-slate-600" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </a>
 
+      <a href="/support/" class="stat-row" style="text-decoration:none;display:flex;">
+        <div class="flex items-center gap-3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span class="text-sm">Help &amp; Support</span>
+        </div>
+        <svg class="ml-auto text-slate-600" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+
       <a href="/games/feedback/" class="stat-row" style="text-decoration:none;display:flex;">
         <div class="flex items-center gap-3">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400">
@@ -354,7 +375,9 @@
     </section>
 
     <!-- Version / debug info -->
-    <p class="text-center text-xs text-slate-700 pb-2" id="version-label"></p>
+    <p class="text-center text-xs text-slate-700 pb-2 hub-profile-span-full" id="version-label"></p>
+
+    </div>
 
     <div class="pb-4"></div>
   </main>
