@@ -236,18 +236,17 @@
         <div id="account-email-step">
           <input type="email" id="account-email-input" placeholder="you@example.com" autocomplete="email"
             class="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder:text-zinc-600 mb-3" />
-          <label class="flex items-start gap-2.5 text-xs text-slate-400 mb-2 cursor-pointer">
-            <input type="checkbox" id="account-terms-checkbox" class="mt-0.5 shrink-0 accent-amber-400" />
-            <span>I agree to the <a href="/terms/" target="_blank" rel="noopener" class="text-amber-300/90 underline">Terms of Service</a> and <a href="/privacy/" target="_blank" rel="noopener" class="text-amber-300/90 underline">Privacy Policy</a>.</span>
-          </label>
-          <label class="flex items-start gap-2.5 text-xs text-slate-400 mb-2 cursor-pointer">
-            <input type="checkbox" id="account-marketing-checkbox" class="mt-0.5 shrink-0 accent-amber-400" />
-            <span>Email me about new games, features, and promotions (optional). Unsubscribe anytime.</span>
-          </label>
-          <p class="text-[11px] text-slate-500 mb-3">Sign-in codes are required transactional emails to link your account, not marketing.</p>
           <button type="button" id="account-send-code-btn"
-            class="w-full py-2.5 rounded-lg font-semibold text-sm text-black"
+            class="w-full py-2.5 rounded-lg font-semibold text-sm text-black mb-3"
             style="background:linear-gradient(135deg,#D4A650,#E5C37E)">Send code</button>
+          <p class="text-[11px] leading-relaxed text-slate-500">
+            By tapping Send code and linking your email, you agree to our
+            <a href="/terms/" target="_blank" rel="noopener" class="text-amber-300/90 underline">Terms of Service</a>
+            and
+            <a href="/privacy/" target="_blank" rel="noopener" class="text-amber-300/90 underline">Privacy Policy</a>,
+            and consent to receive account emails and updates about Daily Grid (including new games and features). Unsubscribe anytime via
+            <a href="mailto:support@dailygrid.app" class="text-amber-300/90 underline">support@dailygrid.app</a>.
+          </p>
         </div>
         <div id="account-code-step" class="hidden">
           <p class="text-xs text-slate-400 mb-2">Enter the 6-digit code sent to <span id="account-email-label" class="text-slate-300"></span></p>
@@ -472,18 +471,13 @@
 
     document.getElementById('account-send-code-btn')?.addEventListener('click', async () => {
       const email = document.getElementById('account-email-input')?.value?.trim();
-      const termsAccepted = document.getElementById('account-terms-checkbox')?.checked;
       if (!email) {
         setAccountStatus('Enter your email address.', true);
         return;
       }
-      if (!termsAccepted) {
-        setAccountStatus('Please agree to the Terms and Privacy Policy.', true);
-        return;
-      }
       setAccountStatus('Sending code…');
       try {
-        await requestCode(email, { termsAccepted: true });
+        await requestCode(email);
         showCodeStep(email);
         setAccountStatus('Code sent. Check your inbox.');
       } catch (err) {
@@ -504,9 +498,7 @@
       }
       setAccountStatus('Verifying…');
       try {
-        const marketingOptIn = document.getElementById('account-marketing-checkbox')?.checked;
-        const termsAccepted = document.getElementById('account-terms-checkbox')?.checked;
-        await signInAndLink(pendingEmail, code, { marketingOptIn, termsAccepted });
+        await signInAndLink(pendingEmail, code);
         await downloadRemoteProgress();
         setAccountStatus('Signed in and linked.');
         showEmailStep();

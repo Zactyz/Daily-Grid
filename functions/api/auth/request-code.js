@@ -22,12 +22,9 @@ export async function onRequest(context) {
     }
 
     const body = await request.json();
-    const { email: rawEmail, termsAccepted } = body;
+    const { email: rawEmail } = body;
     const email = normalizeEmail(rawEmail);
     if (!isValidEmail(email)) return jsonError('Invalid email address');
-    if (!termsAccepted) {
-      return jsonError('You must agree to the Terms of Service and Privacy Policy', 400);
-    }
 
     const recent = await env.DB.prepare(
       `SELECT created_at FROM auth_codes WHERE email = ?1 AND created_at > datetime('now', '-1 minute')`
