@@ -102,7 +102,7 @@
     </nav>
 <main id="main-content" tabindex="-1" class="hub-page-main pb-3">
     <!-- Mobile page header -->
-    <div class="hub-page-header flex items-center gap-3 app-header">
+    <div class="hub-mobile-only hub-page-header flex items-center gap-3 mb-6 app-header">
       <img src="/games/assets/dg-games-192.png" alt="" class="hub-mobile-header-icon hub-mobile-header-icon--pwa" width="40" height="40" decoding="async">
       <div>
         <p class="text-[11px] uppercase tracking-[0.3em] text-slate-400">Daily Grid</p>
@@ -110,9 +110,11 @@
       </div>
     </div>
 
-    <!-- Desktop page header -->
-    <header class="hub-desktop-hero hub-desktop-hero--left hub-desktop-only max-w-5xl mx-auto mb-10">
+    <!-- Desktop hero -->
+    <header class="hub-desktop-only hub-desktop-hero">
+      <div class="hub-desktop-hero__badge">Practice Mode</div>
       <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Practice Puzzles</span></h1>
+      <p class="hub-desktop-hero__subtitle">Sharpen your skills with unlimited practice puzzles. Pick a game and play at your own pace.</p>
     </header>
 
     <div class="hub-mobile-only app-section-title mb-3">Choose A Game</div>

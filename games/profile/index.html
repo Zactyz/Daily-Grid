@@ -63,6 +63,32 @@
       pointer-events: none;
     }
 
+    /* Identity card — keep tagline visible on narrow mobile */
+    .glass-card.identity-card {
+      overflow: visible;
+    }
+    .identity-card__body {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+    }
+    .identity-card__meta {
+      flex: 1;
+      min-width: 0;
+      padding-top: 2px;
+    }
+    .identity-card__meta p {
+      overflow: visible;
+      white-space: normal;
+      word-wrap: break-word;
+    }
+    .identity-card__stat {
+      flex-shrink: 0;
+      text-align: right;
+      padding-top: 2px;
+      padding-left: 0.25rem;
+    }
+
     /* Avatar ring */
     .avatar-ring {
       background: conic-gradient(from 0deg, #D4A650, #a78bfa, #60a5fa, #D4A650);
@@ -154,7 +180,7 @@
 <main id="main-content" tabindex="-1" class="hub-page-main pb-4">
 
     <!-- Page header (mobile) -->
-    <div class="hub-page-header flex items-center gap-3 app-header">
+    <div class="hub-mobile-only hub-page-header flex items-center gap-3 mb-6 app-header">
       <svg class="hub-mobile-header-icon hub-mobile-header-icon--profile" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <circle cx="12" cy="7.5" r="3.5"/>
         <path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"/>
@@ -165,8 +191,10 @@
       </div>
     </div>
 
-    <header class="hub-desktop-hero hub-desktop-only max-w-5xl mx-auto mb-8">
+    <header class="hub-desktop-only hub-desktop-hero">
+      <div class="hub-desktop-hero__badge">Your Stats</div>
       <h1 class="hub-desktop-hero__title"><span class="hub-gold-gradient">Profile</span></h1>
+      <p class="hub-desktop-hero__subtitle">Track streaks, medals, and settings. Link your email to sync progress across devices.</p>
     </header>
 
     <div class="hub-profile-layout">
@@ -186,22 +214,24 @@
     </section>
 
     <!-- Identity card -->
-    <section class="glass-card p-5 mb-4 flex items-center gap-4">
+    <section class="glass-card identity-card p-5 mb-4">
+      <div class="identity-card__body">
       <!-- Avatar: initials-based, from the last game the user claimed initials on -->
-      <div class="avatar-ring" style="width:60px;height:60px">
+      <div class="avatar-ring shrink-0" style="width:60px;height:60px">
         <div class="avatar-inner">
           <span id="avatar-initials" class="text-xl font-bold" style="font-family:'Space Grotesk',sans-serif;color:#a78bfa">?</span>
         </div>
       </div>
-      <div class="flex-1 min-w-0">
+      <div class="identity-card__meta">
         <!-- TODO (Tier 2, user accounts): replace "Anonymous Solver" with real username after auth -->
-        <p class="font-semibold text-base" id="display-name">Anonymous Solver</p>
-        <p class="text-xs text-slate-400" id="member-since"></p>
+        <p class="font-semibold text-base leading-snug" id="display-name">Anonymous Solver</p>
+        <p class="text-xs text-slate-400 leading-relaxed mt-0.5" id="member-since"></p>
       </div>
       <!-- Overall stats pill -->
-      <div class="text-right flex-shrink-0">
-        <p class="text-2xl font-bold" id="total-solved">0</p>
-        <p class="text-xs text-slate-400">solved</p>
+      <div class="identity-card__stat">
+        <p class="text-xl sm:text-2xl font-bold leading-none" id="total-solved">0</p>
+        <p class="text-xs text-slate-400 mt-1">solved</p>
+      </div>
       </div>
     </section>
 
@@ -210,7 +240,7 @@
       <p class="section-header">Medals</p>
       <div class="flex gap-3 justify-around">
         <div class="flex flex-col items-center gap-1">
-          <span class="text-xl font-bold" style="color:#facc15" id="medal-gold">0</span>
+          <span class="text-xl font-bold" style="color:var(--dg-rank-1,#f6d27f)" id="medal-gold">0</span>
           <span class="text-xs text-slate-400">Gold</span>
         </div>
         <div class="w-px bg-white/5"></div>
