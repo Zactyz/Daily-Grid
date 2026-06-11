@@ -129,24 +129,39 @@ export async function verifyAuthCode(db, email, code) {
   return { ok: true };
 }
 
-export async function getOrCreateUser(db, email) {
+export async function getOrCreateUser(db, email, { marketingOptIn = false } = {}) {
   let user = await db.prepare(
-    `SELECT id, email, display_initials AS displayInitials FROM users WHERE email = ?1`
+    `SELECT id, email, display_initials AS displayInitials, marketing_opt_in AS marketingOptIn
+     FROM users WHERE email = ?1`
   ).bind(email).first();
 
   if (user) {
-    await db.prepare(
-      `UPDATE users SET last_login_at = datetime('now') WHERE id = ?1`
-    ).bind(user.id).run();
+    if (marketingOptIn) {
+      await db.prepare(
+        `UPDATE users SET last_login_at = datetime('now'), marketing_opt_in = 1, marketing_opt_in_at = datetime('now') WHERE id = ?1`
+      ).bind(user.id).run();
+      user.marketingOptIn = 1;
+    } else {
+      await db.prepare(
+        `UPDATE users SET last_login_at = datetime('now') WHERE id = ?1`
+      ).bind(user.id).run();
+    }
     return user;
   }
 
   const id = generateUuid();
   await db.prepare(
-    `INSERT INTO users (id, email, last_login_at) VALUES (?1, ?2, datetime('now'))`
-  ).bind(id, email).run();
+    `INSERT INTO users (id, email, last_login_at, marketing_opt_in, marketing_opt_in_at)
+     VALUES (?1, ?2, datetime('now'), ?3, CASE WHEN ?3 = 1 THEN datetime('now') ELSE NULL END)`
+  ).bind(id, email, marketingOptIn ? 1 : 0).run();
 
-  return { id, email, displayInitials: null };
+  return { id, email, displayInitials: null, marketingOptIn: marketingOptIn ? 1 : 0 };
+}
+
+export async function setMarketingOptIn(db, userId, optIn) {
+  await db.prepare(
+    `UPDATE users SET marketing_opt_in = ?1, marketing_opt_in_at = CASE WHEN ?1 = 1 THEN datetime('now') ELSE marketing_opt_in_at END WHERE id = ?2`
+  ).bind(optIn ? 1 : 0, userId).run();
 }
 
 const SCORE_TABLES = [

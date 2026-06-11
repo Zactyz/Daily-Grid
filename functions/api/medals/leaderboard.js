@@ -1,5 +1,5 @@
-// GET /api/medals/leaderboard?puzzleId=YYYY-MM-DD&scope=everyone|friends
-// Returns the top 3 players per game for a given day, plus total solver count per game.
+// GET /api/medals/leaderboard?puzzleId=YYYY-MM-DD&scope=everyone|friends&gameId=&full=1
+// Default: top 3 per game. full=1 + gameId: all entries for one game (for expanded view).
 
 import { handleOptions, methodNotAllowed, jsonOk, jsonError, internalError, validateEnv } from '../../_shared/api-helpers.js';
 import { validatePuzzleId } from '../../_shared/validation-helpers.js';
@@ -19,6 +19,8 @@ const GAME_TABLES = [
   { id: 'harbor',     table: 'harbor_scores',      name: 'BlindSlide' },
 ];
 
+const GAME_BY_ID = Object.fromEntries(GAME_TABLES.map((g) => [g.id, g]));
+
 function buildInClause(values, startIndex = 1) {
   if (!values.length) return { clause: 'NULL', binds: [] };
   const clause = values.map((_, i) => `?${startIndex + i}`).join(', ');
@@ -31,8 +33,20 @@ async function resolveFriendsFilter(db, userId) {
   return { friendUserIds, friendAnonIds };
 }
 
-async function fetchGameLeaderboard(db, { id, table, name }, puzzleId, friendsFilter) {
+function mapEntryRows(rows) {
+  return (rows || []).map((row, idx) => ({
+    rank: idx + 1,
+    timeMs: row.time_ms,
+    initials: row.initials || null,
+    anonId: row.anon_id,
+    userId: row.user_id || null
+  }));
+}
+
+async function fetchGameLeaderboard(db, { id, table, name }, puzzleId, friendsFilter, { entryLimit = 3 } = {}) {
   try {
+    const limitSql = entryLimit ? `LIMIT ${Number(entryLimit)}` : '';
+
     if (friendsFilter) {
       const { friendUserIds, friendAnonIds } = friendsFilter;
       if (!friendUserIds.length && !friendAnonIds.length) {
@@ -58,25 +72,17 @@ async function fetchGameLeaderboard(db, { id, table, name }, puzzleId, friendsFi
          FROM ${table}
          WHERE puzzle_id = ?1 ${whereExtra}
          ORDER BY time_ms ASC
-         LIMIT 3`
+         ${limitSql}`
       ).bind(...binds).all();
 
       const countRow = await db.prepare(
         `SELECT COUNT(*) AS total FROM ${table} WHERE puzzle_id = ?1 ${whereExtra}`
       ).bind(...binds).first();
 
-      const entries = (topResult.results || []).map((row, idx) => ({
-        rank: idx + 1,
-        timeMs: row.time_ms,
-        initials: row.initials || null,
-        anonId: row.anon_id,
-        userId: row.user_id || null
-      }));
-
       return {
         id,
         name,
-        entries,
+        entries: mapEntryRows(topResult.results),
         totalSolvers: Number(countRow?.total || 0)
       };
     }
@@ -87,25 +93,17 @@ async function fetchGameLeaderboard(db, { id, table, name }, puzzleId, friendsFi
          FROM ${table}
          WHERE puzzle_id = ?1
          ORDER BY time_ms ASC
-         LIMIT 3`
+         ${limitSql}`
       ).bind(puzzleId).all(),
       db.prepare(
         `SELECT COUNT(*) AS total FROM ${table} WHERE puzzle_id = ?1`
       ).bind(puzzleId).first()
     ]);
 
-    const entries = (topResult.results || []).map((row, idx) => ({
-      rank: idx + 1,
-      timeMs: row.time_ms,
-      initials: row.initials || null,
-      anonId: row.anon_id,
-      userId: row.user_id || null
-    }));
-
     return {
       id,
       name,
-      entries,
+      entries: mapEntryRows(topResult.results),
       totalSolvers: Number(countResult?.total || 0)
     };
   } catch {
@@ -124,6 +122,8 @@ export async function onRequest(context) {
     const url = new URL(request.url);
     const puzzleId = url.searchParams.get('puzzleId');
     const scope = url.searchParams.get('scope') || 'everyone';
+    const gameId = url.searchParams.get('gameId');
+    const full = url.searchParams.get('full') === '1';
     if (!validatePuzzleId(puzzleId)) return jsonError('Invalid or missing puzzleId');
 
     let friendsFilter = null;
@@ -133,13 +133,20 @@ export async function onRequest(context) {
       friendsFilter = await resolveFriendsFilter(env.DB, session.userId);
     }
 
+    const entryLimit = full ? null : 3;
+
+    if (gameId) {
+      const game = GAME_BY_ID[gameId];
+      if (!game) return jsonError('Invalid gameId', 400);
+      const result = await fetchGameLeaderboard(env.DB, game, puzzleId, friendsFilter, { entryLimit });
+      return jsonOk({ puzzleId, scope, games: result.entries.length ? [result] : [] });
+    }
+
     const gameResults = await Promise.all(
-      GAME_TABLES.map((game) => fetchGameLeaderboard(env.DB, game, puzzleId, friendsFilter))
+      GAME_TABLES.map((game) => fetchGameLeaderboard(env.DB, game, puzzleId, friendsFilter, { entryLimit }))
     );
 
-    const gamesWithData = scope === 'friends'
-      ? gameResults.filter((g) => g.entries.length > 0)
-      : gameResults.filter((g) => g.entries.length > 0);
+    const gamesWithData = gameResults.filter((g) => g.entries.length > 0);
 
     return jsonOk({ puzzleId, scope, games: gamesWithData });
   } catch (err) {

@@ -136,6 +136,25 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 4px rgba(0,0,0,0.18);
     }
     .app-header { font-family: 'Space Grotesk', sans-serif; }
+
+    .lb-rows-expanded {
+      max-height: 19.25rem;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    .lb-expand-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: calc(100% - 1.5rem); margin: 0 0.75rem 0.75rem;
+      padding: 7px 12px; border-radius: 8px;
+      font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+    }
+    .lb-expand-btn:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.06); }
+    .lb-expand-btn svg { transition: transform 0.2s ease; }
+    .lb-expand-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
   </style>
 </head>
 <body>
@@ -237,6 +256,11 @@
 
     let authStatus = null;
     let leaderboardScope = 'everyone';
+    const expandedGames = new Set();
+    const fullEntriesCache = {};
+    let lastLeaderboardGames = [];
+    let lastLeaderboardDate = null;
+    let lastApiGames = [];
 
     // Build id-keyed lookup from canonical GAME_META array
     const GAME_META = Object.fromEntries(GAME_META_LIST.map(g => [g.id, g]));
@@ -298,9 +322,33 @@
         </div>`;
     }
 
+    function renderRankRow(e, anonId) {
+      const isYou = anonId && e.anonId === anonId;
+      const rm = RANK_META[e.rank - 1];
+      const rankClass = rm ? rm.cls : '';
+      const rankLabel = e.rank <= 3 ? rm?.label : `#${e.rank}`;
+      return `
+        <div class="flex items-center gap-3 py-2 px-3 rounded-xl ${isYou ? 'is-you' : ''}" style="border: 1px solid transparent">
+          <span class="rank-badge ${rankClass}">${rankLabel}</span>
+          <span class="flex-1 text-sm font-medium">${e.initials || '-'}</span>
+          ${isYou ? '<span class="you-chip">You</span>' : ''}
+          <span class="text-sm font-mono text-slate-300">${formatTime(e.timeMs)}</span>
+        </div>`;
+    }
+
+    function getEntriesForGame(game) {
+      const total = game.totalSolvers ?? game.entries?.length ?? 0;
+      if (!expandedGames.has(game.id) || total <= 3) {
+        return (game.entries || []).slice(0, 3);
+      }
+      const cacheKey = `${lastLeaderboardDate}-${leaderboardScope}-${game.id}`;
+      return fullEntriesCache[cacheKey] || game.entries || [];
+    }
+
     function renderLeaderboard(games, dateStr) {
       const anonId = getAnonId();
       const container = document.getElementById('leaderboard-list');
+      lastLeaderboardDate = dateStr;
       const isViewingToday = dateStr === today;
       const apiById = Object.fromEntries((games || []).map((g) => [g.id, g]));
 
@@ -336,36 +384,71 @@
         return (GAME_NAME_ORDER[a.id] ?? Number.MAX_SAFE_INTEGER) - (GAME_NAME_ORDER[b.id] ?? Number.MAX_SAFE_INTEGER);
       });
 
-      container.innerHTML = sortedGames.map(({ id, name, entries, totalSolvers, locked }) => {
+      lastLeaderboardGames = sortedGames;
+
+      container.innerHTML = sortedGames.map((game) => {
+        const { id, name, totalSolvers, locked } = game;
         if (locked) return renderLockedGameCard(id, name);
         const meta = GAME_META[id] || {};
-        const rows = entries.map((e) => {
-          const isYou = anonId && e.anonId === anonId;
-          const rm = RANK_META[e.rank - 1];
-          const rankClass = rm ? rm.cls : '';
-          const rankLabel = e.rank <= 3 ? rm.label : `#${e.rank}`;
-          return `
-            <div class="flex items-center gap-3 py-2 px-3 rounded-xl ${isYou ? 'is-you' : ''}" style="border: 1px solid transparent">
-              <span class="rank-badge ${rankClass}">${rankLabel}</span>
-              <span class="flex-1 text-sm font-medium">${e.initials || '-'}</span>
-              ${isYou ? '<span class="you-chip">You</span>' : ''}
-              <span class="text-sm font-mono text-slate-300">${formatTime(e.timeMs)}</span>
-            </div>`;
-        }).join('');
+        const entries = getEntriesForGame(game);
+        const solverCount = totalSolvers ?? game.entries?.length ?? 0;
+        const isExpanded = expandedGames.has(id);
+        const canExpand = solverCount > 3;
+        const rows = entries.map((e) => renderRankRow(e, anonId)).join('');
 
         return `
-          <div class="glass-card">
+          <div class="glass-card" data-game-card="${id}">
             <a href="${meta.path || '#'}" class="flex items-center gap-3 p-4 pb-2" style="text-decoration:none">
               <img src="${meta.logo || ''}" alt="${name}" class="game-logo" onerror="this.style.display='none'">
               <div>
                 <h3 class="font-semibold text-sm">${name}</h3>
-                <p class="text-xs text-slate-400">${totalSolvers ?? entries.length} solver${(totalSolvers ?? entries.length) !== 1 ? 's' : ''} today</p>
+                <p class="text-xs text-slate-400">${solverCount} solver${solverCount !== 1 ? 's' : ''} today</p>
               </div>
               <svg class="ml-auto text-slate-600" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
             </a>
-            <div class="px-3 pb-3">${rows}</div>
+            <div class="px-3 pb-1 ${isExpanded ? 'lb-rows-expanded' : ''}">${rows}</div>
+            ${canExpand ? `
+              <button type="button" class="lb-expand-btn" data-game-id="${id}" aria-expanded="${isExpanded}">
+                <span>${isExpanded ? 'Show top 3' : `Show all ${solverCount}`}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              </button>` : '<div class="pb-2"></div>'}
           </div>`;
       }).join('');
+    }
+
+    async function toggleGameLeaderboard(gameId) {
+      if (expandedGames.has(gameId)) {
+        expandedGames.delete(gameId);
+        rerenderLeaderboard();
+        return;
+      }
+
+      expandedGames.add(gameId);
+      const cacheKey = `${lastLeaderboardDate}-${leaderboardScope}-${gameId}`;
+      if (!fullEntriesCache[cacheKey]) {
+        const scopeParam = leaderboardScope === 'friends' ? '&scope=friends' : '';
+        try {
+          const res = await fetch(
+            `/api/medals/leaderboard?puzzleId=${lastLeaderboardDate}&gameId=${gameId}&full=1${scopeParam}`,
+            { credentials: 'include' }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const fullGame = data.games?.[0];
+            if (fullGame?.entries) fullEntriesCache[cacheKey] = fullGame.entries;
+          }
+        } catch { /* keep top 3 */ }
+      }
+      rerenderLeaderboard();
+    }
+
+    function rerenderLeaderboard() {
+      const merged = lastApiGames.map((g) => {
+        if (!expandedGames.has(g.id)) return g;
+        const cacheKey = `${lastLeaderboardDate}-${leaderboardScope}-${g.id}`;
+        return { ...g, entries: fullEntriesCache[cacheKey] || g.entries };
+      });
+      renderLeaderboard(merged, lastLeaderboardDate);
     }
 
     // ── Date navigation ───────────────────────────────────────────────────────
@@ -403,6 +486,7 @@
 
     // ── Init ──────────────────────────────────────────────────────────────────
     async function loadLeaderboard(dateStr) {
+      expandedGames.clear();
       const container = document.getElementById('leaderboard-list');
       container.innerHTML = `
         <div class="glass-card p-4">
@@ -430,7 +514,8 @@
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        renderLeaderboard(data.games || [], dateStr);
+        lastApiGames = data.games || [];
+        renderLeaderboard(lastApiGames, dateStr);
       } catch (err) {
         console.warn('[Medals] Failed to load leaderboard:', err);
         container.innerHTML = `
@@ -478,6 +563,14 @@
       document.getElementById('scope-friends-btn')?.addEventListener('click', async () => {
         setLeaderboardScope('friends');
         await loadLeaderboard(currentDate);
+      });
+
+      document.getElementById('leaderboard-list')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.lb-expand-btn');
+        if (!btn) return;
+        e.preventDefault();
+        const gameId = btn.dataset.gameId;
+        if (gameId) toggleGameLeaderboard(gameId);
       });
     }
 

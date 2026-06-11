@@ -32,24 +32,24 @@ export function isAuthLive(status = cachedStatus) {
   return Boolean(status?.configured);
 }
 
-export async function requestCode(email) {
+export async function requestCode(email, { termsAccepted = false } = {}) {
   const res = await fetch('/api/auth/request-code', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
+    body: JSON.stringify({ email, termsAccepted })
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || data.message || 'Could not send code');
   return data;
 }
 
-export async function verifyCode(email, code) {
+export async function verifyCode(email, code, { marketingOptIn = false, termsAccepted = true } = {}) {
   const res = await fetch('/api/auth/verify-code', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, code })
+    body: JSON.stringify({ email, code, marketingOptIn, termsAccepted })
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || data.message || 'Invalid code');
@@ -87,8 +87,8 @@ export async function fetchAccountMe() {
   return res.json();
 }
 
-export async function signInAndLink(email, code) {
-  await verifyCode(email, code);
+export async function signInAndLink(email, code, { marketingOptIn = false, termsAccepted = true } = {}) {
+  await verifyCode(email, code, { marketingOptIn, termsAccepted });
   await linkCurrentDevice();
   try {
     const { uploadLocalProgress } = await import('./account-progress.js');
