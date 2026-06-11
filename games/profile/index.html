@@ -143,7 +143,20 @@
         <h1 class="text-2xl font-semibold text-amber-200">Profile</h1>
       </div>
     </div>
-    <!-- TODO (Tier 2, user accounts): settings gear or edit button once auth is added -->
+
+    <!-- Account promo banner (hidden when signed in or dismissed) -->
+    <section id="account-banner" class="glass-card p-4 mb-4 hidden">
+      <div class="flex items-start gap-3">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white">Save progress to the cloud</p>
+          <p class="text-xs text-slate-400 mt-0.5">Link your email to keep medals and streaks across devices.</p>
+        </div>
+        <button type="button" id="account-banner-link" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-black" style="background:linear-gradient(135deg,#D4A650,#E5C37E)">Link email</button>
+        <button type="button" id="account-banner-dismiss" class="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-slate-500" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08)" aria-label="Dismiss">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </section>
 
     <!-- Identity card -->
     <section class="glass-card p-5 mb-4 flex items-center gap-4">
@@ -214,6 +227,50 @@
       <p id="profile-initials-status" class="text-xs text-slate-500 mt-2 hidden"></p>
     </section>
 
+    <!-- Account / Save progress -->
+    <section class="glass-card p-4 mb-4" id="account-section">
+      <p class="section-header">Account</p>
+
+      <div id="account-signed-out">
+        <p class="text-xs text-slate-400 mb-3">Optional email sign-in syncs medals, streaks, and scores across devices.</p>
+        <div id="account-email-step">
+          <input type="email" id="account-email-input" placeholder="you@example.com" autocomplete="email"
+            class="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder:text-zinc-600 mb-2" />
+          <button type="button" id="account-send-code-btn"
+            class="w-full py-2.5 rounded-lg font-semibold text-sm text-black"
+            style="background:linear-gradient(135deg,#D4A650,#E5C37E)">Send code</button>
+        </div>
+        <div id="account-code-step" class="hidden">
+          <p class="text-xs text-slate-400 mb-2">Enter the 6-digit code sent to <span id="account-email-label" class="text-slate-300"></span></p>
+          <input type="text" id="account-code-input" maxlength="6" inputmode="numeric" placeholder="123456"
+            class="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-center text-lg tracking-widest placeholder:text-zinc-600 mb-2" />
+          <button type="button" id="account-verify-btn"
+            class="w-full py-2.5 rounded-lg font-semibold text-sm text-black mb-2"
+            style="background:linear-gradient(135deg,#D4A650,#E5C37E)">Verify and link</button>
+          <button type="button" id="account-back-btn" class="w-full py-2 text-sm text-slate-400">Use a different email</button>
+        </div>
+      </div>
+
+      <div id="account-signed-in" class="hidden">
+        <p class="text-sm font-medium" id="account-email-display"></p>
+        <p class="text-xs text-slate-400 mt-1">Progress synced to your account.</p>
+        <div class="mt-3 pt-3 border-t border-white/5">
+          <p class="text-xs text-slate-500 mb-1">Your friend code</p>
+          <p class="text-sm font-mono font-bold text-amber-200" id="account-friend-code">--------</p>
+          <p class="text-xs text-slate-500 mt-3 mb-2">Add a friend by code</p>
+          <div class="flex gap-2">
+            <input type="text" id="friend-code-input" maxlength="12" placeholder="FRIEND CODE"
+              class="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm uppercase tracking-wider placeholder:text-zinc-600" />
+            <button type="button" id="friend-add-btn" class="px-3 py-2 rounded-lg text-xs font-semibold text-black shrink-0" style="background:linear-gradient(135deg,#D4A650,#E5C37E)">Add</button>
+          </div>
+          <ul id="friends-list" class="mt-3 space-y-1 text-xs text-slate-400"></ul>
+        </div>
+        <button type="button" id="account-sign-out-btn" class="mt-4 w-full py-2 rounded-lg text-sm text-slate-400" style="border:1px solid rgba(255,255,255,0.08)">Sign out</button>
+      </div>
+
+      <p id="account-status" class="text-xs mt-2 hidden"></p>
+    </section>
+
     <!-- Notifications & Settings -->
     <section class="glass-card p-4 mb-4">
       <p class="section-header">Notifications</p>
@@ -272,7 +329,6 @@
         <svg class="ml-auto text-slate-600" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </a>
 
-      <!-- TODO (Tier 2, user accounts): Sign In / Create Account row -->
       <!-- TODO (Tier 2): Privacy & Data, Export stats, Delete account -->
     </section>
 
@@ -285,7 +341,23 @@
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
+    import { maybeShowAccountIntroModal } from '/games/common/account-intro-modal.js';
     import { requestPushPermission, unsubscribePush, isPushSubscribed } from '/games/common/push.js';
+    import { fetchPersonalMedals } from '/games/common/personal-medals.js';
+    import {
+      fetchAuthStatus,
+      requestCode,
+      signInAndLink,
+      logout,
+      isSignedIn,
+      isAuthLive
+    } from '/games/common/account-auth.js';
+    import { downloadRemoteProgress } from '/games/common/account-progress.js';
+    import {
+      isBannerDismissed,
+      dismissBanner,
+      resetCompletionsWithoutAccount
+    } from '/games/common/account-promo.js';
     import {
       getPTDateYYYYMMDD,
       getAnonId,
@@ -298,6 +370,168 @@
 
     mountTabBar('profile');
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'profile' }), 500);
+    setTimeout(() => maybeShowAccountIntroModal(), 1200);
+
+    let authStatus = null;
+    let pendingEmail = '';
+
+    function setAccountStatus(message, isError = false) {
+      const el = document.getElementById('account-status');
+      if (!el) return;
+      if (!message) {
+        el.classList.add('hidden');
+        return;
+      }
+      el.textContent = message;
+      el.classList.remove('hidden');
+      el.style.color = isError ? '#f87171' : '#86efac';
+    }
+
+    function showEmailStep() {
+      document.getElementById('account-email-step')?.classList.remove('hidden');
+      document.getElementById('account-code-step')?.classList.add('hidden');
+    }
+
+    function showCodeStep(email) {
+      pendingEmail = email;
+      document.getElementById('account-email-label').textContent = email;
+      document.getElementById('account-email-step')?.classList.add('hidden');
+      document.getElementById('account-code-step')?.classList.remove('hidden');
+      document.getElementById('account-code-input')?.focus();
+    }
+
+    async function loadFriendsList() {
+      const list = document.getElementById('friends-list');
+      if (!list) return;
+      try {
+        const res = await fetch('/api/friends/list', { credentials: 'include' });
+        if (!res.ok) { list.innerHTML = ''; return; }
+        const data = await res.json();
+        const friends = data.friends || [];
+        if (!friends.length) {
+          list.innerHTML = '<li>No friends yet. Share your code to connect.</li>';
+          return;
+        }
+        list.innerHTML = friends.map((f) =>
+          `<li>${f.displayInitials || '???'} · ${f.friendCode}</li>`
+        ).join('');
+      } catch {
+        list.innerHTML = '';
+      }
+    }
+
+    async function refreshAccountUI() {
+      authStatus = await fetchAuthStatus({ force: true });
+      const live = isAuthLive(authStatus);
+      const signedIn = isSignedIn(authStatus);
+
+      document.getElementById('account-signed-out')?.classList.toggle('hidden', !live || signedIn);
+      document.getElementById('account-signed-in')?.classList.toggle('hidden', !signedIn);
+      document.getElementById('account-section')?.classList.toggle('hidden', !live);
+
+      const banner = document.getElementById('account-banner');
+      if (banner) {
+        const showBanner = live && !signedIn && !isBannerDismissed();
+        banner.classList.toggle('hidden', !showBanner);
+      }
+
+      if (signedIn) {
+        document.getElementById('account-email-display').textContent = authStatus.user?.email || 'Signed in';
+        try {
+          await downloadRemoteProgress();
+        } catch { /* ignore */ }
+        try {
+          const codeRes = await fetch('/api/friends/code', { credentials: 'include' });
+          if (codeRes.ok) {
+            const codeData = await codeRes.json();
+            document.getElementById('account-friend-code').textContent = codeData.friendCode || '--------';
+          }
+        } catch { /* ignore */ }
+        await loadFriendsList();
+        resetCompletionsWithoutAccount();
+      }
+    }
+
+    document.getElementById('account-banner-link')?.addEventListener('click', () => {
+      document.getElementById('account-section')?.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('account-email-input')?.focus();
+    });
+    document.getElementById('account-banner-dismiss')?.addEventListener('click', () => {
+      dismissBanner();
+      document.getElementById('account-banner')?.classList.add('hidden');
+    });
+
+    document.getElementById('account-send-code-btn')?.addEventListener('click', async () => {
+      const email = document.getElementById('account-email-input')?.value?.trim();
+      if (!email) {
+        setAccountStatus('Enter your email address.', true);
+        return;
+      }
+      setAccountStatus('Sending code…');
+      try {
+        await requestCode(email);
+        showCodeStep(email);
+        setAccountStatus('Code sent. Check your inbox.');
+      } catch (err) {
+        setAccountStatus(err.message || 'Could not send code.', true);
+      }
+    });
+
+    document.getElementById('account-back-btn')?.addEventListener('click', () => {
+      showEmailStep();
+      setAccountStatus('');
+    });
+
+    document.getElementById('account-verify-btn')?.addEventListener('click', async () => {
+      const code = document.getElementById('account-code-input')?.value?.trim();
+      if (!/^\d{6}$/.test(code || '')) {
+        setAccountStatus('Enter the 6-digit code.', true);
+        return;
+      }
+      setAccountStatus('Verifying…');
+      try {
+        await signInAndLink(pendingEmail, code);
+        await downloadRemoteProgress();
+        setAccountStatus('Signed in and linked.');
+        showEmailStep();
+        await refreshAccountUI();
+        await renderProfile();
+      } catch (err) {
+        setAccountStatus(err.message || 'Verification failed.', true);
+      }
+    });
+
+    document.getElementById('account-sign-out-btn')?.addEventListener('click', async () => {
+      await logout();
+      setAccountStatus('');
+      showEmailStep();
+      await refreshAccountUI();
+      await renderProfile();
+    });
+
+    document.getElementById('friend-add-btn')?.addEventListener('click', async () => {
+      const friendCode = document.getElementById('friend-code-input')?.value?.trim();
+      if (!friendCode) return;
+      try {
+        const res = await fetch('/api/friends/request', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ friendCode })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not add friend');
+        document.getElementById('friend-code-input').value = '';
+        setAccountStatus('Friend added.');
+        await loadFriendsList();
+      } catch (err) {
+        setAccountStatus(err.message || 'Could not add friend.', true);
+      }
+    });
+
+    if (window.location.hash === '#link-account') {
+      setTimeout(() => document.getElementById('account-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+    }
 
     // ── Load stats from localStorage ─────────────────────────────────────────
     function loadStats() {
@@ -347,30 +581,11 @@
       return { totalSolved, earliestDate, bestInitials, gameRows };
     }
 
-    function countMedals() {
-      const counts = { gold: 0, silver: 0, bronze: 0, top10: 0 };
-      for (const { id } of GAME_META) {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (!key?.startsWith(`dailygrid_${id}_leaderboard_`)) continue;
-          try {
-            const entry = JSON.parse(localStorage.getItem(key));
-            const rank = entry?.rank;
-            if (!rank) continue;
-            if (rank === 1) counts.gold++;
-            else if (rank === 2) counts.silver++;
-            else if (rank === 3) counts.bronze++;
-            if (rank <= 10) counts.top10++;
-          } catch {}
-        }
-      }
-      return counts;
-    }
-
     // ── Render ────────────────────────────────────────────────────────────────
-    function renderProfile() {
+    async function renderProfile() {
       const { totalSolved, earliestDate, bestInitials, gameRows } = loadStats();
-      const medals = countMedals();
+      const userId = isSignedIn(authStatus) ? authStatus.user.id : null;
+      const medals = await fetchPersonalMedals({ anonId: getAnonId(), userId });
 
       // Avatar
       const savedInitials = getPlayerInitials();
@@ -379,12 +594,15 @@
       const profileInitialsInput = document.getElementById('profile-initials-input');
       if (profileInitialsInput && savedInitials) profileInitialsInput.value = savedInitials;
 
-      // Display name, TODO (Tier 2): replace with auth username
-      // Using a friendly label based on streak for now
-      const totalStreak = gameRows.reduce((s, r) => s + r.current, 0);
-      if (totalStreak >= 30) document.getElementById('display-name').textContent = 'Elite Solver';
-      else if (totalStreak >= 7)  document.getElementById('display-name').textContent = 'Daily Solver';
-      else document.getElementById('display-name').textContent = 'Anonymous Solver';
+      // Display name
+      if (isSignedIn(authStatus)) {
+        document.getElementById('display-name').textContent = authStatus.user?.email || 'Daily Solver';
+      } else {
+        const totalStreak = gameRows.reduce((s, r) => s + r.current, 0);
+        if (totalStreak >= 30) document.getElementById('display-name').textContent = 'Elite Solver';
+        else if (totalStreak >= 7)  document.getElementById('display-name').textContent = 'Daily Solver';
+        else document.getElementById('display-name').textContent = 'Anonymous Solver';
+      }
 
       // Member since
       if (earliestDate) {
@@ -546,7 +764,8 @@
     });
 
     // ── Init ──────────────────────────────────────────────────────────────────
-    renderProfile();
+    await refreshAccountUI();
+    await renderProfile();
     renderVersion();
 
     // Load VAPID key first, then init the toggle so key is guaranteed available

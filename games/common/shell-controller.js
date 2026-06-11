@@ -11,6 +11,8 @@ import {
   incrementCompletionsWithoutInitials
 } from './utils.js';
 import { maybeShowInitialsNudgeModal } from './initials-prompt.js';
+import { shouldShowAccountPromo, incrementCompletionsWithoutAccount } from './account-promo.js';
+import { maybeShowAccountLinkNudgeModal } from './account-link-nudge.js';
 import { requestPushPermission, isPushSubscribed, hasPushOptIn } from './push.js';
 import { showTutorialModal } from './tutorial-modal.js';
 import { maybeShowAnnouncementModal } from './announcements.js';
@@ -930,8 +932,27 @@ function initTouchGuards() {
     }
     if (closedWithoutInitials) {
       incrementCompletionsWithoutInitials();
-      window.setTimeout(() => maybeShowInitialsNudgeModal(), 400);
     }
+    window.setTimeout(async () => {
+      const accountEligible = adapter.getMode() === 'daily'
+        && adapter.isComplete()
+        && entry
+        && Number(entry.rank) > 0
+        && (await shouldShowAccountPromo());
+
+      if (closedWithoutInitials) {
+        const initialsShown = await maybeShowInitialsNudgeModal();
+        if (!initialsShown && accountEligible) {
+          incrementCompletionsWithoutAccount();
+          await maybeShowAccountLinkNudgeModal();
+        }
+        return;
+      }
+      if (accountEligible) {
+        incrementCompletionsWithoutAccount();
+        await maybeShowAccountLinkNudgeModal();
+      }
+    }, 400);
   }
 
   function confirmReset() {

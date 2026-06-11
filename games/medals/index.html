@@ -166,6 +166,12 @@
       </button>
     </div>
 
+    <!-- Scope tabs -->
+    <div class="tab-pill mb-4" id="leaderboard-scope-tabs">
+      <button type="button" id="scope-everyone-btn" class="active" data-scope="everyone">Everyone</button>
+      <button type="button" id="scope-friends-btn" data-scope="friends">Friends</button>
+    </div>
+
     <!-- Your medals summary -->
     <section class="glass-card mb-5 p-4" id="your-medals-section">
       <h2 class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Your Medals</h2>
@@ -221,11 +227,16 @@
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
+    import { fetchPersonalMedals } from '/games/common/personal-medals.js';
+    import { fetchAuthStatus, isSignedIn } from '/games/common/account-auth.js';
     import { getPTDateYYYYMMDD, getAnonId, formatTimeShort as formatTime } from '/games/common/utils.js';
     import { GAME_META as GAME_META_LIST } from '/games/common/games.js';
 
     mountTabBar('medals');
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'medals' }), 500);
+
+    let authStatus = null;
+    let leaderboardScope = 'everyone';
 
     // Build id-keyed lookup from canonical GAME_META array
     const GAME_META = Object.fromEntries(GAME_META_LIST.map(g => [g.id, g]));
@@ -236,27 +247,7 @@
       { cls: 'bronze', label: '🥉' },
     ];
 
-    // ── Personal medals (dynamic from API, local fallback) ───────────────────
-    function countPersonalMedalsFromLocalCache() {
-      const counts = { gold: 0, silver: 0, bronze: 0, top10: 0 };
-      for (const gameId of Object.keys(GAME_META)) {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (!key?.startsWith(`dailygrid_${gameId}_leaderboard_`)) continue;
-          try {
-            const entry = JSON.parse(localStorage.getItem(key));
-            const rank = Number(entry?.rank);
-            if (!Number.isFinite(rank)) continue;
-            if (rank === 1) counts.gold++;
-            else if (rank === 2) counts.silver++;
-            else if (rank === 3) counts.bronze++;
-            if (rank <= 10) counts.top10++;
-          } catch { /* ignore */ }
-        }
-      }
-      return counts;
-    }
-
+    // ── Personal medals (live rank from API, local fallback) ───────────────────
     function applyPersonalMedals(counts) {
       const c = counts || { gold: 0, silver: 0, bronze: 0, top10: 0 };
       document.getElementById('your-gold').textContent   = c.gold || 0;
@@ -266,21 +257,10 @@
     }
 
     async function renderPersonalMedals() {
-      const anonId = getAnonId();
-      if (!anonId) {
-        applyPersonalMedals(countPersonalMedalsFromLocalCache());
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/medals/personal?anonId=${encodeURIComponent(anonId)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        applyPersonalMedals(data?.counts);
-      } catch (err) {
-        console.warn('[Medals] Failed to load personal medals from API, using local cache:', err);
-        applyPersonalMedals(countPersonalMedalsFromLocalCache());
-      }
+      authStatus = await fetchAuthStatus();
+      const userId = isSignedIn(authStatus) ? authStatus.user.id : null;
+      const medals = await fetchPersonalMedals({ anonId: getAnonId(), userId });
+      applyPersonalMedals(medals);
     }
 
     // ── Leaderboard from API ──────────────────────────────────────────────────
@@ -438,7 +418,16 @@
           </div>
         </div>`;
       try {
-        const res = await fetch(`/api/medals/leaderboard?puzzleId=${dateStr}`);
+        const scopeParam = leaderboardScope === 'friends' ? '&scope=friends' : '';
+        const res = await fetch(`/api/medals/leaderboard?puzzleId=${dateStr}${scopeParam}`, { credentials: 'include' });
+        if (res.status === 401 && leaderboardScope === 'friends') {
+          container.innerHTML = `
+            <div class="glass-card p-6 text-center empty-state">
+              <p class="text-sm text-slate-400">Sign in to see friend leaderboards.</p>
+              <a href="/games/profile/#link-account" class="mt-3 inline-block text-xs px-4 py-2 rounded-lg" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);text-decoration:none;color:inherit">Link email</a>
+            </div>`;
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         renderLeaderboard(data.games || [], dateStr);
@@ -449,6 +438,18 @@
             <p class="text-sm text-slate-400">Could not load leaderboard.</p>
             <button onclick="window.location.reload()" class="mt-3 text-xs px-4 py-2 rounded-lg" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">Try Again</button>
           </div>`;
+      }
+    }
+
+    function setLeaderboardScope(scope) {
+      leaderboardScope = scope;
+      document.getElementById('scope-everyone-btn')?.classList.toggle('active', scope === 'everyone');
+      document.getElementById('scope-friends-btn')?.classList.toggle('active', scope === 'friends');
+      const heading = document.getElementById('leaderboard-heading');
+      if (heading && scope === 'friends') {
+        heading.textContent = currentDate === today ? "Today's Friends" : `Friends, ${formatDateLabel(currentDate)}`;
+      } else {
+        updateDateUI();
       }
     }
 
@@ -467,6 +468,15 @@
         if (currentDate >= today) return;
         currentDate = offsetDate(currentDate, 1);
         updateDateUI();
+        await loadLeaderboard(currentDate);
+      });
+
+      document.getElementById('scope-everyone-btn')?.addEventListener('click', async () => {
+        setLeaderboardScope('everyone');
+        await loadLeaderboard(currentDate);
+      });
+      document.getElementById('scope-friends-btn')?.addEventListener('click', async () => {
+        setLeaderboardScope('friends');
         await loadLeaderboard(currentDate);
       });
     }

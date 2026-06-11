@@ -1,5 +1,17 @@
 // Shared score submission and rank calculation for Cloudflare Function API handlers
 
+import { getSessionUser } from './auth-helpers.js';
+
+/** Optional signed-in user from session cookie on score submit. */
+export async function resolveSubmitUserId(db, request) {
+  try {
+    const session = await getSessionUser(db, request);
+    return session?.userId || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Submit or retrieve an existing score, then compute rank/percentile/total.
  * @param {D1Database} db - Cloudflare D1 binding
@@ -8,9 +20,10 @@
  * @param {string} anonId
  * @param {number} timeMs
  * @param {number} hintsUsed
+ * @param {string|null} userId - optional account id from session
  * @returns {{ rank, percentile, total }}
  */
-export async function submitAndRank(db, table, puzzleId, anonId, timeMs, hintsUsed = 0) {
+export async function submitAndRank(db, table, puzzleId, anonId, timeMs, hintsUsed = 0, userId = null) {
   const existing = await db.prepare(
     `SELECT time_ms FROM ${table} WHERE puzzle_id = ?1 AND anon_id = ?2`
   ).bind(puzzleId, anonId).first();
@@ -19,10 +32,21 @@ export async function submitAndRank(db, table, puzzleId, anonId, timeMs, hintsUs
 
   if (existing) {
     userTime = existing.time_ms;
+    if (userId) {
+      await db.prepare(
+        `UPDATE ${table} SET user_id = ?1 WHERE puzzle_id = ?2 AND anon_id = ?3 AND (user_id IS NULL OR user_id = ?1)`
+      ).bind(userId, puzzleId, anonId).run();
+    }
   } else {
-    await db.prepare(
-      `INSERT INTO ${table} (puzzle_id, anon_id, time_ms, hints_used) VALUES (?1, ?2, ?3, ?4)`
-    ).bind(puzzleId, anonId, timeMs, hintsUsed).run();
+    if (userId) {
+      await db.prepare(
+        `INSERT INTO ${table} (puzzle_id, anon_id, user_id, time_ms, hints_used) VALUES (?1, ?2, ?3, ?4, ?5)`
+      ).bind(puzzleId, anonId, userId, timeMs, hintsUsed).run();
+    } else {
+      await db.prepare(
+        `INSERT INTO ${table} (puzzle_id, anon_id, time_ms, hints_used) VALUES (?1, ?2, ?3, ?4)`
+      ).bind(puzzleId, anonId, timeMs, hintsUsed).run();
+    }
   }
 
   const fasterResult = await db.prepare(

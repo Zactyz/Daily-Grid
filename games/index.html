@@ -617,6 +617,7 @@
     import { GAME_META as GAME_META_LIST, sortGamesByPlayHistory } from '/games/common/games.js';
     import { mountTabBar } from '/games/common/tab-bar.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
+    import { maybeShowAccountIntroModal } from '/games/common/account-intro-modal.js';
     import { mountFeedbackHubCard, maybeShowFeedbackModal } from '/games/common/feedback-hub.js';
 
     // Build id-keyed lookup from canonical GAME_META array
@@ -752,6 +753,7 @@
     mountTabBar('daily');
     mountFeedbackHubCard(document.getElementById('feedback-card-anchor'));
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'daily' }), 500);
+    setTimeout(() => maybeShowAccountIntroModal(), 1200);
     setTimeout(() => maybeShowFeedbackModal(), 1200);
   </script>
   <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation"><ul class="dg-tab-bar__list">

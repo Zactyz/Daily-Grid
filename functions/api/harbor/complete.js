@@ -1,7 +1,7 @@
 // POST /api/harbor/complete
 import { handleOptions, methodNotAllowed, jsonOk, jsonError, internalError, validateEnv } from '../../_shared/api-helpers.js';
 import { validatePuzzleId, validateTimeMs, validateUUID } from '../../_shared/validation-helpers.js';
-import { submitAndRank } from '../../_shared/complete-helpers.js';
+import { submitAndRank, resolveSubmitUserId } from '../../_shared/complete-helpers.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -13,7 +13,8 @@ export async function onRequest(context) {
     if (!validatePuzzleId(puzzleId)) return jsonError('Invalid puzzle ID format');
     if (!validateUUID(anonId)) return jsonError('Invalid anon ID');
     if (!validateTimeMs(timeMs)) return jsonError('Invalid time');
-    const result = await submitAndRank(env.DB, 'harbor_scores', puzzleId, anonId, timeMs, hintsUsed);
+    const userId = await resolveSubmitUserId(env.DB, request);
+    const result = await submitAndRank(env.DB, 'harbor_scores', puzzleId, anonId, timeMs, hintsUsed, userId);
     return jsonOk({ success: true, ...result });
   } catch (err) {
     return internalError(err, 'Harbor complete');
