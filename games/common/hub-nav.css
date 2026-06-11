@@ -88,11 +88,6 @@
   -webkit-backdrop-filter: none;
   border: none;
   box-shadow: none;
-  view-transition-name: dg-hub-nav;
-}
-
-@view-transition {
-  navigation: auto;
 }
 
 @media (min-width: 900px) {
