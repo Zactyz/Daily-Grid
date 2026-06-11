@@ -97,3 +97,23 @@
     padding-bottom: 2rem !important;
   }
 }
+
+/* Hide scrollbars site-wide while keeping scroll behavior */
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
