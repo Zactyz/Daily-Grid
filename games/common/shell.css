@@ -177,6 +177,13 @@ textarea,
   display: none;
 }
 
+/* Pause overlay — fully opaque like the ready screen */
+#pause-overlay {
+  background: var(--brand-bg, var(--dg-bg-game, #0a0a0f)) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 .shell-start-overlay--top {
   justify-content: flex-start;
   padding-top: 2.5rem;

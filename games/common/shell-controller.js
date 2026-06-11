@@ -1377,7 +1377,7 @@ function initTouchGuards() {
 
       // Inject a "Show Tutorial" button at the bottom of the How to Play accordion
       // so returning users can re-open the tutorial at any time.
-      if (howToPlay && window.DG_TUTORIAL_STEPS?.length) {
+      if (howToPlay && window.DG_TUTORIAL_STEPS?.length && !howToPlay.querySelector('.dg-tutorial-help-btn')) {
         const helpBtn = document.createElement('button');
         helpBtn.className = 'dg-tutorial-help-btn dg-tutorial-help-btn--inline';
         helpBtn.setAttribute('aria-label', 'Show tutorial walkthrough');
