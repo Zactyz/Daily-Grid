@@ -54,7 +54,7 @@
 }
 
 .hub-desktop-hero__title {
-  font-family: var(--dg-font-heading, 'Merriweather', serif);
+  font-family: var(--dg-font-heading, 'Space Grotesk', sans-serif);
   font-size: clamp(2.5rem, 5vw, 3.75rem);
   font-weight: 900;
   margin-bottom: 1rem;
@@ -81,18 +81,16 @@
   display: none;
 }
 
+/* Never inherit page-local .glass bar styling onto the hub nav */
+#dg-hub-nav {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+}
+
 @media (min-width: 900px) {
-  body.dg-hub-nav-page {
-    font-family: 'Inter', sans-serif;
-  }
-
-  body.dg-hub-nav-page h1,
-  body.dg-hub-nav-page h2,
-  body.dg-hub-nav-page h3,
-  body.dg-hub-nav-page .hub-desktop-hero__title {
-    font-family: 'Merriweather', serif;
-  }
-
   .dg-hub-nav {
     display: flex;
     position: fixed;
@@ -103,10 +101,29 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: transparent;
     border: none;
+    box-shadow: none;
+  }
+
+  /* Home-page fonts: Daily hub + in-game pages only (not Practice/Medals/Profile) */
+  body.dg-hub-site-fonts .dg-hub-nav,
+  body.dg-hub-site-fonts .desktop-only,
+  body.dg-hub-site-fonts main.flex-grow {
+    font-family: 'Inter', sans-serif;
+  }
+
+  body.dg-hub-site-fonts .desktop-only h1,
+  body.dg-hub-site-fonts .desktop-only h2,
+  body.dg-hub-site-fonts .desktop-only h3,
+  body.dg-hub-site-fonts .desktop-only .hub-desktop-hero__title,
+  body.dg-hub-site-fonts main.flex-grow h1,
+  body.dg-hub-site-fonts main.flex-grow h2 {
+    font-family: 'Merriweather', serif;
+  }
+
+  body.dg-hub-site-fonts .dg-hub-nav__title {
+    font-family: 'Inter', sans-serif;
   }
 
   .dg-hub-nav__brand {
@@ -136,7 +153,6 @@
   }
 
   .dg-hub-nav__title {
-    font-family: 'Inter', sans-serif;
     font-weight: 700;
     font-size: 1.25rem;
     letter-spacing: -0.025em;

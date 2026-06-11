@@ -16,10 +16,13 @@ const HUB_LINKS = [
  * @param {string} activeKey
  * @param {string} brandHtml
  */
-function mountNav(activeKey, brandHtml) {
+function mountNav(activeKey, brandHtml, useSiteFonts = false) {
   if (document.getElementById('dg-hub-nav')) return;
 
   document.body.classList.add('dg-hub-nav-page');
+  if (useSiteFonts) {
+    document.body.classList.add('dg-hub-site-fonts');
+  }
 
   const nav = document.createElement('nav');
   nav.id = 'dg-hub-nav';
@@ -47,7 +50,7 @@ export function mountHubNav(activeKey) {
     <a href="/" class="dg-hub-nav__brand">
       <img src="/Images/web%20icon.png" alt="" class="dg-hub-nav__logo">
       <span class="dg-hub-nav__title">Daily Grid</span>
-    </a>`);
+    </a>`, activeKey === 'daily');
 }
 
 /**
@@ -60,5 +63,5 @@ export function mountGameNav({ name, logo, href }) {
     <a href="${href}" class="dg-hub-nav__brand">
       <img src="${logo}" alt="" class="dg-hub-nav__logo dg-hub-nav__logo--game">
       <span class="dg-hub-nav__title">${name}</span>
-    </a>`);
+    </a>`, true);
 }
