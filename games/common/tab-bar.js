@@ -20,7 +20,7 @@ const PRACTICE_TAB_ICON = `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fil
 const TABS = [
   {
     key: 'daily',
-    label: 'Daily',
+    label: 'Games',
     href: '/games/',
     icon: `<svg class="dg-tab-bar__icon" viewBox="0 0 24 24" fill="currentColor">
       <rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/>

@@ -7,7 +7,7 @@
  */
 
 const HUB_LINKS = [
-  { key: 'daily', label: 'Daily', href: '/games/' },
+  { key: 'daily', label: 'Games', href: '/games/' },
   { key: 'practice', label: 'Practice', href: '/games/practice/' },
   { key: 'medals', label: 'Medals', href: '/games/medals/' },
   { key: 'profile', label: 'Profile', href: '/games/profile/' },
