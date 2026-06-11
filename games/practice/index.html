@@ -15,6 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
+  <link rel="stylesheet" href="/games/common/hub-nav.css">
   <style>
     body {
       font-family: var(--dg-font-ui);
@@ -75,8 +76,7 @@
   </style>
 </head>
 <body class="min-h-screen">
-  <script src="/games/common/desktop-redirect.js"></script>
-  <main class="max-w-lg mx-auto px-4 pt-6 pb-3">
+  <main class="hub-page-main hub-page-main--wide pb-3">
     <!-- Header -->
     <div class="flex items-center gap-3 mb-6 app-header">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(212,166,80,0.1);border:1px solid rgba(212,166,80,0.2)">
@@ -91,7 +91,7 @@
     </div>
 
     <div class="app-section-title mb-3">Choose A Game</div>
-    <div id="practice-game-list" class="grid gap-3"></div>
+    <div id="practice-game-list" class="hub-practice-grid"></div>
     <!--
       Cards injected synchronously so Tailwind CDN sees all classes on its
       initial DOM scan (DOMContentLoaded), prevents the deferred-module
@@ -119,8 +119,10 @@
   </main>
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
+    import { mountHubNav } from '/games/common/hub-nav.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
     mountTabBar('practice');
+    mountHubNav('practice');
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'practice' }), 500);
   </script>
   <nav id="dg-tab-bar" class="dg-tab-bar" aria-label="Main navigation"><ul class="dg-tab-bar__list">

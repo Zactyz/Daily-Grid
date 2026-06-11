@@ -1,0 +1,138 @@
+/**
+ * Desktop hub navigation + responsive hub page layout.
+ * Mobile uses the liquid glass tab bar (tab-bar.css).
+ */
+
+.hub-page-main {
+  width: 100%;
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 1.5rem;
+}
+
+.hub-page-main.hub-page-main--wide {
+  max-width: 36rem;
+}
+
+.hub-practice-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.hub-medals-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dg-hub-nav {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .dg-hub-nav {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .dg-hub-nav__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease;
+  }
+
+  .dg-hub-nav__brand:hover {
+    transform: scale(1.03);
+  }
+
+  .dg-hub-nav__logo {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  .dg-hub-nav__title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.125rem;
+    letter-spacing: -0.02em;
+  }
+
+  .dg-hub-nav__links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .dg-hub-nav__links a {
+    color: rgba(248, 250, 252, 0.65);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .dg-hub-nav__links a:hover {
+    color: var(--dg-gold, #D4A650);
+  }
+
+  .dg-hub-nav__links a.is-active {
+    color: var(--dg-gold, #D4A650);
+    font-weight: 700;
+  }
+
+  .dg-hub-nav__links a.dg-hub-nav__site-link {
+    color: rgba(248, 250, 252, 0.45);
+  }
+
+  body.dg-hub-nav-page {
+    padding-top: 4.5rem;
+  }
+
+  .hub-page-main {
+    max-width: 40rem;
+  }
+
+  .hub-page-main.hub-page-main--wide {
+    max-width: 44rem;
+  }
+
+  .hub-page-main.hub-page-main--medals {
+    max-width: 56rem;
+  }
+
+  .hub-practice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hub-medals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .hub-practice-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -14,6 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
+  <link rel="stylesheet" href="/games/common/hub-nav.css">
   <style>
     /* Match the body background so a short page never reveals a darker band
        under the floating tab bar when the mobile toolbar collapses. */
@@ -53,8 +54,7 @@
   </style>
 </head>
 <body>
-  <script src="/games/common/desktop-redirect.js"></script>
-  <main class="max-w-lg mx-auto px-4 pt-6">
+  <main class="hub-page-main pb-6">
     <div class="flex items-center gap-3 mb-6">
       <a href="/games/profile/" class="text-slate-400" aria-label="Back to profile" style="text-decoration:none">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
@@ -79,10 +79,12 @@
 
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
+    import { mountHubNav } from '/games/common/hub-nav.js';
     import { getOrCreateAnonId } from '/games/common/utils.js';
     import { getPwaModeLabel } from '/games/common/feedback-hub.js';
 
     mountTabBar('profile');
+    mountHubNav('profile');
 
     const textarea = document.getElementById('feedback-message');
     const charCount = document.getElementById('char-count');

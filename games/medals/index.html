@@ -16,6 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
+  <link rel="stylesheet" href="/games/common/hub-nav.css">
   <style>
     :root {
       --brand-bg: var(--dg-bg);
@@ -158,8 +159,7 @@
   </style>
 </head>
 <body>
-  <script src="/games/common/desktop-redirect.js"></script>
-  <main class="max-w-lg mx-auto px-4 pt-6">
+  <main class="hub-page-main hub-page-main--medals pb-4">
 
     <!-- Header -->
     <div class="flex items-center gap-3 mb-4 app-header">
@@ -220,7 +220,7 @@
     <!-- Leaderboard by game -->
     <section>
       <h2 id="leaderboard-heading" class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Today's Top Solvers</h2>
-      <div id="leaderboard-list" class="flex flex-col gap-3" style="min-height:320px">
+      <div id="leaderboard-list" class="hub-medals-grid flex flex-col gap-3" style="min-height:320px">
         <!-- Loading skeletons -->
         <div class="glass-card p-4">
           <div class="skel h-4 w-28 mb-3"></div>
@@ -245,6 +245,7 @@
 
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
+    import { mountHubNav } from '/games/common/hub-nav.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
     import { fetchPersonalMedals } from '/games/common/personal-medals.js';
     import { fetchAuthStatus, isSignedIn } from '/games/common/account-auth.js';
@@ -252,6 +253,7 @@
     import { GAME_META as GAME_META_LIST } from '/games/common/games.js';
 
     mountTabBar('medals');
+    mountHubNav('medals');
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'medals' }), 500);
 
     let authStatus = null;

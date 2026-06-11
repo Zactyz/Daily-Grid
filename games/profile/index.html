@@ -16,6 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/games/common/design-tokens.css">
   <link rel="stylesheet" href="/games/common/tab-bar.css">
+  <link rel="stylesheet" href="/games/common/hub-nav.css">
   <style>
     :root { --brand-gold: var(--dg-gold); }
     body {
@@ -127,8 +128,7 @@
   </style>
 </head>
 <body>
-  <script src="/games/common/desktop-redirect.js"></script>
-  <main class="max-w-lg mx-auto px-4 pt-6">
+  <main class="hub-page-main hub-page-main--wide pb-4">
 
     <!-- Header -->
     <div class="flex items-center gap-3 mb-6 app-header">
@@ -361,6 +361,7 @@
 
   <script type="module">
     import { mountTabBar } from '/games/common/tab-bar.js';
+    import { mountHubNav } from '/games/common/hub-nav.js';
     import { maybeShowAnnouncementModal } from '/games/common/announcements.js';
     import { maybeShowAccountIntroModal } from '/games/common/account-intro-modal.js';
     import { requestPushPermission, unsubscribePush, isPushSubscribed } from '/games/common/push.js';
@@ -390,6 +391,7 @@
     import { GAME_META } from '/games/common/games.js';
 
     mountTabBar('profile');
+    mountHubNav('profile');
     setTimeout(() => maybeShowAnnouncementModal({ gameId: 'hub', mode: 'profile' }), 500);
     setTimeout(() => maybeShowAccountIntroModal(), 1200);
 

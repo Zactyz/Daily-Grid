@@ -97,9 +97,9 @@ export function normalizeWall(a, b) {
 }
 
 /**
+ * @deprecated Hub pages now use desktop top nav (hub-nav.js) instead of redirecting.
  * Redirect to /games/ if the viewport is at least minWidth px wide.
  * Must be called synchronously (before first paint) to avoid FOUC.
- * Hub-only pages (medals, profile, practice) call this to skip mobile-only UI.
  */
 export function redirectOnDesktop(minWidth = 768) {
   if (window.matchMedia(`(min-width: ${minWidth}px)`).matches) {
