@@ -23,7 +23,7 @@ function mountNav(activeKey, brandHtml) {
 
   const nav = document.createElement('nav');
   nav.id = 'dg-hub-nav';
-  nav.className = 'dg-hub-nav glass';
+  nav.className = 'dg-hub-nav';
   nav.setAttribute('aria-label', 'Games hub');
 
   const linksHtml = HUB_LINKS.map(({ key, label, href }) => {

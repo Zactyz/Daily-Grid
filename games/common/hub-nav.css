@@ -3,6 +3,8 @@
  * Mobile uses the liquid glass tab bar (tab-bar.css).
  */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700;900&display=swap');
+
 .hub-page-main {
   width: 100%;
   max-width: 32rem;
@@ -80,6 +82,16 @@
 }
 
 @media (min-width: 900px) {
+  body.dg-hub-nav-page {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body.dg-hub-nav-page h1,
+  body.dg-hub-nav-page h2,
+  body.dg-hub-nav-page h3 {
+    font-family: 'Merriweather', serif;
+  }
+
   .dg-hub-nav {
     display: flex;
     position: fixed;
@@ -90,6 +102,9 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .dg-hub-nav__brand {
