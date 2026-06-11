@@ -19,6 +19,24 @@
   display: block;
 }
 
+.hub-mobile-header-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  object-fit: cover;
+}
+
+.hub-mobile-header-icon--medals {
+  width: 2.75rem;
+  height: 2.75rem;
+  color: #facc15;
+}
+
+.hub-mobile-header-icon--profile {
+  color: rgba(248, 250, 252, 0.92);
+}
+
 .hub-desktop-only {
   display: none;
 }
