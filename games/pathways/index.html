@@ -592,6 +592,10 @@
                 renderer.render();
                 ui.update();
                 ui.updatePauseState();
+                requestAnimationFrame(() => {
+                    renderer.resize();
+                    renderer.render();
+                });
             } catch (error) {
                 console.error('Failed to initialize game:', error);
                 document.getElementById('loading-state').innerHTML = `

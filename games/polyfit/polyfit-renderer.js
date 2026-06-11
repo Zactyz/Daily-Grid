@@ -94,6 +94,12 @@ export class PolyfitRenderer {
     this.canvasW = r.width;
     this.canvasH = totalH;
 
+    // Lock display size to logical canvas so desktop max-height rules can't
+    // squash the bitmap and break pointer hit-testing.
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = `${totalH}px`;
+    this.canvas.style.maxHeight = 'none';
+
     // Pre-compute bank slot hit areas
     this._bankPieceSlots = this.engine.pieces.map((p, i) => {
       const col = i % bankCols;

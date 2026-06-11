@@ -161,6 +161,20 @@ export function hasPushOptIn() {
   return localStorage.getItem(PUSH_OPT_IN_KEY) === 'true';
 }
 
+/**
+ * Whether completion modals / profile should offer push opt-in on this device.
+ * Desktop browsers and iOS Safari (non-PWA) are excluded.
+ */
+export function isPushPromptSupported() {
+  if (window.matchMedia('(min-width: 900px)').matches) return false;
+
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone;
+  if (isIos && !isStandalone) return false;
+
+  return 'serviceWorker' in navigator && 'PushManager' in window;
+}
+
 // ─── Utility ──────────────────────────────────────────────────────────────────
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);

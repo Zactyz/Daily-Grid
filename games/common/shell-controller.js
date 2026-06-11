@@ -13,7 +13,7 @@ import {
 import { maybeShowInitialsNudgeModal } from './initials-prompt.js';
 import { shouldShowAccountPromo, incrementCompletionsWithoutAccount } from './account-promo.js';
 import { maybeShowAccountLinkNudgeModal } from './account-link-nudge.js';
-import { requestPushPermission, isPushSubscribed, hasPushOptIn } from './push.js';
+import { requestPushPermission, isPushSubscribed, hasPushOptIn, isPushPromptSupported } from './push.js';
 import { showTutorialModal } from './tutorial-modal.js';
 import { maybeShowAnnouncementModal } from './announcements.js';
 import { initServiceWorkerUpdates } from './sw-register.js';
@@ -1422,7 +1422,7 @@ function initTouchGuards() {
      */
     const PUSH_ASKED_KEY = 'dailygrid_push_asked';
     async function schedulePushOptIn(modal) {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      if (!isPushPromptSupported()) return;
       if (localStorage.getItem(PUSH_ASKED_KEY)) return;
       const already = await isPushSubscribed();
       if (already) return;

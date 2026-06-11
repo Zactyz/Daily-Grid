@@ -16,12 +16,15 @@ export class PathwaysInput {
   
   setupListeners() {
     this.canvas.style.touchAction = 'none';
-    
-    this.canvas.addEventListener('pointerdown', this.handlePointerDown.bind(this));
-    this.canvas.addEventListener('pointermove', this.handlePointerMove.bind(this));
-    this.canvas.addEventListener('pointerup', this.handlePointerUp.bind(this));
-    this.canvas.addEventListener('pointercancel', this.handlePointerUp.bind(this));
-    this.canvas.addEventListener('pointerleave', this.handlePointerUp.bind(this));
+
+    this._onDown = (e) => this.handlePointerDown(e);
+    this._onMove = (e) => this.handlePointerMove(e);
+    this._onUp = (e) => this.handlePointerUp(e);
+
+    this.canvas.addEventListener('pointerdown', this._onDown, { passive: false });
+    window.addEventListener('pointermove', this._onMove, { passive: false });
+    window.addEventListener('pointerup', this._onUp);
+    window.addEventListener('pointercancel', this._onUp);
   }
   
   // Update touch behavior based on game state (allow scrolling when complete/paused)
@@ -35,6 +38,7 @@ export class PathwaysInput {
   
   handlePointerDown(e) {
     if (this.engine.state.isPaused || this.engine.state.isComplete) return;
+    if (e.target !== this.canvas) return;
 
     e.preventDefault();
     this.canvas.setPointerCapture?.(e.pointerId);

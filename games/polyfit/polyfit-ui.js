@@ -142,6 +142,10 @@ function initPuzzle() {
   updateProgress();
   updateSolutionUI();
   renderer.render();
+  requestAnimationFrame(() => {
+    renderer.resize();
+    renderer.render();
+  });
   shell?.update();
 }
 

@@ -23,11 +23,21 @@
     max-width: var(--dg-game-main-max) !important;
   }
 
+  /* Square drag canvases only — polyfit uses a tall grid+bank canvas. */
   #game-canvas,
   #hashi-canvas,
   #conduit-canvas,
-  canvas[id$="-canvas"] {
+  #perimeter-canvas {
     max-height: var(--dg-board-max-height) !important;
+  }
+
+  #board {
+    max-height: none !important;
+    overflow: visible;
+  }
+
+  #polyfit-canvas {
+    max-height: none !important;
   }
 
   #harbor-board {
@@ -36,10 +46,6 @@
 
   #tiles-grid {
     max-width: 360px !important;
-  }
-
-  #board {
-    max-height: min(52vh, 520px);
   }
 
   #parcel-grid,
