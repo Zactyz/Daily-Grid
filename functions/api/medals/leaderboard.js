@@ -30,7 +30,16 @@ function buildInClause(values, startIndex = 1) {
 async function resolveFriendsFilter(db, userId) {
   const friendUserIds = await getFriendUserIds(db, userId);
   const friendAnonIds = await getFriendAnonIds(db, userId);
-  return { friendUserIds, friendAnonIds };
+
+  const userIds = [...new Set([...friendUserIds, userId])];
+
+  const selfAnonResult = await db.prepare(
+    `SELECT anon_id AS anonId FROM user_anon_links WHERE user_id = ?1`
+  ).bind(userId).all();
+  const selfAnonIds = (selfAnonResult.results || []).map((r) => r.anonId);
+  const anonIds = [...new Set([...friendAnonIds, ...selfAnonIds])];
+
+  return { friendUserIds: userIds, friendAnonIds: anonIds };
 }
 
 function mapEntryRows(rows) {
@@ -49,9 +58,6 @@ async function fetchGameLeaderboard(db, { id, table, name }, puzzleId, friendsFi
 
     if (friendsFilter) {
       const { friendUserIds, friendAnonIds } = friendsFilter;
-      if (!friendUserIds.length && !friendAnonIds.length) {
-        return { id, name, entries: [], totalSolvers: 0 };
-      }
 
       const userIn = buildInClause(friendUserIds, 2);
       const anonIn = buildInClause(friendAnonIds, 2 + userIn.binds.length);

@@ -359,8 +359,8 @@
         </div>`;
     }
 
-    function renderRankRow(e, anonId) {
-      const isYou = anonId && e.anonId === anonId;
+    function renderRankRow(e, { anonId, userId } = {}) {
+      const isYou = (userId && e.userId === userId) || (anonId && e.anonId === anonId);
       const rm = RANK_META[e.rank - 1];
       const rankClass = rm ? rm.cls : '';
       const rankLabel = e.rank <= 3 ? rm?.label : `#${e.rank}`;
@@ -384,6 +384,7 @@
 
     function renderLeaderboard(games, dateStr) {
       const anonId = getAnonId();
+      const userId = isSignedIn(authStatus) ? authStatus.user.id : null;
       const container = document.getElementById('leaderboard-list');
       lastLeaderboardDate = dateStr;
       const isViewingToday = dateStr === today;
@@ -431,7 +432,10 @@
         const solverCount = totalSolvers ?? game.entries?.length ?? 0;
         const isExpanded = expandedGames.has(id);
         const canExpand = solverCount > 3;
-        const rows = entries.map((e) => renderRankRow(e, anonId)).join('');
+        const rows = entries.map((e) => renderRankRow(e, { anonId, userId })).join('');
+        const solverLine = solverCount > 0
+          ? `<p class="text-xs text-slate-400">${solverCount} solver${solverCount !== 1 ? 's' : ''} today</p>`
+          : '';
 
         return `
           <div class="glass-card" data-game-card="${id}">
@@ -439,7 +443,7 @@
               <img src="${meta.logo || ''}" alt="${name}" class="game-logo" onerror="this.style.display='none'">
               <div>
                 <h3 class="font-semibold text-sm">${name}</h3>
-                <p class="text-xs text-slate-400">${solverCount} solver${solverCount !== 1 ? 's' : ''} today</p>
+                ${solverLine}
               </div>
               <svg class="ml-auto text-slate-600" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
             </a>
