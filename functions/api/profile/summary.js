@@ -2,23 +2,19 @@
 import { handleOptions, methodNotAllowed, jsonOk, jsonError, internalError, validateEnv } from '../../_shared/api-helpers.js';
 import { validateUUID } from '../../_shared/validation-helpers.js';
 import { getSessionUser } from '../../_shared/auth-helpers.js';
-
-const SCORE_TABLES = [
-  'bits_scores', 'hashi_scores', 'snake_scores', 'shikaku_scores', 'pathways_scores',
-  'lattice_scores', 'conduit_scores', 'perimeter_scores', 'polyfit_scores', 'tiles_scores', 'harbor_scores'
-];
+import { SCORE_TABLES, accountCompletionsCountSql } from '../../_shared/score-identity.js';
 
 async function countDistinctCompletions(db, { userId, anonId }) {
   let total = 0;
-  const whereClause = userId
-    ? `(user_id = ?1 OR anon_id IN (SELECT anon_id FROM user_anon_links WHERE user_id = ?1))`
-    : `anon_id = ?1`;
+  const identityWhere = userId
+    ? `s.user_id = ?1 OR s.anon_id IN (SELECT anon_id FROM user_anon_links WHERE user_id = ?1)`
+    : `s.anon_id = ?1`;
   const bindValue = userId || anonId;
 
   for (const table of SCORE_TABLES) {
     try {
       const row = await db.prepare(
-        `SELECT COUNT(DISTINCT puzzle_id) AS c FROM ${table} WHERE ${whereClause}`
+        accountCompletionsCountSql(table, identityWhere)
       ).bind(bindValue).first();
       total += Number(row?.c || 0);
     } catch {

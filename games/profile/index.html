@@ -712,10 +712,32 @@
     }
 
     // ── Render ────────────────────────────────────────────────────────────────
+    async function fetchProfileSummary() {
+      try {
+        const anonId = getAnonId();
+        const url = isSignedIn(authStatus)
+          ? '/api/profile/summary'
+          : anonId
+            ? `/api/profile/summary?anonId=${encodeURIComponent(anonId)}`
+            : null;
+        if (!url) return null;
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) return null;
+        return res.json();
+      } catch {
+        return null;
+      }
+    }
+
     async function renderProfile() {
-      const { totalSolved, earliestDate, bestInitials, gameRows } = loadStats();
+      const { totalSolved: localSolved, earliestDate, bestInitials, gameRows } = loadStats();
       const userId = isSignedIn(authStatus) ? authStatus.user.id : null;
-      const medals = await fetchPersonalMedals({ anonId: getAnonId(), userId });
+      const [medals, summary] = await Promise.all([
+        fetchPersonalMedals({ anonId: getAnonId(), userId }),
+        fetchProfileSummary()
+      ]);
+      const serverSolved = Number(summary?.serverCompleted ?? 0);
+      const totalSolved = Math.max(localSolved, serverSolved);
 
       // Avatar
       const savedInitials = getPlayerInitials();

@@ -207,3 +207,25 @@ export function personalMedalsRankSql(table, identityWhereOnD) {
     FROM mine
   `;
 }
+
+/**
+ * Count canonical daily completions for an account in one game table.
+ * @param {string} identityWhereOnS - e.g. "s.anon_id = ?1" on deduped rows
+ */
+export function accountCompletionsCountSql(table, identityWhereOnS) {
+  return `
+    SELECT COUNT(*) AS c
+    FROM (
+      SELECT puzzle_id
+      FROM (
+        SELECT puzzle_id, user_id, anon_id,
+          ROW_NUMBER() OVER (
+            PARTITION BY puzzle_id, ${ACCOUNT_KEY_SQL}
+            ORDER BY created_at ASC, id ASC
+          ) AS _rn
+        FROM ${table}
+      ) s
+      WHERE _rn = 1 AND (${identityWhereOnS})
+    )
+  `;
+}
