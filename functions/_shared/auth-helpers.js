@@ -1,4 +1,7 @@
 import { validateUUID } from './validation-helpers.js';
+import { SCORE_TABLES, dedupeScoresForUser } from './score-identity.js';
+
+export { SCORE_TABLES };
 
 export const SESSION_COOKIE = 'dg_session';
 export const SESSION_DAYS = 30;
@@ -164,11 +167,6 @@ export async function setMarketingOptIn(db, userId, optIn) {
   ).bind(optIn ? 1 : 0, userId).run();
 }
 
-const SCORE_TABLES = [
-  'bits_scores', 'hashi_scores', 'snake_scores', 'shikaku_scores', 'pathways_scores',
-  'lattice_scores', 'conduit_scores', 'perimeter_scores', 'polyfit_scores', 'tiles_scores', 'harbor_scores'
-];
-
 export async function linkAnonToUser(db, userId, anonId) {
   if (!validateUUID(anonId)) throw new Error('Invalid anon ID');
 
@@ -187,6 +185,8 @@ export async function linkAnonToUser(db, userId, anonId) {
       // table or column may not exist yet in some environments
     }
   }
+
+  await dedupeScoresForUser(db, userId);
 }
 
 export function maskEmail(email) {

@@ -1,6 +1,7 @@
 // Shared score submission and rank calculation for Cloudflare Function API handlers
 
 import { getSessionUser } from './auth-helpers.js';
+import { findAccountScore, computeDedupedRank } from './score-identity.js';
 
 /** Optional signed-in user from session cookie on score submit. */
 export async function resolveSubmitUserId(db, request) {
@@ -14,6 +15,7 @@ export async function resolveSubmitUserId(db, request) {
 
 /**
  * Submit or retrieve an existing score, then compute rank/percentile/total.
+ * One score per account per puzzle: first submission wins (earliest created_at).
  * @param {D1Database} db - Cloudflare D1 binding
  * @param {string} table - e.g. 'snake_scores'
  * @param {string} puzzleId
@@ -24,15 +26,13 @@ export async function resolveSubmitUserId(db, request) {
  * @returns {{ rank, percentile, total }}
  */
 export async function submitAndRank(db, table, puzzleId, anonId, timeMs, hintsUsed = 0, userId = null) {
-  const existing = await db.prepare(
-    `SELECT time_ms FROM ${table} WHERE puzzle_id = ?1 AND anon_id = ?2`
-  ).bind(puzzleId, anonId).first();
+  const existing = await findAccountScore(db, table, puzzleId, { userId, anonId });
 
   let userTime = timeMs;
 
   if (existing) {
     userTime = existing.time_ms;
-    if (userId) {
+    if (userId && existing.anon_id === anonId) {
       await db.prepare(
         `UPDATE ${table} SET user_id = ?1 WHERE puzzle_id = ?2 AND anon_id = ?3 AND (user_id IS NULL OR user_id = ?1)`
       ).bind(userId, puzzleId, anonId).run();
@@ -49,18 +49,5 @@ export async function submitAndRank(db, table, puzzleId, anonId, timeMs, hintsUs
     }
   }
 
-  const fasterResult = await db.prepare(
-    `SELECT COUNT(*) as count FROM ${table} WHERE puzzle_id = ?1 AND time_ms < ?2`
-  ).bind(puzzleId, userTime).first();
-
-  const totalResult = await db.prepare(
-    `SELECT COUNT(*) as count FROM ${table} WHERE puzzle_id = ?1`
-  ).bind(puzzleId).first();
-
-  const fasterCount = fasterResult?.count ?? 0;
-  const total = totalResult?.count ?? 1;
-  const rank = fasterCount + 1;
-  const percentile = Math.floor(((total - rank) / Math.max(total, 1)) * 100);
-
-  return { rank, percentile, total };
+  return computeDedupedRank(db, table, puzzleId, userTime);
 }

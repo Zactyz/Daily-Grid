@@ -4,6 +4,7 @@
 import { handleOptions, methodNotAllowed, jsonOk, jsonError, internalError, validateEnv } from '../../_shared/api-helpers.js';
 import { validatePuzzleId } from '../../_shared/validation-helpers.js';
 import { getSessionUser, getFriendUserIds, getFriendAnonIds } from '../../_shared/auth-helpers.js';
+import { dedupedScoresSelect, dedupedSolverCountSelect } from '../../_shared/score-identity.js';
 
 const GAME_TABLES = [
   { id: 'bits',       table: 'bits_scores',       name: 'Bits'       },
@@ -72,17 +73,16 @@ async function fetchGameLeaderboard(db, { id, table, name }, puzzleId, friendsFi
         binds.push(...anonIn.binds);
       }
 
-      const whereExtra = conditions.length ? `AND (${conditions.join(' OR ')})` : '';
+      const whereExtra = conditions.length ? ` AND (${conditions.join(' OR ')})` : '';
       const topResult = await db.prepare(
         `SELECT time_ms, initials, anon_id, user_id
-         FROM ${table}
-         WHERE puzzle_id = ?1 ${whereExtra}
+         FROM (${dedupedScoresSelect(table, '?1', whereExtra)}) deduped
          ORDER BY time_ms ASC
          ${limitSql}`
       ).bind(...binds).all();
 
       const countRow = await db.prepare(
-        `SELECT COUNT(*) AS total FROM ${table} WHERE puzzle_id = ?1 ${whereExtra}`
+        dedupedSolverCountSelect(table, '?1', whereExtra)
       ).bind(...binds).first();
 
       return {
@@ -96,13 +96,12 @@ async function fetchGameLeaderboard(db, { id, table, name }, puzzleId, friendsFi
     const [topResult, countResult] = await Promise.all([
       db.prepare(
         `SELECT time_ms, initials, anon_id, user_id
-         FROM ${table}
-         WHERE puzzle_id = ?1
+         FROM (${dedupedScoresSelect(table, '?1')}) deduped
          ORDER BY time_ms ASC
          ${limitSql}`
       ).bind(puzzleId).all(),
       db.prepare(
-        `SELECT COUNT(*) AS total FROM ${table} WHERE puzzle_id = ?1`
+        dedupedSolverCountSelect(table, '?1')
       ).bind(puzzleId).first()
     ]);
 

@@ -3,6 +3,7 @@
 
 import { handleOptions, methodNotAllowed, jsonOk, jsonError, internalError, validateEnv } from '../../_shared/api-helpers.js';
 import { validateUUID } from '../../_shared/validation-helpers.js';
+import { personalMedalsRankSql } from '../../_shared/score-identity.js';
 
 const GAME_TABLES = [
   { id: 'bits', table: 'bits_scores' },
@@ -21,25 +22,16 @@ const GAME_TABLES = [
 async function countMedalsForIdentity(db, { userId, anonId }) {
   const counts = { gold: 0, silver: 0, bronze: 0, top10: 0 };
 
-  const whereClause = userId
-    ? `(s.user_id = ?1 OR s.anon_id IN (SELECT anon_id FROM user_anon_links WHERE user_id = ?1))`
-    : `s.anon_id = ?1`;
+  const identityWhere = userId
+    ? `(d.user_id = ?1 OR d.anon_id IN (SELECT anon_id FROM user_anon_links WHERE user_id = ?1))`
+    : `d.anon_id = ?1`;
   const bindValue = userId || anonId;
 
   await Promise.all(
     GAME_TABLES.map(async ({ table }) => {
       try {
         const result = await db.prepare(
-          `SELECT
-             s.puzzle_id AS puzzleId,
-             1 + (
-               SELECT COUNT(*)
-               FROM ${table} t2
-               WHERE t2.puzzle_id = s.puzzle_id
-                 AND t2.time_ms < s.time_ms
-             ) AS rank
-           FROM ${table} s
-           WHERE ${whereClause}`
+          personalMedalsRankSql(table, identityWhere)
         ).bind(bindValue).all();
 
         for (const row of result.results || []) {
