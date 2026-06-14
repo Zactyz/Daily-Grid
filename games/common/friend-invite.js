@@ -29,8 +29,7 @@ export function buildFriendInviteUrl(friendCode) {
 
 export function buildFriendShareText(friendCode) {
   const code = normalizeFriendCode(friendCode);
-  const url = buildFriendInviteUrl(code);
-  return `${url}\nAdd me as a friend on Daily Grid Games using my friend code ${code}!`;
+  return `Add me as a friend on Daily Grid Games using my friend code ${code}!`;
 }
 
 export function captureFriendInviteFromUrl() {
@@ -95,6 +94,7 @@ export async function shareMyFriendCode(buttonEl) {
   await shareWithFallback({
     shareTitle: 'Daily Grid Games — Friend invite',
     shareText: buildFriendShareText(code),
+    shareUrl: buildFriendInviteUrl(code),
     onCopy: () => showShareFeedback(buttonEl, 'Copied!'),
     onError: () => showShareFeedback(buttonEl, 'Copy failed', { durationMs: 2500 })
   });

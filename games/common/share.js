@@ -39,7 +39,10 @@ export async function shareWithFallback({ shareText, shareTitle, shareUrl, share
   }
 
   try {
-    await navigator.clipboard.writeText(shareText);
+    const clipboardText = shareUrl && !shareText.includes(shareUrl)
+      ? `${shareUrl}\n\n${shareText}`
+      : shareText;
+    await navigator.clipboard.writeText(clipboardText);
     onCopy?.();
   } catch (clipboardError) {
     console.warn('Clipboard copy failed during share fallback', clipboardError);
